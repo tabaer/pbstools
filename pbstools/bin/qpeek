@@ -37,7 +37,6 @@ else
 	if ( -d $dir )
 	  {
 	    $spool=$dir;
-	    break;
 	  }
       }
   }
@@ -121,7 +120,7 @@ die "Job $jobid is not running!\n" if ( $node eq "" );
 # chop to magic pbs length
 $jobname = "$jobid.$host";
 $jobname =~ s/(.{11}).*/$1/;
-exec "rsh -n $node $tool $numlines $spool/$jobname.$suffix\n";
+exec "rsh -n $node $tool $numlines $spool/spool/$jobname.$suffix\n";
 
 sub mothersuperior
 {
@@ -136,6 +135,7 @@ sub mothersuperior
         {
 	  ($keyword,$node)=split(/=/);
 	  $node=~s:/[0-9]+[A-z0-9/+]*::;
+	  $keyword="";
 	}
     }
   close(QSTAT);
