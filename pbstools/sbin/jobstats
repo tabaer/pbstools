@@ -594,6 +594,7 @@ for ( $i=1 ; $i <= $nmonths ; $i++ )
 		 {
 		   $jobcount[$nprocs]=0;
 		 }
+	       $sjobid[$nprocs][$jobcount[$nprocs]]=$jobid;
 	       $stime[$nprocs][$jobcount[$nprocs]]=$walltime;
 	       $sqtime[$nprocs][$jobcount[$nprocs]]=$qtime;
 	       $smem[$nprocs][$jobcount[$nprocs]]=$mem;
@@ -771,6 +772,22 @@ for ( $j=1 ; $j <= $maxprocs ; $j++ )
       }
   }
 close(DATA5);
+
+open(DATA6,">$outdir/jobdist.dat");
+print DATA6 "#jobid procs\tqueuewait (hrs)\truntime (hrs)\tmem used (MB)\n";
+for ( $j=1 ; $j <= $maxprocs ; $j++ )
+  {
+    if ( defined($jobcount[$j]) && $jobcount[$j]>0 )
+      {
+	for ( $i=0; $i<$jobcount[$j]; $i++ )
+	  {
+	    printf(DATA6 "%s\t%4d\t%12.4f\t%12.4f\t%12.4f\n",
+		   $sjobid[$j][$i],$j,$sqtime[$j][$i],$stime[$j][$i],$smem[$j][$i]);
+	  }
+	print DATA6 "\n";
+      }
+  }
+close(DATA6);
 
 open(GNUPLOT,"|gnuplot");
 print GNUPLOT <<EOP;
