@@ -1,9 +1,13 @@
 #!/usr/bin/perl
-
+#
+# jobstats -- Generate a web report of PBS job usage over some period of
+#             months
+# Copyright 2005 Ohio Supercomputer Center
+#
 # job metrics requirements:
 #
 # retrospective over N-mo period
-# must run on pbs_server host (nfs1, nfs4, coe3) as root
+# must run on pbs_server host as root
 # requires gnuplot
 #
 # jobstats [-d PBS_HOME] [-h hostname] [-n N] MM/YYYY
@@ -30,8 +34,8 @@
 # walltime vs. # CPUs (mean,stddev,median,max)
 # queue time vs. # CPUs (mean,stddev,median,max)
 #
-# file created:
-# ------------
+# files created:
+# -------------
 # index.html
 # jobs_vs_cpus.dat
 # jobs_vs_cpus.png
@@ -43,6 +47,7 @@
 # maxqtime_vs_cpus.png
 # tottime_vs_cpus.dat
 # tottime_vs_cpus.png
+# jobdist.dat
 
 use POSIX;
 

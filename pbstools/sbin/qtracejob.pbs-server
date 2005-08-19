@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
+#
 # qtracejob -- multi-node pbs tracejob
-# Copyright 2003 Ohio Supercomputer Center
+# Copyright 2005 Ohio Supercomputer Center
 #
 $PBS = "/usr/local/pbs/bin";
 
