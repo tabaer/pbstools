@@ -220,7 +220,7 @@ sub stddev
 		$nsamps++;
 	      }
 	  }
-	$sd=sqrt($ms/$nsamps);
+	$sd=sqrt($ms/($nsamps-1));
       }
 
     $sd;
@@ -367,7 +367,7 @@ sub stddev_2d
     local($imin,$imax,$jmin,$jmax,@val)=@_;
     local($i,$j);
     local(@myval);
-    local($avg,$ms,$sd);
+    local($avg,$nsamps,$ms,$sd);
 
     if ( !defined($imin) )
       {
@@ -408,14 +408,19 @@ sub stddev_2d
       {
 	$avg=&mean_2d($imin,$imax,$jmin,$jmax,@val);
 	$ms=0.0;
+	$nsamps=0;
 	for ( $i=$imin; $i<=$imax; $i++ )
 	  {
 	    for ( $j=$jmin; $j<=$jmax; $j++ )
 	      {
-		$ms+=($avg-$val[i][j])*($avg-$val[i][j]);
+		if ( defined($val[i][j]) )
+		  {
+		    $ms+=($avg-$val[i][j])*($avg-$val[i][j]);
+		    $nsamps++;
+		  }
 	      }
 	  }
-	$sd=sqrt($ms/(($imax-$imin+1)*($jmax-$jmin+1)));
+	$sd=sqrt($ms/($nsamps-1));
       }
     $sd;
   }
@@ -787,7 +792,7 @@ for ( $j=1 ; $j <= $maxprocs ; $j++ )
 	for ( $i=0; $i<$jobcount[$j]; $i++ )
 	  {
 	    printf(DATA6 "%s\t%4d\t%12.4f\t%12.4f\t%12.4f\n",
-		   $sjobid[$j][$i],$j,$sqtime[$j][$i],$stime[$j][$i],$smem[$j][$i]);
+		   $sjobid[$j][$i],$j,$sqtime[$j][$i],$stime[$j][$i],$smem[$j][$i]/1024.);
 	  }
 	print DATA6 "\n";
       }
