@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
+#
 # qpeek:  Peek into a job's output spool files
-# Copyright 2002,2005 Ohio Supercomputer Center
+# Copyright 2005 Ohio Supercomputer Center
 #
 # Usage:  qpeek [options] JOBID
 #
