@@ -534,7 +534,9 @@ for ( $i=1 ; $i <= $nmonths ; $i++ )
                    if ( $processors_per < 1 ) { $processors_per = 1; }
                    $processors += $nodes * $processors_per;
 		 }
-	       $nprocs=&max($processors,$resource{"Resource_List.ncpus"});
+	       $ncpus=&max($resource{"Resource_List.ncpus"},
+			   $resource{"resources_used.ncpus"});
+	       $nprocs=&max($processors,$ncpus);
 	       if ( $nprocs > $sysprocs )
 		 {
 		   print STDERR "Warning!  job $jobid has bogus CPU count of $nprocs (max possible is $sysprocs)\n";

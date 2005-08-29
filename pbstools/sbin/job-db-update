@@ -120,7 +120,9 @@ while ( defined($ARGV[0]) )
 		if ( $processors_per < 1 ) { $processors_per = 1; }
 		$processors += $nodes * $processors_per;
 	      }
-	    $nprocs=&max($processors,$resource{"Resource_List.ncpus"});
+	    $ncpus=&max($resource{"Resource_List.ncpus"},
+			$resource{"resources_used.ncpus"});
+	    $nprocs=&max($processors,$ncpus);
 	    $mem=$resource{"resources_used.mem"};
 	    $mem=~s/kb$//;
 	    $vmem=$resource{"resources_used.vmem"};
@@ -214,6 +216,16 @@ while ( defined($ARGV[0]) )
 		$qhead=$qhead.",vmem_kb";
 		$qvals=$qvals.",\'$vmem\'";
 	      }
+	    if ( defined($resource{"resources_used.mppe"}) )
+	      {
+		$qhead=$qhead.",mppe";
+		$qvals=$qvals.",\'".$resource{"resources_used.mppe"}."\'";
+	      }		
+	    if ( defined($resource{"resources_used.mppssp"}) )
+	      {
+		$qhead=$qhead.",mppssp";
+		$qvals=$qvals.",\'".$resource{"resources_used.mppssp"}."\'";
+	      }		
 	    if ( defined($resource{"exec_host"}) )
 	      {
 		$qhead=$qhead.",hostlist";

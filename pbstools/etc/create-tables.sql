@@ -18,6 +18,8 @@ CREATE TABLE Jobs (
   mem_kb       INT UNSIGNED,
   vmem_req     TINYTEXT,
   vmem_kb      INT UNSIGNED,
+  mppe         INT UNSIGNED,
+  mppssp       INT UNSIGNED,
   hostlist     TEXT,
   script       MEDIUMTEXT
 );
