@@ -109,7 +109,8 @@ else
     echo "[<INPUT type=\"checkbox\" name=\"mppe\" value=\"0\"> MSPs (Cray X1 only)]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"mppssp\" value=\"0\"> SSPs (Cray X1 only)]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"hostlist\" value=\"1\"> host list]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"script\" value=\"0\"> jobscript]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"exit_status\" value=\"1\"> exit status]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"script\" value=\"0\"> job script]<BR>\n";
     echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
   }
 echo "</BODY>\n</HTML>\n";

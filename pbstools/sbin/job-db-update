@@ -231,6 +231,11 @@ while ( defined($ARGV[0]) )
 		$qhead=$qhead.",hostlist";
 		$qvals=$qvals.",\'".$resource{"exec_host"}."\'";
 	      }
+	    if ( defined($resource{"Exit_status"}) )
+	      {
+		$qhead=$qhead.",exit_status";
+		$qvals=$qvals.",\'".$resource{"Exit_status"}."\'";
+	      }
 	    # There's a column for the script file, if we can ever figure
 	    # out how to store it...
 
