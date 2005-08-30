@@ -5,6 +5,8 @@ CREATE TABLE Jobs (
   groupname    VARCHAR(8),
   jobname      TINYTEXT,
   nproc        INT UNSIGNED,
+  mppe         INT UNSIGNED,
+  mppssp       INT UNSIGNED,
   nodes        TEXT,
   queue        TINYTEXT,
   submit_ts    INT,
@@ -18,8 +20,6 @@ CREATE TABLE Jobs (
   mem_kb       INT UNSIGNED,
   vmem_req     TINYTEXT,
   vmem_kb      INT UNSIGNED,
-  mppe         INT UNSIGNED,
-  mppssp       INT UNSIGNED,
   hostlist     TEXT,
   script       MEDIUMTEXT
 );
