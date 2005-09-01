@@ -93,6 +93,8 @@ else
     echo "[<INPUT type=\"checkbox\" name=\"groupname\" value=\"1\"> group]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"jobname\" value=\"1\"> job name]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"nproc\" value=\"1\"> # procs]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"mppe\" value=\"0\"> MSPs (Cray X1 only)]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"mppssp\" value=\"0\"> SSPs (Cray X1 only)]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"nodes\" value=\"1\"> node request]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"queue\" value=\"1\"> queue]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"submit_ts\" value=\"0\"> submission time]<BR>\n";
@@ -106,8 +108,6 @@ else
     echo "[<INPUT type=\"checkbox\" name=\"mem_kb\" value=\"1\"> real memory used]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"vmem_req\" value=\"0\"> virtual memory requested]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"vmem_kb\" value=\"1\"> virtual memory used]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"mppe\" value=\"0\"> MSPs (Cray X1 only)]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"mppssp\" value=\"0\"> SSPs (Cray X1 only)]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"hostlist\" value=\"1\"> host list]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"exit_status\" value=\"1\"> exit status]<BR>\n";
     echo "[<INPUT type=\"checkbox\" name=\"script\" value=\"0\"> job script]<BR>\n";
