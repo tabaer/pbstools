@@ -58,7 +58,7 @@ if ( isset($_POST['jobid']) )
 else
   {
     echo "<FORM method=\"POST\" action=\"jobinfo.php\">\n";
-    echo "Job id:  <INPUT type=\"text\" name=\"jobid\" size=\"30\"><BR>\n";
+    echo "Job id:  <INPUT type=\"text\" name=\"jobid\" size=\"8\"> (Numeric jobid only!)<BR>\n";
     echo "System:  <SELECT name=\"system\" size=\"1\">\n";
     echo "<OPTION value=\"%\">Any\n";
     $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);

@@ -72,21 +72,22 @@ if ( isset($_POST['username']) )
 	if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
 	     $_POST['start_date']!="" )
 	  {
-	    $sql = $sql." AND FROM_UNIXTIME(submit_ts) = '".$_POST['start_date']."'";
+	    $sql = $sql." AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
+	    $sql = $sql." AND FROM_UNIXTIME(submit_ts) <= '".$_POST['start_date']." 23:59:59'";
 	  }
 	else
 	  {
 	    if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
 	      {
-		$sql = $sql." AND FROM_UNIXTIME(submit_ts) > '".$_POST['start_date']."'";
+		$sql = $sql." AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
 	      }
 	    if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
 	      {
-		$sql = $sql." AND FROM_UNIXTIME(submit_ts) < '".$_POST['end_date']."'";
+		$sql = $sql." AND FROM_UNIXTIME(submit_ts) <= '".$_POST['end_date']." 23:59:59'";
 	      }
 	  }
         $sql = $sql." ORDER BY submit_ts;";
-#	echo "<PRE>".$sql."</PRE>\n";
+	echo "<PRE>".$sql."</PRE>\n";
 	$result = $db->query($sql);
 	if ( DB::isError($db) )
 	  {
