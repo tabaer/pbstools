@@ -24,4 +24,7 @@ CREATE TABLE Jobs (
   exit_status  INT,
   script       MEDIUMTEXT
 );
-
+CREATE INDEX system_jobs ON Jobs (system);
+CREATE INDEX user_jobs ON Jobs (username);
+CREATE INDEX group_jobs ON Jobs (groupname);
+CREATE INDEX queue_jobs ON Jobs (queue(16));
