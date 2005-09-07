@@ -87,7 +87,7 @@ if ( isset($_POST['username']) )
 	      }
 	  }
         $sql = $sql." ORDER BY submit_ts;";
-	echo "<PRE>".$sql."</PRE>\n";
+#	echo "<PRE>".$sql."</PRE>\n";
 	$result = $db->query($sql);
 	if ( DB::isError($db) )
 	  {
