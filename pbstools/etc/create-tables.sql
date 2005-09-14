@@ -1,3 +1,5 @@
+CREATE DATABASE pbsacct;
+USE pbsacct;
 CREATE TABLE Jobs (
   jobid        VARCHAR(32) PRIMARY KEY,
   system       VARCHAR(8),
@@ -28,3 +30,5 @@ CREATE INDEX system_jobs ON Jobs (system);
 CREATE INDEX user_jobs ON Jobs (username);
 CREATE INDEX group_jobs ON Jobs (groupname);
 CREATE INDEX queue_jobs ON Jobs (queue(16));
+GRANT ALL PRIVILEGES ON Jobs TO pbsacct IDENTIFIED BY 'pbsRroxor';
+GRANT SELECT ON Jobs TO webapp;
