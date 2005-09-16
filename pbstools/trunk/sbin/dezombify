@@ -31,7 +31,7 @@ for job in $*
 do
     # Since this will later runs an rm -rf command as root,
     # sanity-check that the jobid is really a running job
-    jobid=$(echo $job | sed 's/\..*$//' | egrep '^[^0-9]+$')
+    jobid=$(echo $job | sed 's/\..*$//' | egrep '^[0-9]+$')
     if [ -z "$jobid" ]
     then
         echo "Bogus jobid $job!"
