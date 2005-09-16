@@ -44,6 +44,19 @@ sub max
     $maxval;
   }
 
+sub keyval_exists
+  {
+    local($key,$val,$dbtable,$dbh) = @_;
+    local($sth,$n);
+    
+    $sth=$dbh->prepare("SELECT ".$key." FROM ".$dbtable." WHERE ".$key." = \'".$val."\';")
+      or die "Could not prepare query:  $dbh->errstr";
+    $n=$sth->execute
+      or die "Could not execute query:  $sth->errstr";
+    
+    $n;
+  }
+
 #
 # Main program starts here
 #
@@ -129,120 +142,212 @@ while ( defined($ARGV[0]) )
 	    $vmem=~s/kb$//;
 
 	    # construct query string(s)
-	    $qhead = "INSERT INTO $dbtable \(jobid,system";
-	    $qvals = " VALUES \(\'$job\',\'$hostname\'";
-	    if ( defined($resource{"user"}) )
+	    if ( &keyval_exists("jobid",$job,$dbtable,$dbh) )
 	      {
-		$qhead=$qhead.",username";
-		$qvals=$qvals.",\'".$resource{"user"}."\'";
+		# This jobid already exists in the table,
+		# so do an UPDATE
+		$qhead = "UPDATE $dbtable SET jobid = \'".$job."\'";
+		$qtail = " WHERE jobid = \'".$job."\';";
+		if ( defined($resource{"user"}) )
+		  {
+		    $qhead.=",username = \'".$resource{"user"}."\'";
+		  }
+		if ( defined($resource{"group"}) )
+		  {
+		    $qhead.=",groupname = \'".$resource{"group"}."\'";
+		  }
+		if ( defined($resource{"jobname"}) )
+		  {
+		    $qhead.=",jobname = \'".$resource{"jobname"}."\'";
+		  }
+		if ( $nprocs>0 )
+		  {
+		    $qhead.=",nproc = \'".$nprocs."\'";
+		  }
+		if ( defined($resource{"Resource_List.nodes"}) )
+		  {
+		    $qhead.=",nodes = \'".$resource{"Resource_List.nodes"}."\'";
+		  }
+		if ( defined($resource{"queue"}) )
+		  {
+		    $qhead.=",queue = \'".$resource{"queue"}."\'";
+		  }
+		if ( defined($resource{"ctime"}) )
+		  {
+		    $qhead.=",submit_ts = \'".$resource{"ctime"}."\'";
+		  }
+		if ( defined($resource{"start"}) )
+		  {
+		    $qhead.=",start_ts = \'".$resource{"start"}."\'";
+		  }
+		if ( defined($resource{"end"}) )
+		  {
+		    $qhead.=",end_ts = \'".$resource{"end"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.cput"}) )
+		  {
+		    $qhead.=",cput_req = \'".$resource{"Resource_List.cput"}."\'";
+		  }
+		if ( defined($resource{"resources_used.cput"}) )
+		  {
+		    $qhead.=",cput = \'".$resource{"resources_used.cput"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.walltime"}) )
+		  {
+		    $qhead.=",walltime_req = \'".$resource{"Resource_List.walltime"}."\'";
+		  }
+		if ( defined($resource{"resources_used.walltime"}) )
+		  {
+		    $qhead.=",walltime = \'".$resource{"resources_used.walltime"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.mem"}) )
+		  {
+		    $qhead.=",mem_req = \'".$resource{"Resource_List.mem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.mem"}) )
+		  {
+		    $qhead.=",mem_kb = \'".$resource{""}."\'";
+		  }
+		if ( defined($resource{"Resource_List.vmem"}) )
+		  {
+		    $qhead.=",vmem_req = \'".$resource{"Resource_List.vmem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.vmem"}) )
+		  {
+		    $qhead.=",vmem_kb = \'".$resource{"resources_used.vmem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.mppe"}) )
+		  {
+		    $qhead.=",mppe = \'".$resource{"resources_used.mppe"}."\'";
+		  }		
+		if ( defined($resource{"resources_used.mppssp"}) )
+		  {
+		    $qhead.=",mppssp = \'".$resource{"resources_used.mppssp"}."\'";
+		  }		
+		if ( defined($resource{"exec_host"}) )
+		  {
+		    $qhead.=",hostlist = \'".$resource{"exec_host"}."\'";
+		  }
+		if ( defined($resource{"Exit_status"}) )
+		  {
+		    $qhead.=",exit_status = \'".$resource{"Exit_status"}."\'";
+		  }
 	      }
-	    if ( defined($resource{"group"}) )
+	    else
 	      {
-		$qhead=$qhead.",groupname";
-		$qvals=$qvals.",\'".$resource{"group"}."\'";
+		# This jobid does *NOT* already exist in the table,
+		# so do an INSERT
+		$qhead = "INSERT INTO $dbtable \(jobid,system";
+		$qtail = " VALUES \(\'$job\',\'$hostname\'";
+		if ( defined($resource{"user"}) )
+		  {
+		    $qhead.=",username";
+		    $qtail.=",\'".$resource{"user"}."\'";
+		  }
+		if ( defined($resource{"group"}) )
+		  {
+		    $qhead.=",groupname";
+		    $qtail.=",\'".$resource{"group"}."\'";
+		  }
+		if ( defined($resource{"jobname"}) )
+		  {
+		    $qhead.=",jobname";
+		    $qtail.=",\'".$resource{"jobname"}."\'";
+		  }
+		if ( $nprocs>0 )
+		  {
+		    $qhead.=",nproc";
+		    $qtail.=",\'$nprocs\'";
+		  }
+		if ( defined($resource{"Resource_List.nodes"}) )
+		  {
+		    $qhead.=",nodes";
+		    $qtail.=",\'".$resource{"Resource_List.nodes"}."\'";
+		  }
+		if ( defined($resource{"queue"}) )
+		  {
+		    $qhead.=",queue";
+		    $qtail.=",\'".$resource{"queue"}."\'";
+		  }
+		if ( defined($resource{"ctime"}) )
+		  {
+		    $qhead.=",submit_ts";
+		    $qtail.=",\'".$resource{"ctime"}."\'";
+		  }
+		if ( defined($resource{"start"}) )
+		  {
+		    $qhead.=",start_ts";
+		    $qtail.=",\'".$resource{"start"}."\'";
+		  }
+		if ( defined($resource{"end"}) )
+		  {
+		    $qhead.=",end_ts";
+		    $qtail.=",\'".$resource{"end"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.cput"}) )
+		  {
+		    $qhead.=",cput_req";
+		    $qtail.=",\'".$resource{"Resource_List.cput"}."\'";
+		  }
+		if ( defined($resource{"resources_used.cput"}) )
+		  {
+		    $qhead.=",cput";
+		    $qtail.=",\'".$resource{"resources_used.cput"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.walltime"}) )
+		  {
+		    $qhead.=",walltime_req";
+		    $qtail.=",\'".$resource{"Resource_List.walltime"}."\'";
+		  }
+		if ( defined($resource{"resources_used.walltime"}) )
+		  {
+		    $qhead.=",walltime";
+		    $qtail.=",\'".$resource{"resources_used.walltime"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.mem"}) )
+		  {
+		    $qhead.=",mem_req";
+		    $qtail.=",\'".$resource{"Resource_List.mem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.mem"}) )
+		  {
+		    $qhead.=",mem_kb";
+		    $qtail.=",\'$mem\'";
+		  }
+		if ( defined($resource{"Resource_List.vmem"}) )
+		  {
+		    $qhead.=",vmem_req";
+		    $qtail.=",\'".$resource{"Resource_List.vmem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.vmem"}) )
+		  {
+		    $qhead.=",vmem_kb";
+		    $qtail.=",\'$vmem\'";
+		  }
+		if ( defined($resource{"resources_used.mppe"}) )
+		  {
+		    $qhead.=",mppe";
+		    $qtail.=",\'".$resource{"resources_used.mppe"}."\'";
+		  }		
+		if ( defined($resource{"resources_used.mppssp"}) )
+		  {
+		    $qhead.=",mppssp";
+		    $qtail.=",\'".$resource{"resources_used.mppssp"}."\'";
+		  }		
+		if ( defined($resource{"exec_host"}) )
+		  {
+		    $qhead.=",hostlist";
+		    $qtail.=",\'".$resource{"exec_host"}."\'";
+		  }
+		if ( defined($resource{"Exit_status"}) )
+		  {
+		    $qhead.=",exit_status";
+		    $qtail.=",\'".$resource{"Exit_status"}."\'";
+		  }
+		$qhead.="\)";
+		$qtail.="\);";
 	      }
-	    if ( defined($resource{"jobname"}) )
-	      {
-		$qhead=$qhead.",jobname";
-		$qvals=$qvals.",\'".$resource{"jobname"}."\'";
-	      }
-	    if ( $nprocs>0 )
-	      {
-		$qhead=$qhead.",nproc";
-		$qvals=$qvals.",\'$nprocs\'";
-	      }
-	    if ( defined($resource{"Resource_List.nodes"}) )
-	      {
-		$qhead=$qhead.",nodes";
-		$qvals=$qvals.",\'".$resource{"Resource_List.nodes"}."\'";
-	      }
-	    if ( defined($resource{"queue"}) )
-	      {
-		$qhead=$qhead.",queue";
-		$qvals=$qvals.",\'".$resource{"queue"}."\'";
-	      }
-	    if ( defined($resource{"ctime"}) )
-	      {
-		$qhead=$qhead.",submit_ts";
-		$qvals=$qvals.",\'".$resource{"ctime"}."\'";
-	      }
-	    if ( defined($resource{"start"}) )
-	      {
-		$qhead=$qhead.",start_ts";
-		$qvals=$qvals.",\'".$resource{"start"}."\'";
-	      }
-	    if ( defined($resource{"end"}) )
-	      {
-		$qhead=$qhead.",end_ts";
-		$qvals=$qvals.",\'".$resource{"end"}."\'";
-	      }
-	    if ( defined($resource{"Resource_List.cput"}) )
-	      {
-		$qhead=$qhead.",cput_req";
-		$qvals=$qvals.",\'".$resource{"Resource_List.cput"}."\'";
-	      }
-	    if ( defined($resource{"resources_used.cput"}) )
-	      {
-		$qhead=$qhead.",cput";
-		$qvals=$qvals.",\'".$resource{"resources_used.cput"}."\'";
-	      }
-	    if ( defined($resource{"Resource_List.walltime"}) )
-	      {
-		$qhead=$qhead.",walltime_req";
-		$qvals=$qvals.",\'".$resource{"Resource_List.walltime"}."\'";
-	      }
-	    if ( defined($resource{"resources_used.walltime"}) )
-	      {
-		$qhead=$qhead.",walltime";
-		$qvals=$qvals.",\'".$resource{"resources_used.walltime"}."\'";
-	      }
-	    if ( defined($resource{"Resource_List.mem"}) )
-	      {
-		$qhead=$qhead.",mem_req";
-		$qvals=$qvals.",\'".$resource{"Resource_List.mem"}."\'";
-	      }
-	    if ( defined($resource{"resources_used.mem"}) )
-	      {
-		$qhead=$qhead.",mem_kb";
-		$qvals=$qvals.",\'$mem\'";
-	      }
-	    if ( defined($resource{"Resource_List.vmem"}) )
-	      {
-		$qhead=$qhead.",vmem_req";
-		$qvals=$qvals.",\'".$resource{"Resource_List.vmem"}."\'";
-	      }
-	    if ( defined($resource{"resources_used.vmem"}) )
-	      {
-		$qhead=$qhead.",vmem_kb";
-		$qvals=$qvals.",\'$vmem\'";
-	      }
-	    if ( defined($resource{"resources_used.mppe"}) )
-	      {
-		$qhead=$qhead.",mppe";
-		$qvals=$qvals.",\'".$resource{"resources_used.mppe"}."\'";
-	      }		
-	    if ( defined($resource{"resources_used.mppssp"}) )
-	      {
-		$qhead=$qhead.",mppssp";
-		$qvals=$qvals.",\'".$resource{"resources_used.mppssp"}."\'";
-	      }		
-	    if ( defined($resource{"exec_host"}) )
-	      {
-		$qhead=$qhead.",hostlist";
-		$qvals=$qvals.",\'".$resource{"exec_host"}."\'";
-	      }
-	    if ( defined($resource{"Exit_status"}) )
-	      {
-		$qhead=$qhead.",exit_status";
-		$qvals=$qvals.",\'".$resource{"Exit_status"}."\'";
-	      }
-	    # There's a column for the script file, if we can ever figure
-	    # out how to store it...
-
-	    $qhead=$qhead."\)";
-	    $qvals=$qvals."\);";
-	    $query=$qhead.$qvals;
-
+	    $query=$qhead.$qtail;
 #	    print "$query\n";
 	    $dbh->do($query);
 	  }
