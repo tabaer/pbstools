@@ -34,7 +34,7 @@ if ( isset($_POST['sql']) )
 	    foreach ($keys as $key)
 	      {
 		$data=array_shift($row);
-	        echo "<TD>".$data."</TD>";
+	        echo "<TD><PRE>".$data."</PRE></TD>";
 	      }
 	    echo "</TR>\n";
 	  }

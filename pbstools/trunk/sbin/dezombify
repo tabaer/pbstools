@@ -13,8 +13,8 @@
 # Signs of a zombie job:
 # * "qstat -f $jobid" reports job state as R but no CPU time or memory consumed
 # * "qps -a $jobid" shows *NO* processes
-# * "qtracejob | grep -c JOIN" gives a number that's less than (N-1), where
-#    N==# nodes assigned to the job
+# * "qtracejob $jobid | grep -c JOIN" gives a number that's less than (N-1),
+#    where N==# nodes assigned to the job
 
 # First, make sure we know where to look for the appropriate files to clobber
 if [ -z "$PBS_HOME" ]
