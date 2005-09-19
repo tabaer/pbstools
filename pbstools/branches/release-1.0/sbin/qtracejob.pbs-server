@@ -1,0 +1,146 @@
+#!/usr/bin/perl -w
+#
+# qtracejob -- multi-node pbs tracejob
+# Copyright 2005 Ohio Supercomputer Center
+#
+$PBS = "/usr/local/pbs/bin";
+
+sub slurp($$) {
+    my $prog = shift;
+    my $host = shift;
+    my @list;
+
+#    print "slurp: prog is $prog, host is $host\n";
+    open(FD, "$prog |");
+
+    while (<FD>) {
+	chomp($_);
+	m/(\S+)\s+(\S+)\s+(\S+)\s+(.*)/;
+#	print "it is $1, $2, $3, $4\n";
+	push @list, { date=>$1, time=>$2, action=>$3, text=>$4, host=>$host };
+    }
+    close FD;
+    return @list;
+}
+
+sub uniq(@) {
+    if (!@_) {
+	return;
+    }
+    my $entry = shift;
+    while (@_) {
+	my $next = $_[0];
+	if ($entry ne $next) {
+	    last;
+	}
+	shift;
+    }
+    return $entry, &uniq(@_);
+}
+
+sub sortdate($$) {
+    my ($m1, $d1, $y1) = split(/\//, shift);
+    my ($m2, $d2, $y2) = split(/\//, shift);
+    $i = $y1 <=> $y2;
+    if ($i) {
+	return $i;
+    }
+    $i = $m1 <=> $m2;
+    if ($i) {
+	return $i;
+    }
+    $i = $d1 <=> $d2;
+    if ($i) {
+	return $i;
+    }
+    return 0;
+}
+
+sub sorttime($$) {
+    my ($h1, $m1, $s1) = split(/:/, shift);
+    my ($h2, $m2, $s2) = split(/:/, shift);
+    $i = $h1 <=> $h2;
+    if ($i) {
+	return $i;
+    }
+    $i = $m1 <=> $m2;
+    if ($i) {
+	return $i;
+    }
+    $i = $s1 <=> $s2;
+    if ($i) {
+	return $i;
+    }
+    return 0;
+}
+
+sub sfunc() {
+    my $i;
+    $i = sortdate($a->{date}, $b->{date});
+    if ($i) {
+	return $i;
+    }
+    $i = sorttime($a->{time}, $b->{time});
+    if ($i) {
+	return $i;
+    }
+    return $a->{host} cmp $b->{host};
+}
+
+sub traceone($) {
+    my $job = shift;
+    my @lines;
+    my @list;
+    my @nodes;
+
+    my $hostname = `hostname`;
+    chomp($hostname);
+    @list = slurp("$PBS/tracejob $traceargs $job | sed 1,3d", $hostname);
+    for $entry (@list) {
+	if ($entry->{action} eq "A") {
+	    my $nodelist = $entry->{text};
+	    if ($nodelist =~ m/exec_host=(\S+)/) {
+		my @locn = split(/\+/, $1);
+		map { s/\/\d// } @locn;
+#	        print "my locn", map { " " . $_ } @locn, "\n";
+		@nodes = uniq(sort @nodes, @locn);
+#	        print "my nodes", map { " " . $_ } @nodes, "\n";
+	    }
+	}
+    }
+
+#   print "all nodes", map { " " . $_ } @nodes, "\n";
+    push @lines, @list;
+    foreach $host (@nodes) {
+	@list = slurp("rsh $host $PBS/tracejob $traceargs $job \| sed 1,3d", $host);
+#	for $entry (@list) {
+#	    print "host $host entry is $entry\n";
+#	}
+	push @lines, @list;
+    }
+    # sort by date/time
+    @lines = sort sfunc @lines;
+    for $i (@lines) {
+	printf "%-7s %10s %8s %s %s\n", $i->{host}, $i->{date}, $i->{time},
+	  $i->{action}, $i->{text};
+    }
+    print "\n";
+}
+
+$traceargs = "-z";  # turn off filter-excessive
+while (@ARGV) {
+    my $arg = $ARGV[0];
+    if ($arg =~ m/-[wpnf]/) {
+	$traceargs .= " ". shift(@ARGV) ." ". shift(@ARGV);
+    } elsif ($arg =~ m/-[a-z]/) {
+	$traceargs .= " ". shift(@ARGV);
+    } else {
+	last;
+    }
+}
+#print "traceargs is $traceargs\n";
+
+for $i (@ARGV) {
+    traceone($i);
+}
+exit 0;
