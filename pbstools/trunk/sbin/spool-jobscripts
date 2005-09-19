@@ -5,13 +5,14 @@
 #
 # Not intended to be invoked directly, but rather by dnotify (or the moral
 # equivalent thereof):
-# dnotify -b -p 1 -C $PBS_HOME/server_priv/jobs -e spool-jobscripts '{}'
+# dnotify -b -p 1 -C $PBS_HOME/server_priv/jobs -e /usr/local/sbin/spool-jobscripts '{}'
 
 # my spool dir
 $spooldir="/tmp/scripts";
 if ( ! -d $spooldir )
 {
     mkdir($spooldir) || die "Unable to create $spooldir:  $!";
+    chmod(0700,$spooldir);
 }
 elsif ( ! -w $spooldir )
 {
