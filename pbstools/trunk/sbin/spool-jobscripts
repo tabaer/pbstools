@@ -26,8 +26,6 @@ opendir(DIR,$pbsjobdir) || die "Can't opendir ".$pbsjobdir.":  $!";
 @scriptfiles = grep { /\.SC$/ && -f "$pbsjobdir/$_" } readdir(DIR);
 closedir(DIR);
 
-# lock files so they can't be deleted out from under us(?)
-
 # for each script file, copy it to the spool directory if it's not already
 # there
 foreach $scriptfile (@scriptfiles)
@@ -55,7 +53,6 @@ if ( defined(@newfile) )
     {
 	unshift(@newfile,"jobscript-to-db");
 	exec("/usr/local/sbin/jobscript-to-db",@newfile);
+	exit(0);
     }
 }
-
-# unlock files if they were locked
