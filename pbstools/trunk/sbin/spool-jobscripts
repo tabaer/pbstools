@@ -1,8 +1,10 @@
 #!/usr/bin/perl
 #
 # spool-jobscripts -- copy newly created job scripts to a spool directory
+# Copyright 2005 Ohio Supercomputer Center
 #
-# Not intended to be invoked directly, but rather by dnotify:
+# Not intended to be invoked directly, but rather by dnotify (or the moral
+# equivalent thereof):
 # dnotify -b -p 1 -C $PBS_HOME/server_priv/jobs -e spool-jobscripts '{}'
 
 # my spool dir
@@ -51,9 +53,8 @@ if ( defined(@newfile) )
     $pid=fork();
     if ( $pid==0 )
     {
-	print STDERR "exec'ing jobscript-to-db";
 	unshift(@newfile,"jobscript-to-db");
-	exec("/home/troy/spool-watch/jobscript-to-db",@newfile);
+	exec("/usr/local/sbin/jobscript-to-db",@newfile);
     }
 }
 

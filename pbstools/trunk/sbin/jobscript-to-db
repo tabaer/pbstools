@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 #
 # jobscript-to-db -- copy newly spooled job scripts into database
+# Copyright 2005 Ohio Supercomputer Center
 #
 # Not intended to be invoked directly, but rather by spool-jobscripts
 # (which is itself invoked by dnotify).
