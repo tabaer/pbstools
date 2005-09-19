@@ -45,7 +45,7 @@ if ( isset($_POST['jobid']) )
 		    if ( isset($_POST[$key]) )
 		      {
 			$data[$key]=array_shift($row);
-			echo "<TR><TD><PRE>".$key."</PRE></TD><TD>".$data[$key]."</TD></TR>\n";
+			echo "<TR><TD><PRE>".$key."</PRE></TD><TD><PRE>".$data[$key]."</PRE></TD></TR>\n";
 		      }
 		  }
 		echo "</TABLE>\n";
