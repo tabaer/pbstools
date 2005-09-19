@@ -10,8 +10,6 @@
 #   -h      Show only the beginning of the output file ("head")
 #   -t      Show only the end of the output file ("tail")
 #   -#      Show only # lines of output
-#   -e      Show the stderr file of the job
-#   -o      Show the stdout file of the job
 #   -?      Display help
 
 $tool="cat";
@@ -69,14 +67,6 @@ while ( $ARGV[0] =~ /^-.*/ )
       {
         $numlines=$ARGV[0];
       }
-    elsif ( $ARGV[0] eq "-e" )
-      {
-        $suffix="ER"
-      }
-    elsif ( $ARGV[0] eq "-o" )
-      {
-        $suffix="OU"
-      }
     elsif ( $ARGV[0] eq "-?" || $ARGV[0] eq "-help" )
       {
         print STDERR <<EOF;
@@ -89,8 +79,6 @@ while ( $ARGV[0] =~ /^-.*/ )
    -h      Show only the beginning of the output file ("head")
    -t      Show only the end of the output file ("tail")
    -#      Show only # lines of output
-   -e      Show the stderr file of the job
-   -o      Show the stdout file of the job (default)
    -?      Display this help message
 EOF
         exit;

@@ -4,7 +4,7 @@
 # Copyright 2005 Ohio Supercomputer Center
 #
 # Not intended to be invoked directly, but rather by spool-jobscripts
-# (which is itself invoked by dnotify).
+# (which is itself invoked by dnotify or moral equivalent).
 use POSIX;
 use DBI;
 
@@ -76,8 +76,7 @@ foreach $scriptfile (@ARGV)
 		
 		# do the DB insert
 		$query="INSERT INTO $dbtable \(jobid,script\) VALUES \(\'".$jobid."\',\'".$script."\'\);";
-	        $dbh->do($query) ||
-		  print STDERR "problem executing query $dbh->errstr\n";;
+	        $dbh->do($query) || print STDERR "problem executing query $dbh->errstr\n";;
 	    }
 	}
     }
