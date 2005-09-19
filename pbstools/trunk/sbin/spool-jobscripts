@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+#
+# spool-jobscripts -- copy newly created job scripts to a spool directory
+#
+# Not intended to be invoked directly, but rather by dnotify:
+# dnotify -b -p 1 -C $PBS_HOME/server_priv/jobs -e spool-jobscripts '{}'
+
+# my spool dir
+$spooldir="/tmp/scripts";
+if ( ! -d $spooldir )
+{
+    mkdir($spooldir) || die "Unable to create $spooldir:  $!";
+}
+elsif ( ! -w $spooldir )
+{
+    die "Unable to write to $spooldir:  $!";
+}
+
+# sanity check $ARGV[0]
+$pbsjobdir=$ARGV[0];
+
+# get list of script files
+opendir(DIR,$pbsjobdir) || die "Can't opendir ".$pbsjobdir.":  $!";
+@scriptfiles = grep { /\.SC$/ && -f "$pbsjobdir/$_" } readdir(DIR);
+closedir(DIR);
+
+# lock files so they can't be deleted out from under us(?)
+
+# for each script file, copy it to the spool directory if it's not already
+# there
+foreach $scriptfile (@scriptfiles)
+{
+    if ( -e "$pbsjobdir/$scriptfile" && ! -e "$spooldir/$scriptfile" )
+    {
+	push(@file,"$pbsjobdir/$scriptfile");
+	push(@newfile,"$spooldir/$scriptfile");	
+    }
+}
+
+# copy files to spool dir
+if ( defined(@file) )
+{
+    unshift(@file,"cp");
+    push(@file,"$spooldir");
+    system("/bin/cp",@file);
+}
+
+# fork/exec jobscript-to-db; don't wait for completion
+if ( defined(@newfile) )
+{
+    $pid=fork();
+    if ( $pid==0 )
+    {
+	print STDERR "exec'ing jobscript-to-db";
+	unshift(@newfile,"jobscript-to-db");
+	exec("/home/troy/spool-watch/jobscript-to-db",@newfile);
+    }
+}
+
+# unlock files if they were locked

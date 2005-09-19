@@ -1,0 +1,86 @@
+#!/usr/bin/perl
+#
+# jobscript-to-db -- copy newly spooled job scripts into database
+#
+# Not intended to be invoked directly, but rather by spool-jobscripts
+# (which is itself invoked by dnotify).
+use POSIX;
+use DBI;
+
+sub keyval_exists
+{
+    local($key,$val,$dbtable,$dbh) = @_;
+    local($sth,$n);
+
+    $sth=$dbh->prepare("SELECT ".$key." FROM ".$dbtable." WHERE ".$key." = \'".$val."\';")
+	or die "Could not prepare query:  $dbh->errstr";
+    $n=$sth->execute or die "Could not execute query:  $sth->errstr";
+
+    $n;
+}
+
+#
+# Main program begins here
+#
+
+# my spool dir
+$spooldir=$ARGV[0];
+
+# figure out pbs server name (we need it later)
+if ( ! defined($ENV{"PBS_HOME"}) )
+{
+    die "\$PBS_HOME undefined!";
+} 
+$pbsspooldir=$ENV{"PBS_HOME"};
+open(SERVERNAME,"<$pbsspooldir/server_name");
+$pbsserver=<SERVERNAME>;
+close(SERVERNAME);
+chop($pbsserver);
+
+# connect to DB
+$dbhost="localhost";
+$dbuser="pbsacct";
+$dbpasswd="pbsRroxor";
+$dbname="pbsacct";
+$dbtable="Jobs";
+$dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
+$dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
+  die "$0:  unable to connect to DB!\n";
+
+# for each script file, copy it to the spool directory if it's not already
+# there
+foreach $scriptfile (@ARGV)
+{
+    if ( -e $scriptfile && -r $scriptfile )
+    {
+	# figure out the full jobid from the truncated version
+        # in the script name
+	$jobid=$scriptfile;
+	$jobid =~ s/^\/.*\///;
+	$jobid =~ s/\..*$//;
+	# $jobid should be just digits at this point, otherwise ignore it
+	if ( $jobid =~ /^[0-9]+$/ )
+	{
+	    $jobid .= ".".$pbsserver;
+	    
+	    # Check if this jobid key already exists in the DB -- if so,
+	    # do nothing
+	    if ( &keyval_exists("jobid",$jobid,$dbtable,$dbh)==0 )
+	    {
+		# suck the script into memory
+		open(SCRIPT,"<$scriptfile");
+		$script_length=read(SCRIPT,$script,(64*1024));
+		close(SCRIPT);
+		# may need to massage script contents...?
+		
+		# do the DB insert
+		$query="INSERT INTO $dbtable \(jobid,script\) VALUES \(\'".$jobid."\',\'".$script."\'\);";
+	        $dbh->do($query) ||
+		  print STDERR "problem executing query $dbh->errstr\n";;
+	    }
+	}
+    }
+}
+
+# disconnect from DB
+$dbh->disconnect();
