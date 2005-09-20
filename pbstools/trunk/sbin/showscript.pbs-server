@@ -97,7 +97,10 @@ if ( !defined($spool) )
 $host=`cat $spool/server_name` || 
   die "Unable to find PBS server name!\n";
 chop($host);
-
+# hack for sloppy admins who don't put the full hostname
+# in $PBS_HOME/server_name
+@server=gethostbyname($host);
+$host=$server[0];
 
 $jobid=shift(@ARGV);
 $jobid=~s/\.[A-z0-9.]+$//;

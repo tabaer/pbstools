@@ -28,8 +28,7 @@ sub keyval_exists
 $spooldir=$ARGV[0];
 
 # my system name in DB
-#$host=`hostname`;
-$host="titan";
+$host=`hostname`;
 
 # figure out pbs server name (we need it later)
 if ( ! defined($ENV{"PBS_HOME"}) )
@@ -41,6 +40,10 @@ open(SERVERNAME,"<$pbsspooldir/server_name");
 $pbsserver=<SERVERNAME>;
 close(SERVERNAME);
 chop($pbsserver);
+# hack for sloppy admins who don't put the full hostname
+# in $PBS_HOME/server_name
+@server=gethostbyname($pbsserver);
+$pbsserver=$server[0];
 
 # connect to DB
 $dbhost="localhost";
