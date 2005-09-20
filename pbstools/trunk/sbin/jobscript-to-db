@@ -27,6 +27,10 @@ sub keyval_exists
 # my spool dir
 $spooldir=$ARGV[0];
 
+# my system name in DB
+#$host=`hostname`;
+$host="titan";
+
 # figure out pbs server name (we need it later)
 if ( ! defined($ENV{"PBS_HOME"}) )
 {
@@ -47,9 +51,10 @@ $dbtable="Jobs";
 $dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
 $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
   die "$0:  unable to connect to DB!\n";
+$query="INSERT INTO $dbtable \(jobid,system,script\) VALUES \(?,?,?\);";
+$sth=$dbh->prepare($query) ||
+  die "$0:  unable to prepare query -- ".$sth->errstr;
 
-# for each script file, copy it to the spool directory if it's not already
-# there
 foreach $scriptfile (@ARGV)
 {
     if ( -e $scriptfile && -r $scriptfile )
@@ -75,8 +80,7 @@ foreach $scriptfile (@ARGV)
 		# may need to massage script contents...?
 		
 		# do the DB insert
-		$query="INSERT INTO $dbtable \(jobid,script\) VALUES \(\'".$jobid."\',\'".$script."\'\);";
-	        $dbh->do($query) || print STDERR "problem executing query $dbh->errstr\n";;
+		$sth->execute($jobid,$host,$script) || die "problem executing query -- ".$sth->errstr;;
 	    }
 	}
     }

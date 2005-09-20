@@ -50,9 +50,9 @@ sub keyval_exists
     local($sth,$n);
     
     $sth=$dbh->prepare("SELECT ".$key." FROM ".$dbtable." WHERE ".$key." = \'".$val."\';")
-      or die "Could not prepare query:  $dbh->errstr";
+      or die "Could not prepare query:  ".$dbh::errstr;
     $n=$sth->execute
-      or die "Could not execute query:  $sth->errstr";
+      or die "Could not execute query:  ".$sth::errstr;
     
     $n;
   }
@@ -142,7 +142,7 @@ while ( defined($ARGV[0]) )
 	    $vmem=~s/kb$//;
 
 	    # construct query string(s)
-	    if ( &keyval_exists("jobid",$job,$dbtable,$dbh) )
+	    if ( &keyval_exists("jobid",$job,$dbtable,$dbh)>0 )
 	      {
 		# This jobid already exists in the table,
 		# so do an UPDATE
@@ -349,7 +349,7 @@ while ( defined($ARGV[0]) )
 	      }
 	    $query=$qhead.$qtail;
 #	    print "$query\n";
-	    $dbh->do($query);
+	    $dbh->do($query) || die "$0:  query failed -- ".$dbh::errstr;
 	  }
       }
     shift(@ARGV);

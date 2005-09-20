@@ -67,6 +67,8 @@ else
       {
 	$pwd=`pwd`;
 	chop($pwd);
+	# keep the exec'ed local shell from trying to expand wildcards
+	
 	exec("all -pj cd $pwd \\; cp @ARGV $target\n");
       }
     else # scatter -- default

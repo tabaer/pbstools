@@ -83,7 +83,7 @@ else
 	      );
     foreach $dir ( @defaults )
       {
-	if ( -d $dir )
+	if ( -d $dir && !defined($spool) )
 	  {
 	    $spool=$dir;
 	    break;
@@ -105,4 +105,4 @@ die "No jobid given!\n" if ( $jobid eq "" );
 
 $s = substr("$jobid.$host", 0, 11);
 
-exec "$tool $numlines $spool/$s.$suffix\n";
+exec "$tool $numlines $spool/server_priv/jobs/$s.$suffix\n";
