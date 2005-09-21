@@ -68,8 +68,12 @@ else
 	$pwd=`pwd`;
 	chop($pwd);
 	# keep the exec'ed local shell from trying to expand wildcards
-	
-	exec("all -pj cd $pwd \\; cp @ARGV $target\n");
+	foreach $arg ( @ARGV )
+	  {
+	    $arg =~ s/([\[\]\{\}\(\)\*\?])/\\$1/g;
+	    push(@NEWARGV,$arg);
+	  }
+	exec("all -pj cd $pwd \\; cp @NEWARGV $target\n");
       }
     else # scatter -- default
       {
