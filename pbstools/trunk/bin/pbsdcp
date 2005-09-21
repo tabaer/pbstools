@@ -70,7 +70,7 @@ else
 	# keep the exec'ed local shell from trying to expand wildcards
 	foreach $arg ( @ARGV )
 	  {
-	    $arg =~ s/([\[\]\{\}\(\)\*\?])/\\$1/g;
+	    $arg =~ s/([\[\]\{\}\(\)\*\?\ ])/\\$1/g;
 	    push(@NEWARGV,$arg);
 	  }
 	exec("all -pj cd $pwd \\; cp @NEWARGV $target\n");
