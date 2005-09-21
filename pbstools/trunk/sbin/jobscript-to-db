@@ -28,7 +28,7 @@ sub keyval_exists
 $spooldir=$ARGV[0];
 
 # my system name in DB
-$host=`hostname`;
+$system=`hostname`;
 
 # figure out pbs server name (we need it later)
 if ( ! defined($ENV{"PBS_HOME"}) )
@@ -40,12 +40,11 @@ open(SERVERNAME,"<$pbsspooldir/server_name");
 $pbsserver=<SERVERNAME>;
 close(SERVERNAME);
 chop($pbsserver);
-print $pbsserver."\n";
 # hack for sloppy admins who don't put the full hostname
 # in $PBS_HOME/server_name
 if ( $pbsserver =~ /:/ )
   {
-    ($server,$port) = split(/:/,$pbsserver);
+    ($host,$port) = split(/:/,$pbsserver);
     @server=gethostbyname($server);
     $pbsserver=$server[0].":".$port;
   }
@@ -53,9 +52,8 @@ else
   {
     @server=gethostbyname($pbsserver);
     $pbsserver=$server[0];
+    $host=$server[0];
   }
-print $pbsserver."\n";
-exit;
 
 # connect to DB
 $dbhost="localhost";
@@ -95,7 +93,7 @@ foreach $scriptfile (@ARGV)
 		# may need to massage script contents...?
 		
 		# do the DB insert
-		$sth->execute($jobid,$host,$script) || die "problem executing query -- ".$sth->errstr;;
+		$sth->execute($jobid,$system,$script) || die "problem executing query -- ".$sth->errstr;;
 	    }
 	}
     }

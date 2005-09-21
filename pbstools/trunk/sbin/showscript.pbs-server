@@ -94,18 +94,28 @@ if ( !defined($spool) )
   {
     die "Unable to find PBS spool directory!\n";
   }
-$host=`cat $spool/server_name` || 
+$pbsserver=`cat $spool/server_name` || 
   die "Unable to find PBS server name!\n";
-chop($host);
+chop($pbsserver);
 # hack for sloppy admins who don't put the full hostname
 # in $PBS_HOME/server_name
-@server=gethostbyname($host);
-$host=$server[0];
+if ( $pbsserver =~ /:/ )
+  {
+    ($host,$port) = split(/:/,$pbsserver);
+    @server=gethostbyname($host);
+    $pbsserver=$server[0].":".$port;
+  }
+else
+  {
+    @server=gethostbyname($pbsserver);
+    $pbsserver=$server[0];
+    $host=$server[0];
+  }
 
 $jobid=shift(@ARGV);
 $jobid=~s/\.[A-z0-9.]+$//;
 die "No jobid given!\n" if ( $jobid eq "" );
 
-$s = substr("$jobid.$host", 0, 11);
+$s = substr("$jobid.$pbsserver", 0, 11);
 
 exec "$tool $numlines $spool/server_priv/jobs/$s.$suffix\n";
