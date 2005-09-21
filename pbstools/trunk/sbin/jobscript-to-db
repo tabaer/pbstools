@@ -40,10 +40,22 @@ open(SERVERNAME,"<$pbsspooldir/server_name");
 $pbsserver=<SERVERNAME>;
 close(SERVERNAME);
 chop($pbsserver);
+print $pbsserver."\n";
 # hack for sloppy admins who don't put the full hostname
 # in $PBS_HOME/server_name
-@server=gethostbyname($pbsserver);
-$pbsserver=$server[0];
+if ( $pbsserver =~ /:/ )
+  {
+    ($server,$port) = split(/:/,$pbsserver);
+    @server=gethostbyname($server);
+    $pbsserver=$server[0].":".$port;
+  }
+else
+  {
+    @server=gethostbyname($pbsserver);
+    $pbsserver=$server[0];
+  }
+print $pbsserver."\n";
+exit;
 
 # connect to DB
 $dbhost="localhost";
