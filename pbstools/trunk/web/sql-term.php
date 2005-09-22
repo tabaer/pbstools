@@ -7,7 +7,7 @@ echo "<FORM method=\"POST\" action=\"sql-term.php\">\n";
 echo "<TEXTAREA name=\"sql\" cols=\"80\" rows=\"5\">\n";
 if ( isset($_POST['sql']) )
   {
-    echo $_POST['sql'];
+    echo stripslashes($_POST['sql']);
   }
 echo "</TEXTAREA>\n<BR>\n";
 echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
