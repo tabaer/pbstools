@@ -43,3 +43,4 @@ if ( isset($_POST['sql']) )
   }
 
 echo "</BODY>\n</HTML>\n";
+?>
