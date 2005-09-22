@@ -19,7 +19,7 @@ if ( isset($_POST['sql']) )
       {
 	die ($db->getMessage());
       }
-    $result = $db->query($_POST['sql']);
+    $result = $db->query(stripslashes($_POST['sql']));
     if ( DB::isError($db) )
       {
 	die ($db->getMessage());
