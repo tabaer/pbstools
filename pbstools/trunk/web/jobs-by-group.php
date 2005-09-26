@@ -4,7 +4,7 @@ require_once 'page-layout.php';
 
 if ( isset($_POST['groupname']) )
   { 
-    $title = "Job owned by group ".$_POST['groupname']." on ".$_POST['system'];
+    $title = "Jobs owned by group ".$_POST['groupname']." on ".$_POST['system'];
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
 	     $_POST['start_date']!="" )
       {
@@ -33,26 +33,6 @@ page_header($title);
 $keys = array_keys($_POST);
 if ( isset($_POST['groupname']) )
   {
-    echo "<h1>Jobs owned by group ".$_POST['groupname']." on ".$_POST['system'];
-    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-	     $_POST['start_date']!="" )
-      {
-	echo " submitted on ".$_POST['start_date'];
-      }
-    else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
-	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
-      {
-	echo " submitted between ".$_POST['start_date']." and ".$_POST['end_date'];
-      }
-    else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-      {
-	echo " submitted after ".$_POST['start_date'];
-      }
-    else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-      {
-	echo " submitted before ".$_POST['end_date'];
-      }
-    echo "</h1>\n";
     $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
     if ( DB::isError($db) )
       {
@@ -96,7 +76,7 @@ if ( isset($_POST['groupname']) )
 	  }
 	else
 	  {
-	    echo "<TABLE border=1>\n";
+	    echo "<TABLE border=1 width=\"100%\">\n";
 	    $i=0;
 	    while ($result->fetchInto($row))
 	      {

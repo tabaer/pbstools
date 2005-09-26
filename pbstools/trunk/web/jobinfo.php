@@ -37,13 +37,13 @@ if ( isset($_POST['jobid']) )
 	  {
 	    while ($result->fetchInto($row))
 	      {
-		echo "<TABLE border=1>\n";
+		echo "<TABLE border=1 width=\"100%\">\n";
 		foreach ($keys as $key)
 		  {
 		    if ( isset($_POST[$key]) )
 		      {
 			$data[$key]=array_shift($row);
-			echo "<TR><TD><PRE>".$key."</PRE></TD><TD><PRE>".$data[$key]."</PRE></TD></TR>\n";
+			echo "<TR><TD width=\"10%\"><PRE>".$key."</PRE></TD><TD width=\"90%\"><PRE>".$data[$key]."</PRE></TD></TR>\n";
 		      }
 		  }
 		echo "</TABLE>\n";
