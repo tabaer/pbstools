@@ -8,7 +8,7 @@ export TOPDIR=/local/data
 mysql -u root -p passwd <../etc/create-tables.sql
 
 # Sun COE systems
-../sbin/job-db-update -h amd $TOPDIR/pbs-coe/server_priv/accounting/*
+../sbin/job-db-update -h coe $TOPDIR/pbs-coe/server_priv/accounting/*
 
 # Athlon cluster
 ../sbin/job-db-update -h amd $TOPDIR/pbs-amd/server_priv/accounting/*

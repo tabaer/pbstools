@@ -58,13 +58,19 @@ initialize, run "mysql -u root -p passwd <create-tables.sql".
 sbin/job-db-update -- Parses PBS job accounting records and inserts
 them into DB.
 
-web/jobinfo.php -- Presents information on a single job based from DB.
+sbin/jobscript-to-db -- Inserts one or more job scripts into the job DB.
+
+sbin/spool-jobscripts -- Spools newly submitted jobscripts to /tmp and
+then invokes jobscript-to-db on them.
+
+web/jobinfo.php -- Presents information on a single job based from the
+job DB.
 
 web/jobs-by-user.php -- Presents information on all jobs by a given
-user (over an optional date range) from DB.
+user (over an optional date range) from the job DB.
 
 web/jobs-by-group.php -- Presents information on all jobs by a given
-group (over an optional date range) from DB.
+group (over an optional date range) from the job DB.
 
 web/sql-term.php -- "Terminal" for running arbitrary SQL queries on
 job DB.
