@@ -1,34 +1,34 @@
 <?php
 require_once 'DB.php';
+require_once 'page-layout.php';
 
-echo "<HTML>\n<HEAD>\n<TITLE>";
 if ( isset($_POST['groupname']) )
   { 
-    echo "Job owned by group ".$_POST['groupname']." on ".$_POST['system'];
+    $title = "Job owned by group ".$_POST['groupname']." on ".$_POST['system'];
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
 	     $_POST['start_date']!="" )
       {
-	echo " submitted on ".$_POST['start_date'];
+	$title .= " submitted on ".$_POST['start_date'];
       }
     else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
 	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
       {
-	echo " submitted between ".$_POST['start_date']." and ".$_POST['end_date'];
+	$title .= " submitted between ".$_POST['start_date']." and ".$_POST['end_date'];
       }
     else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
       {
-	echo " submitted after ".$_POST['start_date'];
+	$title .= " submitted after ".$_POST['start_date'];
       }
     else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
       {
-	echo " submitted before ".$_POST['end_date'];
+	$title .= " submitted before ".$_POST['end_date'];
       }
   }
 else
   {
-    echo "Jobs by group";
+    $title = "Jobs by group";
   }
-echo "</TITLE>\n</HEAD>\n<BODY>\n";
+page_header($title);
 
 $keys = array_keys($_POST);
 if ( isset($_POST['groupname']) )
@@ -186,5 +186,6 @@ else
     echo "[<INPUT type=\"checkbox\" name=\"script\" value=\"1\"> job script]<BR>\n";
     echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
   }
-echo "</BODY>\n</HTML>\n";
+
+page_footer();
 ?>

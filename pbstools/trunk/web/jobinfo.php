@@ -1,22 +1,20 @@
 <?php
 require_once 'DB.php';
+require_once 'page-layout.php';
 
-echo "<HTML>\n<HEAD>\n<TITLE>";
 if ( isset($_POST['jobid']) )
   { 
-    echo "Job info for ".$_POST['system']." jobid ".$_POST['jobid'];
+    $title="Job info for ".$_POST['system']." jobid ".$_POST['jobid'];
   } 
  else
   {
-    echo "Job info";
+    $title="Job info";
   }
-echo "</TITLE>\n</HEAD>\n<BODY>\n";
+page_header($title);
 
 $keys = array_keys($_POST);
 if ( isset($_POST['jobid']) )
   {
-    echo "<h1>Job info for ".$_POST['system']." jobid ".$_POST['jobid']."</h1>\n";
-      
     $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
     if ( DB::isError($db) )
       {
@@ -113,5 +111,6 @@ else
     echo "[<INPUT type=\"checkbox\" name=\"script\" value=\"0\"> job script]<BR>\n";
     echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
   }
-echo "</BODY>\n</HTML>\n";
+
+page_footer();
 ?>

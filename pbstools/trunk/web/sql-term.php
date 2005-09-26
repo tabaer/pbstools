@@ -1,7 +1,8 @@
 <?php
 require_once 'DB.php';
+require_once 'page-layout.php';
 
-echo "<HTML>\n<HEAD>\n<TITLE>\nPHP SQL Terminal\n</TITLE>\n</HEAD>\n<BODY>\n";
+page_header("PHP SQL Terminal");
 
 echo "<FORM method=\"POST\" action=\"sql-term.php\">\n";
 echo "<TEXTAREA name=\"sql\" cols=\"80\" rows=\"5\">\n";
@@ -42,5 +43,5 @@ if ( isset($_POST['sql']) )
       }
   }
 
-echo "</BODY>\n</HTML>\n";
+page_footer();
 ?>
