@@ -110,10 +110,12 @@ approach, and one which is attractive on systems where there is only a
 single pbs_mom (eg. Cray X1), is to have the job's prologue invoke
 jobscript-to-db.
 
-The PHP pages in the web directory can be installed virtually anywhere
-in the web server's document hierarchy.  The only modification that
-may need to be made to them is if the MySQL databaser server runs on a
-different host from the web server.
+The files in the web directory can be installed virtually anywhere in
+the web server's document hierarchy.  The only modification that may
+need to be made to them is if the MySQL databaser server runs on a
+different host from the web server.  The layout of the PHP pages is
+controlled by web/page-layout.php, and the style sheet used is
+web/default.css.
 
 ---
 
