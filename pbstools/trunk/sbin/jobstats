@@ -517,8 +517,9 @@ for ( $i=1 ; $i <= $nmonths ; $i++ )
         while ( <ACCTFILE> )
           {
 	    chop;
-	   ($etime,$type,$job,$resources)=split(/;/);
-	   %resource=&resourcelist($resources);
+	    ($etime,$type,$job,$resources)=split(/;/);
+	    undef %resource;
+	    %resource=&resourcelist($resources);
 
 	   if ( $type eq "E" )
 	     {

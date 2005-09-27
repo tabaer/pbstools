@@ -117,6 +117,7 @@ while ( defined($ARGV[0]) )
       {
 	chop;
 	($etime,$type,$job,$resources)=split(/;/);
+	undef %resource;
 	%resource=&resourcelist($resources);
 	
 	if ( $type eq "S" || $type eq "E" )
