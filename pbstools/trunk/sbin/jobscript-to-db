@@ -112,7 +112,7 @@ foreach $scriptfile (@ARGV)
 	# figure out the full jobid from the truncated version
         # in the script name
 	$jobid=$scriptfile;
-	$jobid =~ s/^\/.*\///;
+	$jobid =~ s/^.*\///;
 	$jobid =~ s/\..*$//;
 	# $jobid should be just digits at this point, otherwise ignore it
 	if ( $jobid =~ /^[0-9]+$/ )
