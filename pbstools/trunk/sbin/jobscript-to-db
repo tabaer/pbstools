@@ -70,11 +70,37 @@ $sth=$dbh->prepare($query) ||
 
 while ( $ARGV[0] =~ /^-.*/ )
   {
-    if ( $ARGV[0] eq "-h" )
+    if ( $ARGV[0] eq "-d" )
+      {
+	$dbname=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-h" )
       {
 	$system=$ARGV[1];
 	shift(@ARGV);
       }
+    elsif ( $ARGV[0] eq "-p" )
+      {
+	$dbpasswd=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-s" )
+      {
+	$dbhost=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-t" )
+      {
+	$dbtable=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-u" )
+      {
+	$dbuser=$ARGV[1];
+	shift(@ARGV);
+      }
+
     shift(@ARGV);
   }
 
