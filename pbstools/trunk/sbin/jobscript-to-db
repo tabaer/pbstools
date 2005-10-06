@@ -68,6 +68,16 @@ $query="INSERT INTO $dbtable \(jobid,system,script\) VALUES \(?,?,?\);";
 $sth=$dbh->prepare($query) ||
   die "$0:  unable to prepare query -- ".$sth->errstr;
 
+while ( $ARGV[0] =~ /^-.*/ )
+  {
+    if ( $ARGV[0] eq "-h" )
+      {
+	$system=$ARGV[1];
+	shift(@ARGV);
+      }
+    shift(@ARGV);
+  }
+
 foreach $scriptfile (@ARGV)
 {
     if ( -e $scriptfile && -r $scriptfile )
