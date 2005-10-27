@@ -86,7 +86,7 @@ else
 	if ( -d $dir && !defined($spool) )
 	  {
 	    $spool=$dir;
-	    break;
+	    last;
 	  }
       }
   }
