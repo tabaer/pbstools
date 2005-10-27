@@ -38,6 +38,7 @@ else
 	if ( -d $dir )
 	  {
 	    $spool=$dir;
+	    last;
 	  }
       }
   }
