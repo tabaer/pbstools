@@ -30,7 +30,7 @@ if ( isset($_POST['sql']) )
 	echo "<TABLE border=1>\n";
 	while ($result->fetchInto($row))
 	  {
-	    echo "<TR>";
+	    echo "<TR valign=\"top\">";
 	    $keys=array_keys($row);
 	    foreach ($keys as $key)
 	      {
