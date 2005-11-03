@@ -49,7 +49,7 @@ function nprocs($system)
 
 function sort_criteria($fn)
 {
-  if ( $fn=='cpuhours_vs_groupname' ) return "ORDER BY cpuhours DESC";
+  //  if ( $fn=='cpuhours_vs_groupname' ) return "ORDER BY cpuhours DESC";
   return "";
 }
 
