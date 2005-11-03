@@ -15,12 +15,13 @@ software.  The following are needed for basic functionality:
   also work if they support the -j (only run on nodes assigned to job)
   and -p (parallel) flags.
 
-The included job tracking database system has additional requirements:
+The included job tracking and reporting database system has additional
+requirements:
 * A web server that supports PHP
 * A MySQL database server
 * PHP 4.x or 5.x with PEAR::DB and MySQL support
 * Perl 5.x DBI and DBD::MySQL modules
-
+* JPGraph
 
 Basic Installation:
 -------------------
@@ -103,7 +104,7 @@ script does not have any mechanism for determining when to insert the
 script or from where to get it.  One approach is to have something
 that watches the directory $PBS_HOME/server_priv/jobs directory for
 newly created files with the suffix ".SC".  For Linux, this can be
-done with a utility called "dnotify" [1]; for *BSD and OSX, there is a
+done with a utility called "dnotify"[1]; for *BSD and OSX, there is a
 similar tool called "watch" [2].  (sbin/spool-jobscripts has in its
 comments an example of how to do this with dnotify.)  A second
 approach, and one which is attractive on systems where there is only a
@@ -115,9 +116,12 @@ the web server's document hierarchy.  The only modification that may
 need to be made to them is if the MySQL databaser server runs on a
 different host from the web server.  The layout of the PHP pages is
 controlled by web/page-layout.php, and the style sheet used is
-web/default.css.
+web/default.css.  The job statistics reports rely on JPGraph[3]; the
+path to where JPGraph is installed needs to be updated in
+web/metrics.php.
 
 ---
 
 [1] http://www.student.lu.se/~nbi98oli/dnotify.html
 [2] http://www.25thandclement.com/~william/projects/watch.html
+[3] http://www.aditus.nu/jpgraph/index.php

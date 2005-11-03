@@ -12,7 +12,3 @@ TODO List
 
 * Add wrappers to invoke the *.pbs_server programs with sudo for
   non-root access.
-
-* Add a style sheet for PHP pages.
-
-* Reimplement jobstats using PHP and allow arbitrary date ranges.
