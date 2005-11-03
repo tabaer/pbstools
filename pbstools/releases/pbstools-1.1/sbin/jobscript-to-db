@@ -1,0 +1,140 @@
+#!/usr/bin/perl
+#
+# jobscript-to-db -- copy newly spooled job scripts into database
+# Copyright 2005 Ohio Supercomputer Center
+#
+# Not intended to be invoked directly, but rather by spool-jobscripts
+# (which is itself invoked by dnotify or moral equivalent).
+use POSIX;
+use DBI;
+
+sub keyval_exists
+{
+    local($key,$val,$dbtable,$dbh) = @_;
+    local($sth,$n);
+
+    $sth=$dbh->prepare("SELECT ".$key." FROM ".$dbtable." WHERE ".$key." = \'".$val."\';")
+	or die "Could not prepare query:  $dbh->errstr";
+    $n=$sth->execute or die "Could not execute query:  $sth->errstr";
+
+    $n;
+}
+
+#
+# Main program begins here
+#
+
+# my spool dir
+$spooldir=$ARGV[0];
+
+# my system name in DB
+$system=`hostname`;
+
+# figure out pbs server name (we need it later)
+if ( ! defined($ENV{"PBS_HOME"}) )
+{
+    die "\$PBS_HOME undefined!";
+} 
+$pbsspooldir=$ENV{"PBS_HOME"};
+open(SERVERNAME,"<$pbsspooldir/server_name");
+$pbsserver=<SERVERNAME>;
+close(SERVERNAME);
+chop($pbsserver);
+# hack for sloppy admins who don't put the full hostname
+# in $PBS_HOME/server_name
+if ( $pbsserver =~ /:/ )
+  {
+    ($host,$port) = split(/:/,$pbsserver);
+    @server=gethostbyname($server);
+    $pbsserver=$server[0].":".$port;
+  }
+else
+  {
+    @server=gethostbyname($pbsserver);
+    $pbsserver=$server[0];
+    $host=$server[0];
+  }
+
+$dbhost="localhost";
+$dbuser="pbsacct";
+$dbpasswd="pbsRroxor";
+$dbname="pbsacct";
+$dbtable="Jobs";
+
+while ( $ARGV[0] =~ /^-.*/ )
+  {
+    if ( $ARGV[0] eq "-d" )
+      {
+	$dbname=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-h" )
+      {
+	$system=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-p" )
+      {
+	$dbpasswd=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-s" )
+      {
+	$dbhost=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-t" )
+      {
+	$dbtable=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-u" )
+      {
+	$dbuser=$ARGV[1];
+	shift(@ARGV);
+      }
+
+    shift(@ARGV);
+  }
+
+# connect to DB
+$dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
+$dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
+  die "$0:  unable to connect to DB!\n";
+$query="INSERT INTO $dbtable \(jobid,system,script\) VALUES \(?,?,?\);";
+$sth=$dbh->prepare($query) ||
+  die "$0:  unable to prepare query -- ".$sth->errstr;
+
+foreach $scriptfile (@ARGV)
+{
+    if ( -e $scriptfile && -r $scriptfile )
+    {
+	# figure out the full jobid from the truncated version
+        # in the script name
+	$jobid=$scriptfile;
+	$jobid =~ s/^.*\///;
+	$jobid =~ s/\..*$//;
+	# $jobid should be just digits at this point, otherwise ignore it
+	if ( $jobid =~ /^[0-9]+$/ )
+	{
+	    $jobid .= ".".$pbsserver;
+	    
+	    # Check if this jobid key already exists in the DB -- if so,
+	    # do nothing
+	    if ( &keyval_exists("jobid",$jobid,$dbtable,$dbh)==0 )
+	    {
+		# suck the script into memory
+		open(SCRIPT,"<$scriptfile");
+		$script_length=read(SCRIPT,$script,(64*1024));
+		close(SCRIPT);
+		# may need to massage script contents...?
+		
+		# do the DB insert
+		$sth->execute($jobid,$system,$script) || die "problem executing query -- ".$sth->errstr;;
+	    }
+	}
+    }
+}
+
+# disconnect from DB
+$dbh->disconnect();
