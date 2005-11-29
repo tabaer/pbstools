@@ -1,0 +1,23 @@
+# The following will set up a job DB with job records from 5 different systems
+# which can be used for statistical or historical purposes.
+
+# on a live system this would be /var/spool or /var/spool/batch
+export TOPDIR=/local/data
+
+# create the needed tables
+mysql -u root -p passwd <../etc/create-tables.sql
+
+# Sun COE systems
+../sbin/job-db-update -h coe $TOPDIR/pbs-coe/server_priv/accounting/*
+
+# Athlon cluster
+../sbin/job-db-update -h amd $TOPDIR/pbs-amd/server_priv/accounting/*
+
+# P4 cluster
+../sbin/job-db-update -h piv $TOPDIR/pbs-piv/server_priv/accounting/*
+
+# original Itanium 2 cluster
+../sbin/job-db-update -h mck $TOPDIR/pbs-mck/server_priv/accounting/*
+
+# upgraded Itanium 2 cluster
+../sbin/job-db-update -h ipf $TOPDIR/pbs-ipf/server_priv/accounting/*
