@@ -28,6 +28,9 @@ function page_header($title)
   echo "      <LI><A href=\"jobstats-by-user.php\">User</A></LI>\n";
   echo "      <LI><A href=\"jobstats.php\">All</A></LI>\n";
   echo "    </UL>\n";
+  echo "    <UL><U>Other reports</U>\n";
+  echo "      <LI><A href=\"software-usage.php\">Software usage</A></LI>";
+  echo "    </UL>\n";
   echo "  </TD>\n";
   echo "  <TD width=\"85%\" valign=\"top\" bgcolor=\"ghostwhite\">\n";
 }
