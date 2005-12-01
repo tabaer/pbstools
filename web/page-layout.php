@@ -40,5 +40,12 @@ function page_footer()
   echo "  </TD>\n</TR>\n</TABLE>\n</BODY>\n</HTML>\n";
 }
 
+function checkboxes_from_array($array)
+{
+  foreach ($array as $value)
+    {
+      echo "<INPUT type=\"checkbox\" name=\"".$value."\" value=\"1\"> ".$value."<BR>\n";
+    }
+}
 
 ?> 

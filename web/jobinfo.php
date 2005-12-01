@@ -86,29 +86,14 @@ else
       }
     $db->disconnect();
     echo "</SELECT><BR>\n";
+
     echo "Show properties:<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"username\" value=\"1\"> user]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"groupname\" value=\"1\"> group]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"jobname\" value=\"1\"> job name]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"nproc\" value=\"1\"> # procs]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"mppe\" value=\"0\"> MSPs (Cray X1 only)]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"mppssp\" value=\"0\"> SSPs (Cray X1 only)]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"nodes\" value=\"1\"> node request]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"queue\" value=\"1\"> queue]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"submit_ts\" value=\"0\"> submission time]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"start_ts\" value=\"0\"> start time]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"end_ts\" value=\"0\"> end time]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"cput_req\" value=\"0\"> CPU time requested]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"cput\" value=\"1\"> CPU time used]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"walltime_req\" value=\"0\"> wallclock time requested]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"walltime\" value=\"1\"> wallclock time used]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"mem_req\" value=\"0\"> real memory requested]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"mem_kb\" value=\"1\"> real memory used]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"vmem_req\" value=\"0\"> virtual memory requested]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"vmem_kb\" value=\"1\"> virtual memory used]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"hostlist\" value=\"1\"> host list]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"exit_status\" value=\"1\"> exit status]<BR>\n";
-    echo "[<INPUT type=\"checkbox\" name=\"script\" value=\"0\"> job script]<BR>\n";
+    $props=array("username","groupname","jobname","nproc","mppe","mppssp",
+		 "nodes","queue","submit_ts","start_ts","end_ts","cput_req",
+		 "cput","walltime_req","walltime","mem_req","mem_kb",
+		 "vmem_req","vmem_kb","hostlist","exit_status","script");
+    checkboxes_from_array($props);
+
     echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
   }
 

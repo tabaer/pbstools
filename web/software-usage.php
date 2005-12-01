@@ -27,8 +27,15 @@ if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_d
    }
 page_header($title);
 
-// regular expressions for different software packages
+# list of software packages
+$packages=array("abaqus","amber","ansys","fidap","flow3d","fluent",
+		"gaussian","gamess","matlab","NAG","namd","nwchem",
+		"scalapack");
+
+# regular expressions for different software packages
 $pkgre['gamess']="(gamess|rungmx)";
+$pkgre['gaussian']="(g98|g03)";
+
 
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
@@ -136,21 +143,8 @@ else
     echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
     echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
 
-    echo "Show properties:<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"abaqus\" value=\"1\"> abaqus<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"amber\" value=\"1\"> amber<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"ansys\" value=\"1\"> ansys<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"fidap\" value=\"1\"> fidap<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"flow3d\" value=\"1\"> flow3d<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"fluent\" value=\"1\"> fluent<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"g98\" value=\"1\"> g98<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"g03\" value=\"1\"> g03<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"gamess\" value=\"1\"> gamess<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"matlab\" value=\"1\"> matlab<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"NAG\" value=\"1\"> NAG<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"namd\" value=\"1\"> namd<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"nwchem\" value=\"1\"> nwchem<BR>\n";
-    echo "<INPUT type=\"checkbox\" name=\"scalapack\" value=\"1\"> scalapack<BR>\n";
+    echo "Show packages:<BR>\n";
+    checkboxes_from_array($packages);
 
     echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
   }
