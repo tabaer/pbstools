@@ -28,14 +28,40 @@ if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_d
 page_header($title);
 
 # list of software packages
-$packages=array("abaqus","amber","ansys","fidap","flow3d","fluent",
-		"gaussian","gamess","matlab","NAG","namd","nwchem",
-		"scalapack");
+$packages=array("a.out",
+		"abaqus",
+		"adf",
+		"amber",
+		"ansys",
+		"cbl",
+		"fidap",
+		"flow3d",
+		"fluent",
+		"gaussian",
+		"gamess",
+		"gromacs",
+		"mathematica",
+		"matlab",
+		"NAG",
+		"namd",
+		"NCBI",
+		"nwchem",
+		"octave",
+		"sable",
+		"sas",
+		"scalapack",
+		"turbomole",
+		"vasp");
 
 # regular expressions for different software packages
+$pkgre['a_out']="a\.out";
+$pkgre['adf']="[Aa][Dd][Ff]";
+$pkgre['cbl']="(cbl|pcbl|biolib)";
 $pkgre['gamess']="(gamess|rungmx)";
 $pkgre['gaussian']="(g98|g03)";
-
+$pkgre['gromacs']="(gromacs|mdrun_d)";
+$pkgre['NCBI']="(ncbi|blastall|fastacmd|formatdb|rpsblast|seqtest)";
+$pkgre['vasp']="[Vv][Aa][Ss][Pp]";
 
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
