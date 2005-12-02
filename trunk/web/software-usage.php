@@ -66,19 +66,19 @@ $pkgre['vasp']="[Vv][Aa][Ss][Pp]";
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
-    foreach ($keys as $key)
+    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
+    if ( DB::isError($db) )
       {
-	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
+	die ($db->getMessage());
+      }
+    else
+      {
+	foreach ($keys as $key)
 	  {
-	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
-	    if ( DB::isError($db) )
+	    if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	      {
-		die ($db->getMessage());
-	      }
-	    else
-	      {
-		$sql = "SELECT system,COUNT(jobid) AS JOBCOUNT,SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS CPUHOURS FROM Jobs WHERE system LIKE '".$_POST['system']."' AND script REGEXP ";
+		echo "<H3><CODE>".$key."</CODE></H3>\n";
+		$sql = "SELECT system,COUNT(jobid) AS jobcount,SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours FROM Jobs WHERE system LIKE '".$_POST['system']."' AND script REGEXP ";
 		if ( isset($pkgre[$key]) )
 		  {
 		    $sql .= "'".$pkgre[$key]."'";
@@ -105,7 +105,6 @@ if ( isset($_POST['system']) )
 		      }
 		  }
 		$sql .= " GROUP BY system;";
-		#echo "<PRE>".$sql."</PRE>\n";
 		$result = $db->query($sql);
 		if ( DB::isError($db) )
 		  {
@@ -113,26 +112,76 @@ if ( isset($_POST['system']) )
 		  }
 		else
 		  {
-		    #echo "<TABLE border=1 width=\"100%\">\n";
 		    echo "<TABLE border=1>\n";
 		    echo "<TR><TH>system</TH><TH>jobcount</TH><TH>cpuhours</TH></TR>\n";
 		    while ($result->fetchInto($row))
 		      {
 			$rkeys=array_keys($row);
 			echo "<TR>";
-			foreach ($rkeys as $key)
+			foreach ($rkeys as $rkey)
 			  {
-			    $data[$key]=array_shift($row);
-			    echo "<TD align=\"right\"><PRE>".$data[$key]."</PRE></TD>";
+			    $data[$rkey]=array_shift($row);
+			    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
 			  }
 			echo "</TR>\n";
+		      }
+		    if ( $_POST['system']=="%" )
+		      {
+                        # compute totals iff wildcarding on all systems
+			$sql = "SELECT COUNT(jobid) AS jobcount,SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours FROM Jobs WHERE script REGEXP ";
+			if ( isset($pkgre[$key]) )
+			  {
+			    $sql .= "'".$pkgre[$key]."'";
+			  }
+			else
+			  {
+			    $sql .= "'".$key."'";
+			  }
+			if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+			     $_POST['start_date']!="" )
+			  {
+			    $sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+			    $sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
+			  }
+			else
+			  {
+			    if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
+			      {
+				$sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+			      }
+			    if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
+			      {
+				$sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
+			      }
+			  }
+			$sql .= ";";
+			#echo "<PRE>".$sql."</PRE>\n";
+			$result = $db->query($sql);
+			if ( DB::isError($db) )
+			  {
+			    die ($db->getMessage());
+			  }
+			else
+			  {
+			    while ($result->fetchInto($row))
+			      {
+				$rkeys=array_keys($row);
+				echo "<TR><TH>Total</TH>";
+				foreach ($rkeys as $rkey)
+				  {
+				    $data[$rkey]=array_shift($row);
+				    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+				  }
+				echo "</TR>\n";
+			      }
+			  }
 		      }
 		    echo "</TABLE>\n";
 		  }
 	      }
-	    $db->disconnect();
 	  }
       }
+    $db->disconnect();
   }
 else
   {
