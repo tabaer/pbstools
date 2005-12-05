@@ -98,7 +98,7 @@ if ( isset($_POST['groupname']) )
 		foreach ($rkeys as $key)
 		  {
 		    $data[$key]=array_shift($row);
-		    echo "<TD><PRE>".$data[$key]."</PRE></TD>";
+		    echo "<TD><PRE>".htmlspecialchars($data[$key])."</PRE></TD>";
 		  }
 		echo "</TR>\n";
 	       }

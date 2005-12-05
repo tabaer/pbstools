@@ -43,7 +43,7 @@ if ( isset($_POST['jobid']) )
 		    if ( isset($_POST[$key]) )
 		      {
 			$data[$key]=array_shift($row);
-			echo "<TR><TD width=\"10%\"><PRE>".$key."</PRE></TD><TD width=\"90%\"><PRE>".$data[$key]."</PRE></TD></TR>\n";
+			echo "<TR><TD width=\"10%\"><PRE>".$key."</PRE></TD><TD width=\"90%\"><PRE>".htmlspecialchars($data[$key])."</PRE></TD></TR>\n";
 		      }
 		  }
 		echo "</TABLE>\n";
