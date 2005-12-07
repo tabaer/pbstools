@@ -76,28 +76,35 @@ if ( isset($_POST['node']) )
 	else
 	  {
 	    echo "<TABLE border=1 width=\"100%\">\n";
-	    $i=0;
+	    $ncols=1;
+	    $col[0]="jobid";
+	    echo "<TR><TH>jobid</TH>";
+	    foreach ($keys as $key)
+	      {
+		if ( $key!='node' && $key!='start_date' && $key!='end_date' )
+		  {
+		    echo "<TH>".$key."</TH>";
+		    $col[$ncols]=$key;
+		    $ncols++;
+		  }
+	      }
+	    echo "</TR>\n";
+	    
 	    while ($result->fetchInto($row))
 	      {
-		$rkeys=array_keys($row);
-		if ( $i==0 )
-		  {
-		    echo "<TR><TH>jobid</TH>";
-		    foreach ($keys as $key)
-		      {
-			if ( $key!='node' && $key!='start_date' && $key!='end_date' )
-			  {
-			    echo "<TH>".$key."</TH>";
-			  }
-		      }
-		    echo "</TR>\n";
-		    $i++;
-		  } 
 		echo "<TR>";
+		$rkeys=array_keys($row);
 		foreach ($rkeys as $key)
 		  {
 		    $data[$key]=array_shift($row);
-		    echo "<TD><PRE>".htmlspecialchars($data[$key])."</PRE></TD>";
+		    if ( $col[$key]=="submit_ts" || $col[$key]=="start_ts" || $col[$key]=="end_ts")
+		      {
+			echo "<TD><PRE>".date("Y-m-d H:i:s",$data[$key])."</PVRE></TD>\n";
+		      }
+		    else
+		      {
+			echo "<TD><PRE>".htmlspecialchars($data[$key])."</PRE></TD>";
+		      }
 		  }
 		echo "</TR>\n";
 	       }
