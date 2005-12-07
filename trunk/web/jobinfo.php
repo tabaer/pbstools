@@ -43,7 +43,16 @@ if ( isset($_POST['jobid']) )
 		    if ( isset($_POST[$key]) )
 		      {
 			$data[$key]=array_shift($row);
-			echo "<TR><TD width=\"10%\"><PRE>".$key."</PRE></TD><TD width=\"90%\"><PRE>".htmlspecialchars($data[$key])."</PRE></TD></TR>\n";
+			echo "<TR><TD width=\"10%\"><PRE>".$key."</PRE></TD><TD width=\"90%\"><PRE>";
+			if ( $key=="submit_ts" || $key=="start_ts" || $key=="end_ts" )
+			  {
+			    echo date("Y-m-d H:i:s",$data[$key]);
+			  }
+			else
+			  {
+			    echo htmlspecialchars($data[$key]);
+			  }
+			echo "</PRE></TD></TR>\n";
 		      }
 		  }
 		echo "</TABLE>\n";
