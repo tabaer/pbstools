@@ -26,7 +26,7 @@ if ( isset($_POST['node']) )
   }
 else
   {
-    $title = "Jobs by user";
+    $title = "Jobs on node";
   }
 page_header($title);
 
