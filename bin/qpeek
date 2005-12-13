@@ -70,14 +70,6 @@ while ( $ARGV[0] =~ /^[-+].*/ )
       {
         $tool="cat";
       }
-    elsif ( $ARGV[0] eq "-f" )
-      {
-        $tool="tail -f";
-      }
-    elsif ( $ARGV[0] eq "+0f" )
-      {
-        $tool="tail +0f";
-      }
     elsif ( $ARGV[0] eq "-h" )
       {
         $tool="head";
@@ -86,8 +78,9 @@ while ( $ARGV[0] =~ /^[-+].*/ )
       {
         $tool="tail";
       }
-    elsif ( $ARGV[0] =~ /^-[0-9]+$/ )
+    elsif ( $ARGV[0] =~ /^[-+][0-9]*(f)?$/ )
       {
+	$tool="tail";
         $numlines=$ARGV[0];
       }
     elsif ( $ARGV[0] eq "-e" )
@@ -110,8 +103,9 @@ qpeek:  Peek into a job's output spool files
    -h      Show only the beginning of the output file ("head")
    -t      Show only the end of the output file ("tail")
    -f      Show only the end of the file and keep listening ("tail -f")
+   -<num>f Show only the last <num> lines and keep listening ("tail -<num>f")
    +0f     Show all of the file and keep listening ("tail +0f")
-   -#      Show only # lines of output
+   -#      Show only # lines of output ("tail -<num>")
    -e      Show the stderr file of the job
    -o      Show the stdout file of the job (default)
    -?      Display this help message
