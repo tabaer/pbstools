@@ -48,7 +48,7 @@ if ( !defined($spool) )
   }
 $pbsserver=`cat $spool/server_name` || 
   die "Unable to find PBS server name!\n";
-chop($pbserver);
+chop($pbsserver);
 # hack for sloppy admins who don't put the full hostname
 # in $PBS_HOME/server_name
 if ( $pbsserver =~ /:/ )
