@@ -101,6 +101,7 @@ function software_list()
 function software_regexp_list()
 {
   $pkgre['a_out']="a\.out";
+  $pkgre['amber']="(amber|sander|pmemd|sviol)";
   $pkgre['adf']="[Aa][Dd][Ff]";
   $pkgre['cbl']="(cbl|pcbl|biolib)";
   $pkgre['gamess']="(gamess|rungmx)";
