@@ -2,6 +2,12 @@
 require_once 'DB.php';
 require_once 'page-layout.php';
 
+# accept get queries too for handy command-line usage:  suck all the
+# parameters into _POST.
+if (isset($_GET['jobid'])) {
+    $_POST = $_GET;
+}
+
 if ( isset($_POST['jobid']) )
   { 
     $title="Job info for ".$_POST['system']." jobid ".$_POST['jobid'];
