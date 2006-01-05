@@ -806,7 +806,7 @@ open(GNUPLOT,"|gnuplot");
 print GNUPLOT <<EOP;
 # job count vs. cpu count
 set title "$hostname -- $subtitle"
-set xrange [1:$maxprocs]
+set xrange [0:$maxprocs]
 set term png small color
 set logscale y
 set xlabel "CPU Count"

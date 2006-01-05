@@ -113,7 +113,7 @@ jobscript-to-db.
 
 The files in the web directory can be installed virtually anywhere in
 the web server's document hierarchy.  The only modification that may
-need to be made to them is if the MySQL databaser server runs on a
+need to be made to them is if the MySQL database server runs on a
 different host from the web server.  The layout of the PHP pages is
 controlled by web/page-layout.php, and the style sheet used is
 web/default.css.  The job statistics reports rely on JPGraph[3]; the
