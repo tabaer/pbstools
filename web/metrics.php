@@ -105,6 +105,7 @@ function columns($metric)
   if ( $metric=='cputime' ) return "SEC_TO_TIME(MIN(nproc*TIME_TO_SEC(walltime))) AS 'MIN(cputime)',SEC_TO_TIME(MAX(nproc*TIME_TO_SEC(walltime))) AS 'MAX(cputime)',SEC_TO_TIME(AVG(nproc*TIME_TO_SEC(walltime))) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(nproc*TIME_TO_SEC(walltime))) AS 'STDDEV(cputime)'";
   if ( $metric=='walltime_acc' ) return "MIN(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MIN(walltime_acc)',MAX(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MAX(walltime_acc)',AVG(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'AVG(walltime_acc)',STDDEV(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'STDDEV(walltime_acc)'";
   if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),MAX(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),AVG(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),STDDEV(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime)))";
+  if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS 'users',COUNT(DISTINCT(groupname)) AS 'groups'";
   return "";
 }
 
@@ -121,6 +122,7 @@ function columnnames($metric)
   if ( $metric=='cputime' ) return array("MIN(cputime)","MAX(cputime)","AVG(cputime)","STDDEV(cputime)");
   if ( $metric=='walltime_acc' ) return array("MIN(walltime_acc)","MAX(walltime_acc)","AVG(walltime_acc)","STDDEV(walltime_acc)");
   if ( $metric=='cpu_eff' ) return array("MIN(cpu_eff)","MAX(cpu_eff)","AVG(cpu_eff)","STDDEV(cpu_eff)");
+  if ( $metric=='usercount' ) return array("users","groups");
   return array();
 }
 
@@ -145,7 +147,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
     }
   $query .= ";";
 
-  //echo "<PRE>".$query."</PRE>\n";
+  #echo "<PRE>".$query."</PRE>\n";
   $result = $db->query($query);
   if ( DB::isError($db) )
       {
@@ -410,6 +412,12 @@ function jobstats_summary($db,$system,$start_date,$end_date)
 		 $avgutil,$ndays,$nproc);
 	}
     }
+  echo "<BR>\n";
+  $usercount=get_metric($db,$system,"","usercount",$start_date,$end_date);
+  $usercount->fetchInto($counts);
+  $nusers=$counts[1];
+  $ngroups=$counts[2];
+  echo $nusers." distinct users, ".$ngroups." distinct groups";
   echo "</B></P>\n";
 }
 ?>
