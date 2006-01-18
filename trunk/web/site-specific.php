@@ -15,10 +15,23 @@ function sys_list()
 	       "ipf",
 	       "ipf-altix",
 	       "ipf-noaltix",
+	       "ipf-myri",
+	       "ipf-oldmyri",
+	       "ipf-newmyri",
+	       "ipf-bigmem",
+	       "ipf+mck",
+	       "ipf+mck-altix",
+	       "ipf+mck-noaltix",
+	       "ipf+mck-oldmyri",
+	       "ipf+mck-bigmem",
 	       "mck",
 	       "mck-altix",
 	       "mck-noaltix",
+	       "mck-myri",
+	       "mck-bigmem",
 	       "piv",
+	       "piv-ib",
+	       "piv-noib",
 	       "x1");
 }
 
@@ -31,10 +44,23 @@ function sysselect($system)
   if ( $system=='ipf' ) return "system = 'ipf'";
   if ( $system=='ipf-altix' ) return "system = 'ipf' AND hostlist REGEXP '^ipf50[1-3]'";
   if ( $system=='ipf-noaltix' ) return "system = 'ipf' AND hostlist NOT REGEXP '^ipf50[1-3]'";
+  if ( $system=='ipf-oldmyri' ) return "system = 'ipf' AND hostlist REGEXP '^ipf(0[0-9][0-9]|1([0-1][0-9]|2[0-8]))'";
+  if ( $system=='ipf-newmyri' ) return "system = 'ipf' AND hostlist REGEXP '^ipf(1(49|[5-9][0-9])|2([0-4][0-9]|5[0-8]))'";
+  if ( $system=='ipf-myri' ) return "(".sysselect('ipf-oldmyri').") OR (".sysselect('ipf-newmyri').") ";
+  if ( $system=='ipf-bigmem' ) return "system = 'ipf' AND hostlist REGEXP '^ipf1(29|3[0-9]|4[0-8])'";
+  if ( $system=='ipf+mck' ) return "( ".sysselect('mck')." OR ".sysselect('ipf')." )";
+  if ( $system=='ipf+mck-altix' ) return "(".sysselect('mck-altix').") OR (".sysselect('ipf-altix').") ";
+  if ( $system=='ipf+mck-noaltix' ) return "( ".sysselect('mck-noaltix')." ) OR ( ".sysselect('ipf-noaltix')." )";
+  if ( $system=='ipf+mck-oldmyri' ) return "( ".sysselect('ipf-oldmyri')." ) OR ( ".sysselect('mck-myri')." ) ";
+  if ( $system=='ipf+mck-bigmem' ) return "( ".sysselect('ipf-bigmem')." ) OR ( ".sysselect('mck-bigmem')." ) ";
   if ( $system=='mck' ) return "system = 'mck'";
   if ( $system=='mck-altix' ) return "system = 'mck' AND hostlist REGEXP '^mck149'";
   if ( $system=='mck-noaltix' ) return "system = 'mck' AND hostlist NOT REGEXP '^mck149'";
+  if ( $system=='mck-myri' ) return "system = 'mck' AND hostlist REGEXP '^mck(0[0-9][0-9]|1([0-1][0-9]|2[0-8]))'";
+  if ( $system=='mck-bigmem' ) return "system = 'mck' AND hostlist REGEXP '^mck1(29|3[0-9]|4[0-8])'";
   if ( $system=='piv' ) return "system = 'piv'";
+  if ( $system=='piv-ib' ) return "system = 'piv' AND hostlist REGEXP '^piv(0[0-9][0-9]|1(0[0-9]|1[0-2]))'";
+  if ( $system=='piv-noib' ) return "system = 'piv' AND hostlist NOT REGEXP '^piv(0[0-9][0-9]|1(0[0-9]|1[0-2]))'";
   if ( $system=='x1' ) return "system = 'x1'";
   return "system LIKE '".$system."'";
 }
@@ -45,13 +71,26 @@ function nprocs($system)
   if ( $system=='amd' ) return 256;
   if ( $system=='apple' ) return 64;
   if ( $system=='coe' ) return 60;
-  if ( $system=='ipf' ) return 580;
+  if ( $system=='ipf' ) return nprocs('ipf-noaltix')+nprocs('ipf-altix');
   if ( $system=='ipf-altix' ) return 64;
-  if ( $system=='ipf-noaltix' ) return 516;
+  if ( $system=='ipf-noaltix' ) return nprocs('ipf-myri')+nprocs('ipf-bigmem');
+  if ( $system=='ipf-oldmyri' ) return 256;
+  if ( $system=='ipf-newmyri' ) return 220;
+  if ( $system=='ipf-bigmem' ) return 40;
+  if ( $system=='ipf-myri' ) return nprocs('ipf-oldmyri')+nprocs('ipf-newmyri');
+  if ( $system=='ipf+mck' ) return nprocs('ipf');
+  if ( $system=='ipf+mck-altix' ) return nprocs('ipf-altix');
+  if ( $system=='ipf+mck-noaltix' ) return nprocs('ipf-noaltix');
+  if ( $system=='ipf+mck-bigmem' ) return nprocs('ipf-bigmem');
+  if ( $system=='ipf+mck-oldmyri' ) return nprocs('ipf-oldmyri');
   if ( $system=='mck' ) return 328;
   if ( $system=='mck-altix' ) return 32;
-  if ( $system=='mck-noaltix' ) return 296;
-  if ( $system=='piv' ) return 512;
+  if ( $system=='mck-noaltix' ) return nprocs('mck-myri')+nprocs('mck-bigmem');
+  if ( $system=='mck-bigmem' ) return 40;
+  if ( $system=='mck-myri' ) return 256;
+  if ( $system=='piv' ) return nprocs('piv-ib')+nprocs('piv-noib');
+  if ( $system=='piv-ib' ) return 224;
+  if ( $system=='piv-noib' ) return 288;
   if ( $system=='x1' ) return 48;
   return 0;
 }
