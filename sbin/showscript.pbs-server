@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 #
 # showscript:  Display the script associated with a job.
-# Copyright 2005 Ohio Supercomputer Center
+# Copyright 2006 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL$
 # $Revision$

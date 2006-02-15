@@ -1,7 +1,11 @@
 #!/usr/bin/perl -w
 #
 # qps -- process listing for PBS jobs
-# Copyright 2005 Ohio Supercomputer Center
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
 #
 # for jobs in queue, show ps on each node
 #
