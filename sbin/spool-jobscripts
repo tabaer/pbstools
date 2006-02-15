@@ -1,7 +1,11 @@
 #!/usr/bin/perl
 #
 # spool-jobscripts -- copy newly created job scripts to a spool directory
-# Copyright 2005 Ohio Supercomputer Center
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
 #
 # Not intended to be invoked directly, but rather by dnotify (or the moral
 # equivalent thereof):

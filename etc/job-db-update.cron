@@ -2,7 +2,11 @@
 #
 # job-db-update.cron -- Cron job to run job-db-update on yesterday's PBS
 #                       accounting records.
-# Copyright 2005 Ohio Supercomputer Center
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
 #
 # Meant to be run nightly by cron:
 # 15 0 * * * * /usr/local/etc/job-db-update.cron

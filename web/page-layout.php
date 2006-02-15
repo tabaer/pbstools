@@ -1,4 +1,9 @@
 <?php
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
 
 function page_header($title)
 {

@@ -1,4 +1,10 @@
 <?php
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+
 # The site system logic of the reporting system goes here!
 
 # list of all possible 'system' values to do reports on
