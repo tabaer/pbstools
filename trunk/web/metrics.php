@@ -1,4 +1,9 @@
 <?php
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
 require_once 'DB.php';
 require_once '/var/rw/www/html/jpgraph/jpgraph.php';
 require_once '/var/rw/www/html/jpgraph/jpgraph_bar.php';

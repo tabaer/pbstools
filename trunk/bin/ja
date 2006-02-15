@@ -1,7 +1,11 @@
 #!/bin/bash
 #
 # ja -- Job accounting inside PBS job
-# Copyright 2005 Ohio Supercomputer Center
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
 #
 
 if [ -z "$PBS_JOBID" ]

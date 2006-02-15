@@ -2,6 +2,10 @@
 #
 # showscript:  Display the script associated with a job.
 # Copyright 2005 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
 #
 # Usage:  showscript [options] JOBID
 #

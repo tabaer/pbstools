@@ -2,7 +2,11 @@
 #
 # jobstats -- Generate a web report of PBS job usage over some period of
 #             months
-# Copyright 2005 Ohio Supercomputer Center
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
 #
 # job metrics requirements:
 #
