@@ -1,7 +1,11 @@
 #!/usr/bin/perl -w
 #
 # pbsdcp -- Distributed copy command for the PBS environment
-# Copyright 2005 Ohio Supercomputer Center
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
 #
 # Usage:  pbsdcp [-g|-s] [options] srcfile [...srcfiles...] target
 #
