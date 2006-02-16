@@ -11,9 +11,9 @@ These tools rely on the presence of a number of other pieces of
 software.  The following are needed for basic functionality:
 * A PBS implementation -- either OpenPBS, PBS Pro, or TORQUE.
 * Perl 5.x
-* all, a parallel wrapper around rsh.  Other parallel rsh commands may
-  also work if they support the -j (only run on nodes assigned to job)
-  and -p (parallel) flags.
+* all, a parallel wrapper around rsh -- http://svn.osc.edu/repos/all
+  Other parallel rsh commands may also work if they support the -j
+  (only run on nodes assigned to job) and -p (parallel) flags.
 
 The included job tracking and reporting database system has additional
 requirements:
