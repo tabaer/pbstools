@@ -134,6 +134,7 @@ function software_list()
 	      "sable",
 	      "sas",
 	      "scalapack",
+	      "TURBO",
 	      "turbomole",
 	      "vasp");
   
@@ -153,6 +154,7 @@ function software_regexp_list()
   $pkgre['gaussian']="(g98|g03)";
   $pkgre['gromacs']="(gromacs|mdrun_d)";
   $pkgre['NCBI']="(ncbi|blastall|fastacmd|formatdb|rpsblast|seqtest)";
+  $pkgre['TURBO']="pturbo\.x";
   $pkgre['vasp']="[Vv][Aa][Ss][Pp]";
   
   return $pkgre;
