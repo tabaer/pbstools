@@ -1,0 +1,130 @@
+#!/usr/bin/perl
+#
+# reaver:  Kill any processes that are not owned by users with jobs assigned
+#          to this node.
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+# Usage:  all -j$PBS_JOBID -p /usr/local/sbin/reaver
+#
+# Must be run as root
+# Requires Maui/Moab checknode and Linux procps tools
+# Intended to be run inside a PBS job epilogue
+#
+# Why is this called "reaver" and not "reaper"?  Because I like
+# the TV show "Firefly", that's why. :)  --troy
+#
+
+# uids below this are assumed to be system accounts
+$sysuid_threshold=100;
+
+# regexp of usernames with uids above $sysuid_threshold that are allowed
+# to have processes running on a node without a PBS job
+#$safelist="arraysvcs|oscmon";
+$safelist="";
+
+# append to $safelist the names of all users who have jobs currently running
+# on this host
+# first, we have to get a list of all the PBS jobids assigned to this host
+$hostname=`hostname`;
+$joblist="";
+open(PBSNODES,"pbsnodes -a |");
+while (<PBSNODES>)
+  {
+    # pbsnodes -a output looks like this
+    # host
+    #      indented list of key = value pairs for host
+    # blank line
+    #
+    # so we want to find $hostname in the list and then get the value
+    # of "jobs = " under that
+    if ( $_ eq $hostname )
+      {
+	while (<PBSNODES>)
+	  {
+	    chop;
+	    ($key,$value) = split(/ \= /);
+	    $key =~ s/^ *//g;
+	    if ( $key eq "jobs" )
+	      {
+		$joblist=$value;
+		$joblist =~ s/[0-9]+\///g;
+		$joblist =~ s/\,//g;
+		last;
+	      }
+	  }
+	last;
+      }
+  }
+close(PBSNODES);
+if ( $joblist ne "" )
+  {
+    @alljobs = split(/ /,$joblist);
+    # there may be duplicates in the job list; extract unique values
+    # using method taken from online version of O'Reilly's Perl Cookbook
+    %seen = ();
+    foreach $item (@alljobs) {
+      $seen{$item}++;
+    }
+    @jobs = keys %seen;
+    # now that we have a list of jobids, we need to get their usernames
+    # and add them to $safelist
+    open(QSTAT,"qstat @jobs |");
+    # skip 1st 2 lines of qstat output -- it's just headers
+    <QSTAT>;
+    <QSTAT>;
+    while (<QSTAT>)
+      {
+	($jobid,$jobname,$user,$time,$status,$queue)=split(/ +/);
+	if ( ! ($safelist =~ /$user/) )
+	  {
+	    if ( $safelist eq "" )
+	      {
+		$safelist = "$user";
+	      }
+	    else
+	      {
+		$safelist .= "|$user";
+	      }
+	  }
+      }
+    close(QSTAT);
+  }
+#if ( $safelist ne "" )
+#  {
+#    print "Safe list:  $safelist\n";
+#  }
+
+# find all the target pids
+@pids=();
+open(PS,"ps --no-heading -A -o pid,uid,user |");
+while (<PS>)
+  {
+    chop;
+    ($pid,$uid,$user)=split;
+    if ( ($uid > $sysuid_threshold) && !($user =~ /$safelist/) && ($uid!=$>) )
+      {
+	push(@pids,$pid);
+      }
+  }
+close(PS);
+
+# pull the trigger
+# terminate-with-extreme-prejudice version
+#if ( @pids!=() )
+#  {
+#    kill(9,@pids);
+#  }
+# strictly informational version
+if ( @pids!=() )
+  {
+    print "Stray processes:  @pids\n";
+    system("ps -o pid,state,user,command @pids");
+  }
+#else
+#  {
+#    print "No stray processes found\n";
+#  }
