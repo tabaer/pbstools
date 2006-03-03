@@ -70,8 +70,8 @@ if ( $joblist ne "" )
       $seen{$item}++;
     }
     @jobs = keys %seen;
-    # now that we have a list of jobids, we need to get their usernames
-    # and add them to $safelist
+    # now that we have a list of unique jobids, we need to get their
+    # usernames and add them to $safelist
     open(QSTAT,"qstat @jobs |");
     # skip 1st 2 lines of qstat output -- it's just headers
     <QSTAT>;
