@@ -33,7 +33,7 @@ script tools, such as /usr/local.  Then run the following commands:
 # ksh/bash syntax
 export PREFIX=/usr/local
 cp bin/* $PREFIX/bin
-cp sbin/{dezombify,qtracejob.pbs-server,showscript.pbs-server} $PREFIX/sbin
+cp sbin/{dezombify,qtracejob.pbs-server,reaver,showscript.pbs-server} $PREFIX/sbin
 
 
 Installing the Stats Programs

@@ -31,6 +31,9 @@ sbin/qtracejob.pbs-server -- Wrapper around the tracejob command to
 give a time-sorted list of log messages from all hosts involved.  Must
 run on host where pbs_server resides; requires root privilege.
 
+sbin/reaver -- Find (and optionally clean up) processes on a host
+which have not been allocated jobs on that host.
+
 sbin/showscript.pbs-server -- Show the script associated with a jobid.
 Must run on host where pbs_server resides; requires root privilege.
 
