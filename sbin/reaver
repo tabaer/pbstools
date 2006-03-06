@@ -11,7 +11,7 @@
 # Usage:  all -j$PBS_JOBID -p /usr/local/sbin/reaver
 #
 # Must be run as root
-# Requires Maui/Moab checknode and Linux procps tools
+# Requires Linux procps tools
 # Intended to be run inside a PBS job epilogue
 #
 # Why is this called "reaver" and not "reaper"?  Because I like
