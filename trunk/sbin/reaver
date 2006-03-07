@@ -11,7 +11,6 @@
 # Usage:  all -j$PBS_JOBID -p /usr/local/sbin/reaver
 #
 # Must be run as root
-# Requires Linux procps tools
 # Intended to be run inside a PBS job epilogue
 #
 # Why is this called "reaver" and not "reaper"?  Because I like
@@ -100,7 +99,9 @@ if ( $joblist ne "" )
 
 # find all the target pids
 @pids=();
-open(PS,"ps --no-heading -A -o pid,uid,user |");
+open(PS,"ps -A -o pid,uid,user |");
+# snarf the 1st line
+<PS>;
 while (<PS>)
   {
     chop;
