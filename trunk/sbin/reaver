@@ -22,8 +22,7 @@ $sysuid_threshold=100;
 
 # regexp of usernames with uids above $sysuid_threshold that are allowed
 # to have processes running on a node without a PBS job
-#$safelist="arraysvcs|oscmon";
-$safelist="";
+$safelist="arraysvcs|oscmon|decypher";
 
 # append to $safelist the names of all users who have jobs currently running
 # on this host
@@ -106,7 +105,7 @@ while (<PS>)
   {
     chop;
     ($pid,$uid,$user)=split;
-    if ( ($uid > $sysuid_threshold) && !($user =~ /$safelist/) && ($uid!=$>) )
+    if ( ($uid > $sysuid_threshold) && !($user =~ /^($safelist)$/) && ($uid!=$>) )
       {
 	push(@pids,$pid);
       }
@@ -123,7 +122,10 @@ close(PS);
 if ( @pids!=() )
   {
     print "Stray processes:  @pids\n";
-    system("ps -o pid,state,user,command @pids");
+    foreach $pid ( @pids )
+      {
+       system("ps -o pid,state,user,command -p $pid");
+      }
   }
 #else
 #  {
