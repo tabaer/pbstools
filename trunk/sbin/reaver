@@ -113,18 +113,21 @@ while (<PS>)
 close(PS);
 
 # pull the trigger
-# terminate-with-extreme-prejudice version
-#if ( @pids!=() )
-#  {
-#    kill(9,@pids);
-#  }
-# strictly informational version
 if ( @pids!=() )
   {
-    print "Stray processes:  @pids\n";
-    foreach $pid ( @pids )
+    # terminate-with-extreme-prejudice version
+    if ( $>==0 )
       {
-       system("ps -o pid,state,user,command -p $pid");
+	kill(9,@pids);
+      }
+    # strictly informational version
+    else
+      {
+	print "Stray processes:  @pids\n";
+	foreach $pid ( @pids )
+	  {
+	    system("ps -o pid,state,user,command -p $pid");
+	  }
       }
   }
 #else
