@@ -8,7 +8,9 @@
 # $Revision$
 # $Date$
 #
-# Usage:  all -j$PBS_JOBID -p /usr/local/sbin/reaver
+# Usage:  all -j$PBS_JOBID -p /usr/local/sbin/reaver [jobid [jobids...]]
+#
+# jobid - jobid to clean up
 #
 # Must be run as root
 # Intended to be run inside a PBS job epilogue
@@ -69,28 +71,59 @@ if ( $joblist ne "" )
       $seen{$item}++;
     }
     @jobs = keys %seen;
-    # now that we have a list of unique jobids, we need to get their
-    # usernames and add them to $safelist
-    open(QSTAT,"qstat @jobs |");
-    # skip 1st 2 lines of qstat output -- it's just headers
-    <QSTAT>;
-    <QSTAT>;
-    while (<QSTAT>)
+    # remove from @jobs any jobids given on the command line
+    if ( defined($ARGV[0]) )
       {
-	($jobid,$jobname,$user,$time,$status,$queue)=split(/ +/);
-	if ( ! ($safelist =~ /$user/) )
+	$ptn="";
+	foreach $jobid ( @ARGV )
 	  {
-	    if ( $safelist eq "" )
+	    if ( $ptn eq "" )
 	      {
-		$safelist = "$user";
+		$ptn = $jobid;
 	      }
 	    else
 	      {
-		$safelist .= "|$user";
+		$ptn .= "|$jobid"
+	      }
+	  }
+	if ( $ptn ne "" )
+	  {
+	    @alljobs=@jobs;
+	    @jobs=();
+	    for ( $i=0; $i<=$#alljobs; $i++ )
+	      {
+		if ( !($alljobs[$i] =~ /^($ptn)/) )
+		  {
+		    push(@jobs,$alljobs[$i]);
+		  }
 	      }
 	  }
       }
-    close(QSTAT);
+    # now that we have a list of unique jobids, we need to get their
+    # usernames and add them to $safelist
+    if ( @jobs != () )
+      {
+	open(QSTAT,"qstat @jobs |");
+	# skip 1st 2 lines of qstat output -- it's just headers
+	<QSTAT>;
+	<QSTAT>;
+	while (<QSTAT>)
+	  {
+	    ($jobid,$jobname,$user,$time,$status,$queue)=split(/ +/);
+	    if ( ! ($safelist =~ /$user/) )
+	      {
+		if ( $safelist eq "" )
+		  {
+		    $safelist = "$user";
+		  }
+		else
+		  {
+		    $safelist .= "|$user";
+		  }
+	      }
+	  }
+	close(QSTAT);
+      }
   }
 #if ( $safelist ne "" )
 #  {
