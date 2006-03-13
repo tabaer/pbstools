@@ -16,6 +16,7 @@
 # Why is this called "reaver" and not "reaper"?  Because I like
 # the TV show "Firefly", that's why. :)  --troy
 #
+use POSIX();
 
 # uids below this are assumed to be system accounts
 $sysuid_threshold=100;
@@ -118,7 +119,13 @@ if ( @pids!=() )
     # terminate-with-extreme-prejudice version
     if ( $>==0 )
       {
-	kill(9,@pids);
+	# the CONT signal is needed to reawaken processes that are
+	# in a breakpoint in a debugger
+	kill(POSIX::SIGCONT,@pids);
+	sleep(1);
+	kill(POSIX::SIGTERM,@pids);
+	sleep(5);
+	kill(POSIX::SIGKILL,@pids);
       }
     # strictly informational version
     else
