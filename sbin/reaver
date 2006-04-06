@@ -61,6 +61,7 @@ while (<PBSNODES>)
       }
   }
 close(PBSNODES);
+die "pbsnodes failure" if ( ($?>>8)!=0 );
 if ( $joblist ne "" )
   {
     @alljobs = split(/ /,$joblist);
@@ -123,6 +124,7 @@ if ( $joblist ne "" )
 	      }
 	  }
 	close(QSTAT);
+	die "qstat failure" if ( ($?>>8)!=0 );
       }
   }
 #if ( $safelist ne "" )
@@ -145,6 +147,7 @@ while (<PS>)
       }
   }
 close(PS);
+die "ps failure" if ( ($?>>8)!=0 );
 
 # pull the trigger
 if ( @pids!=() )
