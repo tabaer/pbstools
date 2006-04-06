@@ -117,6 +117,7 @@ function software_list()
 	      "adf",
 	      "amber",
 	      "ansys",
+	      "blat",
 	      "cbl",
 	      "fidap",
 	      "flow3d",
