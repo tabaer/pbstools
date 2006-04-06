@@ -157,11 +157,11 @@ if ( @pids!=() )
       {
 	# the CONT signal is needed to reawaken processes that are
 	# in a breakpoint in a debugger
-	kill(POSIX::SIGCONT,@pids);
+	kill(&POSIX::SIGCONT,@pids);
 	sleep(1);
-	kill(POSIX::SIGTERM,@pids);
+	kill(&POSIX::SIGTERM,@pids);
 	sleep(5);
-	kill(POSIX::SIGKILL,@pids);
+	kill(&POSIX::SIGKILL,@pids);
       }
     # strictly informational version
     else
