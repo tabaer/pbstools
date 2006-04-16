@@ -23,6 +23,18 @@ if ( isset($_POST['jobid']) )
   }
 page_header($title);
 
+$props=array("username","groupname","jobname","nproc","mppe","mppssp",
+	     "nodes","queue","submit_ts","start_ts","end_ts","cput_req",
+	     "cput","walltime_req","walltime","mem_req","mem_kb",
+	     "vmem_req","vmem_kb","hostlist","exit_status","script");
+
+// special key "all=1" turns on all the $props.
+if (!empty($_POST['all'])) {
+    unset($_POST['all']);
+    foreach ($props as $key)
+	$_POST[$key] = 1;
+}
+
 $keys = array_keys($_POST);
 if ( isset($_POST['jobid']) )
   {
@@ -108,10 +120,6 @@ else
     echo "</SELECT><BR>\n";
 
     echo "Show properties:<BR>\n";
-    $props=array("username","groupname","jobname","nproc","mppe","mppssp",
-		 "nodes","queue","submit_ts","start_ts","end_ts","cput_req",
-		 "cput","walltime_req","walltime","mem_req","mem_kb",
-		 "vmem_req","vmem_kb","hostlist","exit_status","script");
     checkboxes_from_array($props);
 
     echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
