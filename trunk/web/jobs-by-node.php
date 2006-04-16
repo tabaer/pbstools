@@ -106,7 +106,13 @@ if ( isset($_POST['node']) )
 		      {
 			echo "<TD><PRE>".date("Y-m-d H:i:s",$data[$key])."</PVRE></TD>\n";
 		      }
-		    else
+		    else if ($col[$key] == "jobid") {
+			$jobid_nodot = ereg_replace('\..*', '', $data[$key]);
+			echo "<TD><PRE><A HREF=\"",
+			  "jobinfo.php?jobid=$jobid_nodot",
+			  "&system=$_POST[system]&all=1\"\>",
+			  htmlspecialchars($jobid_nodot), "</A></PRE></TD>";
+		    } else
 		      {
 			echo "<TD><PRE>".htmlspecialchars($data[$key])."</PRE></TD>";
 		      }
