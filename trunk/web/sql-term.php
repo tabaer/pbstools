@@ -40,7 +40,7 @@ if ( isset($_POST['sql']) )
 	    foreach ($keys as $key)
 	      {
 		$data=array_shift($row);
-	        echo "<TD><PRE>".$data."</PRE></TD>";
+	        echo "<TD><PRE>".htmlspecialchars($data)."</PRE></TD>";
 	      }
 	    echo "</TR>\n";
 	  }
