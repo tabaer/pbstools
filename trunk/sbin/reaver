@@ -56,6 +56,7 @@ while (<PBSNODES>)
 	  {
 	    chop;
 	    my ($key,$value) = split(/ \= /);
+	    last unless $key;
 	    $key =~ s/^ *//g;
 	    if ( $key eq "jobs" )
 	      {
