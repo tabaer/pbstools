@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 #
 # reaver:  Kill any processes that are not owned by users with jobs assigned
 #          to this node.
@@ -18,21 +18,29 @@
 # Why is this called "reaver" and not "reaper"?  Because I like
 # the TV show "Firefly", that's why. :)  --troy
 #
+use strict;
 use POSIX();
 
 # uids below this are assumed to be system accounts
-$sysuid_threshold=100;
+my $sysuid_threshold=100;
 
 # regexp of usernames with uids above $sysuid_threshold that are allowed
 # to have processes running on a node without a PBS job
-$safelist="arraysvcs|oscmon|decypher";
+my $safelist="arraysvcs|oscmon|decypher";
 
 # append to $safelist the names of all users who have jobs currently running
 # on this host
 # first, we have to get a list of all the PBS jobids assigned to this host
-$hostname=`hostname`;
-$joblist="";
-open(PBSNODES,"pbsnodes -a |");
+my $hostname=`hostname`;
+my $joblist="";
+
+# Guess absolute path to command if it isn't already in $PATH
+eval {
+    no warnings "exec";
+    open(PBSNODES, "pbsnodes -a |")
+    or open(PBSNODES, "/usr/local/pbs/bin/pbsnodes -a |");
+} or die "Cannot run pbsnodes command: $!";
+
 while (<PBSNODES>)
   {
     # pbsnodes -a output looks like this
@@ -47,7 +55,7 @@ while (<PBSNODES>)
 	while (<PBSNODES>)
 	  {
 	    chop;
-	    ($key,$value) = split(/ \= /);
+	    my ($key,$value) = split(/ \= /);
 	    $key =~ s/^ *//g;
 	    if ( $key eq "jobs" )
 	      {
@@ -64,19 +72,19 @@ close(PBSNODES);
 die "pbsnodes failure" if ( ($?>>8)!=0 );
 if ( $joblist ne "" )
   {
-    @alljobs = split(/ /,$joblist);
+    my @alljobs = split(/ /,$joblist);
     # there may be duplicates in the job list; extract unique values
     # using method taken from online version of O'Reilly's Perl Cookbook
-    %seen = ();
-    foreach $item (@alljobs) {
+    my %seen = ();
+    foreach my $item (@alljobs) {
       $seen{$item}++;
     }
-    @jobs = keys %seen;
+    my @jobs = keys %seen;
     # remove from @jobs any jobids given on the command line
     if ( defined($ARGV[0]) )
       {
-	$ptn="";
-	foreach $jobid ( @ARGV )
+	my $ptn="";
+	foreach my $jobid ( @ARGV )
 	  {
 	    if ( $ptn eq "" )
 	      {
@@ -91,7 +99,7 @@ if ( $joblist ne "" )
 	  {
 	    @alljobs=@jobs;
 	    @jobs=();
-	    for ( $i=0; $i<=$#alljobs; $i++ )
+	    for ( my $i=0; $i<=$#alljobs; $i++ )
 	      {
 		if ( !($alljobs[$i] =~ /^($ptn)/) )
 		  {
@@ -102,15 +110,19 @@ if ( $joblist ne "" )
       }
     # now that we have a list of unique jobids, we need to get their
     # usernames and add them to $safelist
-    if ( @jobs != () )
+    if ( @jobs )
       {
-	open(QSTAT,"qstat @jobs |");
+        eval {
+            no warnings "exec";
+            open(QSTAT,"qstat @jobs |")
+            or open(QSTAT,"/usr/local/pbs/bin/qstat @jobs |");
+        } or die "Cannot run qstat command: $!";
 	# skip 1st 2 lines of qstat output -- it's just headers
 	<QSTAT>;
 	<QSTAT>;
 	while (<QSTAT>)
 	  {
-	    ($jobid,$jobname,$user,$time,$status,$queue)=split(/ +/);
+	    my ($jobid,$jobname,$user,$time,$status,$queue)=split(/ +/);
 	    if ( ! ($safelist =~ /$user/) )
 	      {
 		if ( $safelist eq "" )
@@ -133,14 +145,14 @@ if ( $joblist ne "" )
 #  }
 
 # find all the target pids
-@pids=();
+my @pids=();
 open(PS,"ps -A -o pid,uid,user |");
 # snarf the 1st line
 <PS>;
 while (<PS>)
   {
     chop;
-    ($pid,$uid,$user)=split;
+    my ($pid,$uid,$user)=split;
     if ( ($uid > $sysuid_threshold) && !($user =~ /^($safelist)$/) && ($uid!=$>) )
       {
 	push(@pids,$pid);
@@ -150,7 +162,7 @@ close(PS);
 die "ps failure" if ( ($?>>8)!=0 );
 
 # pull the trigger
-if ( @pids!=() )
+if ( @pids )
   {
     # terminate-with-extreme-prejudice version
     if ( $>==0 )
@@ -167,7 +179,7 @@ if ( @pids!=() )
     else
       {
 	print "Stray processes:  @pids\n";
-	foreach $pid ( @pids )
+	foreach my $pid ( @pids )
 	  {
 	    system("ps -o pid,state,user,command -p $pid");
 	  }
