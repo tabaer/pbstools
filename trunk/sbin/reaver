@@ -32,14 +32,16 @@ my $safelist="arraysvcs|oscmon|decypher";
 # on this host
 # first, we have to get a list of all the PBS jobids assigned to this host
 my $hostname=`hostname`;
-my $joblist="";
+chomp($hostname);
+my $joblist=undef;
 
 # Guess absolute path to command if it isn't already in $PATH
-eval {
+eval
+  {
     no warnings "exec";
     open(PBSNODES, "pbsnodes -a |")
     or open(PBSNODES, "/usr/local/pbs/bin/pbsnodes -a |");
-} or die "Cannot run pbsnodes command: $!";
+  } or die "Cannot run pbsnodes command: $!";
 
 while (<PBSNODES>)
   {
@@ -50,11 +52,13 @@ while (<PBSNODES>)
     #
     # so we want to find $hostname in the list and then get the value
     # of "jobs = " under that
+    chomp;
     if ( $_ eq $hostname )
       {
+        $joblist="";
 	while (<PBSNODES>)
 	  {
-	    chop;
+	    chomp;
 	    my ($key,$value) = split(/ \= /);
 	    last unless $key;
 	    $key =~ s/^ *//g;
@@ -71,6 +75,9 @@ while (<PBSNODES>)
   }
 close(PBSNODES);
 die "pbsnodes failure" if ( ($?>>8)!=0 );
+
+die "Host $hostname not found in pbsnodes output.\n" unless defined($joblist);
+
 if ( $joblist ne "" )
   {
     my @alljobs = split(/ /,$joblist);
