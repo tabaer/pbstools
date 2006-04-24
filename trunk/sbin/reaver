@@ -88,6 +88,8 @@ if ( $joblist ne "" )
       $seen{$item}++;
     }
     my @jobs = keys %seen;
+    print "Running jobs:  @jobs\n";
+    
     # remove from @jobs any jobids given on the command line
     if ( defined($ARGV[0]) )
       {
@@ -116,8 +118,10 @@ if ( $joblist ne "" )
 	      }
 	  }
       }
+      
     # now that we have a list of unique jobids, we need to get their
     # usernames and add them to $safelist
+    print "Safe jobs:  ";
     if ( @jobs )
       {
         eval {
@@ -131,6 +135,7 @@ if ( $joblist ne "" )
 	while (<QSTAT>)
 	  {
 	    my ($jobid,$jobname,$user,$time,$status,$queue)=split(/ +/);
+	    print "$jobid($user) ";
 	    if ( ! ($safelist =~ /$user/) )
 	      {
 		if ( $safelist eq "" )
@@ -146,11 +151,17 @@ if ( $joblist ne "" )
 	close(QSTAT);
 	die "qstat failure" if ( ($?>>8)!=0 );
       }
+    print "\n";
   }
-#if ( $safelist ne "" )
-#  {
-#    print "Safe list:  $safelist\n";
-#  }
+else
+  {
+    print "Running jobs:  (none)\n";
+  }  
+  
+if ( $safelist ne "" )
+  {
+    print "Safe users:  $safelist\n";
+  }
 
 # find all the target pids
 my @pids=();
@@ -159,7 +170,7 @@ open(PS,"ps -A -o pid,uid,user |");
 <PS>;
 while (<PS>)
   {
-    chop;
+    chomp;
     my ($pid,$uid,$user)=split;
     if ( ($uid > $sysuid_threshold) && !($user =~ /^($safelist)$/) && ($uid!=$>) )
       {
