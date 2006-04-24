@@ -21,6 +21,10 @@
 use strict;
 use POSIX();
 
+# Turn off output buffering so that "sleep" calls don't cause a delay
+# on standard output
+$|=1;
+
 # uids below this are assumed to be system accounts
 my $sysuid_threshold=100;
 
@@ -165,46 +169,37 @@ if ( $safelist ne "" )
 
 # find all the target pids
 my @pids=();
-open(PS,"ps -A -o pid,uid,user |");
+open(PS,"ps -A -o pid,state,uid,user,args |");
 # snarf the 1st line
 <PS>;
+print "Stray processes:  ";
 while (<PS>)
   {
     chomp;
-    my ($pid,$uid,$user)=split;
+    my ($pid,$state,$uid,$user,$command)=split(' ', $_, 5);
     if ( ($uid > $sysuid_threshold) && !($user =~ /^($safelist)$/) && ($uid!=$>) )
       {
 	push(@pids,$pid);
+	printf "\n%8d %s %-8.8s %-10.50s", $pid, $state, $user, $command;
       }
   }
+print "(none)" unless @pids;
+print "\n";
 close(PS);
 die "ps failure" if ( ($?>>8)!=0 );
 
 # pull the trigger
-if ( @pids )
+if ( @pids && ($>==0))
   {
     # terminate-with-extreme-prejudice version
-    if ( $>==0 )
-      {
-	# the CONT signal is needed to reawaken processes that are
-	# in a breakpoint in a debugger
-	kill(&POSIX::SIGCONT,@pids);
-	sleep(1);
-	kill(&POSIX::SIGTERM,@pids);
-	sleep(5);
-	kill(&POSIX::SIGKILL,@pids);
-      }
-    # strictly informational version
-    else
-      {
-	print "Stray processes:  @pids\n";
-	foreach my $pid ( @pids )
-	  {
-	    system("ps -o pid,state,user,command -p $pid");
-	  }
-      }
+    # the CONT signal is needed to reawaken processes that are
+    # in a breakpoint in a debugger
+    print "Sending SIGCONT...\n";
+    kill(&POSIX::SIGCONT,@pids);
+    sleep(1);
+    print "Sending SIGTERM...\n";
+    kill(&POSIX::SIGTERM,@pids);
+    sleep(5);
+    print "Sending SIGKILL...\n";
+    kill(&POSIX::SIGKILL,@pids);
   }
-#else
-#  {
-#    print "No stray processes found\n";
-#  }
