@@ -8,18 +8,16 @@
 # $Revision$
 # $Date$
 #
-# Usage:  all -j$PBS_JOBID -p /usr/local/sbin/reaver [jobid [jobids...]]
-#
-# jobid - jobid to clean up
-#
-# Must be run as root
-# Intended to be run inside a PBS job epilogue
+# Originally intended to be run inside a PBS job epilogue:
+#   all -j$PBS_JOBID -p /usr/local/sbin/reaver [jobid [jobids...]]
+# where jobid = (jobid to clean up)
 #
 # Why is this called "reaver" and not "reaper"?  Because I like
 # the TV show "Firefly", that's why. :)  --troy
 #
 use strict;
 use POSIX();
+use Getopt::Long;
 
 # Turn off output buffering so that "sleep" calls don't cause a delay
 # on standard output
@@ -31,6 +29,47 @@ my $sysuid_threshold=100;
 # regexp of usernames with uids above $sysuid_threshold that are allowed
 # to have processes running on a node without a PBS job
 my $safelist="arraysvcs|oscmon|decypher";
+
+# Should we attempt to kill strays? (0 = no, 1 = yes)
+my $kill_mode = 0;
+
+# Usage/help functions
+my $USAGE = "$0 [-hk] [jobid [jobids...]]";
+my $HELP = "Options:
+ -h, --help
+    Print detailed help screen
+ -k, --kill
+    Attempt to kill all stray processes
+ <jobid>
+    ID of batch job to remove from safe list
+";
+
+sub print_usage {
+        print "Usage: $USAGE\n";
+}
+
+sub print_help {
+        print "Usage: $USAGE\n";
+        print "$HELP\n";
+}
+
+sub usage_error {
+        my $MSG = shift || "";
+        print $MSG;
+        print_usage();
+        exit(1);
+}
+
+# Process command line options
+my ($opt_h, $opt_k);
+Getopt::Long::Configure('bundling');
+GetOptions(
+         "h"   => \$opt_h, "help"  => \$opt_h,
+         "k"   => \$opt_k, "kill"  => \$opt_k,
+) || usage_error();
+
+if ($opt_h) { print_help(); exit(0); }
+if ($opt_k) { $kill_mode = 1; }
 
 # append to $safelist the names of all users who have jobs currently running
 # on this host
@@ -189,7 +228,7 @@ close(PS);
 die "ps failure" if ( ($?>>8)!=0 );
 
 # pull the trigger
-if ( @pids && ($>==0))
+if ( @pids && $kill_mode)
   {
     # terminate-with-extreme-prejudice version
     # the CONT signal is needed to reawaken processes that are
