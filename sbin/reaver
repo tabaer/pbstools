@@ -222,7 +222,7 @@ if ( $safelist ne "" )
 
 # find all the target pids
 my @pids=();
-open(PS,"ps -A -o pid,state,uid,user,args |");
+open(PS,"ps -A -o pid,state,uid,user,command |");
 # snarf the 1st line
 <PS>;
 print "Stray processes:  " if (! $brief_mode);
@@ -239,7 +239,7 @@ while (<PS>)
 	  }
 	else
 	  {
-	    printf "\n%8d %s %-8.8s %-10.50s", $pid, $state, $user, $command;
+	    printf "\n%8d  %-3s %-9.9s %-10.50s", $pid, $state, $user, $command;
 	  }
       }
   }
