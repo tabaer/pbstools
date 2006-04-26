@@ -225,7 +225,7 @@ my @pids=();
 open(PS,"ps -A -o pid,state,uid,user,command |");
 # snarf the 1st line
 <PS>;
-print "Stray processes:  " if (! $brief_mode);
+print "Stray processes:\n" if $verbose_mode;
 while (<PS>)
   {
     chomp;
@@ -239,14 +239,13 @@ while (<PS>)
 	  }
 	else
 	  {
-	    printf "\n%8d  %-3s %-9.9s %-10.50s", $pid, $state, $user, $command;
+	    printf "%8d  %-3s %-9.9s %-10.50s\n", $pid, $state, $user, $command;
 	  }
       }
   }
-if (! $brief_mode)
+if ($verbose_mode)
   {
-    print "(none)" unless @pids;
-    print "\n";
+    print "  (none)\n" unless @pids;
   }
 close(PS);
 die "ps failure" if ( ($?>>8)!=0 );
