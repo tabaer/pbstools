@@ -89,7 +89,7 @@ function ndays($db,$system,$start_date,$end_date)
     }
   $query="SELECT DATEDIFF(".$end.",".$begin.") FROM Jobs WHERE (".
     sysselect($system).") AND (".dateselect($start_time,$end_time).");";
-  //echo "<PRE>".$query."</PRE><BR>\n";
+  #echo "<PRE>".$query."</PRE><BR>\n";
   $result = $db->query($query);
   $result->fetchInto($row);
   $ndays = $row[0];
@@ -99,15 +99,25 @@ function ndays($db,$system,$start_date,$end_date)
 
 
 // metric -> column mapping
-function columns($metric)
+function columns($metric,$system)
 {
-  if ( $metric=='cpuhours' ) return "SUM(nproc*TIME_TO_SEC(walltime)/3600) AS cpuhours";
+  if ( $metric=='cpuhours' ) 
+    {
+      if ( $system=='x1' )
+	return "SUM(TIME_TO_SEC(cput)/3600) AS cpuhours";
+      else
+	return "SUM(nproc*TIME_TO_SEC(walltime)/3600) AS cpuhours";
+    }
   if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(start_ts-submit_ts)) AS 'MIN(qtime)',SEC_TO_TIME(MAX(start_ts-submit_ts)) AS 'MAX(qtime)',SEC_TO_TIME(AVG(start_ts-submit_ts)) AS 'AVG(qtime)',SEC_TO_TIME(STDDEV(start_ts-submit_ts))  AS 'STDDEV(qtime)'";
   if ( $metric=='mem_kb' ) return "MIN(mem_kb),MAX(mem_kb),AVG(mem_kb),STDDEV(mem_kb)";
   if ( $metric=='vmem_kb' ) return "MIN(vmem_kb),MAX(vmem_kb),AVG(vmem_kb),STDDEV(vmem_kb)";
   if ( $metric=='walltime' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(walltime))) AS 'MIN(walltime)',SEC_TO_TIME(MAX(TIME_TO_SEC(walltime))) AS 'MAX(walltime)',SEC_TO_TIME(AVG(TIME_TO_SEC(walltime))) AS 'AVG(walltime)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(walltime))) AS 'STDDEV(walltime)'";
   if ( $metric=='cput' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(cput))) AS 'MIN(cput)',SEC_TO_TIME(MAX(TIME_TO_SEC(cput))) AS 'MAX(cput)',SEC_TO_TIME(AVG(TIME_TO_SEC(cput))) AS 'AVG(cput)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(cput))) AS 'STDDEV(cput)'";
-  if ( $metric=='cputime' ) return "SEC_TO_TIME(MIN(nproc*TIME_TO_SEC(walltime))) AS 'MIN(cputime)',SEC_TO_TIME(MAX(nproc*TIME_TO_SEC(walltime))) AS 'MAX(cputime)',SEC_TO_TIME(AVG(nproc*TIME_TO_SEC(walltime))) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(nproc*TIME_TO_SEC(walltime))) AS 'STDDEV(cputime)'";
+  if ( $metric=='cputime' )
+    if ( $system=='x1' )
+      return "SEC_TO_TIME(MIN(TIME_TO_SEC(cput))) AS 'MIN(cputime)',SEC_TO_TIME(MAX(TIME_TO_SEC(cput))) AS 'MAX(cputime)',SEC_TO_TIME(AVG(TIME_TO_SEC(cput))) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(cput))) AS 'STDDEV(cputime)'";      
+    else
+      return "SEC_TO_TIME(MIN(nproc*TIME_TO_SEC(walltime))) AS 'MIN(cputime)',SEC_TO_TIME(MAX(nproc*TIME_TO_SEC(walltime))) AS 'MAX(cputime)',SEC_TO_TIME(AVG(nproc*TIME_TO_SEC(walltime))) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(nproc*TIME_TO_SEC(walltime))) AS 'STDDEV(cputime)'";
   if ( $metric=='walltime_acc' ) return "MIN(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MIN(walltime_acc)',MAX(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MAX(walltime_acc)',AVG(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'AVG(walltime_acc)',STDDEV(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'STDDEV(walltime_acc)'";
   if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),MAX(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),AVG(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),STDDEV(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime)))";
   if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS 'users',COUNT(DISTINCT(groupname)) AS 'groups'";
@@ -140,9 +150,9 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
       $query .= $xaxis.",";
     }
    $query .= "COUNT(jobid) AS jobcount";
-   if ( columns($metric)!="" )
+   if ( columns($metric,$system)!="" )
      {
-       $query .= ",".columns($metric);
+       $query .= ",".columns($metric,$system);
      }
    $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
      dateselect($start_date,$end_date).")";

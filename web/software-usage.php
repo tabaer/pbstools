@@ -54,7 +54,7 @@ if ( isset($_POST['system']) )
 	    if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	      {
 		echo "<H3><CODE>".$key."</CODE></H3>\n";
-		$sql = "SELECT system,COUNT(jobid) AS jobcount,SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours,COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND script REGEXP ";
+		$sql = "SELECT system,COUNT(jobid) AS jobcount, SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours, SEC_TO_TIME(SUM(TIME_TO_SEC(cput))) AS cpuhours_alt, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND script REGEXP ";
 		if ( isset($pkgre[$key]) )
 		  {
 		    $sql .= "'".$pkgre[$key]."'";
@@ -89,7 +89,7 @@ if ( isset($_POST['system']) )
 		else
 		  {
 		    echo "<TABLE border=1>\n";
-		    echo "<TR><TH>system</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH></TR>\n";
+		    echo "<TR><TH>system</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH><TH>users</TH><TH>groups</TH></TR>\n";
 		    while ($result->fetchInto($row))
 		      {
 			$rkeys=array_keys($row);
@@ -104,7 +104,7 @@ if ( isset($_POST['system']) )
 		    if ( $_POST['system']=="%" )
 		      {
                         # compute totals iff wildcarding on all systems
-			$sql = "SELECT COUNT(jobid) AS jobcount,SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours,COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE script REGEXP ";
+			$sql = "SELECT COUNT(jobid) AS jobcount, SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours, SEC_TO_TIME(SUM(TIME_TO_SEC(cput))) AS alt_cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE script REGEXP ";
 			if ( isset($pkgre[$key]) )
 			  {
 			    $sql .= "'".$pkgre[$key]."'";
