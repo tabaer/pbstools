@@ -139,7 +139,7 @@ while ( defined($ARGV[0]) )
 		$processors += $nodes * $processors_per;
 	      }
 	    $ncpus=&max($resource{"Resource_List.ncpus"},
-			$resource{"resources_used.ncpus"});
+			$resource{"resources_used.mppssp"}+4*$resource{"resources_used.mppe"});
 	    $nprocs=&max($processors,$ncpus);
 	    $mem=$resource{"resources_used.mem"};
 	    $mem=~s/kb$//;
