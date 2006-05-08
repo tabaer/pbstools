@@ -132,7 +132,6 @@ function software_list()
 	      "NCBI",
 	      "nwchem",
 	      "octave",
-	      "R",
 	      "sable",
 	      "sas",
 	      "scalapack",
@@ -156,8 +155,8 @@ function software_match_list()
 
   # exceptions
   $pkgmatch['a_out']="LIKE '%a.out%'";
-  $pkgmatch['amber']="REGEXP '(amber|sander|pmemd|sviol)'";
   $pkgmatch['adf']="REGEXP '[Aa][Dd][Ff]'";
+  $pkgmatch['amber']="REGEXP '(amber|sander|pmemd|sviol)'";
   $pkgmatch['cbl']="REGEXP '(cbl|pcbl|biolib)'";
   $pkgmatch['gamess']="REGEXP '(gamess|rungmx)'";
   $pkgmatch['gaussian']="REGEXP '(g98|g03)'";
