@@ -54,7 +54,7 @@ if ( isset($_POST['system']) )
 	    if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	      {
 		echo "<H3><CODE>".$key."</CODE></H3>\n";
-		$sql = "SELECT system, COUNT(jobid) AS jobcount, SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours, SEC_TO_TIME(SUM(TIME_TO_SEC(cput))) AS cpuhours_alt, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( script IS NOT NULL AND script ";
+		$sql = "SELECT system, COUNT(jobid) AS jobcount, SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours, SEC_TO_TIME(SUM(TIME_TO_SEC(cput))) AS cpuhours_alt, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( script IS NOT NULL AND ";
 		if ( isset($pkgmatch[$key]) )
 		  {
 		    $sql .= $pkgmatch[$key];
@@ -82,7 +82,7 @@ if ( isset($_POST['system']) )
 		      }
 		  }
 		$sql .= " GROUP BY system;";
-		#echo "<PRE>".$sql."</PRE>";
+		#echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 		$result = $db->query($sql);
 		if ( DB::isError($db) )
 		  {
@@ -106,7 +106,7 @@ if ( isset($_POST['system']) )
 		    if ( $_POST['system']=="%" )
 		      {
                         # compute totals iff wildcarding on all systems
-			$sql = "SELECT COUNT(jobid) AS jobcount, SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours, SEC_TO_TIME(SUM(TIME_TO_SEC(cput))) AS alt_cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( script IS NOT NULL AND script ";
+			$sql = "SELECT COUNT(jobid) AS jobcount, SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours, SEC_TO_TIME(SUM(TIME_TO_SEC(cput))) AS alt_cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( script IS NOT NULL AND ";
 			if ( isset($pkgmatch[$key]) )
 			  {
 			    $sql .= $pkgmatch[$key];
@@ -134,7 +134,7 @@ if ( isset($_POST['system']) )
 			      }
 			  }
 			$sql .= ";";
-			#echo "<PRE>".$sql."</PRE>\n";
+			#echo "<PRE>".htmlspecialchars($sql)."</PRE>\n";
 			$result = $db->query($sql);
 			if ( DB::isError($db) )
 			  {
