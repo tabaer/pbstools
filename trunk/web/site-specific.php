@@ -132,6 +132,7 @@ function software_list()
 	      "NCBI",
 	      "nwchem",
 	      "octave",
+	      "R",
 	      "sable",
 	      "sas",
 	      "scalapack",
@@ -150,20 +151,22 @@ function software_match_list()
   # default to "script LIKE '%pkgname%'
   foreach (software_list() as $pkg)
     {
-      $pkgmatch[$pkg]="LIKE '%".$pkg."%'";
+      $pkgmatch[$pkg]="script LIKE '%".$pkg."%'";
     }
 
   # exceptions
-  $pkgmatch['a_out']="LIKE '%a.out%'";
-  $pkgmatch['adf']="REGEXP '[Aa][Dd][Ff]'";
-  $pkgmatch['amber']="REGEXP '(amber|sander|pmemd|sviol)'";
-  $pkgmatch['cbl']="REGEXP '(cbl|pcbl|biolib)'";
-  $pkgmatch['gamess']="REGEXP '(gamess|rungmx)'";
-  $pkgmatch['gaussian']="REGEXP '(g98|g03)'";
-  $pkgmatch['gromacs']="REGEXP '(gromacs|mdrun_d)'";
-  $pkgmatch['NCBI']="REGEXP '(ncbi|blastall|fastacmd|formatdb|rpsblast|seqtest)'";
-  $pkgmatch['TURBO']="LIKE '%pturbo.x%'";
-  $pkgmatch['vasp']="REGEXP '[Vv][Aa][Ss][Pp]'";
+  $pkgmatch['a_out']="script LIKE '%a.out%'";
+  $pkgmatch['adf']="script REGEXP '[Aa][Dd][Ff]'";
+  $pkgmatch['amber']="script REGEXP '(amber|sander|pmemd|sviol)'";
+  $pkgmatch['cbl']="script REGEXP '(cbl|pcbl|biolib)'";
+  $pkgmatch['gamess']="script REGEXP '(gamess|rungmx)'";
+  $pkgmatch['gaussian']="script REGEXP '(g98|g03)'";
+  $pkgmatch['gromacs']="script REGEXP '(gromacs|mdrun_d)'";
+  $pkgmatch['NCBI']="script REGEXP '(ncbi|blastall|fastacmd|formatdb|rpsblast|seqtest)'";
+  $pkgmatch['TURBO']="script LIKE '%pturbo.x%'";
+  $pkgmatch['vasp']="script REGEXP '[Vv][Aa][Ss][Pp]'";
+  $pkgmatch['R']="script LIKE '%\nR %' AND NOT ( ".$pkgmatch['gaussian'].
+    " OR ".$pkgmatch['adf']." )";
   
   return $pkgmatch;
 }
