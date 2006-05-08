@@ -112,7 +112,7 @@ function sort_criteria($fn)
 # list of software packages to look for in job scripts
 function software_list()
 {
-  $list=array("a.out",
+  $list=array("a_out",
 	      "abaqus",
 	      "adf",
 	      "amber",
@@ -132,6 +132,7 @@ function software_list()
 	      "NCBI",
 	      "nwchem",
 	      "octave",
+	      "R",
 	      "sable",
 	      "sas",
 	      "scalapack",
@@ -145,20 +146,27 @@ function software_list()
 # REs to identify particular software packages in job scripts
 # if a RE is not specified, the package name from software_list()
 # is searched for instead
-function software_regexp_list()
+function software_match_list()
 {
-  $pkgre['a_out']="a\.out";
-  $pkgre['amber']="(amber|sander|pmemd|sviol)";
-  $pkgre['adf']="[Aa][Dd][Ff]";
-  $pkgre['cbl']="(cbl|pcbl|biolib)";
-  $pkgre['gamess']="(gamess|rungmx)";
-  $pkgre['gaussian']="(g98|g03)";
-  $pkgre['gromacs']="(gromacs|mdrun_d)";
-  $pkgre['NCBI']="(ncbi|blastall|fastacmd|formatdb|rpsblast|seqtest)";
-  $pkgre['TURBO']="pturbo\.x";
-  $pkgre['vasp']="[Vv][Aa][Ss][Pp]";
+  # default to "script LIKE '%pkgname%'
+  foreach (software_list() as $pkg)
+    {
+      $pkgmatch[$pkg]="LIKE '%".$pkg."%'";
+    }
+
+  # exceptions
+  $pkgmatch['a_out']="LIKE '%a.out%'";
+  $pkgmatch['amber']="REGEXP '(amber|sander|pmemd|sviol)'";
+  $pkgmatch['adf']="REGEXP '[Aa][Dd][Ff]'";
+  $pkgmatch['cbl']="REGEXP '(cbl|pcbl|biolib)'";
+  $pkgmatch['gamess']="REGEXP '(gamess|rungmx)'";
+  $pkgmatch['gaussian']="REGEXP '(g98|g03)'";
+  $pkgmatch['gromacs']="REGEXP '(gromacs|mdrun_d)'";
+  $pkgmatch['NCBI']="REGEXP '(ncbi|blastall|fastacmd|formatdb|rpsblast|seqtest)'";
+  $pkgmatch['TURBO']="LIKE '%pturbo.x%'";
+  $pkgmatch['vasp']="REGEXP '[Vv][Aa][Ss][Pp]'";
   
-  return $pkgre;
+  return $pkgmatch;
 }
 
 ?>
