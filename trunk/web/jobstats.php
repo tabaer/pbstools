@@ -272,6 +272,35 @@ if ( isset($_POST['system']) )
 			   $_POST['system'],
 			   $_POST['start_date'],
 			   $_POST['end_date']);
+
+    // by month
+    jobstats_output_metric('Job Count vs. Month',
+			   'jobcount_vs_username',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('CPU Time vs. Month',
+			   'cpuhours_vs_month',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Job Length vs. Month',
+			   'walltime_vs_month',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Queue Time by Month',
+			   'qtime_vs_month',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
   }
 else
   {
@@ -334,6 +363,13 @@ else
     jobstats_input_metric("Virtual Memory vs. User","vmem_kb_vs_username");
     jobstats_input_metric("Walltime Accuracy vs. User","walltime_acc_vs_username");
     jobstats_input_metric("CPU Efficiency vs. User","cpu_eff_vs_username");
+
+    // by month
+    echo "<TR><TH colspan=\"3\"><HR></TH></TR>\n";
+    jobstats_input_metric("Job Count by Month","jobcount_vs_month");
+    jobstats_input_metric("CPU Time by Month","cpuhours_vs_month");
+    jobstats_input_metric("Job Length by Month","walltime_vs_month");
+    jobstats_input_metric("Queue Time by Month","qtime_vs_month");
     
     echo "</TABLE>\n";
     echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";   

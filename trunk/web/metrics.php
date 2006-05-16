@@ -15,6 +15,17 @@ function xaxis($fn)
   return preg_replace('/^.*_vs_/','',$fn);
 }
 
+function xaxis_column($x)
+{
+  if ( $x=="month" )
+    {
+      return "EXTRACT(YEAR_MONTH FROM FROM_UNIXTIME(start_ts))";
+    }
+  else
+    {
+      return $x;
+    }
+}
 
 function metric($fn)
 {
@@ -147,7 +158,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
   $query = "SELECT ";
    if ( $xaxis!="" )
     { 
-      $query .= $xaxis.",";
+      $query .= xaxis_column($xaxis).",";
     }
    $query .= "COUNT(jobid) AS jobcount";
    if ( columns($metric,$system)!="" )
@@ -158,7 +169,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
      dateselect($start_date,$end_date).")";
   if ( $xaxis!="" )
     {
-      $query .= " AND (".$xaxis." IS NOT NULL) GROUP BY ".$xaxis." ".sort_criteria($metric."_vs_".$xaxis);
+      $query .= " AND (".xaxis_column($xaxis)." IS NOT NULL) GROUP BY ".xaxis_column($xaxis)." ".sort_criteria($metric."_vs_".$xaxis);
     }
   $query .= ";";
 

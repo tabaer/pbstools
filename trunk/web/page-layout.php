@@ -31,6 +31,7 @@ function page_header($title)
   echo "      <LI><A href=\"jobstats-by-queue.php\">Job Class</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-group.php\">Group/Project</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-user.php\">User</A></LI>\n";
+  echo "      <LI><A href=\"jobstats-by-month.php\">Month</A></LI>\n";
   echo "      <LI><A href=\"jobstats.php\">All</A></LI>\n";
   echo "    </UL>\n";
   echo "    <UL><U>Other reports</U>\n";
