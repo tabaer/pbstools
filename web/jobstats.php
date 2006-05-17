@@ -275,7 +275,7 @@ if ( isset($_POST['system']) )
 
     // by month
     jobstats_output_metric('Job Count vs. Month',
-			   'jobcount_vs_username',
+			   'jobcount_vs_month',
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
@@ -297,6 +297,18 @@ if ( isset($_POST['system']) )
 
     jobstats_output_metric('Queue Time by Month',
 			   'qtime_vs_month',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    jobstats_output_metric('Backlog by Month',
+			   'backlog_vs_month',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    jobstats_output_metric("Expansion Factor by Month",
+			   "xfactor_vs_month",
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],

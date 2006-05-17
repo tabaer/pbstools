@@ -63,19 +63,19 @@ function dateselect($start_date,$end_date)
     if ( isset($start_date) && isset($end_date) &&
 	 $start_date!="" && $end_date!="" )
       {
-	return "FROM_UNIXTIME(end_ts) >= '".$start_date." 00:00:00' AND FROM_UNIXTIME(end_ts) <= '".$end_date." 23:59:59'";
+	return "FROM_UNIXTIME(start_ts) >= '".$start_date." 00:00:00' AND FROM_UNIXTIME(end_ts) <= '".$end_date." 23:59:59'";
       }
     else if ( isset($start_date) && $start_date!="" )
       {
-	return "FROM_UNIXTIME(end_ts) >= '".$start_date." 00:00:00'";
+	return "FROM_UNIXTIME(start_ts) >= '".$start_date." 00:00:00'";
       }
     else if ( isset($end_date) && $end_date!="" )
       {
-	return "FROM_UNIXTIME(end_ts) <= '".$_POST['end_date']." 23:59:59'";
+	return "FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
       }
     else
       {
-	return "end_ts IS NOT NULL";
+	return "submit_ts IS NOT NULL AND start_ts IS NOT NULL AND end_ts IS NOT NULL";
       }
 }
 
@@ -132,6 +132,8 @@ function columns($metric,$system)
   if ( $metric=='walltime_acc' ) return "MIN(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MIN(walltime_acc)',MAX(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MAX(walltime_acc)',AVG(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'AVG(walltime_acc)',STDDEV(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'STDDEV(walltime_acc)'";
   if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),MAX(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),AVG(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),STDDEV(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime)))";
   if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS 'users',COUNT(DISTINCT(groupname)) AS 'groups'";
+  if ( $metric=='backlog' ) return "SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours, SEC_TO_TIME(SUM(start_ts-submit_ts)) AS 'SUM(qtime)'";
+  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS 'xfactor'";
   return "";
 }
 
@@ -149,6 +151,8 @@ function columnnames($metric)
   if ( $metric=='walltime_acc' ) return array("MIN(walltime_acc)","MAX(walltime_acc)","AVG(walltime_acc)","STDDEV(walltime_acc)");
   if ( $metric=='cpu_eff' ) return array("MIN(cpu_eff)","MAX(cpu_eff)","AVG(cpu_eff)","STDDEV(cpu_eff)");
   if ( $metric=='usercount' ) return array("users","groups");
+  if ( $metric=='backlog' ) return array("cpuhours","SUM(qtime)");
+  if ( $metric=='xfactor' ) return array("xfactor");
   return array();
 }
 
@@ -230,7 +234,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
 	    }
 	}
     } 
-  elseif ( $metric=='cpuhours' )
+  elseif ( $metric=='cpuhours' || $metric=='xfactor' )
     {
       for ($i=0; $i<$nrows; $i++)
 	{
@@ -243,6 +247,24 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
 	  else
 	    {
 	      $y[$i]=$rawdata[$i][2];
+	    }
+	}
+    }
+  elseif ( $metric=='backlog' )
+    {
+      for ($i=0; $i<$nrows; $i++)
+	{
+	  $x[$i]=$rawdata[$i][0];
+	  if ( $xaxis=='nproc' )
+	    {
+	      if ( $x[$i]>$xmax ) $xmax=$x[$i];
+	      $y[$x[$i]]=time_to_hrs($rawdata[$i][3]);
+	      $max[$x[$i]]=time_to_hrs($rawdata[$i][2]);
+	    }
+	  else
+	    {
+	      $y[$i]=time_to_hrs($rawdata[$i][3]);
+	      $max[$i]=time_to_hrs($rawdata[$i][2]);
 	    }
 	}
     }
@@ -328,7 +350,12 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
     {
       $graph->yscale->SetAutoMax(1.1);
     }
-  if ( $metric!="jobcount" && $metric!="cpuhours" )
+  elseif ( $metric=="xfactor" )
+    {
+      $graph->yscale->SetAutoMin(1.0);
+    }
+  if ( $metric!="jobcount" && $metric!="cpuhours" && 
+       $metric!="backlog" && $metric!="xfactor" )
     {
       $maxbar = new BarPlot($max);
       $maxbar->SetWidth(1.0);
@@ -336,14 +363,28 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
       $maxbar->SetLegend("Maximum");
       $graph->Add($maxbar);
     }
+  else if ( $metric=="backlog" )
+    {
+      $maxbar = new BarPlot($max);
+      $maxbar->SetWidth(1.0);
+      $maxbar->SetFillColor("gray");
+      $maxbar->SetLegend("CPU Hours");
+      $graph->Add($maxbar);
+    }
   $ybar = new BarPlot($y);
   $ybar->SetWidth(1.0);
-  if ( $metric!="jobcount" && $metric!="cpuhours" )
+  if ( $metric!="jobcount" && $metric!="cpuhours" && 
+       $metric!="backlog" && $metric!="xfactor" )
     {
       $ybar->SetLegend("Mean");
     }
+  else if ( $metric=="backlog" )
+    {
+      $ybar->SetLegend("Queue Hours");      
+    }  
   $graph->Add($ybar);
-  if ( $metric!="jobcount" && $metric!="cpuhours" )
+  if ( $metric!="jobcount" && $metric!="cpuhours" &&
+       $metric!="backlog" && $metric!="xfactor" )
     {
       $minbar = new BarPlot($min);
       $minbar->SetWidth(1.0);
