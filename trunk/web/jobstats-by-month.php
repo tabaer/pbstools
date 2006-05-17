@@ -64,6 +64,8 @@ jobstats_input_metric("Job Count by Month","jobcount_vs_month");
 jobstats_input_metric("CPU Time by Month","cpuhours_vs_month");
 jobstats_input_metric("Job Length by Month","walltime_vs_month");
 jobstats_input_metric("Queue Time by Month","qtime_vs_month");
+jobstats_input_metric("Backlog by Month","backlog_vs_month");
+jobstats_input_metric("Expansion Factor by Month","xfactor_vs_month");
 
 echo "</TABLE>\n";
 echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";   
