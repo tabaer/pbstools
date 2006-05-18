@@ -21,6 +21,10 @@ function xaxis_column($x)
     {
       return "EXTRACT(YEAR_MONTH FROM FROM_UNIXTIME(start_ts))";
     }
+  elseif ( $x=="institution" )
+    {
+      return "SUBSTRING(username,1,3)";
+    }
   else
     {
       return $x;
@@ -173,6 +177,10 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
      dateselect($start_date,$end_date).")";
   if ( $xaxis!="" )
     {
+      if ( $xaxis=="institution" )
+	{
+	  $query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' )";
+	}
       $query .= " AND (".xaxis_column($xaxis)." IS NOT NULL) GROUP BY ".xaxis_column($xaxis)." ".sort_criteria($metric."_vs_".$xaxis);
     }
   $query .= ";";
