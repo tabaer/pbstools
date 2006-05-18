@@ -313,6 +313,21 @@ if ( isset($_POST['system']) )
 			   $_POST['system'],
 			   $_POST['start_date'],
 			   $_POST['end_date']);
+
+    // by institution
+    jobstats_output_metric('Job Count vs. Institution',
+			   'jobcount_vs_institution',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('CPU Time vs. Institution',
+			   'cpuhours_vs_institution',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
   }
 else
   {
@@ -383,6 +398,11 @@ else
     jobstats_input_metric("Job Length by Month","walltime_vs_month");
     jobstats_input_metric("Queue Time by Month","qtime_vs_month");
     
+    // by institution
+    echo "<TR><TH colspan=\"3\"><HR></TH></TR>\n";
+    jobstats_input_metric("Job Count by Institution","jobcount_vs_institution");
+    jobstats_input_metric("CPU Time by Institution","cpuhours_vs_institution");
+
     echo "</TABLE>\n";
     echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";   
   }
