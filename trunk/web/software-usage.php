@@ -61,10 +61,10 @@ if ( isset($_POST['system']) )
 		  }
 		else
 		  {
-		    $sql .= " = '".$key."'";
+		    $sql .= "script LIKE '%".$key."%'";
 		  }
 		$sql .= " )";
-		if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+		if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
 		     $_POST['start_date']!="" )
 		  {
 		    $sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";

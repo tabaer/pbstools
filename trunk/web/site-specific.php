@@ -119,6 +119,7 @@ function software_list()
 	      "ansys",
 	      "blat",
 	      "cbl",
+	      "decypher",
 	      "fidap",
 	      "flow3d",
 	      "fluent",
@@ -159,6 +160,7 @@ function software_match_list()
   $pkgmatch['adf']="script REGEXP '[Aa][Dd][Ff]'";
   $pkgmatch['amber']="script REGEXP '(amber|sander|pmemd|sviol)'";
   $pkgmatch['cbl']="script REGEXP '(cbl|pcbl|biolib)'";
+  $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap))'";
   $pkgmatch['gamess']="script REGEXP '(gamess|rungmx)'";
   $pkgmatch['gaussian']="script REGEXP '(g98|g03)'";
   $pkgmatch['gromacs']="script REGEXP '(gromacs|mdrun_d)'";
