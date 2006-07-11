@@ -407,8 +407,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
       $graph->Add($errbars);
     }
   $graph->Stroke();
-  $imgurl=htmlspecialchars($jpgcache.$plot);
-  $imgurl=str_replace("%","%25",$imgurl);
+  $imgurl=$jpgcache.rawurlencode($plot);
   echo "<img src=\"".$imgurl."\">\n";
 }
 
