@@ -171,6 +171,7 @@ function software_match_list()
   $pkgmatch['NCBI']="script REGEXP '(ncbi|blastall|fastacmd|formatdb|rpsblast|seqtest)'";
   $pkgmatch['R']="script LIKE '%\nR %' AND NOT ( ".$pkgmatch['gaussian'].
     " OR ".$pkgmatch['adf']." )";
+  $pkgmatch['sable']="script LIKE '%sable%' AND script NOT LIKE '%DISABLE%'";
   $pkgmatch['TURBO']="script LIKE '%pturbo.x%'";
   $pkgmatch['vasp']="script LIKE '%VASP%' OR script LIKE '%vasp%'";
   
