@@ -122,12 +122,15 @@ function software_list()
 	      "decypher",
 	      "fidap",
 	      "flow3d",
+	      "fld3di",
 	      "fluent",
 	      "gaussian",
 	      "gamess",
 	      "gromacs",
+	      "lsdyna",
 	      "mathematica",
 	      "matlab",
+	      "mrbayes",
 	      "NAG",
 	      "namd",
 	      "NCBI",
@@ -160,7 +163,7 @@ function software_match_list()
   $pkgmatch['adf']="script REGEXP '[Aa][Dd][Ff]'";
   $pkgmatch['amber']="script REGEXP '(amber|sander|pmemd|sviol)'";
   $pkgmatch['cbl']="script REGEXP '(cbl|pcbl|biolib)'";
-  $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap))'";
+  $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
   $pkgmatch['gamess']="script REGEXP '(gamess|rungmx)'";
   $pkgmatch['gaussian']="script REGEXP '(g98|g03)'";
   $pkgmatch['gromacs']="script REGEXP '(gromacs|mdrun_d)'";
@@ -169,6 +172,7 @@ function software_match_list()
   $pkgmatch['vasp']="script REGEXP '[Vv][Aa][Ss][Pp]'";
   $pkgmatch['R']="script LIKE '%\nR %' AND NOT ( ".$pkgmatch['gaussian'].
     " OR ".$pkgmatch['adf']." )";
+  $pkgmatch['mrbayes']="script REGEXP '(mrbayes|mb-parallel)'";
   
   return $pkgmatch;
 }
