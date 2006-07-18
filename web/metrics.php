@@ -448,15 +448,19 @@ function metric_as_xls($result,$xaxis,$metric,$system,$start_date,$end_date)
   $workbook = new Workbook("/tmp/".$cache.$xlsfile);
   $worksheet =& $workbook->add_worksheet($metric." vs ".$xaxis);
 
-  $format_bold =& $workbook->add_format();
-  $format_bold->set_bold();
+  $format_hdr =& $workbook->add_format();
+  $format_hdr->set_bold();
+  $format_hdr->set_align('center');
 
   $rowctr=0;
   $colctr=0;
+  $worksheet->write($rowctr,$colctr,"$xaxis",$format_hdr);
+  $colctr++;
+  $worksheet->write($rowctr,$colctr,"jobcount",$format_hdr);
+  $colctr++;
   foreach (columnnames($metric) as $header)
     {
-#      $worksheet->write($rowctr,$colctr,"$header",$format_bold);
-      $worksheet->write($rowctr,$colctr,"$header");
+      $worksheet->write($rowctr,$colctr,"$header",$format_hdr);
       $colctr++;
     }
   while ($myresult->fetchInto($row))
@@ -548,7 +552,9 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
 {
   
   if ( isset($_POST[$fn.'_graph']) || 
-       isset($_POST[$fn.'_table']) )
+       isset($_POST[$fn.'_table']) ||
+       isset($_POST[$fn.'_xls']) ||
+       isset($_POST[$fn.'_ods']) )
     {
       echo "<H2>".$name."</H2>\n";
       
