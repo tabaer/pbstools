@@ -341,12 +341,8 @@ else
     echo "</SELECT><BR>\n";
     echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
     echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
-    echo "<TABLE>\n";
-    echo "<TR>\n";
-    echo "  <TH>Metrics</TH>\n";
-    echo "  <TH>Graph</TH>";
-    echo "  <TH>Table</TH>\n";
-    echo "</TR>\n";
+
+    jobstats_input_header();
     
     // by nproc
     jobstats_input_metric("Job Count vs. CPU Count","jobcount_vs_nproc");
@@ -359,7 +355,7 @@ else
     jobstats_input_metric("CPU Efficiency vs. CPU Count","cpu_eff_vs_nproc");
     
     // by queue
-    echo "<TR><TH colspan=\"3\"><HR></TH></TR>\n";
+    jobstats_input_spacer();
     jobstats_input_metric("Job Count vs. Job Class","jobcount_vs_queue");
     jobstats_input_metric("CPU Time vs. Job Class","cpuhours_vs_queue");
     jobstats_input_metric("Job Length vs. Job Class","walltime_vs_queue");
@@ -370,7 +366,7 @@ else
     jobstats_input_metric("CPU Efficiency vs. Job Class","cpu_eff_vs_queue");
 
     // by groupname
-    echo "<TR><TH colspan=\"3\"><HR></TH></TR>\n";
+    jobstats_input_spacer();
     jobstats_input_metric("Job Count vs. Group/Project","jobcount_vs_groupname");
     jobstats_input_metric("CPU Time vs. Group/Project","cpuhours_vs_groupname");
     jobstats_input_metric("Job Length vs. Group/Project","walltime_vs_groupname");
@@ -381,7 +377,7 @@ else
     jobstats_input_metric("CPU Efficiency vs. Group/Project","cpu_eff_vs_groupname");
 
     // by username
-    echo "<TR><TH colspan=\"3\"><HR></TH></TR>\n";
+    jobstats_input_spacer();
     jobstats_input_metric("Job Count vs. User","jobcount_vs_username");
     jobstats_input_metric("CPU Time vs. User","cpuhours_vs_username");
     jobstats_input_metric("Job Length vs. User","walltime_vs_username");
@@ -392,18 +388,19 @@ else
     jobstats_input_metric("CPU Efficiency vs. User","cpu_eff_vs_username");
 
     // by month
-    echo "<TR><TH colspan=\"3\"><HR></TH></TR>\n";
+    jobstats_input_spacer();
     jobstats_input_metric("Job Count by Month","jobcount_vs_month");
     jobstats_input_metric("CPU Time by Month","cpuhours_vs_month");
     jobstats_input_metric("Job Length by Month","walltime_vs_month");
     jobstats_input_metric("Queue Time by Month","qtime_vs_month");
     
     // by institution
-    echo "<TR><TH colspan=\"3\"><HR></TH></TR>\n";
+    jobstats_input_spacer();
     jobstats_input_metric("Job Count by Institution","jobcount_vs_institution");
     jobstats_input_metric("CPU Time by Institution","cpuhours_vs_institution");
 
-    echo "</TABLE>\n";
+    jobstats_input_footer();
+
     echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";   
   }
 

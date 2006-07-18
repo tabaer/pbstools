@@ -5,9 +5,12 @@
 # $Revision$
 # $Date$
 require_once 'DB.php';
-require_once '/var/rw/www/html/jpgraph/jpgraph.php';
-require_once '/var/rw/www/html/jpgraph/jpgraph_bar.php';
-require_once '/var/rw/www/html/jpgraph/jpgraph_error.php';
+require_once '/var/rw/www/html/phplib/jpgraph/jpgraph.php';
+require_once '/var/rw/www/html/phplib/jpgraph/jpgraph_bar.php';
+require_once '/var/rw/www/html/phplib/jpgraph/jpgraph_error.php';
+require_once '/var/rw/www/html/phplib/Excel/Workbook.php';
+require_once '/var/rw/www/html/phplib/Excel/Worksheet.php';
+require_once '/var/rw/www/html/phplib/Excel/Format.php';
 require_once 'site-specific.php';
 
 function xaxis($fn)
@@ -336,7 +339,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
 	    }
 	}
     }
-  $jpgcache = APACHE_CACHE_DIR;
+  $cache = APACHE_CACHE_DIR;
   $plot=$system."-".$metric."_vs_".$xaxis."-".$start_date."-".$end_date.".png";
   //  $graph = new graph(640,480,$plot,2,0);
   $graph = new graph(800,600,$plot,2,0);
@@ -407,7 +410,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
       $graph->Add($errbars);
     }
   $graph->Stroke();
-  $imgurl=$jpgcache.rawurlencode($plot);
+  $imgurl=$cache.rawurlencode($plot);
   echo "<img src=\"".$imgurl."\">\n";
 }
 
@@ -416,11 +419,12 @@ function metric_as_table($result,$xaxis,$metric)
 {
   $myresult=$result;
   echo "<TABLE border=\"1\">\n";
-  echo "<TR>\n  <TH>".$xaxis."</TH>\n  <TH>jobcount</TH>\n";
+  echo "<TR><TH>".$xaxis."</TH><TH>jobcount</TH>";
   foreach (columnnames($metric) as $header)
     {
-      echo "  <TH>".$header."</TH>\n";
+      echo "<TH>".$header."</TH>";
     }
+  echo "</TR>\n";
   while ($myresult->fetchInto($row))
     {
       echo "<TR valign=\"top\">";
@@ -435,6 +439,98 @@ function metric_as_table($result,$xaxis,$metric)
   echo "</TABLE>\n";
 }
 
+function metric_as_xls($result,$xaxis,$metric,$system,$start_date,$end_date)
+{
+  $myresult=$result;
+  $xlsfile=$system."-".$metric."_vs_".$xaxis."-".$start_date."-".$end_date.".xls";
+  $cache = APACHE_CACHE_DIR;
+
+  $workbook = new Workbook("/tmp/".$cache.$xlsfile);
+  $worksheet =& $workbook->add_worksheet($metric." vs ".$xaxis);
+
+  $format_bold =& $workbook->add_format();
+  $format_bold->set_bold();
+
+  $rowctr=0;
+  $colctr=0;
+  foreach (columnnames($metric) as $header)
+    {
+#      $worksheet->write($rowctr,$colctr,"$header",$format_bold);
+      $worksheet->write($rowctr,$colctr,"$header");
+      $colctr++;
+    }
+  while ($myresult->fetchInto($row))
+    {
+      $rowctr++;
+      $colctr=0;
+      $keys=array_keys($row);
+      foreach ($keys as $key)
+	{
+	  $data=array_shift($row);
+	  $worksheet->write($rowctr,$colctr,"$data");
+	  $colctr++;
+	}
+    }
+  $workbook->close();
+  echo "<P>Excel file:  <A href=\"".$cache.rawurlencode($xlsfile)."\">".$xlsfile."</A></P>\n";
+}
+
+function metric_as_ods($result,$xaxis,$metric,$system,$start_date,$end_date)
+{
+//   $myresult=$result;
+//   $odsfile=$system."-".$metric."_vs_".$xaxis."-".$start_date."-".$end_date.".ods";
+//   $cache = APACHE_CACHE_DIR;
+
+//   $workbook = new Workbook("/tmp/".$cache.$odsfile);
+//   $worksheet =& $workbook->add_worksheet($metric." vs ".$xaxis);
+
+//   $format_bold =& $workbook->addFormat();
+//   $format_bold->setBold();
+
+//   $rowctr=0;
+//   $colctr=0;
+//   foreach (columnnames($metric) as $header)
+//     {
+//       $worksheet->write($rowctr,$colctr,"$header",$format_bold);
+//       $colctr++;
+//     }
+//   while ($myresult->fetchInto($row))
+//     {
+//       $rowctr++;
+//       $colctr=0;
+//       $keys=array_keys($row);
+//       foreach ($keys as $key)
+// 	{
+// 	  $data=array_shift($row);
+// 	  $worksheet->write($rowctr,$colctr,"$data");
+// 	  $colctr++;
+// 	}
+//     }
+//   $workbook->close();
+//   echo "<P>ODF file:  <A href=\"".$cache.rawurlencode($odsfile)."\">".rawurlencode($odsfile)."</A></P>\n";
+}
+
+function jobstats_input_header()
+{
+  echo "<TABLE>\n";
+  echo "<TR>\n";
+  echo "  <TH>Metrics</TH>\n";
+  echo "  <TH>Graph</TH>";
+  echo "  <TH>Table</TH>\n";
+  echo "  <TH>Excel</TH>\n";
+  //  echo "  <TH>ODF</TH>\n";
+  echo "</TR>\n";
+}
+
+function jobstats_input_spacer()
+{
+  echo "<TR><TH colspan=\"5\"><HR></TH></TR>\n";
+}
+
+function jobstats_input_footer()
+{
+  echo "</TABLE>\n";
+}
 
 function jobstats_input_metric($name,$fn)
 {
@@ -442,6 +538,8 @@ function jobstats_input_metric($name,$fn)
     echo "  <TD>".$name."</TD>";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_graph\" value=\"1\"></TD>\n";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_table\" value=\"1\">\n";
+    echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_xls\" value=\"1\">\n";
+    //    echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_ods\" value=\"1\">\n";
     echo "</TR>\n";
 }
 
@@ -464,6 +562,18 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
 	{
 	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 	  metric_as_table($result,xaxis($fn),metric($fn));
+	}
+
+      if ( isset($_POST[$fn.'_xls']) )
+	{
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
+	}
+
+      if ( isset($_POST[$fn.'_ods']) )
+	{
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
 }

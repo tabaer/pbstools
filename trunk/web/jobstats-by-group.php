@@ -45,14 +45,10 @@ foreach (sys_list() as $host)
 echo "</SELECT><BR>\n";
 echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
 echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
-echo "<TABLE>\n";
-echo "<TR>\n";
-echo "  <TH>Metrics</TH>\n";
-echo "  <TH>Graph</TH>";
-echo "  <TH>Table</TH>\n";
-echo "</TR>\n";
+
 
 // by groupname
+jobstats_input_header();
 jobstats_input_metric("Job Count vs. Group/Project","jobcount_vs_groupname");
 jobstats_input_metric("CPU Time vs. Group/Project","cpuhours_vs_groupname");
 jobstats_input_metric("Job Length vs. Group/Project","walltime_vs_groupname");
@@ -61,8 +57,8 @@ jobstats_input_metric("Real Memory vs. Group/Project","mem_kb_vs_groupname");
 jobstats_input_metric("Virtual Memory vs. Group/Project","vmem_kb_vs_groupname");
 jobstats_input_metric("Walltime Accuracy vs. Group/Project","walltime_acc_vs_groupname");
 jobstats_input_metric("CPU Efficiency vs. Group/Project","cpu_eff_vs_groupname");
+jobstats_input_footer();
 
-echo "</TABLE>\n";
 echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
 
 page_footer();

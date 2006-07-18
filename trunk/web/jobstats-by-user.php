@@ -45,15 +45,9 @@ foreach (sys_list() as $host)
 echo "</SELECT><BR>\n";
 echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
 echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
-echo "<TABLE>\n";
-echo "<TR>\n";
-echo "  <TH>Metrics</TH>\n";
-echo "  <TH>Graph</TH>";
-echo "  <TH>Table</TH>\n";
-echo "</TR>\n";
 
 // by username
-echo "<TR><TH colspan=\"3\"><HR></TH></TR>\n";
+jobstats_input_header();
 jobstats_input_metric("Job Count vs. User","jobcount_vs_username");
 jobstats_input_metric("CPU Time vs. User","cpuhours_vs_username");
 jobstats_input_metric("Job Length vs. User","walltime_vs_username");
@@ -62,8 +56,8 @@ jobstats_input_metric("Real Memory vs. User","mem_kb_vs_username");
 jobstats_input_metric("Virtual Memory vs. User","vmem_kb_vs_username");
 jobstats_input_metric("Walltime Accuracy vs. User","walltime_acc_vs_username");
 jobstats_input_metric("CPU Efficiency vs. User","cpu_eff_vs_username");
+jobstats_input_footer();
 
-echo "</TABLE>\n";
 echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";   
 
 page_footer();
