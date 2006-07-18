@@ -51,23 +51,17 @@ foreach (sys_list() as $host)
 echo "</SELECT><BR>\n";
 echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
 echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
-echo "<TABLE>\n";
-echo "<TR>\n";
-echo "  <TH>Metrics</TH>\n";
-echo "  <TH>Graph</TH>";
-echo "  <TH>Table</TH>\n";
-echo "</TR>\n";
 
 // by month
-echo "<TR><TH colspan=\"3\"><HR></TH></TR>\n";
+jobstats_input_header();
 jobstats_input_metric("Job Count by Month","jobcount_vs_month");
 jobstats_input_metric("CPU Time by Month","cpuhours_vs_month");
 jobstats_input_metric("Job Length by Month","walltime_vs_month");
 jobstats_input_metric("Queue Time by Month","qtime_vs_month");
 jobstats_input_metric("Backlog by Month","backlog_vs_month");
 jobstats_input_metric("Expansion Factor by Month","xfactor_vs_month");
+jobstats_input_footer();
 
-echo "</TABLE>\n";
 echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";   
 
 $db->disconnect;
