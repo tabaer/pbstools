@@ -101,6 +101,20 @@ if ( isset($_POST['system']) )
 			   $_POST['system'],
 			   $_POST['start_date'],
 			   $_POST['end_date']);
+
+    jobstats_output_metric('Active Users vs. CPU Count',
+			   'users_vs_nproc',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Active Groups/Projects vs. CPU Count',
+			   'groups_vs_nproc',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
     
     // by queue
     jobstats_output_metric('Job Count vs. Job Class',
@@ -159,6 +173,20 @@ if ( isset($_POST['system']) )
 			   $_POST['start_date'],
 			   $_POST['end_date']);
     
+    jobstats_output_metric('Active Users vs. Job Class',
+			   'users_vs_queue',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    
+    jobstats_output_metric('Active Groups/Projects vs. Job Class',
+			   'groups_vs_queue',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    
     // by groupname
     jobstats_output_metric('Job Count vs. Group/Project',
 			   'jobcount_vs_groupname',
@@ -211,6 +239,13 @@ if ( isset($_POST['system']) )
     
     jobstats_output_metric('CPU Efficiency vs. Group/Project',
 			   'cpu_eff_vs_groupname',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Active Users vs. Group/Project',
+			   'users_vs_groupname',
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
@@ -301,14 +336,30 @@ if ( isset($_POST['system']) )
 			   $_POST['system'],
 			   $_POST['start_date'],
 			   $_POST['end_date']);
+
     jobstats_output_metric('Backlog by Month',
 			   'backlog_vs_month',
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
 			   $_POST['end_date']);
+
     jobstats_output_metric("Expansion Factor by Month",
 			   "xfactor_vs_month",
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric("Active Users by Month",
+			   "users_vs_month",
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric("Active Groups/Projects by Month",
+			   "groups_vs_month",
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
@@ -324,6 +375,20 @@ if ( isset($_POST['system']) )
 
     jobstats_output_metric('CPU Time vs. Institution',
 			   'cpuhours_vs_institution',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Active Users vs. Institution',
+			   'users_vs_institution',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Active Groups/Projects vs. Institution',
+			   'groups_vs_institution',
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
@@ -353,6 +418,8 @@ else
     jobstats_input_metric("Virtual Memory vs. CPU Count","vmem_kb_vs_nproc");
     jobstats_input_metric("Walltime Accuracy vs. CPU Count","walltime_acc_vs_nproc");
     jobstats_input_metric("CPU Efficiency vs. CPU Count","cpu_eff_vs_nproc");
+    jobstats_input_metric("Active Users vs. CPU Count","users_vs_nproc");
+    jobstats_input_metric("Active Groups/Projects vs. CPU Count","groups_vs_nproc");
     
     // by queue
     jobstats_input_spacer();
@@ -364,6 +431,8 @@ else
     jobstats_input_metric("Virtual Memory vs. Job Class","vmem_kb_vs_queue");
     jobstats_input_metric("Walltime Accuracy vs. Job Class","walltime_acc_vs_queue");
     jobstats_input_metric("CPU Efficiency vs. Job Class","cpu_eff_vs_queue");
+    jobstats_input_metric("Active Users vs. Job Class","users_vs_queue");
+    jobstats_input_metric("Active Groups/Projects vs. Job Class","groups_vs_queue");
 
     // by groupname
     jobstats_input_spacer();
@@ -375,6 +444,7 @@ else
     jobstats_input_metric("Virtual Memory vs. Group/Project","vmem_kb_vs_groupname");
     jobstats_input_metric("Walltime Accuracy vs. Group/Project","walltime_acc_vs_groupname");
     jobstats_input_metric("CPU Efficiency vs. Group/Project","cpu_eff_vs_groupname");
+    jobstats_input_metric("Active Users vs. Group/Project","users_vs_groupname");
 
     // by username
     jobstats_input_spacer();
@@ -393,11 +463,17 @@ else
     jobstats_input_metric("CPU Time by Month","cpuhours_vs_month");
     jobstats_input_metric("Job Length by Month","walltime_vs_month");
     jobstats_input_metric("Queue Time by Month","qtime_vs_month");
+    jobstats_input_metric("Backlog by Month","backlog_vs_month");
+    jobstats_input_metric("Expansion Factor by Month","xfactor_vs_month");
+    jobstats_input_metric("Active Users by Month","users_vs_month");
+    jobstats_input_metric("Active Groups/Projects by Month","groups_vs_month");
     
     // by institution
     jobstats_input_spacer();
     jobstats_input_metric("Job Count by Institution","jobcount_vs_institution");
     jobstats_input_metric("CPU Time by Institution","cpuhours_vs_institution");
+    jobstats_input_metric("Active Users by Institution","users_vs_institution");
+    jobstats_input_metric("Active Groups/Projects by Institution","groups_vs_institution");
 
     jobstats_input_footer();
 

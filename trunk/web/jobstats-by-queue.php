@@ -56,6 +56,8 @@ jobstats_input_metric("Real Memory vs. Job Class","mem_kb_vs_queue");
 jobstats_input_metric("Virtual Memory vs. Job Class","vmem_kb_vs_queue");
 jobstats_input_metric("Walltime Accuracy vs. Job Class","walltime_acc_vs_queue");
 jobstats_input_metric("CPU Efficiency vs. Job Class","cpu_eff_vs_queue");
+jobstats_input_metric("Active Users vs. Job Class","users_vs_queue");
+jobstats_input_metric("Active Groups/Projects vs. Job Class","groups_vs_queue");
 jobstats_input_footer();
 
 echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";   

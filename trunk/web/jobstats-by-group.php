@@ -57,6 +57,7 @@ jobstats_input_metric("Real Memory vs. Group/Project","mem_kb_vs_groupname");
 jobstats_input_metric("Virtual Memory vs. Group/Project","vmem_kb_vs_groupname");
 jobstats_input_metric("Walltime Accuracy vs. Group/Project","walltime_acc_vs_groupname");
 jobstats_input_metric("CPU Efficiency vs. Group/Project","cpu_eff_vs_groupname");
+jobstats_input_metric("Active Users vs. Group/Project","users_vs_groupname");
 jobstats_input_footer();
 
 echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
