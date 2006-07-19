@@ -141,6 +141,8 @@ function columns($metric,$system)
   if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS 'users',COUNT(DISTINCT(groupname)) AS 'groups'";
   if ( $metric=='backlog' ) return "SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours, SEC_TO_TIME(SUM(start_ts-submit_ts)) AS 'SUM(qtime)'";
   if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS 'xfactor'";
+  if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS 'users'";
+  if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS 'groups'";
   return "";
 }
 
@@ -160,6 +162,8 @@ function columnnames($metric)
   if ( $metric=='usercount' ) return array("users","groups");
   if ( $metric=='backlog' ) return array("cpuhours","SUM(qtime)");
   if ( $metric=='xfactor' ) return array("xfactor");
+  if ( $metric=='users' ) return array("users");
+  if ( $metric=='groups' ) return array("groups");
   return array();
 }
 
@@ -245,7 +249,8 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
 	    }
 	}
     } 
-  elseif ( $metric=='cpuhours' || $metric=='xfactor' )
+  elseif ( $metric=='cpuhours' || $metric=='xfactor' ||
+	   $metric=='users' || $metric=='groups' )
     {
       for ($i=0; $i<$nrows; $i++)
 	{
@@ -366,7 +371,8 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
       $graph->yscale->SetAutoMin(1.0);
     }
   if ( $metric!="jobcount" && $metric!="cpuhours" && 
-       $metric!="backlog" && $metric!="xfactor" )
+       $metric!="backlog" && $metric!="xfactor" &&
+       $metric!="users" && $metric!="groups" )
     {
       $maxbar = new BarPlot($max);
       $maxbar->SetWidth(1.0);
@@ -385,7 +391,8 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
   $ybar = new BarPlot($y);
   $ybar->SetWidth(1.0);
   if ( $metric!="jobcount" && $metric!="cpuhours" && 
-       $metric!="backlog" && $metric!="xfactor" )
+       $metric!="backlog" && $metric!="xfactor" &&
+       $metric!="users" && $metric!="groups" )
     {
       $ybar->SetLegend("Mean");
     }
@@ -395,7 +402,8 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
     }  
   $graph->Add($ybar);
   if ( $metric!="jobcount" && $metric!="cpuhours" &&
-       $metric!="backlog" && $metric!="xfactor" )
+       $metric!="backlog" && $metric!="xfactor" &&
+       $metric!="users" && $metric!="groups" )
     {
       $minbar = new BarPlot($min);
       $minbar->SetWidth(1.0);
@@ -551,10 +559,11 @@ function jobstats_input_metric($name,$fn)
 function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
 {
   
-  if ( isset($_POST[$fn.'_graph']) || 
-       isset($_POST[$fn.'_table']) ||
-       isset($_POST[$fn.'_xls']) ||
-       isset($_POST[$fn.'_ods']) )
+  if (    isset($_POST[$fn.'_graph'])
+       || isset($_POST[$fn.'_table'])
+       || isset($_POST[$fn.'_xls']) 
+#      ||  isset($_POST[$fn.'_ods'])
+       )
     {
       echo "<H2>".$name."</H2>\n";
       
@@ -576,11 +585,11 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
-      if ( isset($_POST[$fn.'_ods']) )
-	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
-	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
-	}
+#      if ( isset($_POST[$fn.'_ods']) )
+#	{
+#	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+#	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
+#	}
     }
 }
 

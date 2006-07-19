@@ -56,6 +56,8 @@ jobstats_input_metric("Real Memory vs. CPU Count","mem_kb_vs_nproc");
 jobstats_input_metric("Virtual Memory vs. CPU Count","vmem_kb_vs_nproc");
 jobstats_input_metric("Walltime Accuracy vs. CPU Count","walltime_acc_vs_nproc");
 jobstats_input_metric("CPU Efficiency vs. CPU Count","cpu_eff_vs_nproc");
+jobstats_input_metric("Active Users vs. CPU Count","users_vs_nproc");
+jobstats_input_metric("Active Groups/Projects vs. CPU Count","groups_vs_nproc");
 jobstats_input_footer();
 
 echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";   
