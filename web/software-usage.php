@@ -81,7 +81,39 @@ if ( isset($_POST['system']) )
 			$sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
 		      }
 		  }
-		$sql .= " GROUP BY system;";
+		$sql .= " GROUP BY system";
+		if ( $_POST['system']=="%" )
+		  {
+# compute totals iff wildcarding on all systems
+		    $sql .= " UNION SELECT 'TOTAL:',COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( script IS NOT NULL AND ";
+		    if ( isset($pkgmatch[$key]) )
+		      {
+			$sql .= $pkgmatch[$key];
+		      }
+		    else
+		      {
+			$sql .= " = '".$key."'";
+		      }
+		    $sql .= " )";
+		    if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+			 $_POST['start_date']!="" )
+		      {
+			$sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+			$sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
+		      }
+		    else
+		      {
+			if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
+			  {
+			    $sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+			  }
+			if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
+			  {
+			    $sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
+			  }
+		      }
+		  }
+		$sql .= ";";
 		#echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 		$result = $db->query($sql);
 		if ( DB::isError($db) )
@@ -102,58 +134,6 @@ if ( isset($_POST['system']) )
 			    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
 			  }
 			echo "</TR>\n";
-		      }
-		    if ( $_POST['system']=="%" )
-		      {
-                        # compute totals iff wildcarding on all systems
-			$sql = "SELECT COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( script IS NOT NULL AND ";
-			if ( isset($pkgmatch[$key]) )
-			  {
-			    $sql .= $pkgmatch[$key];
-			  }
-			else
-			  {
-			    $sql .= " = '".$key."'";
-			  }
-			$sql .= " )";
-			if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-			     $_POST['start_date']!="" )
-			  {
-			    $sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-			    $sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
-			  }
-			else
-			  {
-			    if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-			      {
-				$sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-			      }
-			    if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-			      {
-				$sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
-			      }
-			  }
-			$sql .= ";";
-			#echo "<PRE>".htmlspecialchars($sql)."</PRE>\n";
-			$result = $db->query($sql);
-			if ( DB::isError($db) )
-			  {
-			    die ($db->getMessage());
-			  }
-			else
-			  {
-			    while ($result->fetchInto($row))
-			      {
-				$rkeys=array_keys($row);
-				echo "<TR><TH>Total</TH>";
-				foreach ($rkeys as $rkey)
-				  {
-				    $data[$rkey]=array_shift($row);
-				    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
-				  }
-				echo "</TR>\n";
-			      }
-			  }
 		      }
 		    echo "</TABLE>\n";
 		  }
