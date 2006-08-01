@@ -172,6 +172,7 @@ function software_match_list()
   $pkgmatch['R']="script LIKE '%\nR %' AND NOT ( ".$pkgmatch['gaussian'].
     " OR ".$pkgmatch['adf']." )";
   $pkgmatch['sable']="script LIKE '%sable%' AND script NOT LIKE '%DISABLE%'";
+  $pkgmatch['sas']="script LIKE '%\nsas%'";
   $pkgmatch['TURBO']="script LIKE '%pturbo.x%'";
   $pkgmatch['vasp']="script LIKE '%VASP%' OR script LIKE '%vasp%'";
   
