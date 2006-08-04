@@ -4,8 +4,8 @@
 # $HeadURL$
 # $Revision$
 # $Date$
-require_once 'DB.php';
 require_once 'page-layout.php';
+require_once 'dbutils.php';
 require_once 'site-specific.php';
 
 $title = "Software usage";
@@ -42,113 +42,70 @@ $pkgmatch=software_match_list();
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
-    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
-    if ( DB::isError($db) )
+    $db = db_connect();
+    foreach ($keys as $key)
       {
-	die ($db->getMessage());
-      }
-    else
-      {
-	foreach ($keys as $key)
+	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
-	    if ( $key!='system' && $key!='start_date' && $key!='end_date' )
+	    echo "<H3><CODE>".$key."</CODE></H3>\n";
+	    $sql = "SELECT EXTRACT(YEAR_MONTH FROM FROM_UNIXTIME(start_ts)), COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( script IS NOT NULL AND ";
+	    if ( isset($pkgmatch[$key]) )
 	      {
-		echo "<H3><CODE>".$key."</CODE></H3>\n";
-		$sql = "SELECT EXTRACT(YEAR_MONTH FROM FROM_UNIXTIME(start_ts)), COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( script IS NOT NULL AND ";
-		if ( isset($pkgmatch[$key]) )
+		$sql .= $pkgmatch[$key];
+	      }
+	    else
+	      {
+		$sql .= "script LIKE '%".$key."%'";
+	      }
+	    $sql .= " )";
+	    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+		 $_POST['start_date']!="" )
+	      {
+		$sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+		$sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
+	      }
+	    else
+	      {
+		if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
 		  {
-		    $sql .= $pkgmatch[$key];
+		    $sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
 		  }
-		else
+		if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
 		  {
-		    $sql .= "script LIKE '%".$key."%'";
-		  }
-		$sql .= " )";
-		if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-		     $_POST['start_date']!="" )
-		  {
-		    $sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-		    $sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
-		  }
-		else
-		  {
-		    if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-		      {
-			$sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-		      }
-		    if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-		      {
-			$sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
-		      }
-		  }
-		$sql .= " AND EXTRACT(YEAR_MONTH FROM FROM_UNIXTIME(start_ts)) IS NOT NULL GROUP BY EXTRACT(YEAR_MONTH FROM FROM_UNIXTIME(start_ts));";
-		#echo "<PRE>".htmlspecialchars($sql)."</PRE>";
-		$result = $db->query($sql);
-		if ( DB::isError($db) )
-		  {
-		    die ($db->getMessage());
-		  }
-		else
-		  {
-		    echo "<TABLE border=1>\n";
-		    echo "<TR><TH>month</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH><TH>users</TH><TH>groups</TH></TR>\n";
-		    while ($result->fetchInto($row))
-		      {
-			$rkeys=array_keys($row);
-			echo "<TR>";
-			foreach ($rkeys as $rkey)
-			  {
-			    $data[$rkey]=array_shift($row);
-			    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
-			  }
-			echo "</TR>\n";
-		      }
-		    echo "</TABLE>\n";
+		    $sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
 		  }
 	      }
+	    $sql .= " AND EXTRACT(YEAR_MONTH FROM FROM_UNIXTIME(start_ts)) IS NOT NULL GROUP BY EXTRACT(YEAR_MONTH FROM FROM_UNIXTIME(start_ts));";
+            #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
+	    $result = db_query($db,$sql);
+	    echo "<TABLE border=1>\n";
+	    echo "<TR><TH>month</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH><TH>users</TH><TH>groups</TH></TR>\n";
+	    while ($result->fetchInto($row))
+	      {
+		$rkeys=array_keys($row);
+		echo "<TR>";
+		foreach ($rkeys as $rkey)
+		  {
+		    $data[$rkey]=array_shift($row);
+		    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+		  }
+		echo "</TR>\n";
+	      }
+	    echo "</TABLE>\n";
 	  }
       }
-    $db->disconnect();
+    db_disconnect($db);
   }
 else
   {
-    echo "<FORM method=\"POST\" action=\"software-usage-by-month.php\">\n";
-    echo "System:  <SELECT name=\"system\" size=\"1\">\n";
-    echo "<OPTION value=\"%\">Any\n";
-    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
-    if ( DB::isError($db) )
-      {
-        die ($db->getMessage());
-      }
-    else
-      {
-	$sql = "SELECT DISTINCT(system) FROM Jobs;";
-	$result = $db->query($sql);
-	if ( DB::isError($db) )
-	  {
-	    die ($db->getMessage());
-	  }
-	else
-	  {
-	    while ($result->fetchInto($row))
-	      {
-		$rkeys = array_keys($row);
-		foreach ($rkeys as $rkey)
-		  {
-		    echo "<OPTION>".$row[$rkey]."\n";
-		  }
-	      }
-	  }
-      }
-    $db->disconnect();
-    echo "</SELECT><BR>\n";
-    echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
-    echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
+    begin_form("software-usage-by-month.php");
 
-    echo "Show packages:<BR>\n";
-    checkboxes_from_array($packages);
+    system_chooser();
+    date_fields();
 
-    echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
+    checkboxes_from_array("Packages",$packages);
+
+    end_form();
   }
 
 page_footer();

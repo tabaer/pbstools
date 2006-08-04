@@ -4,7 +4,7 @@
 # $HeadURL$
 # $Revision$
 # $Date$
-require_once 'DB.php';
+require_once 'dbutils.php';
 require_once 'page-layout.php';
 require_once 'metrics.php';
 require_once 'site-specific.php';
@@ -35,14 +35,11 @@ if ( isset($_POST['system']) )
   }
 page_header($title);
 
-$db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
-if ( DB::isError($db) )
-  {
-    die ($db->getMessage());
-  }
 
 if ( isset($_POST['system']) )
   {
+    $db = db_connect();
+
     jobstats_summary($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']);
 
     // by CPU count
@@ -393,20 +390,15 @@ if ( isset($_POST['system']) )
 			   $_POST['system'],
 			   $_POST['start_date'],
 			   $_POST['end_date']);
+
+    db_disconnect($db);
   }
 else
   {
-    echo "<FORM method=\"POST\" action=\"jobstats.php\">\n";
-    echo "System:  <SELECT name=\"system\" size=\"1\">\n";
-    echo "<OPTION value=\"%\">Any\n";
-    foreach (sys_list() as $host)
-      {
-	echo "<OPTION>".$host."\n";
-      }
-    echo "</SELECT><BR>\n";
-    echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
-    echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
+    begin_form("jobstats.php");
 
+    virtual_system_chooser();
+    date_fields();
     jobstats_input_header();
     
     // by nproc
@@ -477,9 +469,8 @@ else
 
     jobstats_input_footer();
 
-    echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";   
+    end_form();
   }
 
-$db->disconnect;
 page_footer();
 ?>

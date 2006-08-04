@@ -4,8 +4,8 @@
 # $HeadURL$
 # $Revision$
 # $Date$
-require_once 'DB.php';
 require_once 'page-layout.php';
+require_once 'dbutils.php';
 
 # accept get queries too for handy command-line usage:  suck all the
 # parameters into _POST.
@@ -38,91 +38,48 @@ if (!empty($_POST['all'])) {
 $keys = array_keys($_POST);
 if ( isset($_POST['jobid']) )
   {
-    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
-    if ( DB::isError($db) )
+    $db = db_connect();
+    $sql = "SELECT jobid";
+    foreach ($keys as $key)
       {
-        die ($db->getMessage());
+	if ( isset($_POST[$key]) && $key!='jobid' ) { $sql = $sql.",".$key; }
       }
-    else
+    $sql = $sql." FROM Jobs WHERE jobid LIKE '".$_POST['jobid'].".%' AND system LIKE '".$_POST['system']."';";
+    $result = db_query($db,$sql);
+    while ($result->fetchInto($row))
       {
-	$sql = "SELECT jobid";
+	echo "<TABLE border=1 width=\"100%\">\n";
 	foreach ($keys as $key)
 	  {
-	    if ( isset($_POST[$key]) && $key!='jobid' ) { $sql = $sql.",".$key; }
-	  }
-	$sql = $sql." FROM Jobs WHERE jobid LIKE '".$_POST['jobid'].".%' AND system LIKE '".$_POST['system']."';";
-	$result = $db->query($sql);
-	if ( DB::isError($db) )
-	  {
-	    die ($db->getMessage());
-	  }
-	else
-	  {
-	    while ($result->fetchInto($row))
+	    if ( isset($_POST[$key]) )
 	      {
-		echo "<TABLE border=1 width=\"100%\">\n";
-		foreach ($keys as $key)
+		$data[$key]=array_shift($row);
+		echo "<TR><TD width=\"10%\"><PRE>".$key."</PRE></TD><TD width=\"90%\"><PRE>";
+		if ( $key=="submit_ts" || $key=="start_ts" || $key=="end_ts" )
 		  {
-		    if ( isset($_POST[$key]) )
-		      {
-			$data[$key]=array_shift($row);
-			echo "<TR><TD width=\"10%\"><PRE>".$key."</PRE></TD><TD width=\"90%\"><PRE>";
-			if ( $key=="submit_ts" || $key=="start_ts" || $key=="end_ts" )
-			  {
-			    echo date("Y-m-d H:i:s",$data[$key]);
-			  }
-			else
-			  {
-			    echo htmlspecialchars($data[$key]);
-			  }
-			echo "</PRE></TD></TR>\n";
-		      }
+		    echo date("Y-m-d H:i:s",$data[$key]);
 		  }
-		echo "</TABLE>\n";
-	       }
+		else
+		  {
+		    echo htmlspecialchars($data[$key]);
+		  }
+		echo "</PRE></TD></TR>\n";
+	      }
 	  }
+	echo "</TABLE>\n";
       }
-
-    $db->disconnect();
+    db_disconnect($db);
   }
 else
   {
-    echo "<FORM method=\"POST\" action=\"jobinfo.php\">\n";
-    echo "Job id:  <INPUT type=\"text\" name=\"jobid\" size=\"8\"> (Numeric jobid only!)<BR>\n";
-    echo "System:  <SELECT name=\"system\" size=\"1\">\n";
-    echo "<OPTION value=\"%\">Any\n";
-    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
-    if ( DB::isError($db) )
-      {
-        die ($db->getMessage());
-      }
-    else
-      {
-	$sql = "SELECT DISTINCT(system) FROM Jobs;";
-	$result = $db->query($sql);
-	if ( DB::isError($db) )
-	  {
-	    die ($db->getMessage());
-	  }
-	else
-	  {
-	    while ($result->fetchInto($row))
-	      {
-		$rkeys = array_keys($row);
-		foreach ($rkeys as $rkey)
-		  {
-		    echo "<OPTION>".$row[$rkey]."\n";
-		  }
-	      }
-	  }
-      }
-    $db->disconnect();
-    echo "</SELECT><BR>\n";
+    begin_form("jobinfo.php");
 
-    echo "Show properties:<BR>\n";
-    checkboxes_from_array($props);
+    text_field("Job id","jobid",8);
+    system_chooser();
 
-    echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
+    checkboxes_from_array("Properties",$props);
+
+    end_form();
   }
 
 page_footer();

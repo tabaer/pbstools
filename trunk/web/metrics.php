@@ -4,7 +4,7 @@
 # $HeadURL$
 # $Revision$
 # $Date$
-require_once 'DB.php';
+require_once 'dbutils.php';
 require_once '/var/rw/www/html/phplib/jpgraph/jpgraph.php';
 require_once '/var/rw/www/html/phplib/jpgraph/jpgraph_bar.php';
 require_once '/var/rw/www/html/phplib/jpgraph/jpgraph_error.php';
@@ -108,7 +108,7 @@ function ndays($db,$system,$start_date,$end_date)
   $query="SELECT DATEDIFF(".$end.",".$begin.") FROM Jobs WHERE (".
     sysselect($system).") AND (".dateselect($start_time,$end_time).");";
   #echo "<PRE>".$query."</PRE><BR>\n";
-  $result = $db->query($query);
+  $result = db_query($db,$query);
   $result->fetchInto($row);
   $ndays = $row[0];
 
@@ -192,16 +192,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
     }
   $query .= ";";
 
-  #echo "<PRE>".$query."</PRE>\n";
-  $result = $db->query($query);
-  if ( DB::isError($db) )
-      {
-	die ($db->getMessage());
-      }
-  else
-    {
-      return $result;
-    }
+  return db_query($db,$query);
 }
 
 
