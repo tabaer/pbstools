@@ -81,7 +81,8 @@ else
       }
     else # scatter -- default
       {
-	if ( -e $ENV{'PBS_NODEFILE'} )
+	$sharedfs = "^/(gpfs|lustre|pvfs|home|[a-z])/";
+	if ( -s $ENV{'PBS_NODEFILE'} && !($target =~ $sharedfs) )
 	  {
 	    open(NODES,"uniq ".$ENV{'PBS_NODEFILE'}." |");
 	    @node=<NODES>;
