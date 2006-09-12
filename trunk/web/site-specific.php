@@ -162,6 +162,7 @@ function software_match_list()
   $pkgmatch['a_out']="script LIKE '%a.out%'";
   $pkgmatch['adf']="script LIKE '%ADF%' OR script LIKE '%adf%'";
   $pkgmatch['amber']="script REGEXP '(amber|sander|pmemd|sviol)'";
+  $pkgmatch['blat']="script LIKE '%blat %'";
   $pkgmatch['cbl']="script REGEXP '(cbl|pcbl|biolib)'";
   $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
   $pkgmatch['gamess']="script LIKE '%gamess%' OR script LIKE '%rungmx%'";
