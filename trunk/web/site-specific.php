@@ -114,6 +114,7 @@ function software_list()
 {
   $list=array("a_out",
 	      "abaqus",
+	      "abinit",
 	      "adf",
 	      "amber",
 	      "ansys",
@@ -176,6 +177,7 @@ function software_match_list()
   $pkgmatch['sas']="script LIKE '%\nsas%'";
   $pkgmatch['TURBO']="script LIKE '%pturbo.x%'";
   $pkgmatch['vasp']="script LIKE '%VASP%' OR script LIKE '%vasp%'";
+  $pkgmatch['abinit']="script LIKE '%abinits%' OR script LIKE '%abinitp%'";
   
   return $pkgmatch;
 }
