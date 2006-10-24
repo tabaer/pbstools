@@ -177,7 +177,7 @@ function software_match_list()
   $pkgmatch['sas']="script LIKE '%\nsas%'";
   $pkgmatch['TURBO']="script LIKE '%pturbo.x%'";
   $pkgmatch['vasp']="script LIKE '%VASP%' OR script LIKE '%vasp%'";
-  $pkgmatch['abinit']="script LIKE '%abinits%' OR script LIKE '%abinitp%'";
+  $pkgmatch['abinit']="script LIKE '%abinis%' OR script LIKE '%abinip%'";
   
   return $pkgmatch;
 }
