@@ -48,7 +48,7 @@ if ( isset($_POST['system']) )
 	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT username, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( script IS NOT NULL AND ";
+	    $sql = "SELECT username, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( script IS NOT NULL AND ";
 	    if ( isset($pkgmatch[$key]) )
 	      {
 		$sql .= $pkgmatch[$key];
@@ -75,40 +75,35 @@ if ( isset($_POST['system']) )
 			$sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
 		      }
 		  }
-	    $sql .= " GROUP BY username";
-	    if ( $_POST['system']=="%" )
+	    $sql .= " GROUP BY username UNION SELECT 'TOTAL:',COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( script IS NOT NULL AND ";
+	    if ( isset($pkgmatch[$key]) )
 	      {
-# compute totals iff wildcarding on all systems
-		$sql .= " UNION SELECT 'TOTAL:',COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours FROM Jobs WHERE ( script IS NOT NULL AND ";
-		if ( isset($pkgmatch[$key]) )
-		  {
-		    $sql .= $pkgmatch[$key];
-		  }
-		else
-		  {
-		    $sql .= " = '".$key."'";
-		  }
-		$sql .= " )";
-		if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-		     $_POST['start_date']!="" )
+		$sql .= $pkgmatch[$key];
+	      }
+	    else
+	      {
+		$sql .= " = '".$key."'";
+	      }
+	    $sql .= " )";
+	    if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+		 $_POST['start_date']!="" )
+	      {
+		$sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+		$sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
+	      }
+	    else
+	      {
+		if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
 		  {
 		    $sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-		    $sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
 		  }
-		else
+		if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
 		  {
-		    if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-		      {
-			$sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-		      }
-		    if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-		      {
-			$sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
-		      }
+		    $sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
 		  }
 	      }
 	    $sql .= ";";
-            echo "<PRE>".htmlspecialchars($sql)."</PRE>";
+            #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
 	    echo "<TABLE border=1>\n";
 	    echo "<TR><TH>username</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH></TR>\n";
