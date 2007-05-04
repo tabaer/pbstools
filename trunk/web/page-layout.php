@@ -38,6 +38,7 @@ function page_header($title)
   echo "    </UL>\n";
   echo "    <UL><U>Software usage by</U>\n";
   echo "      <LI><A href=\"software-usage.php\">System</A></LI>";
+  echo "      <LI><A href=\"software-usage-by-user.php\">User</A></LI>";
   echo "      <LI><A href=\"software-usage-by-month.php\">Month</A></LI>";
   echo "    </UL>\n";
   echo "  </TD>\n";
