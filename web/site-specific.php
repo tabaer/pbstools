@@ -17,6 +17,7 @@ function sys_list()
 {
   return array("amd",
 	       "apple",
+	       "bale",
 	       "coe",
 	       "ipf",
 	       "ipf-altix",
@@ -51,6 +52,7 @@ function sysselect($system)
 {
   if ( $system=='amd' ) return "system = 'amd'";
   if ( $system=='apple' ) return "system = 'apple'";
+  if ( $system=='bale' ) return "system = 'bale'";
   if ( $system=='coe' ) return "system = 'coe'";
   if ( $system=='ipf' ) return "system = 'ipf'";
   if ( $system=='ipf-altix' ) return "system = 'ipf' AND hostlist REGEXP '^ipf50[1-3]'";
@@ -86,6 +88,7 @@ function nprocs($system)
 {
   if ( $system=='amd' ) return 256;
   if ( $system=='apple' ) return 64;
+  if ( $system=='bale' ) return 110;
   if ( $system=='coe' ) return 60;
   if ( $system=='ipf' ) return nprocs('ipf-noaltix')+nprocs('ipf-altix');
   if ( $system=='ipf-altix' ) return 64;
