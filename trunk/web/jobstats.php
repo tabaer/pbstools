@@ -1,5 +1,5 @@
 <?php
-# Copyright 2006 Ohio Supercomputer Center
+# Copyright 2006, 2007 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -183,6 +183,113 @@ if ( isset($_POST['system']) )
 			   $_POST['system'],
 			   $_POST['start_date'],
 			   $_POST['end_date']);
+
+    // by wallclock time requested
+    jobstats_output_bucketed_metric('Job Count vs. Job Length Requested',
+				    'jobcount_vs_walltime_req',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('CPU Time vs. Job Length Requested',
+				    'cpuhours_vs_walltime_req',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Queue Time vs. Job Length Requested',
+				    'qtime_vs_walltime_req',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+
+   jobstats_output_bucketed_metric('Job Length vs. Job Length Requested',
+				    'walltime_vs_walltime_req',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Real Memory vs. Job Length Requested',
+				    'mem_kb_vs_walltime_req',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Virtual Memory vs. Job Length Requested',
+				    'vmem_kb_vs_walltime_req',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Walltime_Req Accuracy vs. Job Length Requested',
+				    'walltime_acc_vs_walltime_req',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('CPU Efficiency vs. Job Length Requested',
+				    'cpu_eff_vs_walltime_req',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+
+    // by wallclock time
+    jobstats_output_bucketed_metric('Job Count vs. Job Length',
+				    'jobcount_vs_walltime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('CPU Time vs. Job Length',
+				    'cpuhours_vs_walltime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Queue Time vs. Job Length',
+				    'qtime_vs_walltime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Real Memory vs. Job Length',
+				    'mem_kb_vs_walltime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Virtual Memory vs. Job Length',
+				    'vmem_kb_vs_walltime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Walltime Accuracy vs. Job Length',
+				    'walltime_acc_vs_walltime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('CPU Efficiency vs. Job Length',
+				    'cpu_eff_vs_walltime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
     
     // by groupname
     jobstats_output_metric('Job Count vs. Group/Project',
@@ -425,6 +532,27 @@ else
     jobstats_input_metric("CPU Efficiency vs. Job Class","cpu_eff_vs_queue");
     jobstats_input_metric("Active Users vs. Job Class","users_vs_queue");
     jobstats_input_metric("Active Groups/Projects vs. Job Class","groups_vs_queue");
+
+    // by walltime_req
+    jobstats_input_spacer();
+    jobstats_input_metric("Job Count vs. Job Length Requested","jobcount_vs_walltime_req");
+    jobstats_input_metric("CPU Time vs. Job Length Requested","cpuhours_vs_walltime_req");
+    jobstats_input_metric("Queue Time vs. Job Length Requested","qtime_vs_walltime_req");
+    jobstats_input_metric("Job Length vs. Job Length Requested","walltime_vs_walltime_req");
+    jobstats_input_metric("Real Memory vs. Job Length Requested","mem_kb_vs_walltime_req");
+    jobstats_input_metric("Virtual Memory vs. Job Length Requested","vmem_kb_vs_walltime_req");
+    jobstats_input_metric("Walltime Accuracy vs. Job Length Requested","walltime_acc_vs_walltime_req");
+    jobstats_input_metric("CPU Efficiency vs. Job Length Requested","cpu_eff_vs_walltime_req");
+
+    // by walltime
+    jobstats_input_spacer();
+    jobstats_input_metric("Job Count vs. Job Length","jobcount_vs_walltime");
+    jobstats_input_metric("CPU Time vs. Job Length","cpuhours_vs_walltime");
+    jobstats_input_metric("Queue Time vs. Job Length","qtime_vs_walltime");
+    jobstats_input_metric("Real Memory vs. Job Length","mem_kb_vs_walltime");
+    jobstats_input_metric("Virtual Memory vs. Job Length","vmem_kb_vs_walltime");
+    jobstats_input_metric("Walltime Accuracy vs. Job Length","walltime_acc_vs_walltime");
+    jobstats_input_metric("CPU Efficiency vs. Job Length","cpu_eff_vs_walltime");
 
     // by groupname
     jobstats_input_spacer();

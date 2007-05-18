@@ -1,5 +1,5 @@
 <?php
-# Copyright 2006 Ohio Supercomputer Center
+# Copyright 2006, 2007 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -27,6 +27,10 @@ function xaxis_column($x)
   elseif ( $x=="institution" )
     {
       return "SUBSTRING(username,1,3)";
+    }
+  elseif ( $x=="qtime" )
+    {
+      return "SEC_TO_TIME(start_ts-submit_ts)";
     }
   else
     {
@@ -192,6 +196,64 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
     }
   $query .= ";";
 
+  return db_query($db,$query);
+}
+
+
+// bucket sizes
+function bucket_maxs($xaxis)
+{
+  if ( $xaxis=='nproc' ) return array("2","4","16","64","256","1024");
+  if ( $xaxis=='walltime' ) return array("1:00:00","8:00:00","24:00:00","48:00:00","168:00:00","320:00:00");
+  if ( $xaxis=='walltime_req' ) return array("1:00:00","8:00:00","24:00:00","48:00:00","168:00:00","320:00:00");
+  if ( $xaxis=='qtime' ) return array("1:00:00","4:00:00","24:00:00","48:00:00","168:00:00","320:00:00");
+  if ( $xaxis=='mem_kb' ) return array("262144","1048576","4194304","12582912","33554432");
+  if ( $xaxis=='vmem_kb' ) return array("262144","1048576","4194304","12582912","33554432");
+  return array();
+}
+
+
+function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
+{
+  $first = 0;
+  $query = "";
+  $maxs = bucket_maxs($xaxis);
+  for ( $i=0 ; $i<(count($maxs)+1) ; $i++ )
+    {
+      if ( $i==0 )
+	{ 
+	  $query .= "SELECT '<=".$maxs[$i]."',";
+	}
+      elseif ( $i==count($maxs) )
+	{
+	  $query .= " UNION\nSELECT '>".$maxs[$i-1]."',";
+	}
+      else
+	{
+	  $query .= " UNION\nSELECT '".$maxs[$i-1]."-".$maxs[$i]."',";
+	}
+      $query .= "COUNT(jobid) AS jobcount";
+      if ( columns($metric,$system)!="" )
+	{
+	  $query .= ",".columns($metric,$system);
+	}
+      $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
+	dateselect($start_date,$end_date).")";
+      if ( $i==0 )
+	{
+	  $query .= " AND ( ".xaxis_column($xaxis)." <= '".$maxs[$i]."' )";
+	}
+      elseif ( $i==count($maxs) )
+	{
+	  $query .= " AND ( ".xaxis_column($xaxis)." > '".$maxs[$i-1]."' )";
+	}
+      else
+	{
+	  $query .= " AND ( ".xaxis_column($xaxis)." > '".$maxs[$i-1]."' AND ".xaxis_column($xaxis)." <= '".$maxs[$i]."' )";
+	}
+    }
+  $query .= ";";
+  #print "<PRE>".$query."</PRE>\n";
   return db_query($db,$query);
 }
 
@@ -579,6 +641,43 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
 #      if ( isset($_POST[$fn.'_ods']) )
 #	{
 #	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+#	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
+#	}
+    }
+}
+
+function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_date)
+{
+  
+  if (    isset($_POST[$fn.'_graph'])
+       || isset($_POST[$fn.'_table'])
+       || isset($_POST[$fn.'_xls']) 
+#      ||  isset($_POST[$fn.'_ods'])
+       )
+    {
+      echo "<H2>".$name."</H2>\n";
+      
+      if ( isset($_POST[$fn.'_graph']) )
+	{
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  metric_as_graph($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
+	}
+      
+      if ( isset($_POST[$fn.'_table']) )
+	{
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  metric_as_table($result,xaxis($fn),metric($fn));
+	}
+
+      if ( isset($_POST[$fn.'_xls']) )
+	{
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
+	}
+
+#      if ( isset($_POST[$fn.'_ods']) )
+#	{
+#	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 #	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 #	}
     }
