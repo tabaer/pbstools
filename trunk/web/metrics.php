@@ -49,6 +49,12 @@ function xaxis_column($x)
     }
 }
 
+function clause($xaxis,$metric)
+{
+  if ( $metric=="qtime" || $metric=="xfactor" ) return "( start_ts >= submit_ts )";
+  return "";
+}
+
 function metric($fn)
 {
   return preg_replace('/_vs_.*$/','',$fn);
@@ -205,6 +211,10 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 	}
       $query .= " AND (".xaxis_column($xaxis)." IS NOT NULL) GROUP BY ".xaxis_column($xaxis)." ".sort_criteria($metric."_vs_".$xaxis);
     }
+  if ( clause($xaxis,$metric)!="" )
+    {
+      $query .= " AND ".clause($xaxis,$metric);
+    }
   $query .= ";";
   #print "<PRE>".$query."</PRE>\n";
   return db_query($db,$query);
@@ -241,7 +251,12 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
       $query .= ",MIN(".$xaxis.") AS hidden";
     }
   $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-    dateselect($start_date,$end_date).") GROUP BY ".$xaxis."_bucket ORDER BY hidden;";
+    dateselect($start_date,$end_date).")";
+  if ( clause($xaxis,$metric)!="" )
+    {
+      $query .= " AND ".clause($xaxis,$metric);
+    }
+  $query .= " GROUP BY ".$xaxis."_bucket ORDER BY hidden;";
   #print "<PRE>".$query."</PRE>\n";
   return db_query($db,$query);
 }
