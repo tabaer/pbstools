@@ -523,9 +523,12 @@ function metric_as_xls($result,$xaxis,$metric,$system,$start_date,$end_date)
       $keys=array_keys($row);
       foreach ($keys as $key)
 	{
-	  $data=array_shift($row);
-	  $worksheet->write($rowctr,$colctr,"$data");
-	  $colctr++;
+	  if ( $key!="hidden" )
+	    {
+	      $data=array_shift($row);
+	      $worksheet->write($rowctr,$colctr,"$data");
+	      $colctr++;
+	    }
 	}
     }
   $workbook->close();
