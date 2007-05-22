@@ -213,6 +213,13 @@ if ( isset($_POST['system']) )
 				    $_POST['start_date'],
 				    $_POST['end_date']);
     
+   jobstats_output_bucketed_metric('Expansion Factor vs. Job Length Requested',
+				    'xfactor_vs_walltime_req',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+
     jobstats_output_bucketed_metric('Real Memory vs. Job Length Requested',
 				    'mem_kb_vs_walltime_req',
 				    $db,
@@ -227,14 +234,14 @@ if ( isset($_POST['system']) )
 				    $_POST['start_date'],
 				    $_POST['end_date']);
     
-    jobstats_output_bucketed_metric('Walltime_Req Accuracy vs. Job Length Requested',
+    jobstats_output_metric('Walltime Accuracy vs. Job Length Requested',
 				    'walltime_acc_vs_walltime_req',
 				    $db,
 				    $_POST['system'],
 				    $_POST['start_date'],
 				    $_POST['end_date']);
     
-    jobstats_output_bucketed_metric('CPU Efficiency vs. Job Length Requested',
+    jobstats_output_metric('CPU Efficiency vs. Job Length Requested',
 				    'cpu_eff_vs_walltime_req',
 				    $db,
 				    $_POST['system'],
@@ -258,6 +265,20 @@ if ( isset($_POST['system']) )
     
     jobstats_output_bucketed_metric('Queue Time vs. Job Length',
 				    'qtime_vs_walltime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+   jobstats_output_bucketed_metric('Job Length vs. Job Length',
+				    'walltime_vs_walltime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+   jobstats_output_bucketed_metric('Expansion Factor vs. Job Length',
+				    'xfactor_vs_walltime',
 				    $db,
 				    $_POST['system'],
 				    $_POST['start_date'],

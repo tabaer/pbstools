@@ -32,6 +32,17 @@ function xaxis_column($x)
     {
       return "SEC_TO_TIME(start_ts-submit_ts)";
     }
+  elseif ( $x=="walltime" || $x=="walltime_req" )
+    {
+      $maxs = bucket_maxs($x);
+      $column = "CASE WHEN ".$x." <= '".$maxs[0]."' THEN '<=".$maxs[0]."'\n\t";
+      for ( $i=1 ; $i<count($maxs) ; $i++ )
+	{
+	  $column .= " WHEN ".$x." > '".$maxs[$i-1]."' AND ".$x." <= '".$maxs[$i]."' THEN '".$maxs[$i-1]."-".$maxs[$i]."'\n\t";
+	}
+      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS ".$x."_bucket";
+      return $column;
+    }
   else
     {
       return $x;
@@ -195,7 +206,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
       $query .= " AND (".xaxis_column($xaxis)." IS NOT NULL) GROUP BY ".xaxis_column($xaxis)." ".sort_criteria($metric."_vs_".$xaxis);
     }
   $query .= ";";
-
+  #print "<PRE>".$query."</PRE>\n";
   return db_query($db,$query);
 }
 
@@ -215,44 +226,22 @@ function bucket_maxs($xaxis)
 
 function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 {
-  $first = 0;
-  $query = "";
-  $maxs = bucket_maxs($xaxis);
-  for ( $i=0 ; $i<(count($maxs)+1) ; $i++ )
+
+  $query = "SELECT ".xaxis_column($xaxis).",COUNT(jobid) AS jobcount";
+  if ( columns($metric,$system)!="" )
     {
-      if ( $i==0 )
-	{ 
-	  $query .= "SELECT '<=".$maxs[$i]."',";
-	}
-      elseif ( $i==count($maxs) )
-	{
-	  $query .= " UNION\nSELECT '>".$maxs[$i-1]."',";
-	}
-      else
-	{
-	  $query .= " UNION\nSELECT '".$maxs[$i-1]."-".$maxs[$i]."',";
-	}
-      $query .= "COUNT(jobid) AS jobcount";
-      if ( columns($metric,$system)!="" )
-	{
-	  $query .= ",".columns($metric,$system);
-	}
-      $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-	dateselect($start_date,$end_date).")";
-      if ( $i==0 )
-	{
-	  $query .= " AND ( ".xaxis_column($xaxis)." <= '".$maxs[$i]."' )";
-	}
-      elseif ( $i==count($maxs) )
-	{
-	  $query .= " AND ( ".xaxis_column($xaxis)." > '".$maxs[$i-1]."' )";
-	}
-      else
-	{
-	  $query .= " AND ( ".xaxis_column($xaxis)." > '".$maxs[$i-1]."' AND ".xaxis_column($xaxis)." <= '".$maxs[$i]."' )";
-	}
+      $query .= ",".columns($metric,$system);
     }
-  $query .= ";";
+  if ( $xaxis=="walltime" || $xaxis=="walltime_req" )
+    {
+      $query .= ",MIN(TIME_TO_SEC(".$xaxis.")) AS hidden";
+    }
+  else
+    {
+      $query .= ",MIN(".$xaxis.") AS hidden";
+    }
+  $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
+    dateselect($start_date,$end_date).") GROUP BY ".$xaxis."_bucket ORDER BY hidden;";
   #print "<PRE>".$query."</PRE>\n";
   return db_query($db,$query);
 }
@@ -492,8 +481,11 @@ function metric_as_table($result,$xaxis,$metric)
       $keys=array_keys($row);
       foreach ($keys as $key)
 	{
-	  $data=array_shift($row);
-	  echo "<TD align=\"right\"><PRE>".$data."</PRE></TD>";
+	  if ( $key!="hidden" )
+	    {
+	      $data=array_shift($row);
+	      echo "<TD align=\"right\"><PRE>".$data."</PRE></TD>";
+	    }
 	}
       echo "</TR>\n";
     }
