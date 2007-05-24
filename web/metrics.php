@@ -35,12 +35,12 @@ function xaxis_column($x)
   elseif ( $x=="walltime" || $x=="walltime_req" )
     {
       $maxs = bucket_maxs($x);
-      $column = "CASE WHEN ".$x." <= '".$maxs[0]."' THEN '<=".$maxs[0]."'\n\t";
+      $column = "CASE WHEN ".$x." <= '".$maxs[0]."' THEN '<=".$maxs[0]."'";
       for ( $i=1 ; $i<count($maxs) ; $i++ )
 	{
-	  $column .= " WHEN ".$x." > '".$maxs[$i-1]."' AND ".$x." <= '".$maxs[$i]."' THEN '".$maxs[$i-1]."-".$maxs[$i]."'\n\t";
+	  $column .= " WHEN ".$x." > '".$maxs[$i-1]."' AND ".$x." <= '".$maxs[$i]."' THEN '".$maxs[$i-1]."-".$maxs[$i]."'";
 	}
-      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS ".$x."_bucket";
+      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS ".$x;
       return $column;
     }
   else
@@ -256,7 +256,7 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
     {
       $query .= " AND ".clause($xaxis,$metric);
     }
-  $query .= " GROUP BY ".$xaxis."_bucket ORDER BY hidden;";
+  $query .= " GROUP BY ".$xaxis." ORDER BY hidden;";
   #print "<PRE>".$query."</PRE>\n";
   return db_query($db,$query);
 }
