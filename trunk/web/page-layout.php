@@ -41,6 +41,7 @@ function page_header($title)
   echo "      <LI><A href=\"software-usage.php\">System</A></LI>";
   echo "      <LI><A href=\"software-usage-by-user.php\">User</A></LI>";
   echo "      <LI><A href=\"software-usage-by-group.php\">Group</A></LI>";
+  echo "      <LI><A href=\"software-usage-by-walltime.php\">Job Length</A></LI>";
   echo "      <LI><A href=\"software-usage-by-month.php\">Month</A></LI>";
   echo "    </UL>\n";
   echo "  </TD>\n";
