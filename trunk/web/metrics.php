@@ -209,11 +209,13 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 	{
 	  $query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' )";
 	}
-      $query .= " AND (".xaxis_column($xaxis)." IS NOT NULL) GROUP BY ".xaxis_column($xaxis)." ".sort_criteria($metric."_vs_".$xaxis);
-    }
-  if ( clause($xaxis,$metric)!="" )
-    {
-      $query .= " AND ".clause($xaxis,$metric);
+      $query .= " AND (".xaxis_column($xaxis)." IS NOT NULL)";
+      if ( clause($xaxis,$metric)!="" )
+	{
+	  $query .= " AND ".clause($xaxis,$metric);
+	}    
+
+      $query .= " GROUP BY ".xaxis_column($xaxis)." ".sort_criteria($metric."_vs_".$xaxis);
     }
   $query .= ";";
   #print "<PRE>".$query."</PRE>\n";
