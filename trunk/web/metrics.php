@@ -201,7 +201,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
      {
        $query .= ",".columns($metric,$system);
      }
-   $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
+   $query .= ",NULL AS hidden FROM Jobs WHERE (".sysselect($system).") AND (".
      dateselect($start_date,$end_date).")";
   if ( $xaxis!="" )
     {
