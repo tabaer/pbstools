@@ -201,9 +201,9 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
      {
        $query .= ",".columns($metric,$system);
      }
-   $query .= ",NULL AS hidden FROM Jobs WHERE (".sysselect($system).") AND (".
+   $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
      dateselect($start_date,$end_date).")";
-  if ( $xaxis!="" )
+   if ( $xaxis!="" )
     {
       if ( $xaxis=="institution" )
 	{
@@ -484,12 +484,20 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
 
 function metric_as_table($result,$xaxis,$metric)
 {
+  $mycolumnname=array($xaxis,"jobcount");
+  foreach (columnnames($metric) as $columnname)
+    {
+      array_push($mycolumnname,$columnname);
+    }
   $myresult=$result;
   echo "<TABLE border=\"1\">\n";
-  echo "<TR><TH>".$xaxis."</TH><TH>jobcount</TH>";
-  foreach (columnnames($metric) as $header)
+  echo "<TR>";
+  foreach ($mycolumnname as $header)
     {
-      echo "<TH>".$header."</TH>";
+      if ( !($header=='hidden') && !($header=='') )
+	{
+	  echo "<TH>".$header."</TH>";
+	}
     }
   echo "</TR>\n";
   while ($myresult->fetchInto($row))
@@ -498,10 +506,9 @@ function metric_as_table($result,$xaxis,$metric)
       $keys=array_keys($row);
       foreach ($keys as $key)
 	{
-	  if ( $key!="hidden" )
+	  if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
 	    {
-	      $data=array_shift($row);
-	      echo "<TD align=\"right\"><PRE>".$data."</PRE></TD>";
+	      echo "<TD align=\"right\"><PRE>".$row[$key]."</PRE></TD>";
 	    }
 	}
       echo "</TR>\n";
@@ -522,13 +529,14 @@ function metric_as_xls($result,$xaxis,$metric,$system,$start_date,$end_date)
   $format_hdr->set_bold();
   $format_hdr->set_align('center');
 
+  $mycolumnname=array($xaxis,"jobcount");
+  foreach (columnnames($metric) as $columnname)
+    {
+      array_push($mycolumnname,$columnname);
+    }
   $rowctr=0;
   $colctr=0;
-  $worksheet->write($rowctr,$colctr,"$xaxis",$format_hdr);
-  $colctr++;
-  $worksheet->write($rowctr,$colctr,"jobcount",$format_hdr);
-  $colctr++;
-  foreach (columnnames($metric) as $header)
+  foreach ($mycolumnname as $header)
     {
       $worksheet->write($rowctr,$colctr,"$header",$format_hdr);
       $colctr++;
@@ -540,10 +548,9 @@ function metric_as_xls($result,$xaxis,$metric,$system,$start_date,$end_date)
       $keys=array_keys($row);
       foreach ($keys as $key)
 	{
-	  if ( $key!="hidden" )
+	  if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
 	    {
-	      $data=array_shift($row);
-	      $worksheet->write($rowctr,$colctr,"$data");
+	      $worksheet->write($rowctr,$colctr,$row[$key]);
 	      $colctr++;
 	    }
 	}
