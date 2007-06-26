@@ -38,9 +38,20 @@ function xaxis_column($x)
       $column = "CASE WHEN ".$x." <= '".$maxs[0]."' THEN '<=".$maxs[0]."'";
       for ( $i=1 ; $i<count($maxs) ; $i++ )
 	{
-	  $column .= " WHEN ".$x." > '".$maxs[$i-1]."' AND ".$x." <= '".$maxs[$i]."' THEN '".$maxs[$i-1]."-".$maxs[$i]."'";
+	  $column .= " WHEN ".$x." > '".$maxs[$i-1]."' AND ".$x." <= '".$maxs[$i]."' THEN '&gt;".$maxs[$i-1]."-".$maxs[$i]."'";
 	}
       $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS ".$x;
+      return $column;
+    }
+  elseif ( $x=="nproc_bucketed")
+    {
+      $maxs = bucket_maxs("nproc");
+      $column = "CASE WHEN nproc <= '".$maxs[0]."' THEN '<=".$maxs[0]."'";
+      for ( $i=1 ; $i<count($maxs) ; $i++ )
+	{
+	  $column .= " WHEN nproc > '".$maxs[$i-1]."' AND nproc <= '".$maxs[$i]."' THEN '&gt;".$maxs[$i-1]."-".$maxs[$i]."'";
+	}
+      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS nproc";
       return $column;
     }
   else
@@ -159,11 +170,12 @@ function columns($metric,$system)
       return "SEC_TO_TIME(MIN(nproc*TIME_TO_SEC(walltime))) AS 'MIN(cputime)',SEC_TO_TIME(MAX(nproc*TIME_TO_SEC(walltime))) AS 'MAX(cputime)',SEC_TO_TIME(AVG(nproc*TIME_TO_SEC(walltime))) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(nproc*TIME_TO_SEC(walltime))) AS 'STDDEV(cputime)'";
   if ( $metric=='walltime_acc' ) return "MIN(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MIN(walltime_acc)',MAX(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MAX(walltime_acc)',AVG(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'AVG(walltime_acc)',STDDEV(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'STDDEV(walltime_acc)'";
   if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),MAX(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),AVG(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),STDDEV(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime)))";
-  if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS 'users',COUNT(DISTINCT(groupname)) AS 'groups'";
+  if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups";
   if ( $metric=='backlog' ) return "SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours, SEC_TO_TIME(SUM(start_ts-submit_ts)) AS 'SUM(qtime)'";
-  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS 'xfactor'";
-  if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS 'users'";
-  if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS 'groups'";
+  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
+  if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS users";
+  if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS groups";
+  if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system);
   return "";
 }
 
@@ -185,6 +197,7 @@ function columnnames($metric)
   if ( $metric=='xfactor' ) return array("xfactor");
   if ( $metric=='users' ) return array("users");
   if ( $metric=='groups' ) return array("groups");
+  if ( $metric=='dodmetrics' ) return array("users","projects","cpuhours");
   return array();
 }
 
@@ -226,7 +239,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 // bucket sizes
 function bucket_maxs($xaxis)
 {
-  if ( $xaxis=='nproc' ) return array("2","4","16","64","256","1024");
+  if ( $xaxis=='nproc' ) return array("1","4","8","16","32","64","128","256","512","1024");
   if ( $xaxis=='walltime' ) return array("1:00:00","8:00:00","24:00:00","48:00:00","168:00:00","320:00:00");
   if ( $xaxis=='walltime_req' ) return array("1:00:00","8:00:00","24:00:00","48:00:00","168:00:00","320:00:00");
   if ( $xaxis=='qtime' ) return array("1:00:00","4:00:00","24:00:00","48:00:00","168:00:00","320:00:00");
@@ -248,6 +261,10 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
     {
       $query .= ",MIN(TIME_TO_SEC(".$xaxis.")) AS hidden";
     }
+  elseif ( $xaxis=="nproc_bucketed" )
+    {
+      $query .= ",MIN(nproc) AS hidden";
+    }
   else
     {
       $query .= ",MIN(".$xaxis.") AS hidden";
@@ -258,7 +275,15 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
     {
       $query .= " AND ".clause($xaxis,$metric);
     }
-  $query .= " GROUP BY ".$xaxis." ORDER BY hidden;";
+  if ( $xaxis=="nproc_bucketed" )
+    {
+      $query .= " GROUP BY nproc";
+    }
+  else
+    {
+      $query .= " GROUP BY ".$xaxis;
+    }
+  $query .= " ORDER BY hidden;";
   #print "<PRE>".$query."</PRE>\n";
   return db_query($db,$query);
 }
