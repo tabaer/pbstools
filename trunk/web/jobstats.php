@@ -519,6 +519,14 @@ if ( isset($_POST['system']) )
 			   $_POST['start_date'],
 			   $_POST['end_date']);
 
+    // custom wackiness
+    jobstats_output_bucketed_metric('DoD Metrics vs. Processor Count',
+				    'dodmetrics_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+
     db_disconnect($db);
   }
 else
@@ -615,6 +623,10 @@ else
     jobstats_input_metric("CPU Time by Institution","cpuhours_vs_institution");
     jobstats_input_metric("Active Users by Institution","users_vs_institution");
     jobstats_input_metric("Active Groups/Projects by Institution","groups_vs_institution");
+
+    // custom wackiness
+    jobstats_input_spacer();
+    jobstats_input_metric("DoD Metrics vs. Processor Count","dodmetrics_vs_nproc_bucketed");
 
     jobstats_input_footer();
 
