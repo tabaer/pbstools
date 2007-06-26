@@ -102,7 +102,7 @@ function nprocs($system)
   if ( $system=='ipf+mck-noaltix' ) return nprocs('ipf-noaltix');
   if ( $system=='ipf+mck-bigmem' ) return nprocs('ipf-bigmem');
   if ( $system=='ipf+mck-oldmyri' ) return nprocs('ipf-oldmyri');
-  if ( $system=='mck' ) return 328;
+  if ( $system=='mck' ) return nprocs('mck-noaltix')+nprocs('mck-altix');
   if ( $system=='mck-altix' ) return 32;
   if ( $system=='mck-noaltix' ) return nprocs('mck-myri')+nprocs('mck-bigmem');
   if ( $system=='mck-bigmem' ) return 40;
