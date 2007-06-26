@@ -51,6 +51,7 @@ jobstats_input_metric("Virtual Memory vs. Group/Project","vmem_kb_vs_groupname")
 jobstats_input_metric("Walltime Accuracy vs. Group/Project","walltime_acc_vs_groupname");
 jobstats_input_metric("CPU Efficiency vs. Group/Project","cpu_eff_vs_groupname");
 jobstats_input_metric("Active Users vs. Group/Project","users_vs_groupname");
+jobstats_input_metric("Processor Count vs. Group/Project","nproc_vs_groupname");
 jobstats_input_footer();
 
 end_form();

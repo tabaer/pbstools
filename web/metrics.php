@@ -176,6 +176,8 @@ function columns($metric,$system)
   if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS users";
   if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS groups";
   if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system);
+  if ( $metric=='nproc' ) return "MIN(nproc),MAX(nproc),AVG(nproc),STDDEV(nproc)";
+
   return "";
 }
 
@@ -198,6 +200,8 @@ function columnnames($metric)
   if ( $metric=='users' ) return array("users");
   if ( $metric=='groups' ) return array("groups");
   if ( $metric=='dodmetrics' ) return array("users","projects","cpuhours");
+  if ( $metric=='nproc' ) return array("MIN(nproc)","MAX(nproc)","AVG(nproc)","STDDEV(nproc)");
+  
   return array();
 }
 

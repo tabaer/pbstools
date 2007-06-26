@@ -376,6 +376,13 @@ if ( isset($_POST['system']) )
 			   $_POST['start_date'],
 			   $_POST['end_date']);
     
+    jobstats_output_metric('Processor Count vs. Group/Project',
+			   'nproc_vs_groupname',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    
     // by username
     jobstats_output_metric('Job Count vs. User',
 			   'jobcount_vs_username',
@@ -594,6 +601,7 @@ else
     jobstats_input_metric("Walltime Accuracy vs. Group/Project","walltime_acc_vs_groupname");
     jobstats_input_metric("CPU Efficiency vs. Group/Project","cpu_eff_vs_groupname");
     jobstats_input_metric("Active Users vs. Group/Project","users_vs_groupname");
+    jobstats_input_metric("Processor Count vs. Group/Project","nproc_vs_groupname");
 
     // by username
     jobstats_input_spacer();
