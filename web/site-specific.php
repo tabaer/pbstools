@@ -135,7 +135,9 @@ function software_list()
 	      "blat",
 	      "cbl",
 	      "CHARMM",
+	      "cpmd",
 	      "decypher",
+	      "ex_e",
 	      "fidap",
 	      "fdl3di",
 	      "flow3d",
@@ -180,18 +182,22 @@ function software_match_list()
     }
 
   # exceptions
+  # REGEXP match is ***MUCH*** slower than regular LIKE matching
+  # in MySQL, so don't use REGEXP unless you really need it.
   $pkgmatch['a_out']="script LIKE '%a.out%'";
   $pkgmatch['abinit']="script LIKE '%abinis%' OR script LIKE '%abinip%'";
   $pkgmatch['adf']="script LIKE '%ADF%' OR script LIKE '%adf%'";
   $pkgmatch['AliEn']="( script LIKE '%aliroot%' OR script LIKE '%agent.startup%' )";
-  $pkgmatch['amber']="script REGEXP '(amber|sander|pmemd|sviol)'";
+  $pkgmatch['amber']="( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' )";
   $pkgmatch['blat']="script LIKE '%blat %'";
   $pkgmatch['cbl']="script REGEXP '(cbl|pcbl|biolib)'";
+  $pkgmatch['cpmd']="script LIKE '%cpmd.x%'";
   $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
+  $pkgmatch['ex_e']="script LIKE '%ex.e%'";
   $pkgmatch['gamess']="script LIKE '%gamess%' OR script LIKE '%rungmx%'";
   $pkgmatch['gaussian']="script LIKE '%g98%' OR script LIKE '%g03%'";
   $pkgmatch['GLAST']="( script LIKE '%glast%' OR script LIKE '%gp run%' )";
-  $pkgmatch['gromacs']="( script LIKE '%gromacs%' OR script LIKE '%mdrun_d%' OR script LIKE '%rgmx%' )";
+  $pkgmatch['gromacs']="( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' )";
   $pkgmatch['LAMMPS']="( script LIKE '%lammps' OR script LIKE '%lmp_%' )";
   $pkgmatch['mrbayes']="script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%'";
   $pkgmatch['NCBI']="script REGEXP '(ncbi|blastall|fastacmd|formatdb|rpsblast|seqtest)'";
