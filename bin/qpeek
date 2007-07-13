@@ -147,7 +147,7 @@ sub mothersuperior
       if ( $_ =~ /exec_host/ )
         {
 	  ($keyword,$node)=split(/=/);
-	  $node=~s:/[0-9]+[A-z0-9/+]*::;
+	  $node=~s:/[0-9]+[A-z0-9/+-]*::;
 	  $keyword="";
 	}
     }
