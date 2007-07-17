@@ -117,20 +117,41 @@ if ($opt_v) { $verbose_mode = 1; $brief_mode = 0; }
 
 # Append to $safelist the names of all users who have jobs currently running
 # on this host
-# The following approach doesn't put any load on the 
-my $jobuserlist = `strings $spool/mom_priv/jobs/*.JB | grep PBS_O_LOGNAME | sed 's/PBS_O_LOGNAME=//g' | sort | uniq | tr '\n' '|'`;
-chop($jobuserlist);
-if ( $jobuserlist ne "" )
+# The following approach doesn't put any load on the PBS server, but forces
+# reaver to be run by root
+my $ptn = "$spool/mom_priv/jobs/*.JB";
+if ( glob($ptn) )
+{
+    my $jobuserlist = `cat $ptn | strings | grep PBS_O_LOGNAME | sed 's/PBS_O_LOGNAME=//g' | sort | uniq | tr '\n' '|'`;
+    chop($jobuserlist);
+    if ( $jobuserlist ne "" )
+    {
+	if ( $safelist eq "" )
+	{
+	    $safelist = $jobuserlist;
+	}
+	else
+	{
+	    $safelist .= "|".$jobuserlist;
+	}
+    }
+}
+
+# Append to $safelist the owner of /dev/console
+my $consoleowner = `stat -c %U /dev/console`;
+chop($consoleowner);
+if ( $consoleowner ne "root" )
 {
     if ( $safelist eq "" )
     {
-	$safelist = $jobuserlist;
+	$safelist = $consoleowner;
     }
     else
     {
-	$safelist .= "|".$jobuserlist;
+	$safelist .= "|".$consoleowner;
     }
 }
+
   
 if ( $safelist ne "" )
   {
