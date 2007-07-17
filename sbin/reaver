@@ -9,7 +9,7 @@
 # $Date$
 #
 # Originally intended to be run inside a PBS job epilogue:
-#   all -j$PBS_JOBID -p /usr/local/sbin/reaver [jobid [jobids...]]
+#   all -j$PBS_JOBID -p /usr/local/sbin/reaver
 # where jobid = (jobid to clean up)
 #
 # Why is this called "reaver" and not "reaper"?  Because I like
@@ -40,7 +40,7 @@ my $brief_mode = 0;
 my $verbose_mode = 0;
 
 # Usage/help functions
-my $USAGE = "$0 [-hkbv] [jobid [jobids...]]";
+my $USAGE = "$0 [-hkbv]";
 my $HELP = "Options:
  -h, --help
     Print detailed help screen
@@ -50,9 +50,39 @@ my $HELP = "Options:
     Display only the stray process IDs
  -v, --verbose
     Display extra info
- <jobid>
-    ID of batch job to remove from safe list
 ";
+
+# Find $PBS_HOME
+my $spool = undef;
+if ( defined($ENV{"PBS_HOME"}) )
+  {
+      $spool=$ENV{"PBS_HOME"};
+  }
+else
+{
+    my @defaults=("/usr/spool/PBS",
+		  "/var/spool/pbs",
+		  "/var/spool/torque",
+		  "/var/spool/batch/pbs",
+		  "/var/spool/batch/torque",
+		  "/var/spool/batch/pbs-piv",
+		  "/var/spool/batch/pbs-ipf",
+		  ".",
+		  );
+    foreach my $dir ( @defaults )
+    {
+        if ( -d $dir )
+	{
+            $spool=$dir;
+            last;
+	}
+    }
+}
+if ( !defined($spool) )
+{
+    die "Unable to find PBS spool directory!\n";
+}
+
 
 sub print_usage {
         print "Usage: $USAGE\n";
@@ -85,135 +115,22 @@ if ($opt_k) { $kill_mode = 1; }
 if ($opt_b) { $brief_mode = 1; }
 if ($opt_v) { $verbose_mode = 1; $brief_mode = 0; }
 
-# append to $safelist the names of all users who have jobs currently running
+# Append to $safelist the names of all users who have jobs currently running
 # on this host
-# first, we have to get a list of all the PBS jobids assigned to this host
-my $hostname=`hostname`;
-chomp($hostname);
-my $joblist=undef;
-
-# Guess absolute path to command if it isn't already in $PATH
-eval
-  {
-    no warnings "exec";
-    open(PBSNODES, "pbsnodes -a |")
-    or open(PBSNODES, "/usr/local/pbs/bin/pbsnodes -a |");
-  } or die "Cannot run pbsnodes command: $!";
-
-while (<PBSNODES>)
-  {
-    # pbsnodes -a output looks like this
-    # host
-    #      indented list of key = value pairs for host
-    # blank line
-    #
-    # so we want to find $hostname in the list and then get the value
-    # of "jobs = " under that
-    chomp;
-    if ( $_ eq $hostname )
-      {
-        $joblist="";
-	while (<PBSNODES>)
-	  {
-	    chomp;
-	    my ($key,$value) = split(/ \= /);
-	    last unless $key;
-	    $key =~ s/^ *//g;
-	    if ( $key eq "jobs" )
-	      {
-		$joblist=$value;
-		$joblist =~ s/[0-9]+\///g;
-		$joblist =~ s/\,//g;
-		last;
-	      }
-	  }
-	last;
-      }
-  }
-close(PBSNODES);
-die "pbsnodes failure" if ( ($?>>8)!=0 );
-
-die "Host $hostname not found in pbsnodes output.\n" unless defined($joblist);
-
-if ( $joblist ne "" )
-  {
-    my @alljobs = split(/ /,$joblist);
-    # there may be duplicates in the job list; extract unique values
-    # using method taken from online version of O'Reilly's Perl Cookbook
-    my %seen = ();
-    foreach my $item (@alljobs) {
-      $seen{$item}++;
+# The following approach doesn't put any load on the 
+my $jobuserlist = `strings $spool/mom_priv/jobs/*.JB | grep PBS_O_LOGNAME | sed 's/PBS_O_LOGNAME=//g' | sort | uniq | tr '\n' '|'`;
+chop($jobuserlist);
+if ( $jobuserlist ne "" )
+{
+    if ( $safelist eq "" )
+    {
+	$safelist = $jobuserlist;
     }
-    my @jobs = keys %seen;
-    print "Running jobs:  @jobs\n" if $verbose_mode;
-    
-    # remove from @jobs any jobids given on the command line
-    if ( defined($ARGV[0]) )
-      {
-	my $ptn="";
-	foreach my $jobid ( @ARGV )
-	  {
-	    if ( $ptn eq "" )
-	      {
-		$ptn = $jobid;
-	      }
-	    else
-	      {
-		$ptn .= "|$jobid"
-	      }
-	  }
-	if ( $ptn ne "" )
-	  {
-	    @alljobs=@jobs;
-	    @jobs=();
-	    for ( my $i=0; $i<=$#alljobs; $i++ )
-	      {
-		if ( !($alljobs[$i] =~ /^($ptn)/) )
-		  {
-		    push(@jobs,$alljobs[$i]);
-		  }
-	      }
-	  }
-      }
-      
-    # now that we have a list of unique jobids, we need to get their
-    # usernames and add them to $safelist
-    print "Safe jobs:  " if $verbose_mode;
-    if ( @jobs )
-      {
-        eval {
-            no warnings "exec";
-            open(QSTAT,"qstat @jobs |")
-            or open(QSTAT,"/usr/local/pbs/bin/qstat @jobs |");
-        } or die "Cannot run qstat command: $!";
-	# skip 1st 2 lines of qstat output -- it's just headers
-	<QSTAT>;
-	<QSTAT>;
-	while (<QSTAT>)
-	  {
-	    my ($jobid,$jobname,$user,$time,$status,$queue)=split(/ +/);
-	    print "$jobid($user) " if $verbose_mode;
-	    if ( ! ($safelist =~ /$user/) )
-	      {
-		if ( $safelist eq "" )
-		  {
-		    $safelist = "$user";
-		  }
-		else
-		  {
-		    $safelist .= "|$user";
-		  }
-	      }
-	  }
-	close(QSTAT);
-	die "qstat failure" if ( ($?>>8)!=0 );
-      }
-    print "\n" if $verbose_mode;
-  }
-else
-  {
-    print "Running jobs:  (none)\n" if $verbose_mode;
-  }  
+    else
+    {
+	$safelist .= "|".$jobuserlist;
+    }
+}
   
 if ( $safelist ne "" )
   {
