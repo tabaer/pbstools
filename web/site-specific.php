@@ -134,7 +134,7 @@ function software_list()
 	      "ansys",
 	      "blat",
 	      "cbl",
-	      "CHARMM",
+	      "charmm",
 	      "cpmd",
 	      "decypher",
 	      "ex_e",
@@ -144,17 +144,18 @@ function software_list()
 	      "fluent",
 	      "gaussian",
 	      "gamess",
-	      "GLAST",
+	      "glast",
 	      "gromacs",
-	      "LAMMPS",
-	      "LMF",
+	      "jaguar",
+	      "lammps",
+	      "lmf",
 	      "lsdyna",
 	      "mathematica",
 	      "matlab",
 	      "mrbayes",
-	      "NAG",
+	      "nag",
 	      "namd",
-	      "NCBI",
+	      "ncbi",
 	      "nwchem",
 	      "octave",
 	      "pwscf",
@@ -163,7 +164,7 @@ function software_list()
 	      "sable",
 	      "sas",
 	      "scalapack",
-	      "TURBO",
+	      "turbo",
 	      "turbomole",
 	      "vasp");
   
@@ -186,27 +187,27 @@ function software_match_list()
   # in MySQL, so don't use REGEXP unless you really need it.
   $pkgmatch['a_out']="script LIKE '%a.out%'";
   $pkgmatch['abinit']="script LIKE '%abinis%' OR script LIKE '%abinip%'";
-  $pkgmatch['adf']="script LIKE '%ADF%' OR script LIKE '%adf%'";
+  $pkgmatch['adf']="script LIKE '%adf%'";
   $pkgmatch['AliEn']="( script LIKE '%aliroot%' OR script LIKE '%agent.startup%' )";
   $pkgmatch['amber']="( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' )";
   $pkgmatch['blat']="script LIKE '%blat %'";
-  $pkgmatch['cbl']="script REGEXP '(cbl|pcbl|biolib)'";
+  $pkgmatch['cbl']="( script LIKE '%cbl%' OR script LIKE '%pcbl%' OR script LIKE '%biolib%' )";
   $pkgmatch['cpmd']="script LIKE '%cpmd.x%'";
   $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
   $pkgmatch['ex_e']="script LIKE '%ex.e%'";
   $pkgmatch['gamess']="script LIKE '%gamess%' OR script LIKE '%rungmx%'";
   $pkgmatch['gaussian']="script LIKE '%g98%' OR script LIKE '%g03%'";
-  $pkgmatch['GLAST']="( script LIKE '%glast%' OR script LIKE '%gp run%' )";
+  $pkgmatch['glast']="( script LIKE '%glast%' OR script LIKE '%gp run%' )";
   $pkgmatch['gromacs']="( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' )";
-  $pkgmatch['LAMMPS']="( script LIKE '%lammps' OR script LIKE '%lmp_%' )";
-  $pkgmatch['mrbayes']="script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%'";
-  $pkgmatch['NCBI']="script REGEXP '(ncbi|blastall|fastacmd|formatdb|rpsblast|seqtest)'";
-  $pkgmatch['R']="script LIKE '%\nR %' AND NOT ( ".$pkgmatch['gaussian'].
-    " OR ".$pkgmatch['adf']." )";
-  $pkgmatch['root']="script like '%\nroot -q%'";
+  $pkgmatch['lammps']="( script LIKE '%lammps' OR script LIKE '% lmp_%' )";
+  $pkgmatch['mrbayes']="( script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%' )";
+  $pkgmatch['ncbi']="( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )";
+  $pkgmatch['R']="( script LIKE '%\nR %' AND NOT ( ".$pkgmatch['gaussian'].
+    " OR ".$pkgmatch['adf']." ) )";
+  $pkgmatch['root']="script LIKE '%\nroot -q%'";
   $pkgmatch['sable']="( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )";
   $pkgmatch['sas']="script LIKE '%\nsas%'";
-  $pkgmatch['TURBO']="script LIKE '%pturbo.x%'";
+  $pkgmatch['turbo']="script LIKE '%pturbo.x%'";
   $pkgmatch['vasp']="script LIKE '%VASP%' OR script LIKE '%vasp%'";
   
   return $pkgmatch;
