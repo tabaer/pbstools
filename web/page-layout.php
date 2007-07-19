@@ -26,6 +26,7 @@ function page_header($title)
   echo "      <LI><A href=\"jobs-by-user.php\">User</A></LI>\n";
   echo "      <LI><A href=\"jobs-by-group.php\">Group</A></LI>\n";
   echo "      <LI><A href=\"jobs-by-node.php\">Node</A></LI>\n";
+  echo "      <LI><A href=\"problem-jobs.php\">Problematic Jobs</A></LI>\n";
   echo "    </UL>\n";
   echo "    <UL><U>Job stats by</U>\n";
   echo "      <LI><A href=\"jobstats-by-nproc.php\">CPU Count</A></LI>\n";
