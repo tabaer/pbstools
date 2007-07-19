@@ -7,7 +7,7 @@
 require_once 'page-layout.php';
 require_once 'dbutils.php';
 
-if ( isset($_POST['node']) )
+if ( isset($_POST['system']) )
   { 
     $title = "Potentially problematic jobs ".$_POST['node']." on ".$_POST['system'];
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
