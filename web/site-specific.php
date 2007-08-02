@@ -39,6 +39,7 @@ function sys_list()
 	       "mck-noaltix",
 	       "mck-myri",
 	       "mck-bigmem",
+	       "opt",
 	       "piv",
 	       "piv-ib",
 	       "piv-noib",
@@ -74,6 +75,7 @@ function sysselect($system)
   if ( $system=='mck-noaltix' ) return "system = 'mck' AND hostlist NOT REGEXP '^mck149'";
   if ( $system=='mck-myri' ) return "system = 'mck' AND hostlist REGEXP '^mck(0[0-9][0-9]|1([0-1][0-9]|2[0-8]))'";
   if ( $system=='mck-bigmem' ) return "system = 'mck' AND hostlist REGEXP '^mck1(29|3[0-9]|4[0-8])'";
+  if ( $system=='opt' ) return "system = 'opt'";
   if ( $system=='piv' ) return "system = 'piv'";
   if ( $system=='piv-ib' ) return "system = 'piv' AND hostlist REGEXP '^piv(0[0-9][0-9]|1(0[0-9]|1[0-2]))'";
   if ( $system=='piv-noib' ) return "system = 'piv' AND hostlist NOT REGEXP '^piv(0[0-9][0-9]|1(0[0-9]|1[0-2]))'";
@@ -107,6 +109,7 @@ function nprocs($system)
   if ( $system=='mck-noaltix' ) return nprocs('mck-myri')+nprocs('mck-bigmem');
   if ( $system=='mck-bigmem' ) return 40;
   if ( $system=='mck-myri' ) return 256;
+  if ( $system=='opt' ) return 704;
   if ( $system=='piv' ) return nprocs('piv-ib')+nprocs('piv-noib');
   if ( $system=='piv-ib' ) return 224;
   if ( $system=='piv-noib' ) return 288;
