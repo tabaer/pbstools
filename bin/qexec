@@ -22,7 +22,7 @@ elsif ( $0 =~ /qlogin$/ )
 {
     unshift(@qsub,("-I"));
 }
-elsif ( $0 =~ /qrsh$/ )
+else
 {
     unshift(@qsub,("-I"));
 }
