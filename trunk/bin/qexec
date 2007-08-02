@@ -1,7 +1,6 @@
 #!/usr/bin/perl
-#use strict;
+use strict;
 use POSIX;
-use Term::Cap;
 
 my @qsub;
 
@@ -77,17 +76,6 @@ elsif ( $0 =~ /qsh$/ )
     unshift(@ARGV,("xterm","-e",$cmd));
 }
 unshift(@qsub,("qsub","-d",$cwd));
-
-print STDERR "\$0 = ".$0."\n";
-print STDERR "qsub:  @qsub\n";
-print STDERR "ARGV:  @ARGV\n";
-
-# # # terminal setup
-# my $termios = new POSIX::Termios;
-# $termios->getattr;
-# my $ospeed = $termios->getospeed;
-# my $terminal = Tgetent Term::Cap { TERM => undef, OSPEED => $ospeed };
-# $terminal->Trequire(qw/ce ku kd/);
 
 if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ )
 {
