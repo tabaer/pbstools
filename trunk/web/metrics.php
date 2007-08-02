@@ -295,6 +295,7 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 
 function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
 {
+  set_time_limit(900);
   $myresult=$result;
   $nrows=0;
   $xmax=0;
