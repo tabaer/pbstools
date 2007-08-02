@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use strict;
+#use strict;
 use POSIX;
 
 my @qsub;
@@ -95,10 +95,16 @@ if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ )
     if ( defined($ENV{"SHELL"}) )
     {
 	print SCRIPT "#!".$ENV{"SHELL"}."\n";
+	if ( $ENV{"SHELL"} =~ /csh$/ )
+	{
+	    print SCRIPT "set ";
+	}
+	print SCRIPT "SHELL=".$ENV{"SHELL"}."\n";
     }
     else
     {
 	print SCRIPT "#!/bin/sh\n";
+	print SCRIPT "SHELL=/bin/sh\n";
     }
     print SCRIPT "@ARGV \n";
     close(SCRIPT);
