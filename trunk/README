@@ -19,6 +19,7 @@ bin/qps -- ps for PBS jobs; relies on the "all" command.
 
 bin/qpeek -- Allows users to look at spooled output of running jobs.
 
+bin/qexec -- Workalike for SGE qlogin/qrsh/qsh
 
 Admin tools:
 ------------
