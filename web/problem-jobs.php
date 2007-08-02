@@ -47,7 +47,7 @@ if ( isset($_POST['system']) )
 	    $sql .= ",".$key;
 	  }
       }
-    $sql .= " FROM Jobs WHERE ( script IS NOT NULL AND script NOT LIKE '%TMPDIR%' ) AND system LIKE '".$_POST['system']."'";
+    $sql .= " FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."'";
     if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
 	 $_POST['start_date']!="" )
       {
