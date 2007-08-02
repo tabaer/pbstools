@@ -1,0 +1,126 @@
+#!/usr/bin/perl
+#use strict;
+use POSIX;
+use Term::Cap;
+
+my @qsub;
+
+my $cmd;
+if ( defined($ENV{"SHELL"}) )
+{
+    $cmd = $ENV{"SHELL"};
+}
+else
+{
+    $cmd = "/bin/bash";
+}
+
+if ( $0 =~ /qsh$/ )
+{
+    unshift(@qsub,("-I","-v","DISPLAY"));
+}
+elsif ( $0 =~ /qlogin$/ )
+{
+    unshift(@qsub,("-I"));
+}
+elsif ( $0 =~ /qrsh$/ )
+{
+    unshift(@qsub,("-I"));
+}
+
+my $cwd;
+if ( defined($ENV{"HOME"}) )
+{
+    $cwd = $ENV{"HOME"};
+}
+else
+{
+    $cwd = "~";
+}
+
+# argument processing
+while ( $ARGV[0] =~ /^-.*$/ ) 
+{
+    if ( $ARGV[0] eq "-cwd" )
+    {
+	shift(@ARGV);
+	$cwd = $ENV{"PWD"};
+    }
+    elsif ( $ARGV[0] eq "--" )
+    {
+	shift(@ARGV);
+	last;
+    }
+    elsif ( $ARGV[0] =~ /^-[hIVXz]$/ )
+    {
+	# shift one element off @ARGV into @qsub
+	unshift(@qsub,shift(@ARGV));
+    }
+    elsif ( $ARGV[0] =~ /^-[aAbcCdDejklmMNopqrSuvW]$/ )
+    {
+	# shift two elements off @ARGV into @qsub
+	my @args = (shift(@ARGV),shift(@ARGV));
+	unshift(@qsub,@args);
+    }
+    else
+    {
+	print STDERR $0.":  Unknown argument ".$ARGV[0]."\n";
+	shift @ARGV;
+    }
+}
+if ( $#ARGV<0 && $0 =~ /qrsh$/ )
+{
+    unshift(@ARGV,($cmd));
+}
+elsif ( $0 =~ /qsh$/ )
+{
+    unshift(@ARGV,("xterm","-e",$cmd));
+}
+unshift(@qsub,("qsub","-d",$cwd));
+
+print STDERR "\$0 = ".$0."\n";
+print STDERR "qsub:  @qsub\n";
+print STDERR "ARGV:  @ARGV\n";
+
+# # # terminal setup
+# my $termios = new POSIX::Termios;
+# $termios->getattr;
+# my $ospeed = $termios->getospeed;
+# my $terminal = Tgetent Term::Cap { TERM => undef, OSPEED => $ospeed };
+# $terminal->Trequire(qw/ce ku kd/);
+
+if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ )
+{
+    # qrsh -- need to run a command inside the qsub
+    # create "miniscript" with desired commands
+    my $scriptdir = $ENV{"HOME"}."/.qexec";
+    if ( ! -d $scriptdir )
+    {
+	mkdir $scriptdir || die $0.":  Unable to create directory ".$scriptdir."\n";
+    }
+    my $script = $scriptdir."/".$ENV{"HOSTNAME"}."-".$$.".script";
+    if ( -e $script )
+    {
+	warn $0.":  overwritting ".$script."\n";
+    }
+    open(SCRIPT,">$script") || die $0.":  unable to open ".$script."\n";
+    if ( defined($ENV{"SHELL"}) )
+    {
+	print SCRIPT "#!".$ENV{"SHELL"}."\n";
+    }
+    else
+    {
+	print SCRIPT "#!/bin/sh\n";
+    }
+    print SCRIPT "@ARGV \n";
+    close(SCRIPT);
+    chmod(0755,$script);
+    system("@qsub -S $script");
+    unlink($script);
+}
+else
+{
+    # qlogin -- just run qsub
+    exec(@qsub);
+}
+
