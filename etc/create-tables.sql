@@ -22,6 +22,7 @@ CREATE TABLE Jobs (
   mem_kb       INT UNSIGNED,
   vmem_req     TINYTEXT,
   vmem_kb      INT UNSIGNED,
+  software     TINYTEXT,
   hostlist     TEXT,
   exit_status  INT,
   script       MEDIUMTEXT
