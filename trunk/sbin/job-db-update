@@ -211,7 +211,7 @@ while ( defined($ARGV[0]) )
 		  }
 		if ( defined($resource{"resources_used.mem"}) )
 		  {
-		    $qhead.=",mem_kb = \'".$resource{""}."\'";
+		    $qhead.=",mem_kb = \'".$resource{"resources_used.mem"}."\'";
 		  }
 		if ( defined($resource{"Resource_List.vmem"}) )
 		  {
@@ -236,6 +236,10 @@ while ( defined($ARGV[0]) )
 		if ( defined($resource{"Exit_status"}) )
 		  {
 		    $qhead.=",exit_status = \'".$resource{"Exit_status"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.software"}) )
+		  {
+		    $qhead.=",software = \'".$resource{"Resource_List.software"}."\'";
 		  }
 	      }
 	    else
@@ -348,6 +352,11 @@ while ( defined($ARGV[0]) )
 		  {
 		    $qhead.=",exit_status";
 		    $qtail.=",\'".$resource{"Exit_status"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.software"}) )
+		  {
+		    $qhead.=",software";
+		    $qtail.=",\'".$resource{"Resource_List.software"}."\'";
 		  }
 		$qhead.="\)";
 		$qtail.="\);";
