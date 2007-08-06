@@ -56,7 +56,7 @@ if ( isset($_POST['system']) )
 	      }
 	    else
 	      {
-		$sql .= "script LIKE '%".$key."%'";
+		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
 	      }
 	    $sql .= " )";
 	    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
@@ -76,14 +76,14 @@ if ( isset($_POST['system']) )
 			$sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
 		      }
 		  }
-	    $sql .= " GROUP BY walltime UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours,100000000 AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( script IS NOT NULL AND ";
+	    $sql .= " GROUP BY walltime UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours,100000000 AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
 	    if ( isset($pkgmatch[$key]) )
 	      {
 		$sql .= $pkgmatch[$key];
 	      }
 	    else
 	      {
-		$sql .= " = '".$key."'";
+		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
 	      }
 	    $sql .= " )";
 	    if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 

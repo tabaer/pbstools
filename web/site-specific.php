@@ -182,7 +182,7 @@ function software_match_list()
   # default to "script LIKE '%pkgname%'
   foreach (software_list() as $pkg)
     {
-      $pkgmatch[$pkg]="script LIKE '%".$pkg."%'";
+      $pkgmatch[$pkg]="script LIKE '%".$pkg."%' OR software LIKE '%".$pkg."%'";
     }
 
   # exceptions
@@ -209,7 +209,7 @@ function software_match_list()
     " OR ".$pkgmatch['adf']." ) )";
   $pkgmatch['root']="script LIKE '%\nroot -q%'";
   $pkgmatch['sable']="( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )";
-  $pkgmatch['sas']="script LIKE '%\nsas%'";
+  $pkgmatch['sas']="script LIKE '%\nsas%' OR software LIKE '%sas%' OR queue  LIKE '%sas%'";
   $pkgmatch['turbo']="script LIKE '%pturbo.x%'";
   $pkgmatch['vasp']="script LIKE '%VASP%' OR script LIKE '%vasp%'";
   

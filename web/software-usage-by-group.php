@@ -48,14 +48,14 @@ if ( isset($_POST['system']) )
 	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT groupname, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt FROM Jobs WHERE system LIKE '".$_POST['system']."'  AND groupname IS NOT NULL AND ( script IS NOT NULL AND ";
+	    $sql = "SELECT groupname, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt FROM Jobs WHERE system LIKE '".$_POST['system']."'  AND groupname IS NOT NULL AND ( ";
 	    if ( isset($pkgmatch[$key]) )
 	      {
 		$sql .= $pkgmatch[$key];
 	      }
 	    else
 	      {
-		$sql .= "script LIKE '%".$key."%'";
+		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
 	      }
 	    $sql .= " )";
 	    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
@@ -75,14 +75,14 @@ if ( isset($_POST['system']) )
 			$sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
 		      }
 		  }
-	    $sql .= " GROUP BY groupname UNION SELECT 'TOTAL:',COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours FROM Jobs WHERE system LIKE '".$_POST['system']."'  AND groupname IS NOT NULL AND ( script IS NOT NULL AND ";
+	    $sql .= " GROUP BY groupname UNION SELECT 'TOTAL:',COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours FROM Jobs WHERE system LIKE '".$_POST['system']."'  AND groupname IS NOT NULL AND ( ";
 	    if ( isset($pkgmatch[$key]) )
 	      {
 		$sql .= $pkgmatch[$key];
 	      }
 	    else
 	      {
-		$sql .= " = '".$key."'";
+		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
 	      }
 	    $sql .= " )";
 	    if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
