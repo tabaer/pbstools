@@ -139,7 +139,7 @@ if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ || $0 =~ /mpi(exec|run)$/ )
 	print SCRIPT "#!/bin/sh\n";
 	print SCRIPT "SHELL=/bin/sh\n";
 	print SCRIPT "test -e /etc/profile && . /etc/profile\n";
-	print SCRIPT "test -e $HOME/.profile && . $HOME/.profile\n";
+	print SCRIPT "test -e \$HOME/.profile && . \$HOME/.profile\n";
     }
     print SCRIPT "@ARGV \n";
     close(SCRIPT);
