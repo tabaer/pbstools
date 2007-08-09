@@ -101,7 +101,7 @@ if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ )
 	    print SCRIPT "if ( -e /etc/cshrc ) then\n";
 	    print SCRIPT "    source /etc/cshrc\n";
 	    print SCRIPT "else if ( -e /etc/csh.cshrc ) then\n";
-	    print SCRIPT "    source /etc/cshrc\n";
+	    print SCRIPT "    source /etc/csh.cshrc\n";
 	    print SCRIPT "endif\n";
 	    print SCRIPT "if ( -e \$HOME/.cshrc ) source \$HOME/cshrc\n";
 	}
