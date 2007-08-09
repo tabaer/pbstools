@@ -97,14 +97,28 @@ if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ )
 	print SCRIPT "#!".$ENV{"SHELL"}."\n";
 	if ( $ENV{"SHELL"} =~ /csh$/ )
 	{
-	    print SCRIPT "set ";
+	    print SCRIPT "set SHELL=".$ENV{"SHELL"}."\n";
+	    print SCRIPT "if ( -e /etc/cshrc ) then\n";
+	    print SCRIPT "    source /etc/cshrc\n";
+	    print SCRIPT "else if ( -e /etc/csh.cshrc ) then\n";
+	    print SCRIPT "    source /etc/cshrc\n";
+	    print SCRIPT "endif\n";
+	    print SCRIPT "if ( -e \$HOME/.cshrc ) source \$HOME/cshrc\n";
 	}
-	print SCRIPT "SHELL=".$ENV{"SHELL"}."\n";
+	else
+	  {
+	    print SCRIPT "SHELL=".$ENV{"SHELL"}."\n";
+	    print SCRIPT "export SHELL\n";
+	    print SCRIPT "test -e /etc/profile && . /etc/profile\n";
+	    print SCRIPT "test -e \$HOME/.profile && . \$HOME/.profile\n";
+	  }
     }
     else
     {
 	print SCRIPT "#!/bin/sh\n";
 	print SCRIPT "SHELL=/bin/sh\n";
+	print SCRIPT "test -e /etc/profile && . /etc/profile\n";
+	print SCRIPT "test -e $HOME/.profile && . $HOME/.profile\n";
     }
     print SCRIPT "@ARGV \n";
     close(SCRIPT);
