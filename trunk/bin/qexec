@@ -91,14 +91,14 @@ elsif ( $0 =~ /qsh$/ )
 {
     unshift(@ARGV,("xterm","-e",$cmd));
 }
-elsif ( $0 =~ /mpiexec$/ )
+elsif ( $0 =~ /mpi(exec|run)$/ )
 {
     unshift(@ARGV,@mpiexec);
     unshift(@ARGV,("mpiexec"));
 }
 unshift(@qsub,("qsub","-d",$cwd));
 
-if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ || $0 =~ /mpiexec$/ )
+if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ || $0 =~ /mpi(exec|run)$/ )
 {
     # qrsh -- need to run a command inside the qsub
     # create "miniscript" with desired commands
