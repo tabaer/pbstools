@@ -3,6 +3,7 @@
 use POSIX;
 
 my @qsub;
+my @mpiexec;
 
 my $cmd;
 if ( defined($ENV{"SHELL"}) )
@@ -40,6 +41,7 @@ else
 # argument processing
 while ( $ARGV[0] =~ /^-.*$/ ) 
 {
+    # SGE workalike args
     if ( $ARGV[0] eq "-cwd" )
     {
 	shift(@ARGV);
@@ -50,6 +52,7 @@ while ( $ARGV[0] =~ /^-.*$/ )
 	shift(@ARGV);
 	last;
     }
+    # qsub args
     elsif ( $ARGV[0] =~ /^-[hIVXz]$/ )
     {
 	# shift one element off @ARGV into @qsub
@@ -61,6 +64,19 @@ while ( $ARGV[0] =~ /^-.*$/ )
 	my @args = (shift(@ARGV),shift(@ARGV));
 	unshift(@qsub,@args);
     }
+    # mpiexec args
+    elsif ( $ARGV[0] =~ /^-(verbose|nostdin|allstdin|nostdout|mpich-p4-shmem|mpich-p4-no-shmem|pernode|nolocal|gige|tv|kill|version)$/ )
+    {
+      # shift one element off @ARGV into @mpiexec
+      unshift(@mpiexec,shift(@ARGV));
+    }
+    elsif ( $ARGV[0] =~ /^-(n|comm|npernode|transform-hostname|transform-hostname-program|config)$/ )
+    {
+      # shift two elements off @ARGV into @mpiexec
+      my @args = (shift(@ARGV),shift(@ARGV));
+      unshift(@mpiexec,@args);
+    }
+    # unknown args
     else
     {
 	print STDERR $0.":  Unknown argument ".$ARGV[0]."\n";
@@ -75,9 +91,14 @@ elsif ( $0 =~ /qsh$/ )
 {
     unshift(@ARGV,("xterm","-e",$cmd));
 }
+elsif ( $0 =~ /mpiexec$/ )
+{
+    unshift(@ARGV,@mpiexec);
+    unshift(@ARGV,("mpiexec"));
+}
 unshift(@qsub,("qsub","-d",$cwd));
 
-if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ )
+if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ || $0 =~ /mpiexec$/ )
 {
     # qrsh -- need to run a command inside the qsub
     # create "miniscript" with desired commands
