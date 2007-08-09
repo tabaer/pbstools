@@ -33,6 +33,7 @@ script tools, such as /usr/local.  Then run the following commands:
 # ksh/bash syntax
 export PREFIX=/usr/local
 cp bin/* $PREFIX/bin
+ln -s $PREFIX/bin/qexec $PREFIX/bin/interactive-mpiexec
 ln -s $PREFIX/bin/qexec $PREFIX/bin/qlogin
 ln -s $PREFIX/bin/qexec $PREFIX/bin/qrsh
 ln -s $PREFIX/bin/qexec $PREFIX/bin/qsh
