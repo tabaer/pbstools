@@ -136,6 +136,7 @@ function software_list()
 	      "amber",
 	      "ansys",
 	      "blat",
+	      "casino",
 	      "cbl",
 	      "charmm",
 	      "cpmd",
@@ -198,7 +199,7 @@ function software_match_list()
   $pkgmatch['cpmd']="script LIKE '%cpmd.x%'";
   $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
   $pkgmatch['ex_e']="script LIKE '%ex.e%'";
-  $pkgmatch['gamess']="script LIKE '%gamess%' OR script LIKE '%rungmx%'";
+  $pkgmatch['gamess']="script LIKE '%gamess%' OR script LIKE '%rungms%' OR script LIKE '%rungmx%'";
   $pkgmatch['gaussian']="script LIKE '%g98%' OR script LIKE '%g03%'";
   $pkgmatch['glast']="( script LIKE '%glast%' OR script LIKE '%gp run%' )";
   $pkgmatch['gromacs']="( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' )";
