@@ -68,7 +68,7 @@ else
     $host=$server[0];
   }
 
-while ( $ARGV[0] =~ /^[-+].*/ )
+while ( $#ARGV>=0 && $ARGV[0] =~ /^[-+].*/ )
   {
     if ( $ARGV[0] eq "-c" )
       {
@@ -123,9 +123,15 @@ EOF
     shift(@ARGV);
   }
 
-$jobid=shift(@ARGV);
-$jobid=~s/\.[A-z0-9.:]+$//;
-die "No jobid given!\n" if ( $jobid eq "" );
+if ( $#ARGV>=0 )
+  {
+     $jobid=shift(@ARGV);
+     $jobid=~s/\.[A-z0-9.:]+$//;
+  }
+else
+  {
+    die "No jobid given!\n";
+  }
 
 $node=&mothersuperior($jobid);
 die "Job $jobid is not running!\n" if ( $node eq "" );
