@@ -33,3 +33,13 @@ CREATE INDEX group_jobs ON Jobs (groupname);
 CREATE INDEX queue_jobs ON Jobs (queue(16));
 GRANT INSERT,UPDATE,SELECT ON Jobs TO 'pbsacct'@'localhost' IDENTIFIED BY 'pbsRroxor';
 GRANT SELECT ON Jobs TO 'webapp'@'localhost';
+CREATE TABLE Config (
+  row_number   SERIAL PRIMARY KEY,
+  system       VARCHAR(8),
+  nproc        INT UNSIGNED DEFAULT 0,
+  start        DATE DEFAULT NULL,
+  end          DATE DEFAULT NULL
+);
+CREATE INDEX system_config ON Config (system);
+GRANT SELECT ON Config TO 'webapp'@'localhost';
+
