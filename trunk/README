@@ -1,5 +1,5 @@
 PBS tools
-Copyright 2007, Ohio Supercomputer Center
+Copyright 2005, 2006, 2007, Ohio Supercomputer Center
 
 Contained herein are several utilities that have been developed at OSC
 to aid in the administration and management of PBS variants (including
@@ -33,7 +33,8 @@ give a time-sorted list of log messages from all hosts involved.  Must
 run on host where pbs_server resides; requires root privilege.
 
 sbin/reaver -- Find (and optionally clean up) processes on a host
-which have not been allocated jobs on that host.
+which have not been allocated jobs on that host; requires root
+privilege.
 
 sbin/showscript.pbs-server -- Show the script associated with a jobid.
 Must run on host where pbs_server resides; requires root privilege.
