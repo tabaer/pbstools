@@ -1,6 +1,6 @@
 
 <?php
-# Copyright 2007 Ohio Supercomputer Center
+# Copyright 2006, 2007 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/jobstats-by-walltime.php $
 # $Revision: 144 $
