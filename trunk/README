@@ -1,5 +1,5 @@
 PBS tools
-Copyright 2006, Ohio Supercomputer Center
+Copyright 2007, Ohio Supercomputer Center
 
 Contained herein are several utilities that have been developed at OSC
 to aid in the administration and management of PBS variants (including
@@ -75,6 +75,52 @@ user (over an optional date range) from the job DB.
 
 web/jobs-by-group.php -- Presents information on all jobs by a given
 group (over an optional date range) from the job DB.
+
+web/jobs-by-node.php -- Presents information on all jobs on a given
+node (over an optional date range) from the job DB.
+
+web/jobstats.php -- Presents statistics on all jobs (over an optional
+date range) from the job DB.
+
+web/jobstats-by-user.php -- Presents statistics on all jobs (over an optional
+date range) from the job DB, broken down by user.
+
+web/jobstats-by-group.php -- Presents statistics on all jobs (over an optional
+date range) from the job DB, broken down by month.
+
+web/jobstats-by-month.php -- Presents statistics on all jobs (over an optional
+date range) from the job DB, broken down by month.
+
+web/jobstats-by-queue.php -- Presents statistics on all jobs (over an optional
+date range) from the job DB, broken down by job queue/class.
+
+web/jobstats-by-nproc.php -- Presents statistics on all jobs (over an optional
+date range) from the job DB, broken down by processor count.
+
+web/jobstats-by-walltime.php -- Presents statistics on all jobs (over an optional
+date range) from the job DB, broken down by wallclock time.
+
+web/software-usage.php -- Presents information on software usage on
+all jobs (over an optional date range) from the job DB, broken down by
+system.
+
+web/software-usage-by-user.php -- Presents information on software
+usage on all jobs (over an optional date range) from the job DB,
+broken down by user.
+
+web/software-usage-by-group.php -- Presents information on software
+usage on all jobs (over an optional date range) from the job DB,
+broken down by group.
+
+web/software-usage-by-month.php -- Presents information on software
+usage on all jobs (over an optional date range) from the job DB,
+broken down by month.
+
+web/software-usage-by-walltime.php -- Presents information on software
+usage on all jobs (over an optional date range) from the job DB,
+broken down by wallclock time.
+
+web/site-specific.php -- Site specific settings.
 
 web/sql-term.php -- "Terminal" for running arbitrary SQL queries on
 job DB.
