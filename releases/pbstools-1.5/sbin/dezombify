@@ -1,0 +1,73 @@
+#!/bin/bash
+#
+# dezombify:  Requeue a "running" PBS job that's not actually running
+#             because it had JOIN JOB failures.
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+# Usage:  dezombify jobid [...jobids...]
+#
+# Must be run as root
+# Requires all -j
+# Requires $PBS_HOME to be set
+#
+# Signs of a zombie job:
+# * "qstat -f $jobid" reports job state as R but no CPU time or memory consumed
+# * "qps -a $jobid" shows *NO* processes
+# * "qtracejob $jobid | grep -c JOIN" gives a number that's less than (N-1),
+#    where N==# nodes assigned to the job
+
+# First, make sure we know where to look for the appropriate files to clobber
+if [ -z "$PBS_HOME" ]
+then
+    echo "PBS_HOME not set, exiting!"
+    exit -1
+elif [ ! -d $PBS_HOME ]
+then
+    echo "$PBS_HOME not a directory, exiting!"
+    exit -2
+fi
+
+for job in $*
+do
+    # Since this will later runs an rm -rf command as root,
+    # sanity-check that the jobid is really a running job
+    jobid=$(echo $job | sed 's/\..*$//' | egrep '^[0-9]+$')
+    if [ -z "$jobid" ]
+    then
+        echo "Bogus jobid $job!"
+    else
+        # Make sure job is "running"
+        state=$(qstat -r $jobid | grep $jobid | awk '{print $10}')
+	if [ "$state" = "R" ]
+	then
+            # hold the job
+            qhold $jobid
+    
+            # stop all associated pbs_mom's
+            all -p -j$jobid /sbin/service pbs_mom stop
+    
+            # nuke the job files on the nodes
+            all -p -j$jobid /bin/rm -rf $PBS_HOME/mom_priv/jobs/$jobid.'*'
+    
+            # restart the pbs_mom's with -p option
+            # can't be done in parallel because the pbs_server can't
+            # keep up with all the "I'm back up!" messages
+            all -j$jobid /sbin/service pbs_mom pstart \; sleep 1
+    
+            # "rerun" the job
+            # since it's held, this causes the pbs_server to clear its
+            # neednodes list and R state
+            qrerun $jobid
+    
+            # release the job
+            # if everything went OK, this will return the job to the Q state
+            qrls $jobid
+	else
+	    echo "Job $jobid not in R state!"
+	fi
+    fi
+done

@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# ja -- Job accounting inside PBS job
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+
+if [ -z "$PBS_JOBID" ]
+then
+    echo "$0: Not in a PBS job, exiting!"
+else
+    qstat -f $PBS_JOBID | egrep 'Job Id|Job_Name|resources_used'
+fi
