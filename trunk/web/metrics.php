@@ -648,10 +648,10 @@ function jobstats_input_header()
   echo "<TABLE>\n";
   echo "<TR>\n";
   echo "  <TH>Metrics</TH>\n";
-  echo "  <TH>Graph</TH>";
+  #echo "  <TH>Graph</TH>";
   echo "  <TH>Table</TH>\n";
   echo "  <TH>Excel</TH>\n";
-  //  echo "  <TH>ODF</TH>\n";
+  #echo "  <TH>ODF</TH>\n";
   echo "</TR>\n";
 }
 
@@ -669,7 +669,7 @@ function jobstats_input_metric($name,$fn)
 {
     echo "<TR>\n";
     echo "  <TD>".$name."</TD>";
-    echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_graph\" value=\"1\"></TD>\n";
+    #echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_graph\" value=\"1\"></TD>\n";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_table\" value=\"1\">\n";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_xls\" value=\"1\">\n";
     //    echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_ods\" value=\"1\">\n";
