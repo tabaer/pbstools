@@ -137,14 +137,33 @@ function ndays($db,$system,$start_date,$end_date)
     {
       $end="FROM_UNIXTIME(MAX(end_ts))";
     }
-  $query="SELECT DATEDIFF(".$end.",".$begin.") FROM Jobs WHERE (".
-    sysselect($system).") AND (".dateselect($start_time,$end_time).");";
+  $query =  "SELECT SUM(DATEDIFF(end,start)+1) AS ndays,\n";
+  $query .= "       SUM(nproc*24*(DATEDIFF(end,start)+1)) AS cpuhrs_avail\n";
+  $query .= "FROM ( SELECT nproc,\n";
+  $query .= "       CASE\n";
+  $query .= "         WHEN '".$start_date."' >= start AND ( ( end IS NULL AND CURRENT_DATE < '".$start_date."' ) OR '".$start_date."' <= end ) THEN '".$start_date."'\n";
+  $query .= "         WHEN '".$start_date."' < start THEN start\n";
+  $query .= "         WHEN end IS NOT NULL AND '".$start_date."' > end THEN end\n";
+  $query .= "         WHEN end IS NULL AND '".$start_date."' > CURRENT_DATE THEN CURRENT_DATE\n";
+  $query .= "         ELSE NULL\n";
+  $query .= "       END AS start,\n";
+  $query .= "       CASE\n";
+  $query .= "         WHEN '".$end_date."' >= start AND ( ( end IS NULL AND '".$end_date."' <= CURRENT_DATE ) OR '".$end_date."' <= end ) THEN '".$end_date."'\n";
+  $query .= "         WHEN end IS NOT NULL AND '".$end_date."' > end THEN end\n";
+  $query .= "         WHEN end IS NULL AND '".$end_date."' > CURRENT_DATE THEN CURRENT_DATE\n";
+  $query .= "         WHEN '".$end_date."' < start THEN start\n";
+  $query .= "         ELSE NULL\n";
+  $query .= "        END AS end\n";
+  $query .= " FROM Config WHERE system = '".$system."'\n";
+  $query .= "               AND ( ( end IS NOT NULL AND end >= '".$start_date."' )\n";
+  $query .= "                  OR ( end IS NULL AND CURRENT_DATE >= '".$start_date."' ) )\n";
+  $query .= "               AND start <= '".$end_date."' ) AS tmp;\n";
+
   #echo "<PRE>".$query."</PRE><BR>\n";
   $result = db_query($db,$query);
   $result->fetchInto($row);
-  $ndays = $row[0];
 
-  return $ndays+1;
+  return $row;
 }
 
 
@@ -744,12 +763,14 @@ function jobstats_summary($db,$system,$start_date,$end_date)
   $nproc=nprocs($system);
   if ( $nproc>0 )
     {
-      $ndays=ndays($db,$system,$start_date,$end_date);
+      $data=ndays($db,$system,$start_date,$end_date);
+      $ndays = $data[0];
+      $cpuhours_avail = $data[1];
       if ( $ndays>0 )
 	{
-	  $avgutil=100.0*$cpuhours/($nproc*24.0*$ndays);
-	  printf(" (avg. %6.2f%% utilization over %d days on %d processors)",
-		 $avgutil,$ndays,$nproc);
+	  $avgutil=100.0*$cpuhours/$cpuhours_avail;
+	  printf(" (avg. %6.2f%% utilization over %d days)",
+		 $avgutil,$ndays);
 	}
     }
   echo "<BR>\n";
