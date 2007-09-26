@@ -259,18 +259,6 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 }
 
 
-// bucket sizes
-function bucket_maxs($xaxis)
-{
-  if ( $xaxis=='nproc' ) return array("1","4","8","16","32","64","128","256","512","1024");
-  if ( $xaxis=='walltime' ) return array("1:00:00","8:00:00","24:00:00","48:00:00","168:00:00","320:00:00");
-  if ( $xaxis=='walltime_req' ) return array("1:00:00","8:00:00","24:00:00","48:00:00","168:00:00","320:00:00");
-  if ( $xaxis=='qtime' ) return array("1:00:00","4:00:00","24:00:00","48:00:00","168:00:00","320:00:00");
-  if ( $xaxis=='mem_kb' ) return array("262144","1048576","4194304","12582912","33554432");
-  if ( $xaxis=='vmem_kb' ) return array("262144","1048576","4194304","12582912","33554432");
-  return array();
-}
-
 
 function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 {
