@@ -90,14 +90,17 @@ function nprocs($system)
 {
   if ( $system=='amd' ) return 256;
   if ( $system=='apple' ) return 64;
-  if ( $system=='bale' ) return 110;
+#  if ( $system=='bale' ) return 110;
+  if ( $system=='bale' ) return 174;
   if ( $system=='coe' ) return 60;
   if ( $system=='ipf' ) return nprocs('ipf-noaltix')+nprocs('ipf-altix');
   if ( $system=='ipf-altix' ) return 64;
   if ( $system=='ipf-noaltix' ) return nprocs('ipf-myri')+nprocs('ipf-bigmem');
-  if ( $system=='ipf-oldmyri' ) return 256;
+#  if ( $system=='ipf-oldmyri' ) return 256;
+  if ( $system=='ipf-oldmyri' ) return 128;
   if ( $system=='ipf-newmyri' ) return 220;
-  if ( $system=='ipf-bigmem' ) return 40;
+#  if ( $system=='ipf-bigmem' ) return 40;
+  if ( $system=='ipf-bigmem' ) return 16;
   if ( $system=='ipf-myri' ) return nprocs('ipf-oldmyri')+nprocs('ipf-newmyri');
   if ( $system=='ipf+mck' ) return nprocs('ipf');
   if ( $system=='ipf+mck-altix' ) return nprocs('ipf-altix');
@@ -109,10 +112,11 @@ function nprocs($system)
   if ( $system=='mck-noaltix' ) return nprocs('mck-myri')+nprocs('mck-bigmem');
   if ( $system=='mck-bigmem' ) return 40;
   if ( $system=='mck-myri' ) return 256;
-  if ( $system=='opt' ) return 704;
+  if ( $system=='opt' ) return 1392;
   if ( $system=='piv' ) return nprocs('piv-ib')+nprocs('piv-noib');
   if ( $system=='piv-ib' ) return 224;
-  if ( $system=='piv-noib' ) return 288;
+#  if ( $system=='piv-noib' ) return 288;
+  if ( $system=='piv-noib' ) return 56;
   if ( $system=='x1' ) return 48;
   return 0;
 }
@@ -152,7 +156,7 @@ function software_list()
 	      "cbl",
 	      "charmm",
 	      "cpmd",
-	      "decypher",
+#	      "decypher",
 	      "ex_e",
 	      "fidap",
 	      "fdl3di",
@@ -178,8 +182,9 @@ function software_list()
 	      "R",
 	      "root",
 	      "sable",
-	      "sas",
+#	      "sas",
 	      "scalapack",
+	      "stata",
 	      "turbo",
 	      "turbomole",
 	      "vasp");
@@ -207,7 +212,7 @@ function software_match_list()
   $pkgmatch['AliEn']="( script LIKE '%aliroot%' OR script LIKE '%agent.startup%' )";
   $pkgmatch['amber']="( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' )";
   $pkgmatch['blat']="script LIKE '%blat %'";
-  $pkgmatch['cbl']="( script LIKE '%cbl%' OR script LIKE '%pcbl%' OR script LIKE '%biolib%' )";
+  $pkgmatch['cbl']="( script LIKE '% cbl%' OR script LIKE '%pcbl%' OR script LIKE '%biolib%' )";
   $pkgmatch['cpmd']="script LIKE '%cpmd.x%'";
   $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
   $pkgmatch['ex_e']="script LIKE '%ex.e%'";
@@ -215,7 +220,7 @@ function software_match_list()
   $pkgmatch['gaussian']="script LIKE '%g98%' OR script LIKE '%g03%'";
   $pkgmatch['glast']="( script LIKE '%glast%' OR script LIKE '%gp run%' )";
   $pkgmatch['gromacs']="( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' )";
-  $pkgmatch['lammps']="( script LIKE '%lammps' OR script LIKE '% lmp_%' )";
+  $pkgmatch['lammps']="( script LIKE '%lammps%' OR script LIKE '% lmp_%' )";
   $pkgmatch['mrbayes']="( script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%' )";
   $pkgmatch['ncbi']="( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )";
   $pkgmatch['R']="( script LIKE '%\nR %' AND NOT ( ".$pkgmatch['gaussian'].
