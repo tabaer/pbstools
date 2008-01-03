@@ -26,7 +26,6 @@ function page_header($title)
   echo "      <LI><A href=\"jobs-by-user.php\">User</A></LI>\n";
   echo "      <LI><A href=\"jobs-by-group.php\">Group</A></LI>\n";
   echo "      <LI><A href=\"jobs-by-node.php\">Node</A></LI>\n";
-  echo "      <LI><A href=\"problem-jobs.php\">Problematic Jobs</A></LI>\n";
   echo "    </UL>\n";
   echo "    <UL><U>Job stats by</U>\n";
   echo "      <LI><A href=\"jobstats-by-nproc.php\">CPU Count</A></LI>\n";
@@ -44,6 +43,11 @@ function page_header($title)
   echo "      <LI><A href=\"software-usage-by-group.php\">Group</A></LI>";
   echo "      <LI><A href=\"software-usage-by-walltime.php\">Job Length</A></LI>";
   echo "      <LI><A href=\"software-usage-by-month.php\">Month</A></LI>";
+  echo "    </UL>\n";
+  echo "    <UL><U>Miscellaneous reports</U>\n";
+  echo "      <LI><A href=\"problem-jobs.php\">Problematic Jobs</A></LI>\n";
+  echo "      <LI><A href=\"active-users.php\">Most Active Users</A></LI>\n";
+  echo "      <LI><A href=\"active-groups.php\">Most Active Groups</A></LI>\n";
   echo "    </UL>\n";
   echo "  </TD>\n";
   echo "  <TD width=\"85%\" valign=\"top\" bgcolor=\"ghostwhite\">\n";
@@ -114,4 +118,26 @@ function date_fields()
   echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
 }
 
-?> 
+function pulldown($name,$label,$choices,$default)
+{
+  echo $label.": <SELECT name=\"".$name."\" size=\"1\">\n";
+  foreach ($choices as $choice)
+    {
+      if ( $choice==$default )
+	{
+	  echo "<OPTION selected>".$choice."\n";
+	}
+      else
+	{
+	  echo "<OPTION>".$choice."\n";
+	}
+    }
+  echo "</SELECT><BR>\n";  
+}
+
+function textfield($name,$label,$default,$width)
+{
+  echo $label.": <INPUT type=\"text\" name=\"".$name."\" size=\"".$width."\" value=\"".$default."\"><BR>\n";
+}
+
+?>
