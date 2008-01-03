@@ -45,6 +45,7 @@ function page_header($title)
   echo "      <LI><A href=\"software-usage-by-month.php\">Month</A></LI>";
   echo "    </UL>\n";
   echo "    <UL><U>Miscellaneous reports</U>\n";
+  echo "      <LI><A href=\"usage-summary.php\">Usage Summary</A></LI>\n";
   echo "      <LI><A href=\"problem-jobs.php\">Problematic Jobs</A></LI>\n";
   echo "      <LI><A href=\"active-users.php\">Most Active Users</A></LI>\n";
   echo "      <LI><A href=\"active-groups.php\">Most Active Groups</A></LI>\n";
@@ -125,7 +126,7 @@ function pulldown($name,$label,$choices,$default)
     {
       if ( $choice==$default )
 	{
-	  echo "<OPTION selected>".$choice."\n";
+	  echo "<OPTION selected=\"selected\">".$choice."\n";
 	}
       else
 	{
