@@ -46,8 +46,8 @@ if ( isset($_POST['system']) )
   {
     $db = db_connect();
 
+    # system overview
     echo "<H3>Overview</H3>\n";
-
     $sql = "SELECT system, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, NULL AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."'";
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
 	 $_POST['start_date']!="" )
@@ -97,6 +97,8 @@ if ( isset($_POST['system']) )
 	    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
 	  }
 	echo "</TR>\n";
+	ob_flush();
+	flush();
       }
     if ( $_POST['system']=="%" )
       {
@@ -133,8 +135,11 @@ if ( isset($_POST['system']) )
       }
     echo "</TABLE>\n";    
 
-    echo "<H3>Software Usage</H3>\n";
+    ob_flush();
+    flush();
 
+    # software usage
+    echo "<H3>Software Usage</H3>\n";
     $first=1;
     $sql = "";
     foreach ( $packages as $pkg )
