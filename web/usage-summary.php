@@ -87,7 +87,7 @@ if ( isset($_POST['system']) )
 		  }
 		else
 		  {
-		    $data[$rkey]="system=".$row[0].",startdate=".$_POST['start_date'].",enddate=".$_POST['end_date'];
+		    $data[$rkey]="N/A";
 		  }
 	      }
 	    else
