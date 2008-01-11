@@ -68,9 +68,12 @@ if ( isset($_POST['system']) )
       }
     $sql .= " GROUP BY system ORDER BY ".$_POST['order']." DESC";
     #echo "<PRE>\n".$sql."</PRE>\n";
-    $result = db_query($db,$sql);
     echo "<TABLE border=1>\n";
     echo "<TR><TH>system</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>%util</TH><TH>users</TH><TH>groups</TH></TR>\n";
+    ob_flush();
+    flush();
+
+    $result = db_query($db,$sql);
     while ($result->fetchInto($row))
       {
 	$data=array();
@@ -131,15 +134,19 @@ if ( isset($_POST['system']) )
 		echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
 	      }
 	    echo "</TR>\n";
+	    ob_flush();
+	    flush();
 	  }
       }
     echo "</TABLE>\n";    
 
+    # software usage
+    echo "<H3>Software Usage</H3>\n";
+    echo "<TABLE border=1>\n";
+    echo "<TR><TH>package</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH></TR>\n";
     ob_flush();
     flush();
 
-    # software usage
-    echo "<H3>Software Usage</H3>\n";
     $first=1;
     $sql = "";
     foreach ( $packages as $pkg )
@@ -188,8 +195,6 @@ if ( isset($_POST['system']) )
 
     #echo "<PRE>\n".$sql."</PRE>\n";
     $result = db_query($db,$sql);
-    echo "<TABLE border=1>\n";
-    echo "<TR><TH>package</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH></TR>\n";
     while ($result->fetchInto($row))
       {
 	$rkeys=array_keys($row);
@@ -200,6 +205,8 @@ if ( isset($_POST['system']) )
 	    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
 	  }
 	echo "</TR>\n";
+	ob_flush();
+	flush();
       }
     echo "</TABLE>\n";
 
