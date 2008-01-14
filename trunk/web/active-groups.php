@@ -1,11 +1,12 @@
 <?php
-# Copyright 2007 Ohio Supercomputer Center
+# Copyright 2007, 2008 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/active-groups.php $
 # $Revision: 199 $
 # $Date: 2007-09-12 13:39:15 -0400 (Wed, 12 Sep 2007) $
-require_once 'page-layout.php';
 require_once 'dbutils.php';
+require_once 'page-layout.php';
+require_once 'metrics.php';
 
 if ( isset($_POST['system']) )
   { 
@@ -39,25 +40,7 @@ $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
     $db = db_connect();
-    $sql = "SELECT groupname, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600 AS cpuhrs FROM Jobs WHERE system LIKE '".$_POST['system']."'";
-    if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-	 $_POST['start_date']!="" )
-      {
-	$sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	$sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['start_date']." 23:59:59'";
-      }
-    else
-      {
-	if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	  }
-	if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['end_date']." 23:59:59'";
-	  }
-      }
-    $sql .= " GROUP BY groupname ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
+    $sql = "SELECT groupname, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600 AS cpuhrs FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY groupname ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     echo "<TABLE border=1 width=\"100%\">\n";

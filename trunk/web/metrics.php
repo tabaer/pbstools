@@ -1,5 +1,5 @@
 <?php
-# Copyright 2006, 2007 Ohio Supercomputer Center
+# Copyright 2006, 2007, 2008 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -97,24 +97,24 @@ function units($metric)
 
 
 // date selector
-function dateselect($start_date,$end_date)
+function dateselect($action,$start_date,$end_date)
 {
     if ( isset($start_date) && isset($end_date) &&
 	 $start_date!="" && $end_date!="" )
       {
-	return "FROM_UNIXTIME(start_ts) >= '".$start_date." 00:00:00' AND FROM_UNIXTIME(end_ts) <= '".$end_date." 23:59:59'";
+	return $action."_date >= '".$start_date."' AND ".$action."_date <= '".$end_date."'";
       }
     else if ( isset($start_date) && $start_date!="" )
       {
-	return "FROM_UNIXTIME(start_ts) >= '".$start_date." 00:00:00'";
+	return $action."_date >= '".$start_date."'";
       }
     else if ( isset($end_date) && $end_date!="" )
       {
-	return "FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
+	return $action."_date <= '".$_POST['end_date']."'";
       }
     else
       {
-	return "submit_ts IS NOT NULL AND start_ts IS NOT NULL AND end_ts IS NOT NULL";
+	return $action."_date IS NOT NULL";
       }
 }
 
@@ -238,7 +238,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
        $query .= ",".columns($metric,$system);
      }
    $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-     dateselect($start_date,$end_date).")";
+     dateselect("start",$start_date,$end_date).")";
    if ( $xaxis!="" )
     {
       if ( $xaxis=="institution" )
@@ -281,7 +281,7 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
       $query .= ",MIN(".$xaxis.") AS hidden";
     }
   $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-    dateselect($start_date,$end_date).")";
+    dateselect("start",$start_date,$end_date).")";
   if ( clause($xaxis,$metric)!="" )
     {
       $query .= " AND ".clause($xaxis,$metric);

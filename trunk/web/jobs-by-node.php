@@ -1,11 +1,12 @@
 <?php
-# Copyright 2006 Ohio Supercomputer Center
+# Copyright 2006, 2007, 2008 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL$
 # $Revision$
 # $Date$
-require_once 'page-layout.php';
 require_once 'dbutils.php';
+require_once 'page-layout.php';
+require_once 'metrics.php';
 
 if ( isset($_POST['node']) )
   { 
@@ -47,25 +48,7 @@ if ( isset($_POST['node']) )
 	    $sql .= ",".$key;
 	  }
       }
-    $sql .= " FROM Jobs WHERE hostlist REGEXP '".$_POST['node']."' AND system LIKE '".$_POST['system']."'";
-    if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-	 $_POST['start_date']!="" )
-      {
-	$sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-	$sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
-      }
-    else
-      {
-	if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-	  }
-	if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
-	  }
-      }
-    $sql .= " ORDER BY start_ts;";
+    $sql .= " FROM Jobs WHERE hostlist REGEXP '".$_POST['node']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     echo "<TABLE border=1 width=\"100%\">\n";

@@ -1,5 +1,5 @@
 <?php
-# Copyright 2007 Ohio Supercomputer Center
+# Copyright 2007, 2008 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -58,25 +58,7 @@ if ( isset($_POST['system']) )
 	      {
 		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
 	      }
-	    $sql .= " )";
-	    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-		 $_POST['start_date']!="" )
-		  {
-		    $sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-		    $sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
-		  }
-		else
-		  {
-		    if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-		      {
-			$sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-		      }
-		    if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-		      {
-			$sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
-		      }
-		  }
-	    $sql .= " GROUP BY walltime UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours,100000000 AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
+	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY walltime UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours, 100000000 AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
 	    if ( isset($pkgmatch[$key]) )
 	      {
 		$sql .= $pkgmatch[$key];
@@ -85,25 +67,7 @@ if ( isset($_POST['system']) )
 	      {
 		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
 	      }
-	    $sql .= " )";
-	    if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-		 $_POST['start_date']!="" )
-	      {
-		$sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-		$sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
-	      }
-	    else
-	      {
-		if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-		  {
-		    $sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
-		  }
-		if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-		  {
-		    $sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
-		  }
-	      }
-	    $sql .= " ORDER BY hidden;";
+	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY hidden;";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
 	    echo "<TABLE border=1>\n";
