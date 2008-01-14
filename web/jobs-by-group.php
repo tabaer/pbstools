@@ -1,11 +1,12 @@
 <?php
-# Copyright 2006 Ohio Supercomputer Center
+# Copyright 2006, 2007, 2008 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL$
 # $Revision$
 # $Date$
-require_once 'page-layout.php';
 require_once 'dbutils.php';
+require_once 'page-layout.php';
+require_once 'metrics.php';
 
 if ( isset($_POST['groupname']) )
   { 
@@ -48,25 +49,7 @@ if ( isset($_POST['groupname']) )
 	    $sql .= ",".$key;
 	  }
       }
-    $sql = $sql." FROM Jobs WHERE groupname = '".$_POST['groupname']."' AND system LIKE '".$_POST['system']."'";
-    if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-	 $_POST['start_date']!="" )
-      {
-	$sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	$sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['start_date']." 23:59:59'";
-      }
-    else
-      {
-	if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	      }
-	if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['end_date']." 23:59:59'";
-	  }
-      }
-    $sql .= " ORDER BY submit_ts;";
+    $sql = $sql." FROM Jobs WHERE groupname = '".$_POST['groupname']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY submit_ts;";
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     echo "<TABLE border=1 width=\"100%\">\n";

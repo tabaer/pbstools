@@ -1,5 +1,5 @@
 <?php
-# Copyright 2006, 2007 Ohio Supercomputer Center
+# Copyright 2006, 2007, 2008 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -42,25 +42,7 @@ if ( isset($_POST['system']) )
 
     # system summary table
     echo "<H3>System Summary</H3>\n";
-    $sql = "SELECT system, COUNT(jobid) AS jobcount, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."'";
-    if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-	 $_POST['start_date']!="" )
-      {
-	$sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	$sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['start_date']." 23:59:59'";
-      }
-    else
-      {
-	if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	  }
-	if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['end_date']." 23:59:59'";
-	  }
-      }
-    $sql .= " GROUP BY system ORDER BY jobcount DESC";
+    $sql = "SELECT system, COUNT(jobid) AS jobcount, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY jobcount DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     echo "<TABLE border=1>\n";
@@ -79,24 +61,7 @@ if ( isset($_POST['system']) )
       }
     if ( $_POST['system']=="%" )
       {
-	$sql = "SELECT 'TOTAL', COUNT(jobid), COUNT(DISTINCT(username)), COUNT(DISTINCT(groupname)) FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' )";
-	if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-	     $_POST['start_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['start_date']." 23:59:59'";
-	  }
-	else
-	  {
-	    if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-	      {
-		$sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	      }
-	    if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-	      {
-		$sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['end_date']." 23:59:59'";
-	      }
-	  }
+	$sql = "SELECT 'TOTAL', COUNT(jobid), COUNT(DISTINCT(username)), COUNT(DISTINCT(groupname)) FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." )";
 	$result = db_query($db,$sql);
 	while ($result->fetchInto($row))
 	  {
@@ -118,25 +83,7 @@ if ( isset($_POST['system']) )
 
     # user summary table
     echo "<H3>User Summary</H3>\n";
-    $sql = "SELECT DISTINCT(username) AS username, groupname, system, COUNT(jobid) AS jobcount FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."'";
-    if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-	 $_POST['start_date']!="" )
-      {
-	$sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	$sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['start_date']." 23:59:59'";
-      }
-    else
-      {
-	if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	  }
-	if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['end_date']." 23:59:59'";
-	  }
-      }
-    $sql .= " GROUP BY username, system ORDER BY jobcount DESC";
+    $sql = "SELECT DISTINCT(username) AS username, groupname, system, COUNT(jobid) AS jobcount FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, system ORDER BY jobcount DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     echo "<TABLE border=1>\n";
@@ -168,25 +115,7 @@ if ( isset($_POST['system']) )
 	    $sql .= ",".$key;
 	  }
       }
-    $sql .= " FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."'";
-    if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-	 $_POST['start_date']!="" )
-      {
-	$sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	$sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['start_date']." 23:59:59'";
-      }
-    else
-      {
-	if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) >= '".$_POST['start_date']." 00:00:00'";
-	  }
-	if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-	  {
-	    $sql .= " AND FROM_UNIXTIME(submit_ts) <= '".$_POST['end_date']." 23:59:59'";
-	  }
-      }
-    $sql .= " ORDER BY start_ts;";
+    $sql .= " FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     echo "<TABLE border=1 width=\"100%\">\n";
