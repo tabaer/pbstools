@@ -180,14 +180,17 @@ while ( defined($ARGV[0]) )
 		if ( defined($resource{"ctime"}) )
 		  {
 		    $qhead.=",submit_ts = \'".$resource{"ctime"}."\'";
+		    $qhead.=",submit_date = DATE(FROM_UNIXTIME(\'".$resource{"ctime"}."\'))";
 		  }
 		if ( defined($resource{"start"}) )
 		  {
 		    $qhead.=",start_ts = \'".$resource{"start"}."\'";
+		    $qhead.=",start_date = DATE(FROM_UNIXTIME(\'".$resource{"start"}."\'))";
 		  }
 		if ( defined($resource{"end"}) )
 		  {
 		    $qhead.=",end_ts = \'".$resource{"end"}."\'";
+		    $qhead.=",end_date = DATE(FROM_UNIXTIME(\'".$resource{"end"}."\'))";
 		  }
 		if ( defined($resource{"Resource_List.cput"}) )
 		  {
@@ -282,16 +285,22 @@ while ( defined($ARGV[0]) )
 		  {
 		    $qhead.=",submit_ts";
 		    $qtail.=",\'".$resource{"ctime"}."\'";
+		    $qhead.=",submit_date";
+		    $qtail.=",DATE(FROM_UNIXTIME(\'".$resource{"ctime"}."\'))";
 		  }
 		if ( defined($resource{"start"}) )
 		  {
 		    $qhead.=",start_ts";
 		    $qtail.=",\'".$resource{"start"}."\'";
+		    $qhead.=",start_date";
+		    $qtail.=",DATE(FROM_UNIXTIME(\'".$resource{"start"}."\'))";
 		  }
 		if ( defined($resource{"end"}) )
 		  {
 		    $qhead.=",end_ts";
 		    $qtail.=",\'".$resource{"end"}."\'";
+		    $qhead.=",end_date";
+		    $qtail.=",DATE(FROM_UNIXTIME(\'".$resource{"end"}."\'))";
 		  }
 		if ( defined($resource{"Resource_List.cput"}) )
 		  {
