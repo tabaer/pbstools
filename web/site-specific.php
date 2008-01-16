@@ -224,7 +224,7 @@ function software_match_list()
   $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
   $pkgmatch['dock']="( script LIKE '%dock5%' OR script LIKE '%dock6%' OR script LIKE '%sphgen%' OR script LIKE '%mopac%' )";
   $pkgmatch['ex_e']="script LIKE '%ex.e%'";
-  $pkgmatch['fsweep']="script LIKE '%fsweep2.exe%';
+  $pkgmatch['fsweep']="script LIKE '%fsweep2.exe%'";
   $pkgmatch['gamess']="script LIKE '%gamess%' OR script LIKE '%rungms%' OR script LIKE '%rungmx%'";
   $pkgmatch['gaussian']="script LIKE '%g98%' OR script LIKE '%g03%'";
   $pkgmatch['glast']="( script LIKE '%glast%' OR script LIKE '%gp run%' )";
