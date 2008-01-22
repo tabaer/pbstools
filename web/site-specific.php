@@ -176,6 +176,7 @@ function software_list()
 	      "lsdyna",
 	      "mathematica",
 	      "matlab",
+	      "mm5",
 	      "mrbayes",
 	      "nag",
 	      "namd",
@@ -191,10 +192,12 @@ function software_list()
 	      "sable",
 #	      "sas",
 	      "scalapack",
+	      "sfeles",
 	      "stata",
 	      "turbo",
 	      "turbomole",
-	      "vasp");
+	      "vasp",
+              "wrf");
   
   return $list;
 }
