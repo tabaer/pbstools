@@ -243,7 +243,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
     {
       if ( $xaxis=="institution" )
 	{
-	  $query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' )";
+	  $query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' AND username NOT LIKE 'wrk%' )";
 	}
       $query .= " AND (".xaxis_column($xaxis)." IS NOT NULL)";
       if ( clause($xaxis,$metric)!="" )
