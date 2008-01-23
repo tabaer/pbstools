@@ -22,15 +22,15 @@ function xaxis_column($x)
 {
   if ( $x=="month" )
     {
-      return "EXTRACT(YEAR_MONTH FROM FROM_UNIXTIME(start_ts))";
+      return "EXTRACT(YEAR_MONTH FROM FROM_UNIXTIME(start_ts)) AS month";
     }
   elseif ( $x=="institution" )
     {
-      return "SUBSTRING(username,1,3)";
+      return "SUBSTRING(username,1,3) AS institution";
     }
   elseif ( $x=="qtime" )
     {
-      return "SEC_TO_TIME(start_ts-submit_ts)";
+      return "SEC_TO_TIME(start_ts-submit_ts) AS qtime";
     }
   elseif ( $x=="walltime" || $x=="walltime_req" )
     {
@@ -240,29 +240,45 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
    $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
      dateselect("start",$start_date,$end_date).")";
    if ( $xaxis!="" )
-    {
-      if ( $xaxis=="institution" )
-	{
-	  $query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' AND username NOT LIKE 'wrk%' )";
-	}
-      $query .= " AND (".xaxis_column($xaxis)." IS NOT NULL)";
-      if ( clause($xaxis,$metric)!="" )
-	{
-	  $query .= " AND ".clause($xaxis,$metric);
-	}    
-
-      $query .= " GROUP BY ".xaxis_column($xaxis)." ".sort_criteria($metric."_vs_".$xaxis);
-    }
-  $query .= ";";
-  #print "<PRE>".$query."</PRE>\n";
-  return db_query($db,$query);
+     {
+       if ( $xaxis=="institution" )
+	 {
+	   $query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' AND username NOT LIKE 'osc%' AND username NOT LIKE 'wrk%' )";
+	 }
+#       else
+#	 {
+#	   $query .= " AND (".xaxis_column($xaxis)." IS NOT NULL)";
+#	 }
+       if ( clause($xaxis,$metric)!="" )
+	 {
+	   $query .= " AND ".clause($xaxis,$metric);
+	 }    
+       $query .= " GROUP BY ".$xaxis;
+     }
+   if ( $xaxis=="institution" )
+     {
+       $query .= " UNION SELECT 'osc' AS institution,COUNT(jobid) AS jobcount";
+       if ( columns($metric,$system)!="" )
+	 {
+	   $query .= ",".columns($metric,$system);
+	 }
+       $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
+	 dateselect("start",$start_date,$end_date).") AND ".
+	 "( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%') )";
+       if ( clause($xaxis,$metric)!="" )
+	 {
+	   $query .= " AND ".clause($xaxis,$metric);
+	 }
+     }
+   $query .= " ".sort_criteria($metric."_vs_".$xaxis);
+   #print "<PRE>".$query."</PRE>\n";
+   return db_query($db,$query);
 }
 
 
 
 function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 {
-
   $query = "SELECT ".xaxis_column($xaxis).",COUNT(jobid) AS jobcount";
   if ( columns($metric,$system)!="" )
     {
