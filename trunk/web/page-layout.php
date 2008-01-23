@@ -31,6 +31,8 @@ function page_header($title)
   echo "      <LI><A href=\"jobstats-by-nproc.php\">CPU Count</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-queue.php\">Job Class</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-walltime.php\">Job Length</A></LI>\n";
+# NOTE By-institution jobstats involves OSC site-specific logic.  You may
+# want to comment it out.
   echo "      <LI><A href=\"jobstats-by-institution.php\">Institution</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-group.php\">Group/Project</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-user.php\">User</A></LI>\n";
@@ -39,10 +41,13 @@ function page_header($title)
   echo "    </UL>\n";
   echo "    <UL><U>Software usage by</U>\n";
   echo "      <LI><A href=\"software-usage.php\">System</A></LI>";
-  echo "      <LI><A href=\"software-usage-by-user.php\">User</A></LI>";
-  echo "      <LI><A href=\"software-usage-by-group.php\">Group</A></LI>";
-  echo "      <LI><A href=\"software-usage-by-institution.php\">Institution</A></LI>";
+  echo "      <LI><A href=\"software-usage-by-queue.php\">Job Class</A></LI>";
   echo "      <LI><A href=\"software-usage-by-walltime.php\">Job Length</A></LI>";
+# NOTE By-institution jobstats involves OSC site-specific logic.  You may
+# want to comment it out.
+  echo "      <LI><A href=\"software-usage-by-institution.php\">Institution</A></LI>";
+  echo "      <LI><A href=\"software-usage-by-group.php\">Group/Project</A></LI>";
+  echo "      <LI><A href=\"software-usage-by-user.php\">User</A></LI>";
   echo "      <LI><A href=\"software-usage-by-month.php\">Month</A></LI>";
   echo "    </UL>\n";
   echo "    <UL><U>Miscellaneous reports</U>\n";
