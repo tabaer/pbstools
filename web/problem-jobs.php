@@ -6,6 +6,7 @@
 # $Date$
 require_once 'page-layout.php';
 require_once 'dbutils.php';
+require_once 'metrics.php';
 
 if ( isset($_POST['system']) )
   { 
