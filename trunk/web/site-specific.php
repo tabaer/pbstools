@@ -157,6 +157,7 @@ function software_list()
 	      "casino",
 	      "cbl",
 	      "charmm",
+	      "chemshell",
 	      "cpmd",
 #	      "decypher",
               "dlpoly",
@@ -224,6 +225,7 @@ function software_match_list()
   $pkgmatch['amber']="( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' )";
   $pkgmatch['blat']="script LIKE '%blat %'";
   $pkgmatch['cbl']="( script LIKE '% cbl%' OR script LIKE '%pcbl%' OR script LIKE '%biolib%' )";
+  $pkgmatch['chemshell']="script LIKE '%chemsh%'";
   $pkgmatch['cpmd']="script LIKE '%cpmd.x%'";
   $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
   $pkgmatch['dock']="( script LIKE '%dock5%' OR script LIKE '%dock6%' OR script LIKE '%sphgen%' OR script LIKE '%mopac%' )";
