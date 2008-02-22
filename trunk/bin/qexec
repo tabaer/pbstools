@@ -65,12 +65,13 @@ while ( $ARGV[0] =~ /^-.*$/ )
 	unshift(@qsub,@args);
     }
     # mpiexec args
-    elsif ( $ARGV[0] =~ /^-(verbose|nostdin|allstdin|nostdout|mpich-p4-shmem|mpich-p4-no-shmem|pernode|nolocal|gige|tv|kill|version)$/ )
+    elsif ( $ARGV[0] =~ /^-{1,2}(verbose|nostdin|allstdin|nostdout|mpich-p4-shmem|mpich-p4-no-shmem|pernode|nolocal|gige|tv|kill|version)$/ ||
+	    $ARGV[0] =~ /^-{1,2}(comm|npernode|transform-hostname|transform-hostname-program|config)=.*$/ )
     {
       # shift one element off @ARGV into @mpiexec
       unshift(@mpiexec,shift(@ARGV));
     }
-    elsif ( $ARGV[0] =~ /^-(n|comm|npernode|transform-hostname|transform-hostname-program|config)$/ )
+    elsif ( $ARGV[0] =~ /^-{1,2}(n|comm|npernode|transform-hostname|transform-hostname-program|config)$/ )
     {
       # shift two elements off @ARGV into @mpiexec
       my @args = (shift(@ARGV),shift(@ARGV));
