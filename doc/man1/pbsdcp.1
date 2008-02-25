@@ -1,0 +1,90 @@
+.TH pbsdcp 1 "$Date$" "$Revision$" "PBS TOOLS"
+
+.SH NAME
+pbsdcp \- Distributed copy command for the PBS environment
+
+.SH SYNOPSIS
+.B pbsdcp
+[-s|-g] [options] srcfile [...srcfiles...] target
+
+.SH DESCRIPTION
+
+In many PBS environments, there is often shared storage, such as home
+directories or parallel file system, as well as storage local to each
+compute host.  It is often desirable from a performance perspective to
+have parallel jobs use a local file system as its working directory;
+however, staging data in and out of these local file systems
+dynamically can be a challenge.  
+.B pbsdcp
+automates the most common elements of this type of operation by 
+.I scattering
+files from shared storage into host-local scratch space on a set of
+nodes, or by
+.I gathering
+files from host-local scratch space on a set of nodes into shared
+storage.
+
+.SH OPTIONS
+.TP
+\-g
+Gather mode. In this mode, the source files on each node are copied
+into the shared target directory.
+.TP
+\-h
+Help.  Print a help message and exit.
+.TP
+\-p
+Preserve permissions.  This causes pbsdcp to attempt to preserve
+(duplicate) in its copies the modification times and modes of the
+source files, ignoring the umask.  (Note that this is identical to the
+-p option in rcp.)
+.TP
+\-r
+Recursive.  If any of the source files are directories, pbsdcp copies
+each subtree rooted at that name.  (Note that this is identical to the
+-r option in rcp.)
+.TP
+\-s
+Scatter mode (default).  In this mode, a copy of each source files is
+created in an instance of the target directory on each node assigned
+to the job.
+
+.SH EXAMPLES
+
+Scatter (default) mode:
+.PP
+.nf
+.B pbsdcp -s infile1 infile2 $TMPDIR
+.fi
+.PP
+Gather mode:
+.PP
+.nf
+.B pbsdcp -g $TMPDIR/outfile'*' $HOME
+.fi
+.PP
+Using both scatter and gather:
+.PP
+.nf
+# Assume $PBS_O_WORKDIR is on a shared file system, eg. NFS
+cd $PBS_O_WORKDIR
+pbsdcp -s mpi_prog infile1 infile2 $TMPDIR
+cd $TMPDIR
+mpiexec ./mpi_prog
+pbsdcp -g output'*' $PBS_O_WORKDIR
+.fi
+
+.SH BUGS
+
+Gather mode does not attempt to resolve namespace collisions between
+files on different nodes with the same name.
+.PP
+When using wildcards in gather mode, it is necessary to escape the
+wildcards so that they are not expanded by a shell on the mother
+superior node of the job.
+
+.SH AUTHOR
+Troy Baer (troy (at) osc.edu)
+
+.SH SEE ALSO
+qsub(1B), rcp(1)

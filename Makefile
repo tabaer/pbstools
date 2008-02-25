@@ -19,6 +19,17 @@ usertools:
 	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qmpirun
 	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qrsh
 	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qsh
+	install -d $(PREFIX)/man/man1
+	install -m 0644 doc/man1/ja.1 $(PREFIX)/man/man1
+	install -m 0644 doc/man1/pbsdcp.1 $(PREFIX)/man/man1
+	install -m 0644 doc/man1/qexec.1 $(PREFIX)/man/man1
+	install -m 0644 doc/man1/qpeek.1 $(PREFIX)/man/man1
+	install -m 0644 doc/man1/qps.1 $(PREFIX)/man/man1
+	ln -s $(PREFIX)/man/man1/qexec.1 $(PREFIX)/man/man1/qlogin.1
+	ln -s $(PREFIX)/man/man1/qexec.1 $(PREFIX)/man/man1/qmpiexec.1
+	ln -s $(PREFIX)/man/man1/qexec.1 $(PREFIX)/man/man1/qmpirun.1
+	ln -s $(PREFIX)/man/man1/qexec.1 $(PREFIX)/man/man1/qrsh.1
+	ln -s $(PREFIX)/man/man1/qexec.1 $(PREFIX)/man/man1/qsh.1
 
 admintools:
 	install -d $(PREFIX)/sbin
