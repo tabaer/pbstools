@@ -37,6 +37,9 @@ admintools:
 	install -m 0750 sbin/qtracejob.pbs-server $(PREFIX)/sbin
 	install -m 0750 sbin/reaver $(PREFIX)/sbin
 	install -m 0750 sbin/showscript.pbs-server $(PREFIX)/sbin
+	install -d $(PREFIX)/man/man8
+	install -m 0644 doc/man8/dezombify.8 $(PREFIX)/man/man8
+	install -m 0644 doc/man8/reaver.8 $(PREFIX)/man/man8
 
 statstools:
 	install -d $(PREFIX)/sbin
