@@ -1,0 +1,72 @@
+.TH qpeek 1 "$Date$" "$Revision$" "PBS TOOLS"
+
+.SH NAME
+qpeek \- Peek into a running job's output spool files
+
+.SH SYNOPSIS
+qpeek [-c|-h|-f|-t] [-e|-o] [-#] JOBID
+
+.SH DESCRIPTION
+
+PBS causes all jobs run within it to spool their stdout and stderr
+streams to files, which are delivered to the user after the job ceases
+execution.  qpeek allows the user to inspect these spool files while
+the job is still executing.
+
+.SH OPTIONS
+.TP
+\-c
+Show all of the output file ("cat", default)
+.TP
+\-h
+Show only the beginning of the output file ("head")
+.TP
+\-t
+Show only the end of the output file ("tail")
+.TP
+\-f
+Show only the end of the file and keep listening ("tail -f")
+.TP
+\-e
+Show the stderr file of the job
+.TP
+\-o
+Show the stdout file of the job (default)
+.TP
+\-#
+Show only # lines of output (default 10)
+.TP
+\-?
+Display help
+
+.SH EXAMPLES
+Show all of stdout from jobid 12345:
+.nf
+.B qpeek 12345
+.fi
+.PP
+Show the first 50 lines of stderr from jobid 12346:
+.nf
+.B qpeek -h -e -50 12346
+.fi
+.PP
+Show the last 25 lines of stdout from jobid 12347:
+.nf
+.B qpeek -t -o -25 12346
+.fi
+.PP
+Show the last 10 lines of stdout from jobid 12348 and listen for more
+output until interrupted:
+.nf
+.B qpeek -f 12346
+.fi
+
+.SH BUGS
+qpeek is not particularly forgiving if spool files in question do not
+exist.
+
+.SH AUTHOR
+Troy Baer (troy (at) osc.edu)
+
+.SH SEE ALSO
+cat(1), head(1), qsub(1B), rsh(1), tail(1)
