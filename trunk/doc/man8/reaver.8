@@ -1,0 +1,38 @@
+.TH reaver 8 "$Date$" "$Revision$" "PBS TOOLS"
+
+.SH NAME
+reaver \- Identify (and optionally kill) any processes that are not
+owned by users with jobs assigned to a node.
+
+.SH SYNOPSIS
+reaver [options]
+
+.SH DESCRIPTION
+
+The
+.B reaver
+command searches for stray processes running on a compute node which
+cannot be associated with a running jobid on that node.  It can
+optionally terminate any stray processes it finds.
+
+.SH OPTIONS
+.TP
+\-h, \-\-help
+Print detailed help screen.
+.TP
+\-k, \-\-kill
+Attempt to kill all stray processes.  This is accomplished by sending
+first SIGCONT, then 1 second later SIGTERM, then 5 seconds later
+SIGKILL.
+.TP
+\-b, \-\-brief
+Display only the stray process IDs.
+.TP
+\-v, \-\-verbose
+Display extra info.
+
+.SH AUTHORS
+Troy Baer (troy (at) osc.edu), Rick Mohr (rfmohr (at) osc.edu)
+
+.SH SEE ALSO
+kill(1), ps(1), qstat(1B), signal(7)
