@@ -1,0 +1,95 @@
+.TH parallel-command-processor 1 "$Date$" "$Revision$" "PBS TOOLS"
+
+.SH NAME
+parallel-command-processor \- Execute large numbers of independent
+serial processes in parallel
+
+.SH SYNOPSIS
+.BI "mpiexec " [mpiexec_options] " parallel-command-processor " [config_file]
+
+.SH DESCRIPTION
+
+On large parallel cluster systems, there is often a sizeable
+contingent of users who simply want to run huge numbers of independent
+serial jobs.  However, very large numbers of small, short running jobs
+can sometimes cause scalability problems with file systems,
+schedulers, and other pieces of cluster infrastructure.  One
+alternative to this is allocate a number of nodes/processors to
+running a (much larger) number of serial processes for some period of
+time.  parallel-command-processor (hereafter referred to as "PCP") is
+one way of coordinating these sorts of "massively serial"
+calculations.
+
+PCP works as follows: In a parallel job with N processors allocated,
+the PCP manager process (a.k.a. MPI rank 0) will read the first N-1
+commands in the command stream and distribute them to the other N-1
+processors.  As processes complete, the PCP manager will read the next
+one in the stream and send it out to an idle processor core.  Once the
+PCP manager runs out of commands to run, it will wait on the remaining
+running processes to complete before shutting itself down.
+
+If specified, PCP can use a config file with a stream of commands to
+run, one command per line.  However, if no config file is specified,
+PCP will instead read a stream of commands from standard input.
+
+.SH COMMAND FORMAT
+
+A "command" in PCP's view of the world is simply a line-terminated
+string of at most LINE_MAX (typically 4096) characters which is used
+as input to the POSIX
+.BR system (3)
+C library function.  On UNIX-like systems, this can include single
+commands, sequences of multiple commands separated by semi-colons, and
+pipelines of commands:
+.nf
+.B ls > ls.out
+.B ( ls ; ls /tmp ; ls /dev ) > ls2.out
+.B ls | cat > ls3.out
+.fi
+
+By default, all commands run by PCP share the same standard output and
+standard error streams.  To avoid having multiple commands
+multiplexing their output to that shared stdout stream, it is strongly
+recommended that commands run by PCP redirect their standard outputs
+into files.
+
+.SH EXAMPLES
+
+Using a config file:
+.nf
+.B mpiexec parallel-command-processor cfgfile
+.fi
+.PP
+Using a here document:
+.nf
+.B mpiexec parallel-command-processor <<EOF
+.B cmd1
+.B cmd2
+.B ...
+.B EOF
+.fi
+.PP
+Using a pipe (bash syntax):
+.nf
+.B for i in $(seq 1 10000)
+.B do
+.RS 4
+.B    ctr=$(printf "%05d" $i)
+.B    echo \*(lq cmd${ctr} > ${ctr}.out \*(rq
+.RE
+.B done | mpiexec parallel-command-processor 
+.fi
+
+.SH BUGS
+
+PCP does not check the return codes of the MPI routines it uses as
+closely as it perhaps ought to.
+
+.SH AUTHOR
+Troy Baer (troy (at) osc.edu)
+
+.SH SEE ALSO
+.BR mpiexec (1),
+.BR qsub (1B),
+.BR system (3)
+
