@@ -2,10 +2,15 @@ PREFIX    = /usr/local
 WEBPREFIX = /var/www/html/pbsacct
 DBSERVER  = localhost
 DBADMIN   = root
+MPICC = mpicc
+MPILIBS = 
 
-default: usertools admintools
+default:
+	@echo "Run \"make install\" or \"make install-all\" to install pbstools"
 
-all: usertools admintools statstools dbtools
+install: usertools admintools
+
+install-all: usertools admintools mpitools statstools dbtools
 
 usertools:
 	install -d $(PREFIX)/bin
@@ -40,6 +45,12 @@ admintools:
 	install -d $(PREFIX)/man/man8
 	install -m 0644 doc/man8/dezombify.8 $(PREFIX)/man/man8
 	install -m 0644 doc/man8/reaver.8 $(PREFIX)/man/man8
+
+mpitools:
+	install -d $(PREFIX)/bin
+	$(MPICC) src/parallel-command-processor.c -o $(PREFIX)/bin/parallel-command-processor
+	install -d $(PREFIX)/man/man1
+	install -m 0644 doc/man1/parallel-command-processor.1 $(PREFIX)/man/man1
 
 statstools:
 	install -d $(PREFIX)/sbin
