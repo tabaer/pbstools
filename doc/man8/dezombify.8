@@ -10,9 +10,10 @@ dezombify <jobid> [jobids...]
 
 .SH DESCRIPTION
 
-dezombify automates a somewhat tedious process required to requeue a
-"zombie" job, which pbs_server claims is running but in reality is
-not.  Signs of a zombie job:
+.B dezombify
+automates a somewhat tedious process required to requeue a "zombie"
+job, which pbs_server claims is running but in reality is not.  Signs
+of a zombie job:
 .nf
 * "qstat -f $jobid" reports job state as R but no CPU time or memory consumed
 * "qps -a $jobid" shows *NO* processes
@@ -42,4 +43,8 @@ apparent reason.
 Troy Baer (troy (at) osc.edu)
 
 .SH SEE ALSO
-all(1), qdel(1B), qhold(1B), qrerun(1B), qrls(1B)
+.BR all (1),
+.BR qdel (1B),
+.BR qhold (1B),
+.BR qrerun (1B),
+.BR qrls (1B)

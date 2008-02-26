@@ -26,25 +26,27 @@ storage.
 
 .SH OPTIONS
 .TP
-\-g
+.B \-g
 Gather mode. In this mode, the source files on each node are copied
 into the shared target directory.
 .TP
-\-h
+.B \-h
 Help.  Print a help message and exit.
 .TP
-\-p
+.B \-p
 Preserve permissions.  This causes pbsdcp to attempt to preserve
 (duplicate) in its copies the modification times and modes of the
 source files, ignoring the umask.  (Note that this is identical to the
--p option in rcp.)
+-p option in
+.BR rcp (1).)
 .TP
-\-r
+.B \-r
 Recursive.  If any of the source files are directories, pbsdcp copies
 each subtree rooted at that name.  (Note that this is identical to the
--r option in rcp.)
+-r option in 
+.BR rcp (1).)
 .TP
-\-s
+.B \-s
 Scatter mode (default).  In this mode, a copy of each source files is
 created in an instance of the target directory on each node assigned
 to the job.
@@ -67,11 +69,11 @@ Using both scatter and gather:
 .PP
 .nf
 # Assume $PBS_O_WORKDIR is on a shared file system, eg. NFS
-cd $PBS_O_WORKDIR
-pbsdcp -s mpi_prog infile1 infile2 $TMPDIR
-cd $TMPDIR
-mpiexec ./mpi_prog
-pbsdcp -g output'*' $PBS_O_WORKDIR
+.B cd $PBS_O_WORKDIR
+.B pbsdcp -s mpi_prog infile1 infile2 $TMPDIR
+.B cd $TMPDIR
+.B mpiexec ./mpi_prog
+.B pbsdcp -g output'*' $PBS_O_WORKDIR
 .fi
 
 .SH BUGS
@@ -87,4 +89,5 @@ superior node of the job.
 Troy Baer (troy (at) osc.edu)
 
 .SH SEE ALSO
-qsub(1B), rcp(1)
+.BR qsub (1B),
+.BR rcp (1)
