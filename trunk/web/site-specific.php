@@ -159,6 +159,7 @@ function software_list()
 	      "charmm",
 	      "chemshell",
 	      "cpmd",
+	      "crystal",
 #	      "decypher",
               "dlpoly",
 	      "dock",
@@ -227,6 +228,7 @@ function software_match_list()
   $pkgmatch['cbl']="( script LIKE '% cbl%' OR script LIKE '%pcbl%' OR script LIKE '%biolib%' )";
   $pkgmatch['chemshell']="script LIKE '%chemsh%'";
   $pkgmatch['cpmd']="script LIKE '%cpmd.x%'";
+  $pkgmatch['crystal']="script LIKE '%Pcrystal%'";
   $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
   $pkgmatch['dock']="( script LIKE '%dock5%' OR script LIKE '%dock6%' OR script LIKE '%sphgen%' OR script LIKE '%mopac%' )";
   $pkgmatch['ex_e']="script LIKE '%ex.e%'";
