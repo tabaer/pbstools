@@ -48,7 +48,7 @@ admintools:
 
 mpitools:
 	install -d $(PREFIX)/bin
-	$(MPICC) src/parallel-command-processor.c -o $(PREFIX)/bin/parallel-command-processor
+	$(MPICC) src/parallel-command-processor.c -o $(PREFIX)/bin/parallel-command-processor $(MPILIBS)
 	install -d $(PREFIX)/man/man1
 	install -m 0644 doc/man1/parallel-command-processor.1 $(PREFIX)/man/man1
 
