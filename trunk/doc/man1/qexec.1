@@ -4,48 +4,72 @@
 qexec \- Workalike for SGE qlogin, qrsh, and qsh commands
 
 .SH SYNOPSIS
-qexec [qsub_arguments]
+.B qexec
+[qsub_arguments]
 .PP
-qlogin [qsub_arguments]
+.B qlogin
+[qsub_arguments]
 .PP
-qrsh [qsub_arguments] [command [cmdargs]]
+.B qrsh
+[qsub_arguments] [command [cmdargs]]
 .PP
-qsh [qsub_arguments]
+.B qsh
+[qsub_arguments]
 .PP
-qmpiexec [qsub_arguments] [mpiexec_arguments] command [cmdargs]
+.B qmpiexec
+[qsub_arguments] [mpiexec_arguments] command [cmdargs]
 .PP
-qmpirun [qsub_arguments] [mpiexec_arguments] command [cmdargs]
+.B qmpirun
+[qsub_arguments] [mpiexec_arguments] command [cmdargs]
 
 .SH DESCRIPTION
-qexec is a wrapper around the PBS/TORQUE
+.B qexec
+is a wrapper around the PBS/TORQUE
 .B qsub \-I
 interactive job submission functionality, which implements a number of
 different interactive job submission behaviors depending on how it is
 invoked.  Several of these behaviors are similar to the Sun Grid
-Engine (SGE) commands of the same name.
+Engine (SGE) commands of the same names.
 .PP
-The default behavior for qexec (also known as "qlogin" mode) behaves
-like the rlogin command.  It initiates an interactive session on a
-compute node, with resource limits as specified on the command line.
+The default behavior for
+.B qexec
+(also known as
+.B qlogin
+mode) behaves like the rlogin command.  It initiates an interactive
+session on a compute node, with resource limits as specified on the
+command line.
 .PP
-In "qrsh" mode, qexec behaves like the rsh command.  If a command is
-specified, it will execute that command interactively in the context
-of a batch job.  If a command is not specified, qrsh will act like
-qlogin.
+In 
+.B qrsh
+mode, qexec behaves like the rsh command.  If a command is specified,
+it will execute that command interactively in the context of a batch
+job.  If a command is not specified, qrsh will act like qlogin.
 .PP
-The "qsh" mode of qexec is similar to "qlogin" mode, in that it
-initiates an interactive session.  However, instead of that
-interactive session being a shell, it is contained in an xterm window.
-Note that X11 remote display most be working properly for qsh to
-succeed.
+The
+.B qsh
+mode of qexec is similar to
+.B qlogin
+mode, in that it initiates an interactive session.  However, instead
+of that interactive session being a shell, it is contained in an xterm
+window.  Note that X11 remote display most be working properly for qsh
+to succeed.
 .PP
-The "qmpiexec" and "qmpirun" modes of qexec interactively execute a
-single MPI program in the current working directory.
+The 
+.B qmpiexec
+and
+.B qmpirun
+modes of qexec interactively execute a single MPI program in the
+current working directory.
 
 .SH OPTIONS
 All variations of qexec accept any valid PBS/TORQUE arguments to
-qsub(1B).  qmpiexec and qmpirun also accept virtually any valid
-argument to mpiexec(1).
+.BR qsub (1B)
+.  
+.B qmpiexec
+and
+.B qmpirun
+also accept virtually any valid argument to 
+.BR mpiexec (1).
 
 .SH EXAMPLES
 The following are all equivalent to each other, in that they all
@@ -77,12 +101,23 @@ current working directory on 32 processors with a maximum run time of
 .B qmpirun -l nodes=8:ppn=4,walltime=2:00:00 ./mpiprog
 
 .SH BUGS
-qrsh, qsh, qmpiexec, and qmpirun all require that the user's home
-directory on the submit host be identical to their home directory on
-the compute nodes, using a shared file system such as NFS.
+.B qrsh
+, 
+.B qsh
+, 
+.B qmpiexec
+, and 
+.B qmpirun
+all require that the user's home directory on the submit host be
+identical to their home directory on the compute nodes, using a shared
+file system such as NFS.
 
 .SH AUTHOR
 Troy Baer (troy (at) osc.edu)
 
 .SH SEE ALSO
-mpiexec(1), rlogin(1), rsh(1), qsub(1B), xterm(1)
+.BR mpiexec (1),
+.BR rlogin (1),
+.BR rsh (1),
+.BR qsub (1B),
+.BR xterm (1)
