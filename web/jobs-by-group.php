@@ -8,6 +8,13 @@ require_once 'dbutils.php';
 require_once 'page-layout.php';
 require_once 'metrics.php';
 
+# accept get queries too for handy command-line usage:  suck all the
+# parameters into _POST.
+if (isset($_GET['groupname']))
+  {
+    $_POST = $_GET;
+  }
+
 if ( isset($_POST['groupname']) )
   { 
     $title = "Jobs owned by group ".$_POST['groupname']." on ".$_POST['system'];
