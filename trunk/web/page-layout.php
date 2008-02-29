@@ -147,4 +147,46 @@ function textfield($name,$label,$default,$width)
   echo $label.": <INPUT type=\"text\" name=\"".$name."\" size=\"".$width."\" value=\"".$default."\"><BR>\n";
 }
 
+function bookmarkable_url()
+{
+  # the following code is derived from an example at
+  # http://www.webcheatsheet.com/PHP/get_current_page_url.php
+  $pageURL = 'http';
+  if ($_SERVER["HTTPS"] == "on")
+    {
+      $pageURL .= "s";
+    }
+  $pageURL .= "://";
+  if ( $_SERVER["SERVER_PORT"]!=80 &&
+       ($_SERVER["HTTPS"]=="on" &&  $_SERVER["SERVER_PORT"]!=443) )
+    {
+      $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+    }
+  else
+    {
+      $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+    }
+  if ( !preg_match('/\?/',$_SERVER["REQUEST_URI"]) )
+    {
+      $first = 1;
+      foreach (array_keys($_POST) as $param)
+	{
+	  if ( $first==1 )
+	    {
+	      $pageURL .= "?".$param;
+	      $first = 0;
+	    }
+	  else
+	    {
+	      $pageURL .= "&".$param;
+	    }
+	  if ( isset($_POST[$param]) && $_POST[$param]!="" )
+	    {
+	      $pageURL .= "=".$_POST[$param];
+	    }
+	}
+    }
+  echo "<P>Bookmarkable URL for this report:  <A href=\"".$pageURL."\"><PRE>".htmlspecialchars($pageURL)."</PRE></A></P>\n";
+}
+
 ?>

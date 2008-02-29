@@ -8,6 +8,13 @@ require_once 'page-layout.php';
 require_once 'dbutils.php';
 require_once 'metrics.php';
 
+# accept get queries too for handy command-line usage:  suck all the
+# parameters into _POST.
+if (isset($_GET['system']))
+  {
+    $_POST = $_GET;
+  }
+
 if ( isset($_POST['system']) )
   { 
     $title = "Potentially problematic jobs on ".$_POST['system'];
@@ -119,7 +126,7 @@ if ( isset($_POST['system']) )
     $sql .= " FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
-    echo "<TABLE border=1 width=\"100%\">\n";
+    echo "<TABLE border=\"1\">\n";
     $ncols=1;
     $col[0]="jobid";
     echo "<TR><TH>jobid</TH>";
@@ -163,6 +170,7 @@ if ( isset($_POST['system']) )
     echo "</TABLE>\n";
   
     db_disconnect($db);
+    bookmarkable_url();
   }
 else
   {

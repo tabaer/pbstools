@@ -59,7 +59,7 @@ if ( isset($_POST['groupname']) )
     $sql = $sql." FROM Jobs WHERE groupname = '".$_POST['groupname']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY submit_ts;";
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
-    echo "<TABLE border=1 width=\"100%\">\n";
+    echo "<TABLE border=\"1\">\n";
     $col[0]="jobid";
     $col[1]="username";
     $col[2]="groupname";
@@ -85,7 +85,7 @@ if ( isset($_POST['groupname']) )
 	    $data[$key]=array_shift($row);
 	    if ( $col[$key]=="submit_ts" || $col[$key]=="start_ts" || $col[$key]=="end_ts")
 	      {
-		echo "<TD><PRE>".date("Y-m-d H:i:s",$data[$key])."</PVRE></TD>\n";
+		echo "<TD><PRE>".date("Y-m-d H:i:s",$data[$key])."</PRE></TD>\n";
 	      }
 	    else
 	      {
@@ -97,6 +97,7 @@ if ( isset($_POST['groupname']) )
     echo "</TABLE>\n";
 
     db_disconnect($db);
+    bookmarkable_url();
   }
 else
   {

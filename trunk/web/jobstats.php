@@ -9,6 +9,13 @@ require_once 'page-layout.php';
 require_once 'metrics.php';
 require_once 'site-specific.php';
 
+# accept get queries too for handy command-line usage:  suck all the
+# parameters into _POST.
+if (isset($_GET['system']))
+  {
+    $_POST = $_GET;
+  }
+
 $title = "Job statistics";
 if ( isset($_POST['system']) )
   {
@@ -535,6 +542,7 @@ if ( isset($_POST['system']) )
 				    $_POST['end_date']);
 
     db_disconnect($db);
+    bookmarkable_url();
   }
 else
   {

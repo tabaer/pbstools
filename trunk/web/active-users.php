@@ -8,6 +8,13 @@ require_once 'dbutils.php';
 require_once 'page-layout.php';
 require_once 'metrics.php';
 
+# accept get queries too for handy command-line usage:  suck all the
+# parameters into _POST.
+if (isset($_GET['system']))
+  {
+    $_POST = $_GET;
+  }
+
 if ( isset($_POST['system']) )
   { 
     $title = "Most active users on ".$_POST['system'];
@@ -43,7 +50,7 @@ if ( isset($_POST['system']) )
     $sql = "SELECT username, groupname, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600 AS cpuhrs FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
-    echo "<TABLE border=1 width=\"100%\">\n";
+    echo "<TABLE border=\"1\">\n";
     echo "<TR><TH>user</TH><TH>group</TH><TH>job count</TH><TH>CPU-hours</TH></TR>\n";
         while ($result->fetchInto($row))
       {
@@ -59,6 +66,7 @@ if ( isset($_POST['system']) )
     echo "</TABLE>\n";
   
     db_disconnect($db);
+    bookmarkable_url();
   }
 else
   {

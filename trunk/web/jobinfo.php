@@ -49,7 +49,7 @@ if ( isset($_POST['jobid']) )
     $result = db_query($db,$sql);
     while ($result->fetchInto($row))
       {
-	echo "<TABLE border=1 width=\"100%\">\n";
+	echo "<TABLE border=\"1\">\n";
 	foreach ($keys as $key)
 	  {
 	    if ( isset($_POST[$key]) )
@@ -70,6 +70,7 @@ if ( isset($_POST['jobid']) )
 	echo "</TABLE>\n";
       }
     db_disconnect($db);
+    bookmarkable_url();
   }
 else
   {
