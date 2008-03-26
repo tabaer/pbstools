@@ -1,11 +1,12 @@
 <?php
-# Copyright 2006, 2007 Ohio Supercomputer Center
+# Copyright 2006, 2007, 2008 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL$
 # $Revision$
 # $Date$
 
-# The site system logic of the reporting system goes here!
+# The site-specific logic of the reporting system goes here!
+# Below are settings for OSC.
 
 # list of all possible 'system' values to do reports on
 # NOTE:  This does *NOT* necessary need to have a 1:1 correspondence
@@ -148,6 +149,7 @@ function software_list()
   $list=array("a_out",
 	      "abaqus",
 	      "abinit",
+	      "aces2",
 	      "adf",
 	      "AliEn",
 	      "amber",
@@ -221,6 +223,7 @@ function software_match_list()
   # in MySQL, so don't use REGEXP unless you really need it.
   $pkgmatch['a_out']="script LIKE '%a.out%'";
   $pkgmatch['abinit']="script LIKE '%abinis%' OR script LIKE '%abinip%'";
+  $pkgmatch['aces2']="script LIKE '%xaces2%'";
   $pkgmatch['adf']="script LIKE '%adf%'";
   $pkgmatch['AliEn']="( script LIKE '%aliroot%' OR script LIKE '%agent.startup%' )";
   $pkgmatch['amber']="( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' )";
