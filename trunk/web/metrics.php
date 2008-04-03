@@ -196,6 +196,7 @@ function columns($metric,$system)
   if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS groups";
   if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system);
   if ( $metric=='nproc' ) return "MIN(nproc),MAX(nproc),AVG(nproc),STDDEV(nproc)";
+  if ( $metric=='usage' ) return columns('cpuhours',$system).",".columns('usercount',$system);
 
   return "";
 }
@@ -220,7 +221,16 @@ function columnnames($metric)
   if ( $metric=='groups' ) return array("groups");
   if ( $metric=='dodmetrics' ) return array("users","projects","cpuhours");
   if ( $metric=='nproc' ) return array("MIN(nproc)","MAX(nproc)","AVG(nproc)","STDDEV(nproc)");
-  
+  if ( $metric=='usage' )
+    {
+      $output = columnnames('cpuhours');
+      foreach (columnnames('usercount') as $element)
+	{
+	  array_push($output,$element);
+	}
+      return $output;
+    }
+
   return array();
 }
 
@@ -243,7 +253,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
      {
        if ( $xaxis=="institution" )
 	 {
-	   $query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' AND username NOT LIKE 'osc%' AND username NOT LIKE 'wrk%' )";
+	   $query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' AND username NOT LIKE 'osc%' AND username NOT LIKE 'wrk%' AND username NOT LIKE 'test%')";
 	 }
 #       else
 #	 {
@@ -264,7 +274,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 	 }
        $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
 	 dateselect("start",$start_date,$end_date).") AND ".
-	 "( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%') )";
+	 "( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%' OR username LIKE 'test%') )";
        if ( clause($xaxis,$metric)!="" )
 	 {
 	   $query .= " AND ".clause($xaxis,$metric);
