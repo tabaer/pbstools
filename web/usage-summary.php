@@ -112,6 +112,19 @@ if ( isset($_POST['system']) )
       }
     echo "</TABLE>\n";    
 
+    # by institution
+    # NOTE By-institution jobstats involves OSC site-specific logic.  You may
+    # want to comment out the following statement.
+    $inst_summary=true;
+    if ( isset($inst_summary) && $inst_summary==true )
+      {
+	echo "<H3>Usage By Institution</H#>\n";
+	$result=get_metric($db,$_POST['system'],'institution','usage',$_POST[start_date],$_POST[end_date]);
+	metric_as_table($result,'institution','usage');
+	ob_flush();
+	flush();
+      }
+
     # software usage
     echo "<H3>Software Usage</H3>\n";
     echo "<TABLE border=1>\n";

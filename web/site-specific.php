@@ -127,6 +127,7 @@ function nprocs($system)
 function sort_criteria($fn)
 {
   #  if ( $fn=='cpuhours_vs_groupname' ) return "ORDER BY cpuhours DESC";
+  if ( isset($_POST['order']) ) return "ORDER BY ".$_POST['order']." DESC";
   if ( xaxis($fn)=="institution" ) return "ORDER BY institution";
   return "";
 }
