@@ -116,7 +116,7 @@ if ( isset($_POST['system']) )
     # NOTE By-institution jobstats involves OSC site-specific logic.  You may
     # want to comment out the following statement.
     $inst_summary=true;
-    if ( isset($inst_summary) && $inst_summary==true )
+    if ( isset($_POST['institution']) && isset($inst_summary) && $inst_summary==true )
       {
 	echo "<H3>Usage By Institution</H#>\n";
 	$result=get_metric($db,$_POST['system'],'institution','usage',$_POST[start_date],$_POST[end_date]);
@@ -126,17 +126,17 @@ if ( isset($_POST['system']) )
       }
 
     # software usage
-    echo "<H3>Software Usage</H3>\n";
-    echo "<TABLE border=1>\n";
-    echo "<TR><TH>package</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH></TR>\n";
-    ob_flush();
-    flush();
-
-    $first=1;
-    $sql = "";
-    foreach ( $packages as $pkg )
+    if ( isset($_POST['software']) )
       {
-	if ( isset($_POST[$pkg]) )
+	echo "<H3>Software Usage</H3>\n";
+	echo "<TABLE border=1>\n";
+	echo "<TR><TH>package</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH></TR>\n";
+	ob_flush();
+	flush();
+	
+	$first=1;
+	$sql = "";
+	foreach ( $packages as $pkg )
 	  {
 	    if ( $first==1 )
 	      {
@@ -158,25 +158,25 @@ if ( isset($_POST['system']) )
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
 	    $sql .= "\n";
 	  }
-      }
-    $sql .= " ORDER BY ".$_POST['order']." DESC";
-
-    #echo "<PRE>\n".$sql."</PRE>\n";
-    $result = db_query($db,$sql);
-    while ($result->fetchInto($row))
-      {
-	$rkeys=array_keys($row);
-	echo "<TR>";
-	foreach ($rkeys as $rkey)
+	$sql .= " ORDER BY ".$_POST['order']." DESC";
+	
+#echo "<PRE>\n".$sql."</PRE>\n";
+	$result = db_query($db,$sql);
+	while ($result->fetchInto($row))
 	  {
-	    $data[$rkey]=array_shift($row);
-	    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+	    $rkeys=array_keys($row);
+	    echo "<TR>";
+	    foreach ($rkeys as $rkey)
+	      {
+		$data[$rkey]=array_shift($row);
+		echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+	      }
+	    echo "</TR>\n";
+	    ob_flush();
+	    flush();
 	  }
-	echo "</TR>\n";
-	ob_flush();
-	flush();
+	echo "</TABLE>\n";
       }
-    echo "</TABLE>\n";
 
     db_disconnect($db);
     bookmarkable_url();
@@ -189,9 +189,9 @@ else
     date_fields();
 
     $orders=array("jobcount","cpuhours","users","groups");
+    checkboxes_from_array("Supplemental reports",array("institution","software"));
     $defaultorder="cpuhours";
     pulldown("order","Order by",$orders,$defaultorder);
-    checkboxes_from_array("Software packages",$packages);
 
     end_form();
   }
