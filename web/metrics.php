@@ -22,7 +22,11 @@ function xaxis_column($x)
 {
   if ( $x=="month" )
     {
-      return "EXTRACT(YEAR_MONTH FROM FROM_UNIXTIME(start_ts)) AS month";
+      return "DATE_FORMAT(start_date,'%Y/%m') AS month";
+    }
+  elseif ( $x=="week" )
+    {
+      return "DATE_FORMAT(start_date,'%Y-wk%v') AS week";
     }
   elseif ( $x=="institution" )
     {

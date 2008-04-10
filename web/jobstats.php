@@ -504,6 +504,63 @@ if ( isset($_POST['system']) )
 			   $_POST['start_date'],
 			   $_POST['end_date']);
 
+    // by week
+    jobstats_output_metric('Job Count vs. Week',
+			   'jobcount_vs_week',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('CPU Time vs. Week',
+			   'cpuhours_vs_week',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Job Length vs. Week',
+			   'walltime_vs_week',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Queue Time by Week',
+			   'qtime_vs_week',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Backlog by Week',
+			   'backlog_vs_week',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric("Expansion Factor by Week",
+			   "xfactor_vs_week",
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric("Active Users by Week",
+			   "users_vs_week",
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric("Active Groups/Projects by Week",
+			   "groups_vs_week",
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
     // by institution
     jobstats_output_metric('Job Count vs. Institution',
 			   'jobcount_vs_institution',
@@ -632,6 +689,17 @@ else
     jobstats_input_metric("Expansion Factor by Month","xfactor_vs_month");
     jobstats_input_metric("Active Users by Month","users_vs_month");
     jobstats_input_metric("Active Groups/Projects by Month","groups_vs_month");
+
+    // by week
+    jobstats_input_spacer();
+    jobstats_input_metric("Job Count by Week","jobcount_vs_week");
+    jobstats_input_metric("CPU Time by Week","cpuhours_vs_week");
+    jobstats_input_metric("Job Length by Week","walltime_vs_week");
+    jobstats_input_metric("Queue Time by Week","qtime_vs_week");
+    jobstats_input_metric("Backlog by Week","backlog_vs_week");
+    jobstats_input_metric("Expansion Factor by Week","xfactor_vs_week");
+    jobstats_input_metric("Active Users by Week","users_vs_week");
+    jobstats_input_metric("Active Groups/Projects by Week","groups_vs_week");
     
     // by institution
     jobstats_input_spacer();
