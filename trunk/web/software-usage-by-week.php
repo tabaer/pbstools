@@ -16,7 +16,7 @@ if (isset($_GET['system']))
     $_POST = $_GET;
   }
 
-$title = "Software usage";
+$title = "Software usage by week";
 if ( isset($_POST['system']) )
   {
     $title .= " on ".$_POST['system'];
