@@ -20,7 +20,11 @@ function xaxis($fn)
 
 function xaxis_column($x)
 {
-  if ( $x=="month" )
+  if ( $x=="quarter" )
+    {
+      return "CONCAT(DATE_FORMAT(start_date,'%Yq'),QUARTER(start_date)) AS quarter";
+    }
+  elseif ( $x=="month" )
     {
       return "DATE_FORMAT(start_date,'%Y/%m') AS month";
     }
