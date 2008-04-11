@@ -36,6 +36,7 @@ function page_header($title)
   echo "      <LI><A href=\"jobstats-by-institution.php\">Institution</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-group.php\">Group/Project</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-user.php\">User</A></LI>\n";
+  echo "      <LI><A href=\"jobstats-by-quarter.php\">Quarter</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-month.php\">Month</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-week.php\">Week</A></LI>\n";
   echo "      <LI><A href=\"jobstats.php\">All</A></LI>\n";
@@ -49,6 +50,7 @@ function page_header($title)
   echo "      <LI><A href=\"software-usage-by-institution.php\">Institution</A></LI>";
   echo "      <LI><A href=\"software-usage-by-group.php\">Group/Project</A></LI>";
   echo "      <LI><A href=\"software-usage-by-user.php\">User</A></LI>";
+  echo "      <LI><A href=\"software-usage-by-quarter.php\">Quarter</A></LI>";
   echo "      <LI><A href=\"software-usage-by-month.php\">Month</A></LI>";
   echo "      <LI><A href=\"software-usage-by-week.php\">Week</A></LI>";
   echo "    </UL>\n";

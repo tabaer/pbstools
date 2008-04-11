@@ -447,6 +447,63 @@ if ( isset($_POST['system']) )
 			   $_POST['start_date'],
 			   $_POST['end_date']);
 
+    // by quarter
+    jobstats_output_metric('Job Count vs. Quarter',
+			   'jobcount_vs_quarter',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('CPU Time vs. Quarter',
+			   'cpuhours_vs_quarter',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Job Length vs. Quarter',
+			   'walltime_vs_quarter',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Queue Time by Quarter',
+			   'qtime_vs_quarter',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Backlog by Quarter',
+			   'backlog_vs_quarter',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric("Expansion Factor by Quarter",
+			   "xfactor_vs_quarter",
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric("Active Users by Quarter",
+			   "users_vs_quarter",
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric("Active Groups/Projects by Quarter",
+			   "groups_vs_quarter",
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
     // by month
     jobstats_output_metric('Job Count vs. Month',
 			   'jobcount_vs_month',
@@ -678,6 +735,17 @@ else
     jobstats_input_metric("Virtual Memory vs. User","vmem_kb_vs_username");
     jobstats_input_metric("Walltime Accuracy vs. User","walltime_acc_vs_username");
     jobstats_input_metric("CPU Efficiency vs. User","cpu_eff_vs_username");
+
+    // by quarter
+    jobstats_input_spacer();
+    jobstats_input_metric("Job Count by Quarter","jobcount_vs_quarter");
+    jobstats_input_metric("CPU Time by Quarter","cpuhours_vs_quarter");
+    jobstats_input_metric("Job Length by Quarter","walltime_vs_quarter");
+    jobstats_input_metric("Queue Time by Quarter","qtime_vs_quarter");
+    jobstats_input_metric("Backlog by Quarter","backlog_vs_quarter");
+    jobstats_input_metric("Expansion Factor by Quarter","xfactor_vs_quarter");
+    jobstats_input_metric("Active Users by Quarter","users_vs_quarter");
+    jobstats_input_metric("Active Groups/Projects by Quarter","groups_vs_quarter");
 
     // by month
     jobstats_input_spacer();
