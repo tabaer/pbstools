@@ -1,0 +1,114 @@
+#!/usr/bin/perl -w
+#
+# pbsdcp -- Distributed copy command for the PBS environment
+# Copyright 2006 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+# Usage:  pbsdcp [-g|-s] [options] srcfile [...srcfiles...] target
+#
+# Options:
+#  -g   gather mode
+#  -s   scatter mode (default)
+#
+#  -h   print a help message
+#  -p   preserve modification times and permissions
+#  -r   recursive copy
+if ( ! $ENV{"PBS_ENVIRONMENT"} || 
+     ( $ENV{"PBS_ENVIRONMENT"} ne "PBS_BATCH" && 
+       $ENV{"PBS_ENVIRONMENT"} ne "PBS_INTERACTIVE" ) || 
+     $ARGV[0] eq "-h" || $#ARGV < 1 )
+{
+    if ( ! $ENV{"PBS_ENVIRONMENT"} ||
+	 ( $ENV{"PBS_ENVIRONMENT"} ne "PBS_BATCH" &&
+	   $ENV{"PBS_ENVIRONMENT"} ne "PBS_INTERACTIVE" ) )
+    {
+	warn "$0:  Not running withing a PBS job, exiting.\n\n";
+    }
+    print <<EOH
+$0 -- Distributed copy command for the PBS environment
+
+Usage:  pbsdcp [-g|-s|-h] [options] srcfile [...srcfiles...] target
+
+Options:
+  -g   gather mode
+  -s   scatter mode (default)
+  -h   print this help message
+
+  -p   preserve modification times and permissions
+  -r   recursive copy
+EOH
+}
+else
+{
+    # Rewrite the target name if it's a relative path
+    $target=pop(@ARGV);
+    if ( $target =~ m:^[^/]: )
+    {
+        $pwd = `pwd`;
+        chop($pwd);
+        $newtarget = $pwd . "/" . $target;
+        $target = $newtarget;
+    }
+
+    # Handle -g and -s
+    $gather=0;
+    if ( $ARGV[0] eq "-g" )
+    {
+        shift(@ARGV);
+        $gather=1;
+    }
+    elsif ( $ARGV[0] eq "-s" )
+    {
+        shift(@ARGV);
+        $gather=0;
+    }
+
+    # Do the heavy lifting
+    if ( $gather==1 )
+      {
+	$pwd=`pwd`;
+	chop($pwd);
+	# keep the exec'ed local shell from trying to expand wildcards
+	foreach $arg ( @ARGV )
+	  {
+	    $arg =~ s/([\[\]\{\}\(\)\*\?\ ])/\\$1/g;
+	    push(@NEWARGV,$arg);
+	  }
+	exec("all -pj cd $pwd \\; cp @NEWARGV $target\n");
+      }
+    else # scatter -- default
+      {
+	$sharedfs = "^/(gpfs|lustre|pvfs|home|[a-z])/";
+	if ( -s $ENV{'PBS_NODEFILE'} && !($target =~ $sharedfs) )
+	  {
+	    open(NODES,"uniq ".$ENV{'PBS_NODEFILE'}." |");
+	    @node=<NODES>;
+	    chop(@node);
+	    if ( $#node>0 )
+	      {
+		for ( $i=0 ; $i<=$#node; $i++ )
+		  {
+			if ( ($pid[$i]=fork)==0 )
+			  {
+			    exec("rcp @ARGV $node[$i]:$target\n");
+			  }
+		  }
+		for ( $i=0 ; $i<=$#node; $i++ )
+		  {
+		    waitpid($pid[$i],0);
+		  }
+	      }
+	    else
+	      {
+		exec("cp @ARGV $target");
+	      }
+	  }
+	else
+	  {
+	    exec("cp @ARGV $target");
+	  }
+      }
+}

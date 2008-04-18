@@ -1,0 +1,156 @@
+#!/usr/bin/perl
+#use strict;
+use POSIX;
+
+my @qsub;
+my @mpiexec;
+
+my $cmd;
+if ( defined($ENV{"SHELL"}) )
+{
+    $cmd = $ENV{"SHELL"};
+}
+else
+{
+    $cmd = "/bin/bash";
+}
+
+if ( $0 =~ /qsh$/ )
+{
+    unshift(@qsub,("-I","-v","DISPLAY"));
+}
+elsif ( $0 =~ /qlogin$/ )
+{
+    unshift(@qsub,("-I"));
+}
+else
+{
+    unshift(@qsub,("-I"));
+}
+
+my $cwd;
+if ( defined($ENV{"HOME"}) )
+{
+    $cwd = $ENV{"HOME"};
+}
+else
+{
+    $cwd = "~";
+}
+
+# argument processing
+while ( $ARGV[0] =~ /^-.*$/ ) 
+{
+    # SGE workalike args
+    if ( $ARGV[0] eq "-cwd" )
+    {
+	shift(@ARGV);
+	$cwd = $ENV{"PWD"};
+    }
+    elsif ( $ARGV[0] eq "--" )
+    {
+	shift(@ARGV);
+	last;
+    }
+    # qsub args
+    elsif ( $ARGV[0] =~ /^-[hIVXz]$/ )
+    {
+	# shift one element off @ARGV into @qsub
+	unshift(@qsub,shift(@ARGV));
+    }
+    elsif ( $ARGV[0] =~ /^-[aAbcCdDejklmMNopqrSuvW]$/ )
+    {
+	# shift two elements off @ARGV into @qsub
+	my @args = (shift(@ARGV),shift(@ARGV));
+	unshift(@qsub,@args);
+    }
+    # mpiexec args
+    elsif ( $ARGV[0] =~ /^-{1,2}(verbose|nostdin|allstdin|nostdout|mpich-p4-shmem|mpich-p4-no-shmem|pernode|nolocal|gige|tv|kill|version)$/ ||
+	    $ARGV[0] =~ /^-{1,2}(comm|npernode|transform-hostname|transform-hostname-program|config)=.*$/ )
+    {
+      # shift one element off @ARGV into @mpiexec
+      unshift(@mpiexec,shift(@ARGV));
+    }
+    elsif ( $ARGV[0] =~ /^-{1,2}(n|comm|npernode|transform-hostname|transform-hostname-program|config)$/ )
+    {
+      # shift two elements off @ARGV into @mpiexec
+      my @args = (shift(@ARGV),shift(@ARGV));
+      unshift(@mpiexec,@args);
+    }
+    # unknown args
+    else
+    {
+	print STDERR $0.":  Unknown argument ".$ARGV[0]."\n";
+	shift @ARGV;
+    }
+}
+if ( $#ARGV<0 && $0 =~ /qrsh$/ )
+{
+    unshift(@ARGV,($cmd));
+}
+elsif ( $0 =~ /qsh$/ )
+{
+    unshift(@ARGV,("xterm","-e",$cmd));
+}
+elsif ( $0 =~ /mpi(exec|run)$/ )
+{
+    unshift(@ARGV,@mpiexec);
+    unshift(@ARGV,("mpiexec"));
+}
+unshift(@qsub,("qsub","-d",$cwd));
+
+if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ || $0 =~ /mpi(exec|run)$/ )
+{
+    # qrsh -- need to run a command inside the qsub
+    # create "miniscript" with desired commands
+    my $scriptdir = $ENV{"HOME"}."/.qexec";
+    if ( ! -d $scriptdir )
+    {
+	mkdir $scriptdir || die $0.":  Unable to create directory ".$scriptdir."\n";
+    }
+    my $script = $scriptdir."/".$ENV{"HOSTNAME"}."-".$$.".script";
+    if ( -e $script )
+    {
+	warn $0.":  overwritting ".$script."\n";
+    }
+    open(SCRIPT,">$script") || die $0.":  unable to open ".$script."\n";
+    if ( defined($ENV{"SHELL"}) )
+    {
+	print SCRIPT "#!".$ENV{"SHELL"}."\n";
+	if ( $ENV{"SHELL"} =~ /csh$/ )
+	{
+	    print SCRIPT "set SHELL=".$ENV{"SHELL"}."\n";
+	    print SCRIPT "if ( -e /etc/cshrc ) then\n";
+	    print SCRIPT "    source /etc/cshrc\n";
+	    print SCRIPT "else if ( -e /etc/csh.cshrc ) then\n";
+	    print SCRIPT "    source /etc/csh.cshrc\n";
+	    print SCRIPT "endif\n";
+	    print SCRIPT "if ( -e \$HOME/.cshrc ) source \$HOME/cshrc\n";
+	}
+	else
+	  {
+	    print SCRIPT "SHELL=".$ENV{"SHELL"}."\n";
+	    print SCRIPT "export SHELL\n";
+	    print SCRIPT "test -e /etc/profile && . /etc/profile\n";
+	    print SCRIPT "test -e \$HOME/.profile && . \$HOME/.profile\n";
+	  }
+    }
+    else
+    {
+	print SCRIPT "#!/bin/sh\n";
+	print SCRIPT "SHELL=/bin/sh\n";
+	print SCRIPT "test -e /etc/profile && . /etc/profile\n";
+	print SCRIPT "test -e \$HOME/.profile && . \$HOME/.profile\n";
+    }
+    print SCRIPT "@ARGV \n";
+    close(SCRIPT);
+    chmod(0755,$script);
+    system("@qsub -S $script");
+    unlink($script);
+}
+else
+{
+    # qlogin -- just run qsub
+    exec(@qsub);
+}
+

@@ -1,0 +1,97 @@
+.type10 {  
+	font-family: Arial, Helvetica, sans-serif; 
+	font-size: 10px
+}
+.type10bold {  
+	font-family: Arial, Helvetica, sans-serif; 
+	font-size: 10px; 
+	font-weight: bold
+}
+.type12 {
+	font-size: 12px;
+	font-family: Arial, Helvetica, sans-serif;
+}
+p {
+	font-size: 12px;
+	font-family: Arial, Helvetica, sans-serif;
+}
+li {
+	font-size: 12px;
+	font-family: Arial, Helvetica, sans-serif;
+}
+.type12bold {
+	font-size: 12px;
+	font-style: normal;
+	font-weight: bold;
+	font-family: Arial, Helvetica, sans-serif;
+}
+.type14 {
+	font-size: 14px;
+	font-family: Arial, Helvetica, sans-serif;
+}
+.type14bold {
+	font-size: 14px;
+	font-weight: bold;
+	font-family: Arial, Helvetica, sans-serif;
+}
+.type16 { 
+	font-family: Arial, Helvetica, sans-serif; 
+	font-size: 16px
+}
+.type16bold {  
+	font-family: Arial, Helvetica, sans-serif; 
+	font-size: 16px;
+	font-weight: bold}
+.heading {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 18px;
+	font-style: normal;
+	color: #592989; 
+	font-weight: bold;
+}
+.subheading {  
+	font-family: Arial, Helvetica, sans-serif; 
+	font-size: 16px;
+	font-style: normal; 
+	font-weight: bold; 
+	color: #592989}
+.highlight {
+	background-color: #FFFFCC;
+	color: #660099;
+	font-family: Arial, Helvetica, sans-serif;
+}
+.shadow { background-color: #EEEEEE;  color: #000000 }
+
+body { 
+	background-color: #ffffff;  
+	color: #000000 
+}
+a { 
+	color: #0000ff; 
+	text-decoration: none 
+}
+a:visited { 
+	color: #669999; 
+	text-decoration: none 
+}
+a:hover { color:#660099; text-decoration: underline }
+a.title {
+	color: #660099;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+h1 { 
+	font-family: Arial, Helvetica, sans-serif; font-size: large;
+	font-style: normal; font-weight: bold; color: #592989 }
+
+h2 { font-family: Arial, Helvetica, sans-serif; font-size: large;
+	font-style: normal; font-weight: bold; color: #592989 }
+
+h3 { font-family: Arial, Helvetica, sans-serif; font-size: medium;
+	font-style: normal; font-weight: bold; color: #592989 }
+
+h4 { font-family: Arial, Helvetica, sans-serif; font-size: medium;
+	font-style: normal; font-weight: bold; color: #592989 }
+
+pre.type14 { font-family: Courier; font-size: 14px; color: #592989 }
