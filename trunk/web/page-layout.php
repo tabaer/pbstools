@@ -84,6 +84,11 @@ function text_field($label,$field,$width)
   echo $label.":  <INPUT type=\"text\" name=\"".$field."\" size=\"".$width."\"><BR>\n";
 }
 
+function checkbox($label,$name)
+{
+  echo "<INPUT type=\"checkbox\" name=\"".$name."\" value=\"1\"> ".$label."<BR>\n";
+}
+
 function checkboxes_from_array($label,$array)
 {
   echo $label.":<BR>\n";

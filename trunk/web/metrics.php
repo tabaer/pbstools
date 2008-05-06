@@ -665,6 +665,44 @@ function metric_as_ods($result,$xaxis,$metric,$system,$start_date,$end_date)
 //   echo "<P>ODF file:  <A href=\"".$cache.rawurlencode($odsfile)."\">".rawurlencode($odsfile)."</A></P>\n";
 }
 
+function result_as_xls($result,$mycolumnname,$filebase)
+{
+  $myresult=$result;
+  $cache = APACHE_CACHE_DIR;
+  $xlsfile = $filebase.".xls";
+
+  $workbook = new Workbook("/tmp/".$cache.$xlsfile);
+  $worksheet =& $workbook->add_worksheet("Sheet 1");
+
+  $format_hdr =& $workbook->add_format();
+  $format_hdr->set_bold();
+  $format_hdr->set_align('center');
+
+  $rowctr=0;
+  $colctr=0;
+  foreach ($mycolumnname as $header)
+    {
+      $worksheet->write($rowctr,$colctr,"$header",$format_hdr);
+      $colctr++;
+    }
+  while ($myresult->fetchInto($row))
+    {
+      $rowctr++;
+      $colctr=0;
+      $keys=array_keys($row);
+      foreach ($keys as $key)
+	{
+	  if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
+	    {
+	      $worksheet->write($rowctr,$colctr,$row[$key]);
+	      $colctr++;
+	    }
+	}
+    }
+  $workbook->close();
+  echo "<P>Excel file:  <A href=\"".$cache.rawurlencode($xlsfile)."\">".$xlsfile."</A></P>\n";
+}
+
 function jobstats_input_header()
 {
   echo "<TABLE>\n";
