@@ -159,6 +159,7 @@ function software_list()
 	      "blat",
 	      "casino",
 	      "cbl",
+	      "cfl3d",
 	      "charmm",
 	      "chemshell",
 	      "cpmd",
