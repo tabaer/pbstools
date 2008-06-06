@@ -28,7 +28,8 @@ CREATE TABLE Jobs (
   software     TINYTEXT,
   hostlist     TEXT,
   exit_status  INT,
-  script       MEDIUMTEXT
+  script       MEDIUMTEXT,
+  contact      TINYTEXT
 );
 CREATE INDEX system_jobs ON Jobs (system);
 CREATE INDEX user_jobs ON Jobs (username);
