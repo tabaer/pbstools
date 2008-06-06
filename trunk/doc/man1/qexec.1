@@ -62,7 +62,11 @@ modes of qexec interactively execute a single MPI program in the
 current working directory.
 
 .SH OPTIONS
-All variations of qexec accept any valid PBS/TORQUE arguments to
+.TP
+.B -cwd
+Use the current working directory as the working directory of the job.
+.PP
+All variations of qexec also accept any valid PBS/TORQUE arguments to
 .BR qsub (1B)
 .  
 .B qmpiexec
