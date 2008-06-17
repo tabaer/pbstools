@@ -159,6 +159,7 @@ function software_list()
 	      "blat",
 	      "casino",
 	      "cbl",
+	      "ccsm",
 	      "cfl3d",
 	      "charmm",
 	      "chemshell",
@@ -191,11 +192,13 @@ function software_list()
 	      "nwchem",
 	      "octave",
 	      "openeye",
+	      "paup",
               "polly",
               "propagators",
 	      "pwscf",
               "qchem",
 	      "R",
+	      "rosetta",
 	      "root",
 	      "sable",
 #	      "sas",
@@ -247,13 +250,18 @@ function software_match_list()
   $pkgmatch['mrbayes']="( script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%' )";
   $pkgmatch['openeye']="( script LIKE '%babel3%' OR script LIKE '%checkcff%' OR script LIKE '%chunker%' OR script LIKE '%fred2%' OR script LIKE '%fredPA%' OR script LIKE '%ligand_info%' OR script LIKE '%makefraglib%' OR script LIKE '%makerocsdb%' OR script LIKE '%nam2mol%' OR script LIKE '%omega2%' OR script LIKE '%szybki%' )";
   $pkgmatch['ncbi']="( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )";
-  $pkgmatch['R']="( script LIKE '%\nR %' AND NOT ( ".$pkgmatch['gaussian'].
-    " OR ".$pkgmatch['adf']." ) )";
+  $pkgmatch['rosetta']="( script LIKE '%rosetta.%' OR script LIKE '%/rr %' )";
   $pkgmatch['root']="script LIKE '%\nroot -q%'";
   $pkgmatch['sable']="( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )";
   $pkgmatch['sas']="script LIKE '%\nsas%' OR software LIKE '%sas%' OR queue  LIKE '%sas%'";
   $pkgmatch['turbo']="script LIKE '%pturbo.x%'";
   $pkgmatch['vasp']="script LIKE '%vasp%'";
+
+# package matches with dependencies on other package matches
+  $pkgmatch['R']="( script LIKE '%\nR %' AND NOT ( ".$pkgmatch['gaussian'].
+    " OR ".$pkgmatch['adf']." ) )";
+  $pkgmatch['charmm'] = "( script LIKE '%charmm%' AND NOT ( ".$pkgmatch['chemshell']." ) )";
+  $pkgmatch['turbomole'] = "( script LIKE '%turbomole%' AND NOT ( ".$pkgmatch['chemshell']." ) )";
   
   return $pkgmatch;
 }
