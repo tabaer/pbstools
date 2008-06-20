@@ -123,8 +123,13 @@ if ( isset($_POST['system']) )
 	metric_as_table($result,'institution','usage');
 	if ( isset($_POST['xls']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
-	    metric_as_xls($result,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	    $xlsresult=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	    metric_as_xls($xlsresult,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	  }
+	if ( isset($_POST['ods']) )
+	  {
+	    $odsresult=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	    metric_as_ods($odsresult,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
 	  }
 	ob_flush();
 	flush();
@@ -187,6 +192,12 @@ if ( isset($_POST['system']) )
 	    $columns = array("package","jobcount","cpuhours","users","groups");
 	    result_as_xls($xlsresult,$columns,$_POST['system']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
 	  }
+	if ( isset($_POST['ods']) )
+	  {
+	    $odsresult = db_query($db,$sql);
+	    $columns = array("package","jobcount","cpuhours","users","groups");
+	    result_as_ods($odsresult,$columns,$_POST['system']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
+	  }
       }
 
     db_disconnect($db);
@@ -204,6 +215,7 @@ else
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
     checkbox("Generate Excel files for supplemental reports","xls");
+    checkbox("Generate ODF files for supplemental reports","ods");
 
     end_form();
   }
