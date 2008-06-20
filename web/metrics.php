@@ -11,6 +11,7 @@ require_once '/var/rw/www/html/phplib/jpgraph/jpgraph_error.php';
 require_once '/var/rw/www/html/phplib/Excel/Workbook.php';
 require_once '/var/rw/www/html/phplib/Excel/Worksheet.php';
 require_once '/var/rw/www/html/phplib/Excel/Format.php';
+require_once '/var/rw/www/html/phplib/ods.php';
 require_once 'site-specific.php';
 
 function xaxis($fn)
@@ -632,37 +633,46 @@ function metric_as_xls($result,$xaxis,$metric,$system,$start_date,$end_date)
 
 function metric_as_ods($result,$xaxis,$metric,$system,$start_date,$end_date)
 {
-//   $myresult=$result;
-//   $odsfile=$system."-".$metric."_vs_".$xaxis."-".$start_date."-".$end_date.".ods";
-//   $cache = APACHE_CACHE_DIR;
+  $myresult=$result;
+  $odsfile=$system."-".$metric."_vs_".$xaxis."-".$start_date."-".$end_date.".ods";
+  $cache = APACHE_CACHE_DIR;
 
-//   $workbook = new Workbook("/tmp/".$cache.$odsfile);
-//   $worksheet =& $workbook->add_worksheet($metric." vs ".$xaxis);
+  $workbook = newOds();
 
-//   $format_bold =& $workbook->addFormat();
-//   $format_bold->setBold();
+  $sheet=0;
+  $rowctr=0;
+  $colctr=0;
 
-//   $rowctr=0;
-//   $colctr=0;
-//   foreach (columnnames($metric) as $header)
-//     {
-//       $worksheet->write($rowctr,$colctr,"$header",$format_bold);
-//       $colctr++;
-//     }
-//   while ($myresult->fetchInto($row))
-//     {
-//       $rowctr++;
-//       $colctr=0;
-//       $keys=array_keys($row);
-//       foreach ($keys as $key)
-// 	{
-// 	  $data=array_shift($row);
-// 	  $worksheet->write($rowctr,$colctr,"$data");
-// 	  $colctr++;
-// 	}
-//     }
-//   $workbook->close();
-//   echo "<P>ODF file:  <A href=\"".$cache.rawurlencode($odsfile)."\">".rawurlencode($odsfile)."</A></P>\n";
+  $mycolumnname=array($xaxis,"jobcount");
+  foreach (columnnames($metric) as $columnname)
+    {
+      array_push($mycolumnname,$columnname);
+    }
+  foreach ($mycolumnname as $header)
+    {
+      $workbook->addCell($sheet,$rowctr,$colctr,"$header","string");
+      $colctr++;
+    }
+  while ($myresult->fetchInto($row))
+    {
+      $rowctr++;
+      $colctr=0;
+      $keys=array_keys($row);
+      foreach ($keys as $key)
+	{
+	  $data=array_shift($row);
+	  $type = "string";
+	  # regex found on http://www.regular-expressions.info/floatingpoint.html
+	  if ( preg_match('/^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/',$data) )
+	    {
+	      $type = "float";
+	    }
+	  $workbook->addCell($sheet,$rowctr,$colctr,htmlspecialchars("$data"),$type);
+	  $colctr++;
+	}
+    }
+  saveOds($workbook,"/tmp/".$cache.$odsfile);
+  echo "<P>ODF file:  <A href=\"".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";
 }
 
 function result_as_xls($result,$mycolumnname,$filebase)
@@ -703,6 +713,44 @@ function result_as_xls($result,$mycolumnname,$filebase)
   echo "<P>Excel file:  <A href=\"".$cache.rawurlencode($xlsfile)."\">".$xlsfile."</A></P>\n";
 }
 
+function result_as_ods($result,$mycolumnname,$filebase)
+{
+  $myresult=$result;
+  $cache = APACHE_CACHE_DIR;
+  $odsfile = $filebase.".ods";
+
+  $workbook = newOds();
+
+  $sheet=0;
+  $rowctr=0;
+  $colctr=0;
+  foreach ($mycolumnname as $header)
+    {
+      $workbook->addCell($sheet,$rowctr,$colctr,"$header","string");
+      $colctr++;
+    }
+  while ($myresult->fetchInto($row))
+    {
+      $rowctr++;
+      $colctr=0;
+      $keys=array_keys($row);
+      foreach ($keys as $key)
+	{
+	  $data=array_shift($row);
+	  $type = "string";
+	  # regex found on http://www.regular-expressions.info/floatingpoint.html
+	  if ( preg_match('/^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/',$data) )
+	    {
+	      $type = "float";
+	    }
+	  $workbook->addCell($sheet,$rowctr,$colctr,htmlspecialchars("$data"),$type);
+	  $colctr++;
+	}
+    }
+  saveOds($workbook,"/tmp/".$cache.$odsfile);
+  echo "<P>ODF file:  <A href=\"".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";  
+}
+
 function jobstats_input_header()
 {
   echo "<TABLE>\n";
@@ -711,7 +759,7 @@ function jobstats_input_header()
   #echo "  <TH>Graph</TH>";
   echo "  <TH>Table</TH>\n";
   echo "  <TH>Excel</TH>\n";
-  #echo "  <TH>ODF</TH>\n";
+  echo "  <TH>ODF</TH>\n";
   echo "</TR>\n";
 }
 
@@ -732,7 +780,7 @@ function jobstats_input_metric($name,$fn)
     #echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_graph\" value=\"1\"></TD>\n";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_table\" value=\"1\">\n";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_xls\" value=\"1\">\n";
-    //    echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_ods\" value=\"1\">\n";
+    echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_ods\" value=\"1\">\n";
     echo "</TR>\n";
 }
 
@@ -743,7 +791,7 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
   if (    isset($_POST[$fn.'_graph'])
        || isset($_POST[$fn.'_table'])
        || isset($_POST[$fn.'_xls']) 
-#      ||  isset($_POST[$fn.'_ods'])
+       ||  isset($_POST[$fn.'_ods'])
        )
     {
       echo "<H2>".$name."</H2>\n";
@@ -766,11 +814,11 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
-#      if ( isset($_POST[$fn.'_ods']) )
-#	{
-#	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
-#	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
-#	}
+     if ( isset($_POST[$fn.'_ods']) )
+	{
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
+	}
     }
 }
 
@@ -780,7 +828,7 @@ function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_
   if (    isset($_POST[$fn.'_graph'])
        || isset($_POST[$fn.'_table'])
        || isset($_POST[$fn.'_xls']) 
-#      ||  isset($_POST[$fn.'_ods'])
+       ||  isset($_POST[$fn.'_ods'])
        )
     {
       echo "<H2>".$name."</H2>\n";
@@ -803,11 +851,11 @@ function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
-#      if ( isset($_POST[$fn.'_ods']) )
-#	{
-#	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
-#	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
-#	}
+      if ( isset($_POST[$fn.'_ods']) )
+	{
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
+	}
     }
 }
 
