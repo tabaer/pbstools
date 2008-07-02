@@ -235,6 +235,7 @@ function software_list()
 	      "mathematica",
 	      "matlab",
 	      "mm5",
+	      "molcas",
 	      "mrbayes",
 	      "nag",
 	      "namd",
