@@ -20,7 +20,7 @@ function page_header($title)
   echo "  </TD>\n";
   echo "</TR>\n";
   echo "<TR height=\"90%\">\n";
-  echo "  <TD width=\"15%\" valign=\"top\" bgcolor=\"#dedfdf\">";
+  echo "  <TD width=\"15%\" valign=\"top\" bgcolor=\"#dedfdf\">\n";
   echo "    <UL><U>Job info by</U>\n";
   echo "      <LI><A href=\"jobinfo.php\">Job id</A></LI>\n";
   echo "      <LI><A href=\"jobs-by-user.php\">User</A></LI>\n";
@@ -42,17 +42,17 @@ function page_header($title)
   echo "      <LI><A href=\"jobstats.php\">All</A></LI>\n";
   echo "    </UL>\n";
   echo "    <UL><U>Software usage by</U>\n";
-  echo "      <LI><A href=\"software-usage.php\">System</A></LI>";
-  echo "      <LI><A href=\"software-usage-by-queue.php\">Job Class</A></LI>";
-  echo "      <LI><A href=\"software-usage-by-walltime.php\">Job Length</A></LI>";
+  echo "      <LI><A href=\"software-usage.php\">System</A></LI>\n";
+  echo "      <LI><A href=\"software-usage-by-queue.php\">Job Class</A></LI>\n";
+  echo "      <LI><A href=\"software-usage-by-walltime.php\">Job Length</A></LI>\n";
 # NOTE By-institution jobstats involves OSC site-specific logic.  You may
 # want to comment it out.
-  echo "      <LI><A href=\"software-usage-by-institution.php\">Institution</A></LI>";
-  echo "      <LI><A href=\"software-usage-by-group.php\">Group/Project</A></LI>";
-  echo "      <LI><A href=\"software-usage-by-user.php\">User</A></LI>";
-  echo "      <LI><A href=\"software-usage-by-quarter.php\">Quarter</A></LI>";
-  echo "      <LI><A href=\"software-usage-by-month.php\">Month</A></LI>";
-  echo "      <LI><A href=\"software-usage-by-week.php\">Week</A></LI>";
+  echo "      <LI><A href=\"software-usage-by-institution.php\">Institution</A></LI>\n";
+  echo "      <LI><A href=\"software-usage-by-group.php\">Group/Project</A></LI>\n";
+  echo "      <LI><A href=\"software-usage-by-user.php\">User</A></LI>\n";
+  echo "      <LI><A href=\"software-usage-by-quarter.php\">Quarter</A></LI>\n";
+  echo "      <LI><A href=\"software-usage-by-month.php\">Month</A></LI>\n";
+  echo "      <LI><A href=\"software-usage-by-week.php\">Week</A></LI>\n";
   echo "    </UL>\n";
   echo "    <UL><U>Miscellaneous reports</U>\n";
   echo "      <LI><A href=\"usage-summary.php\">Usage Summary</A></LI>\n";
