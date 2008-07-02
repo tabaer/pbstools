@@ -4,7 +4,7 @@
 # $HeadURL$
 # $Revision$
 # $Date$
-require_once 'DB.php';
+require_once 'dbutils.php';
 require_once 'page-layout.php';
 
 page_header("PHP SQL Terminal");
@@ -20,12 +20,12 @@ echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
 
 if ( isset($_POST['sql']) )
   {
-    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
+    $db = db_connect();
     if ( DB::isError($db) )
       {
 	die ($db->getMessage());
       }
-    $result = $db->query(stripslashes($_POST['sql']));
+    $result = db_query($db,stripslashes($_POST['sql']));
     if ( DB::isError($db) )
       {
 	die ($db->getMessage());
@@ -40,12 +40,13 @@ if ( isset($_POST['sql']) )
 	    foreach ($keys as $key)
 	      {
 		$data=array_shift($row);
-	        echo "<TD><PRE>".htmlspecialchars($data)."</PRE></TD>";
+		echo "<TD><PRE>".htmlspecialchars($data)."</PRE></TD>";
 	      }
 	    echo "</TR>\n";
 	  }
 	echo "</TABLE>\n";
       }
+    db_disconnect($db);
   }
 
 page_footer();
