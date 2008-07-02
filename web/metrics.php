@@ -5,13 +5,13 @@
 # $Revision$
 # $Date$
 require_once 'dbutils.php';
-require_once '/var/rw/www/html/phplib/jpgraph/jpgraph.php';
-require_once '/var/rw/www/html/phplib/jpgraph/jpgraph_bar.php';
-require_once '/var/rw/www/html/phplib/jpgraph/jpgraph_error.php';
-require_once '/var/rw/www/html/phplib/Excel/Workbook.php';
-require_once '/var/rw/www/html/phplib/Excel/Worksheet.php';
-require_once '/var/rw/www/html/phplib/Excel/Format.php';
-require_once '/var/rw/www/html/phplib/ods.php';
+require_once 'phplib/jpgraph/jpgraph.php';
+require_once 'phplib/jpgraph/jpgraph_bar.php';
+require_once 'phplib/jpgraph/jpgraph_error.php';
+require_once 'phplib/Excel/Workbook.php';
+require_once 'phplib/Excel/Worksheet.php';
+require_once 'phplib/Excel/Format.php';
+require_once 'phplib/ods.php';
 require_once 'site-specific.php';
 
 function xaxis($fn)
