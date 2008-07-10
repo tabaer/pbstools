@@ -78,6 +78,17 @@ int verifyregfile(char *cp)   {
   
 }
 
+/*argument_status: Checks if the stat buffer in the argument is a file or directory or neither*/
+/*   0  --> Neither a file nor a directory. Can be skipped */
+/*   1  --> File  */
+/*   2  --> Directory */
+int argument_status(struct stat *stbuf) {
+  if (S_ISDIR((*stbuf).st_mode)) return 2;
+  else if(S_ISREG((*stbuf).st_mode)) return 1;
+  else return 0;
+}
+
+
 /*striptrailingslashes: Strips the arguments of the trailing slashes if any*/
 void striptrailingslashes(int argc, char ***argv) {
   

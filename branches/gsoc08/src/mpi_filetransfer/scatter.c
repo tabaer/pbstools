@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <getopt.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -25,40 +26,93 @@ extern  int alphasort();
 
 int dirwalk_nfiles(char *pathname, int procID, int nproc) { 
   /*Returns the total number of files recursively inside a given directory*/
-  int filecount=0 ;
 
+  struct stat stbuf ;
   int count, i;
   struct direct **files;
   char name[MAX_PATH] ;
+
+  struct FileAttr att_file ;
+  int bytecount=0 ;
+  char *filedata ;
+  int rd_blocks ;
+  int BLKSIZE=256 ;
+
+  int filecount=0 ;
+  int cdir_count ;
+
+  int ArgStatus ; 
+/*   ArgStatus --> Indicates the status of the curent argument that is being dealt with. */
+/*   0  --> Neither a file nor a directory. Can be skipped */
+/*   1  --> File  */
+/*   2  --> Directory */
 
   int file_select(struct direct *);
   int file_d ; 
 
   if(procID == 0) {
-    count = scandir(pathname, &files, file_select, &alphasort);
-    filecount = count ;
-  } else count = 1 ;
+    cdir_count = scandir(pathname, &files, file_select, &alphasort);
+    filecount = cdir_count ;
+    printf("Total number of files in %s is %d \n", pathname, cdir_count) ;
+  } 
+  MPI_Barrier(MPI_COMM_WORLD) ;
+  MPI_Bcast(&cdir_count, 1, MPI_INT, 0, MPI_COMM_WORLD) ;  
   
   /* If no files found, make a non-selectable menu item */
-  if (count <= 0) {
-    //    printf("No files in this directory \n");
+  if (cdir_count <= 0) {
+    printf("No files in this directory \n");
     return 0 ; 
   }
 
-  for (i=0; i<count; ++i) {
+  for (i=0; i<cdir_count; ++i) {
+    printf("P: %d going thro %d of %d files in %s \n", procID, i+1, cdir_count, pathname) ;
     if(procID == 0) {
       sprintf(name, "%s/%s", pathname, files[i]->d_name);
-      sprintf(targetpath, "%s%s", targetdir, strstr(name,basedir)) ;
+      sprintf(targetpath, "%s/%s", targetdir, strstr(name,basedir+1)) ;
+      printf("%s %s \n", name, basedir+1) ;
       printf("Target is %s \n", targetpath) ;   
+      if(stat(name, &stbuf)==0) {     
+      //      printf("P: %d %s \n", procID, *argv) ;
+      ArgStatus = argument_status(&stbuf) ;
+      } else ArgStatus = 0 ;
+
+      if(ArgStatus) {
+	if(getfileattr(stbuf, &att_file)) strcpy((char *) att_file.pathname, targetpath);
+      }
     }
-    if(verifydir(name, procID, nproc)) {        
-      printf("%d %d \n", mkdir(targetpath, S_IRWXU), errno) ;
-      filecount += dirwalk_nfiles(name, procID, nproc) ;
-    } else {
-      //      mpi_file_transfer(name, targetpath);
-      file_d = open(targetpath, O_CREAT) ;
-      printf("%d %d \n", file_d, errno) ;
-      close(file_d) ;      
+
+    MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) ;      
+    MPI_Bcast(&ArgStatus, 1, MPI_INT, 0, MPI_COMM_WORLD) ;
+
+    if(ArgStatus == 2) {        
+      mkdir((char *) att_file.pathname, S_IRWXU) ;
+	//      printf("%d %s \n", mkdir((char *) att_file.pathname, S_IRWXU), strerror(errno)) ;
+      filecount += dirwalk_nfiles(name, procID, nproc) ;      
+    } 
+
+    else if(ArgStatus == 1) {
+      if(procID == 0) {
+	filedata = (char *) malloc ((att_file.filesize)*sizeof(char)) ;
+	file_d = open(name, O_RDONLY) ;
+	rd_blocks = (int) (att_file.filesize/BLKSIZE) + 1 ;
+	for(count=0;count < rd_blocks; count++) 
+	  bytecount += read(file_d, &filedata[count*BLKSIZE], BLKSIZE) ;	      
+	close(file_d) ;
+      }
+      else filedata = (char *) malloc ((att_file.filesize)*sizeof(char)) ;
+
+      MPI_Bcast(filedata, att_file.filesize, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) ;	  
+      
+      rd_blocks =  (att_file.filesize/BLKSIZE) + 1 ;
+      file_d = creat((char *) att_file.pathname, S_IRWXU) ;
+      //      printf("%d %s \n", file_d, strerror(errno)) ;
+      bytecount = 0 ;
+      for(count=0; count < rd_blocks-1; count++)
+	bytecount += write(file_d, &filedata[count*BLKSIZE], BLKSIZE) ;
+      bytecount += write(file_d, &filedata[count*BLKSIZE], att_file.filesize - (rd_blocks-1)*BLKSIZE) ;
+      close(file_d) ;
+      
+      filecount++ ;
     }    
     
   }
@@ -83,6 +137,12 @@ int main(int argc, char **argv) {
   int8 *a ;
   int b ;
   int pflag, iamrecursive, targetshouldbedir, targetisdir; 
+  int ArgStatus ; 
+
+/*   ArgStatus --> Indicates the status of the curent argument that is being dealt with. */
+/*   0  --> Neither a file nor a directory. Can be skipped */
+/*   1  --> File  */
+/*   2  --> Directory */
 
   int filecount = 0 ;
   int i ; //Iteration variable
@@ -153,78 +213,77 @@ int main(int argc, char **argv) {
   MPI_Comm_rank(MPI_COMM_WORLD, &procID); // Get process rank    
   MPI_Comm_size(MPI_COMM_WORLD, &nproc); // Get total number of processes specificed at start of run
 
-  BLKSIZE = 256 ;
+  BLKSIZE = 32768 ;
   if(!mpi_fileattr_define()) printf("Error in constructing MPI datatype\n") ;  
 
   strcpy(targetdir, argv[argc-1]) ;
   while(argc-- > 1) {
-/*       if(verifydir(*argv, procID, nproc)) { */
-/* 	//      printf("P: %d %s \n", procID, *argv) ; */
-/* 	if(procID == 0)  { */
-/* 	  if(strrchr(*argv,'/') == NULL) sprintf(basedir,"/%s", *argv)  ; */
-/* 	  else strcpy(basedir,strrchr(*argv,'/')) ; */
-/* 	  printf("The base directory is %s \n", basedir) ;				        */
-	  
-/* 	  sprintf(targetpath, "%s%s", targetdir, basedir) ; */
-/* 	  printf("Target is %s ", targetpath) ; */
-/* 	  printf("%d %d \n", mkdir(targetpath ,S_IRWXU), errno) ; */
-/* 	}       */
-/* 	filecount += dirwalk_nfiles(*argv++, procID, nproc) ;	 */
-	
-/*       } */
+    if (procID == 0) {
+      if(stat(*argv, &stbuf)==0) {     
+      //      printf("P: %d %s \n", procID, *argv) ;
+      ArgStatus = argument_status(&stbuf) ;
+      } else ArgStatus = 0 ;
+    }
+    
+    MPI_Bcast(&ArgStatus, 1, MPI_INT, 0, MPI_COMM_WORLD) ;
+  
+    if(ArgStatus == 2) {
       
-        if(procID == 0)  {
-	//      printf("P: %d %s \n", procID, *argv) ;
-	  if(verifyregfile(*argv) && !verifydir(*argv)) {
-	    if(strrchr(*argv,'/') == NULL) sprintf(targetpath, "%s/%s", targetdir,*argv) ;
-	    else sprintf(targetpath, "%s%s", targetdir,strrchr(*argv,'/')) ;	
-	    //	    printf("Target is %s \n", targetpath) ;
-	    
-	    if(stat(*argv, &stbuf) == 0) {
-	      if(getfileattr(stbuf, &att_file)) {
-		strcpy((char *) att_file.pathname, targetpath);
-		filedata = (char *) malloc ((att_file.filesize)*sizeof(char)) ;
-		file_d = open(*argv, O_RDONLY) ;
-		rd_blocks = (int) (att_file.filesize/BLKSIZE) + 1 ;
-		//		printf("File size %d Block size %d \n ", att_file.filesize, BLKSIZE) ;
-		//		printf("rd_blocks %d last part %d \n", rd_blocks, att_file.filesize - (rd_blocks-1)*BLKSIZE) ;
-		for(count=0;count < rd_blocks; count++) 
-		  bytecount += read(file_d, &filedata[count*BLKSIZE], BLKSIZE) ;	      
-		
-		close(file_d) ;
-	      }
-	    }	    
-	  }	  
+      if(procID == 0) {
+	if(strrchr(*argv,'/') == NULL) {
+	  sprintf(basedir,"/%s", *argv)  ;
+	  //	  strcpy(*argv, basedir)  ;	  
 	}
-	
-	MPI_Barrier(MPI_COMM_WORLD) ;
-	MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) ;
-	//	printf("File size in P:%d is %d \n" , procID, att_file.filesize) ;
-	
-	if(procID != 0) filedata = (char *) malloc ((att_file.filesize)*sizeof(char)) ;
-	MPI_Bcast(filedata, att_file.filesize, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) ;
-	
-	if(1) {
-	  //	  printf("File size %d Block size %d \n ", att_file.filesize, BLKSIZE) ;
-	  rd_blocks =  (att_file.filesize/BLKSIZE) + 1 ;
-	  printf("rd_blocks %d last part %d \n", rd_blocks, att_file.filesize - (rd_blocks-1)*BLKSIZE) ;
+	else strcpy(basedir,strrchr(*argv,'/')) ;
+	printf("The base directory is %s \n", basedir) ;	  
+	sprintf(targetpath, "%s%s", targetdir, basedir) ;
+	printf("Target is %s ", targetpath) ;
+	if(getfileattr(stbuf, &att_file)) strcpy((char *) att_file.pathname, targetpath);
+      }
 
-	  printf("Target is %s \n", att_file.pathname) ;	  
-	  file_d = creat((char *) att_file.pathname, S_IRWXU) ;
-	  printf("P: %d %d %d %s \n", procID, file_d, errno, strerror(errno)) ;
-	  bytecount = 0 ;
-	  for(count=0; count < rd_blocks-1; count++)
-	    bytecount += write(file_d, &filedata[count*BLKSIZE], BLKSIZE) ;
-	  bytecount += write(file_d, &filedata[count*BLKSIZE], att_file.filesize - (rd_blocks-1)*BLKSIZE) ;
-	  printf("Number of bytes written is %d Errno is %d \n", bytecount, errno) ;
-	  close(file_d) ;    
-	}
+      MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) ;
+      printf("%d %s \n", mkdir((char *) att_file.pathname, S_IRWXU), strerror(errno)) ;
+      filecount += dirwalk_nfiles(*argv, procID, nproc) ;
+      
+    }
+    
+    if(ArgStatus == 1) {
+      if(procID == 0)   {
+	if(strrchr(*argv,'/') == NULL) sprintf(targetpath, "%s/%s", targetdir,*argv) ;
+	else sprintf(targetpath, "%s%s", targetdir,strrchr(*argv,'/')) ;	      
 	
-
-	argv++ ;
-	filecount++ ;
+	if(getfileattr(stbuf, &att_file)) {
+	  strcpy((char *) att_file.pathname, targetpath);
+	  filedata = (char *) malloc ((att_file.filesize)*sizeof(char)) ;
+	  file_d = open(*argv, O_RDONLY) ;
+	  rd_blocks = (int) (att_file.filesize/BLKSIZE) + 1 ;
+	  
+	  for(count=0;count < rd_blocks; count++) 
+	    bytecount += read(file_d, &filedata[count*BLKSIZE], BLKSIZE) ;	      
+	  
+	  close(file_d) ;
+	}	
+      }
+      
+      MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) ;
+      
+      if(procID != 0) filedata = (char *) malloc ((att_file.filesize)*sizeof(char)) ;
+      MPI_Bcast(filedata, att_file.filesize, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) ;	  
+      
+      rd_blocks =  (att_file.filesize/BLKSIZE) + 1 ;
+      file_d = creat((char *) att_file.pathname, S_IRWXU) ;
+      bytecount = 0 ;
+      for(count=0; count < rd_blocks-1; count++)
+	bytecount += write(file_d, &filedata[count*BLKSIZE], BLKSIZE) ;
+      bytecount += write(file_d, &filedata[count*BLKSIZE], att_file.filesize - (rd_blocks-1)*BLKSIZE) ;
+      close(file_d) ;
+      
+    }   
+    
+    argv++ ;
+    filecount++ ;
   }
-
+  
   
   if(procID == 0) printf("The total number of files is %d \n", filecount) ;
   
