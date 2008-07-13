@@ -11,7 +11,9 @@
 #include <sys/param.h>
 #include <mpi.h>
 #include <math.h>
+#include <utime.h>
 #include "fileattr.h"
+
 
 #define FALSE 0
 #define TRUE !FALSE
@@ -37,6 +39,7 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
   char *filedata ;
   int rd_blocks ;
   int BLKSIZE=256 ;
+  struct utimbuf file_times ;
 
   int filecount=0 ;
   int cdir_count ;
@@ -65,18 +68,16 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
   }
 
   for (i=0; i<cdir_count; ++i) {
-    printf("P: %d going thro %d of %d files in %s \n", procID, i+1, cdir_count, pathname) ;
     if(procID == 0) {
       sprintf(name, "%s/%s", pathname, files[i]->d_name);
       sprintf(targetpath, "%s/%s", targetdir, strstr(name,basedir+1)) ;
-      printf("%s %s \n", name, basedir+1) ;
       printf("Target is %s \n", targetpath) ;   
       if(stat(name, &stbuf)==0) {     
-      //      printf("P: %d %s \n", procID, *argv) ;
-      ArgStatus = argument_status(&stbuf) ;
+	ArgStatus = argument_status(&stbuf) ;
+	printf("P: %d %s %d \n", procID, name, ArgStatus) ;
       } else ArgStatus = 0 ;
 
-      if(ArgStatus) {
+      if(ArgStatus != 0) {
 	if(getfileattr(stbuf, &att_file)) strcpy((char *) att_file.pathname, targetpath);
       }
     }
@@ -86,8 +87,14 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
 
     if(ArgStatus == 2) {        
       mkdir((char *) att_file.pathname, S_IRWXU) ;
+
 	//      printf("%d %s \n", mkdir((char *) att_file.pathname, S_IRWXU), strerror(errno)) ;
       filecount += dirwalk_nfiles(name, procID, nproc) ;      
+
+      file_times.actime = att_file.atime ;
+      file_times.modtime = att_file.mtime ;
+      printf("P: %d %d %s \n", procID, utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
+      printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;
     } 
 
     else if(ArgStatus == 1) {
@@ -111,6 +118,11 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
 	bytecount += write(file_d, &filedata[count*BLKSIZE], BLKSIZE) ;
       bytecount += write(file_d, &filedata[count*BLKSIZE], att_file.filesize - (rd_blocks-1)*BLKSIZE) ;
       close(file_d) ;
+      
+      file_times.actime = att_file.atime ;
+      file_times.modtime = att_file.mtime ;
+      printf("%d %s \n", utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
+      printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;
       
       filecount++ ;
     }    
@@ -155,7 +167,7 @@ int main(int argc, char **argv) {
   char *filedata ;
   int rd_blocks ;
   int BLKSIZE ;
-  long arbit1 ; // some arbit variable.. testing
+  struct utimbuf file_times ;
 
   /*
     pflag --> Set as 1 if permissions are to be retained.
@@ -242,9 +254,14 @@ int main(int argc, char **argv) {
       }
 
       MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) ;
-      printf("%d %s \n", mkdir((char *) att_file.pathname, S_IRWXU), strerror(errno)) ;
+      mkdir((char *) att_file.pathname, S_IRWXU) ;
+
       filecount += dirwalk_nfiles(*argv, procID, nproc) ;
-      
+
+      file_times.actime = att_file.atime ;
+      file_times.modtime = att_file.mtime ;
+      printf("%d %s \n", utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
+      printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;      
     }
     
     if(ArgStatus == 1) {
@@ -277,6 +294,11 @@ int main(int argc, char **argv) {
 	bytecount += write(file_d, &filedata[count*BLKSIZE], BLKSIZE) ;
       bytecount += write(file_d, &filedata[count*BLKSIZE], att_file.filesize - (rd_blocks-1)*BLKSIZE) ;
       close(file_d) ;
+
+      file_times.actime = att_file.atime ;
+      file_times.modtime = att_file.mtime ;
+      printf("%d %s \n", utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
+      printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;
       
     }   
     
