@@ -23,6 +23,7 @@ typedef unsigned char int8 ;
 char basedir[MAX_PATH] ; //The base directory for recursive directory scans
 char targetdir[MAX_PATH] ; //The target directory 
 char targetpath[MAX_PATH] ;
+int pflag=0, iamrecursive=0 ;
 
 extern  int alphasort();
 
@@ -90,11 +91,12 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
 
 	//      printf("%d %s \n", mkdir((char *) att_file.pathname, S_IRWXU), strerror(errno)) ;
       filecount += dirwalk_nfiles(name, procID, nproc) ;      
-
-      file_times.actime = att_file.atime ;
-      file_times.modtime = att_file.mtime ;
-      printf("P: %d %d %s \n", procID, utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
-      printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;
+      if(pflag) {
+	file_times.actime = att_file.atime ;
+	file_times.modtime = att_file.mtime ;
+	printf("P: %d %d %s \n", procID, utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
+	printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;
+      }
     } 
 
     else if(ArgStatus == 1) {
@@ -119,11 +121,12 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
       bytecount += write(file_d, &filedata[count*BLKSIZE], att_file.filesize - (rd_blocks-1)*BLKSIZE) ;
       close(file_d) ;
       
-      file_times.actime = att_file.atime ;
-      file_times.modtime = att_file.mtime ;
-      printf("%d %s \n", utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
-      printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;
-      
+      if(pflag) {
+	file_times.actime = att_file.atime ;
+	file_times.modtime = att_file.mtime ;
+	printf("%d %s \n", utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
+	printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;
+      }
       filecount++ ;
     }    
     
@@ -148,7 +151,7 @@ int main(int argc, char **argv) {
   struct stat stbuf ;
   int8 *a ;
   int b ;
-  int pflag, iamrecursive, targetshouldbedir, targetisdir; 
+  int targetshouldbedir, targetisdir; 
   int ArgStatus ; 
 
 /*   ArgStatus --> Indicates the status of the curent argument that is being dealt with. */
@@ -256,12 +259,15 @@ int main(int argc, char **argv) {
       MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) ;
       mkdir((char *) att_file.pathname, S_IRWXU) ;
 
-      filecount += dirwalk_nfiles(*argv, procID, nproc) ;
+      if(iamrecursive) filecount += dirwalk_nfiles(*argv, procID, nproc) ;
 
-      file_times.actime = att_file.atime ;
-      file_times.modtime = att_file.mtime ;
-      printf("%d %s \n", utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
-      printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;      
+      if(pflag) {
+	file_times.actime = att_file.atime ;
+	file_times.modtime = att_file.mtime ;
+	printf("%d %s \n", utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
+	printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;      
+      }
+
     }
     
     if(ArgStatus == 1) {
@@ -295,11 +301,13 @@ int main(int argc, char **argv) {
       bytecount += write(file_d, &filedata[count*BLKSIZE], att_file.filesize - (rd_blocks-1)*BLKSIZE) ;
       close(file_d) ;
 
-      file_times.actime = att_file.atime ;
-      file_times.modtime = att_file.mtime ;
-      printf("%d %s \n", utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
-      printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;
-      
+      if(pflag) {
+	file_times.actime = att_file.atime ;
+	file_times.modtime = att_file.mtime ;
+	printf("%d %s \n", utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
+	printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;
+      }
+	
     }   
     
     argv++ ;
