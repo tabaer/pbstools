@@ -20,6 +20,7 @@
 #define MAX_PATH 1024
 typedef unsigned char int8 ;
 
+int basedir_jump ; // The number of characters to jump in the given argument to get to basedir
 char basedir[MAX_PATH] ; //The base directory for recursive directory scans
 char targetdir[MAX_PATH] ; //The target directory 
 char targetpath[MAX_PATH] ;
@@ -71,7 +72,7 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
   for (i=0; i<cdir_count; ++i) {
     if(procID == 0) {
       sprintf(name, "%s/%s", pathname, files[i]->d_name);
-      sprintf(targetpath, "%s/%s", targetdir, strstr(name,basedir+1)) ;
+      sprintf(targetpath, "%s%s", targetdir, name+basedir_jump) ;
       printf("Target is %s \n", targetpath) ;   
       if(stat(name, &stbuf)==0) {     
 	ArgStatus = argument_status(&stbuf) ;
@@ -185,7 +186,7 @@ int main(int argc, char **argv) {
 
 
   //Getting arguments
-  while ((ch = getopt(argc, argv, "prgs:")) != -1)
+  while ((ch = getopt(argc, argv, "prhgs:")) != -1)
 	  switch (ch) {
 		  /* User-visible flags. */
 	  case 'p':
@@ -194,6 +195,9 @@ int main(int argc, char **argv) {
 	  case 'r':
 		  iamrecursive = 1;
 		  break;
+	  case 'h':
+                  usage();
+                  break ;
 	  case 'g':
 		  printf("Gather mode not supported here");
 		  break;
@@ -246,10 +250,15 @@ int main(int argc, char **argv) {
       
       if(procID == 0) {
 	if(strrchr(*argv,'/') == NULL) {
+	  basedir_jump = 0 ;
 	  sprintf(basedir,"/%s", *argv)  ;
 	  //	  strcpy(*argv, basedir)  ;	  
 	}
-	else strcpy(basedir,strrchr(*argv,'/')) ;
+	else {
+	  strcpy(basedir,strrchr(*argv,'/')) ;
+	  basedir_jump = strrchr(*argv,'/') - *argv ;
+	}
+	printf("basedir_jump = %d \n", basedir_jump) ;
 	printf("The base directory is %s \n", basedir) ;	  
 	sprintf(targetpath, "%s%s", targetdir, basedir) ;
 	printf("Target is %s ", targetpath) ;
