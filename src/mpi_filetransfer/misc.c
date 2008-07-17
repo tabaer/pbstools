@@ -53,15 +53,15 @@ void printarguments(int argc, char **argv) {
 int verifydir(char *cp) {
 
   struct stat stb;
-  if (!stat(cp, &stb)) {
+  if (stat(cp, &stb) == 0) {
     if (S_ISDIR(stb.st_mode))
       return 1;
     else {
       errno = ENOTDIR;      
       return 0;    
-    }
-    
-  } 
+    }    
+  }
+  else return 0 ;
   
   //	run_err("%s: %s", cp, strerror(errno));
   //	killchild(0);
