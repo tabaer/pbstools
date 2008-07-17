@@ -152,8 +152,10 @@ int main(int argc, char **argv) {
   struct stat stbuf ;
   int8 *a ;
   int b ;
+  int singlefileflag = 0 ;
   int targetshouldbedir, targetisdir; 
   int ArgStatus ; 
+  
 
 /*   ArgStatus --> Indicates the status of the curent argument that is being dealt with. */
 /*   0  --> Neither a file nor a directory. Can be skipped */
@@ -186,7 +188,7 @@ int main(int argc, char **argv) {
 
 
   //Getting arguments
-  while ((ch = getopt(argc, argv, "prhgs:")) != -1)
+  while ((ch = getopt(argc, argv, "prhgs")) != -1)
 	  switch (ch) {
 		  /* User-visible flags. */
 	  case 'p':
@@ -199,7 +201,7 @@ int main(int argc, char **argv) {
                   usage();
                   break ;
 	  case 'g':
-		  printf("Gather mode not supported here");
+		  printf("Gather mode not supported here \n");
 		  break;
 	  case 's':
 		  break;
@@ -212,25 +214,37 @@ int main(int argc, char **argv) {
   argc -= optind;
   argv += optind;
   //  printf("The number of arguments remaining is %d \n", argc) ; 
-  
-  if (argc < 2) 
-    usage();
-  else if(argc > 2) {
-    targetshouldbedir = 1;    
-    if(verifydir(argv[argc-1])) {
-      targetisdir = 1 ;
-    }
-    else {
-      printf("Target must be a directory if more than 1 files are to be transferred\n");
-      usage() ;
-    }
-  }  
+
 
   striptrailingslashes(argc, &argv) ;
 
   MPI_Init(&argc, &argv); // Initialize MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &procID); // Get process rank    
   MPI_Comm_size(MPI_COMM_WORLD, &nproc); // Get total number of processes specificed at start of run
+  
+  if(procID == 0) {
+    if (argc < 2) 
+      usage();
+    else if(argc == 2) {
+      printf("Target dir is %s and the check yields %d \n", argv[argc-1], verifydir(argv[argc-1])) ;
+      if(verifydir(argv[argc-1])) singlefileflag = 2 ;
+      else {
+	strncpy(targetdir, argv[argc-1], strrchr(argv[argc-1],'/') - argv[argc-1]) ;	
+	if(verifydir(targetdir)) singlefileflag = 1 ;
+	else printf("Given target path %s does not exist \n", targetdir);
+      }
+    }
+    else if(argc > 2) {
+      targetshouldbedir = 1;    
+      if(verifydir(argv[argc-1])) {
+	targetisdir = 1 ;
+      }
+      else {
+	printf("Target must be a directory if more than 1 files are to be transferred\n");
+	usage() ;
+      }
+    }  
+  }
 
   BLKSIZE = 32768 ;
   if(!mpi_fileattr_define()) printf("Error in constructing MPI datatype\n") ;  
@@ -281,8 +295,12 @@ int main(int argc, char **argv) {
     
     if(ArgStatus == 1) {
       if(procID == 0)   {
-	if(strrchr(*argv,'/') == NULL) sprintf(targetpath, "%s/%s", targetdir,*argv) ;
-	else sprintf(targetpath, "%s%s", targetdir,strrchr(*argv,'/')) ;	      
+	printf("The singlefileflag is %d \n", singlefileflag) ;
+	if(singlefileflag == 1) strcpy(targetpath, targetdir) ;
+	else {
+	  if(strrchr(*argv,'/') == NULL) sprintf(targetpath, "%s/%s", targetdir,*argv) ;
+	  else sprintf(targetpath, "%s%s", targetdir,strrchr(*argv,'/')) ;	      
+	}
 	
 	if(getfileattr(stbuf, &att_file)) {
 	  strcpy((char *) att_file.pathname, targetpath);
@@ -298,7 +316,8 @@ int main(int argc, char **argv) {
       }
       
       MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) ;
-      
+
+      printf("P:%d %s \n", procID, att_file.pathname) ;
       if(procID != 0) filedata = (char *) malloc ((att_file.filesize)*sizeof(char)) ;
       MPI_Bcast(filedata, att_file.filesize, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) ;	  
       
@@ -313,8 +332,8 @@ int main(int argc, char **argv) {
       if(pflag) {
 	file_times.actime = att_file.atime ;
 	file_times.modtime = att_file.mtime ;
-	printf("%d %s \n", utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
-	printf("%d %s \n", chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;
+	printf("Check P: %d %d %s \n", procID, utime((char *)att_file.pathname, &file_times), strerror(errno)) ;
+	printf("Check P: %d %d %s \n", procID, chmod((char *)att_file.pathname, att_file.mode), strerror(errno)) ;
       }
 	
     }   
