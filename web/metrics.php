@@ -476,6 +476,10 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
 	}
     }
   $cache = APACHE_CACHE_DIR;
+  if ( ! file_exists("/tmp/".$cache) )
+    {
+      mkdir("/tmp/".$cache,0750);
+    }
   $plot=$system."-".$metric."_vs_".$xaxis."-".$start_date."-".$end_date.".png";
   //  $graph = new graph(640,480,$plot,2,0);
   $graph = new graph(800,600,$plot,2,0);
@@ -593,6 +597,10 @@ function metric_as_xls($result,$xaxis,$metric,$system,$start_date,$end_date)
   $myresult=$result;
   $xlsfile=$system."-".$metric."_vs_".$xaxis."-".$start_date."-".$end_date.".xls";
   $cache = APACHE_CACHE_DIR;
+  if ( ! file_exists("/tmp/".$cache) )
+    {
+      mkdir("/tmp/".$cache,0750);
+    }
 
   $workbook = new Workbook("/tmp/".$cache.$xlsfile);
   $worksheet =& $workbook->add_worksheet($metric." vs ".$xaxis);
@@ -636,6 +644,10 @@ function metric_as_ods($result,$xaxis,$metric,$system,$start_date,$end_date)
   $myresult=$result;
   $odsfile=$system."-".$metric."_vs_".$xaxis."-".$start_date."-".$end_date.".ods";
   $cache = APACHE_CACHE_DIR;
+  if ( ! file_exists("/tmp/".$cache) )
+    {
+      mkdir("/tmp/".$cache,0750);
+    }
 
   $workbook = newOds();
 
@@ -679,6 +691,11 @@ function result_as_xls($result,$mycolumnname,$filebase)
 {
   $myresult=$result;
   $cache = APACHE_CACHE_DIR;
+  if ( ! file_exists("/tmp/".$cache) )
+    {
+      mkdir("/tmp/".$cache,0750);
+    }
+
   $xlsfile = $filebase.".xls";
 
   $workbook = new Workbook("/tmp/".$cache.$xlsfile);
@@ -717,6 +734,11 @@ function result_as_ods($result,$mycolumnname,$filebase)
 {
   $myresult=$result;
   $cache = APACHE_CACHE_DIR;
+  if ( ! file_exists("/tmp/".$cache) )
+    {
+      mkdir("/tmp/".$cache,0750);
+    }
+
   $odsfile = $filebase.".ods";
 
   $workbook = newOds();
