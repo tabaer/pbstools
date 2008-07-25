@@ -93,7 +93,6 @@ else
 	    chomp($mpiexec);
 	    $scatter = `which pbsdcp-scatter 2>/dev/null`;
 	    chomp($scatter);
-	    print "mpiexec=".$mpiexec.", scatter=".$scatter."\n";
 	    # use pbsdcp-scatter if available
 	    if ( length($mpiexec)>0 && length($scatter)>0 )
 	      {
