@@ -82,33 +82,53 @@ else
     else # scatter -- default
       {
 	$sharedfs = "^/(gpfs|lustre|pvfs|home|[a-z])/";
-	if ( -s $ENV{'PBS_NODEFILE'} && !($target =~ $sharedfs) )
+	# if the target is a known shared file system, just use cp
+	if ( $target =~ $sharedfs )
 	  {
-	    open(NODES,"uniq ".$ENV{'PBS_NODEFILE'}." |");
-	    @node=<NODES>;
-	    chop(@node);
-	    if ( $#node>0 )
+	    exec("cp @ARGV $target");
+	  }
+	else
+	  {
+	    $mpiexec = `which mpiexec 2>/dev/null`;
+	    chomp($mpiexec);
+	    $scatter = `which pbsdcp-scatter 2>/dev/null`;
+	    chomp($scatter);
+	    print "mpiexec=".$mpiexec.", scatter=".$scatter."\n";
+	    # use pbsdcp-scatter if available
+	    if ( length($mpiexec)>0 && length($scatter)>0 )
 	      {
-		for ( $i=0 ; $i<=$#node; $i++ )
+		exec("mpiexec -pernode pbsdcp-scatter @ARGV $target");
+	      }
+	    # if pbsdcp-scatter is not available but there's a node file, use rcp
+	    elsif ( defined($ENV{'PBS_NODEFILE'}) && -s $ENV{'PBS_NODEFILE'} )
+	      {
+		open(NODES,"uniq ".$ENV{'PBS_NODEFILE'}." |");
+		@node=<NODES>;
+		chop(@node);
+		if ( $#node>0 )
 		  {
+		    for ( $i=0 ; $i<=$#node; $i++ )
+		      {
 			if ( ($pid[$i]=fork)==0 )
 			  {
 			    exec("rcp @ARGV $node[$i]:$target\n");
 			  }
+		      }
+		    for ( $i=0 ; $i<=$#node; $i++ )
+		      {
+			waitpid($pid[$i],0);
+		      }
 		  }
-		for ( $i=0 ; $i<=$#node; $i++ )
+		else
 		  {
-		    waitpid($pid[$i],0);
+		    exec("cp @ARGV $target");
 		  }
 	      }
+	    # if all else fails, just use cp
 	    else
 	      {
 		exec("cp @ARGV $target");
 	      }
-	  }
-	else
-	  {
-	    exec("cp @ARGV $target");
 	  }
       }
 }
