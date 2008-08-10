@@ -10,11 +10,24 @@
 #include <mpi.h>
 #include <time.h>
 #include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
+#include <getopt.h>
+#include <errno.h>
+#include <sys/dir.h>
+#include <sys/param.h>
+#include <math.h>
+#include <utime.h>
+#include <unistd.h>
 
-#define MAX_PATH 1024
+#define FALSE 0
+#define TRUE !FALSE
 
 struct FileAttr {
-  unsigned char pathname[MAX_PATH] ;
+  unsigned char pathname[PATH_MAX] ;
   unsigned int mode ;
   unsigned long long int filesize ;    
   unsigned long long int atime ;
@@ -24,7 +37,5 @@ struct FileAttr {
 
 MPI_Datatype MPI_FileAttr ; //The corresponding MPI Datatype
 
-/* extern int mpi_fileattr_define() ;/*Defines the MPI Datatype corresponding to 
-                    * the FileAttr type. Returns 1 on successful definition */
 #endif	/* _FILEATTR_H */
 

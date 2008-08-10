@@ -1,31 +1,14 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <getopt.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/dir.h>
-#include <string.h>
-#include <sys/param.h>
-
-#ifndef OTHER_DEFS
-#define FALSE 0
-#define TRUE !FALSE
-#define MAX_PATH 1024
-typedef unsigned char int8 ;
-#endif /* OTHER_DEFS*/
-
+#include "fileattr.h"
 /*usage: Prints the usage of the scatter command */
 void usage(void) {
 
-  (void) fprintf(stderr,		 
-		 " Usage:  pbsdcp [-g|-s] [options] srcfile [...srcfiles...] target\n"
-		 " Options:\n"
-		 "  -g   gather mode \n"
-		 "  -s   scatter mode (default) \n"
-		 "  -h   print a help message \n"
-		 "  -p   preserve modification times and permissions \n"
-		 "  -r   recursive copy \n") ;
+  printf(" Usage:  pbsdcp [-g|-s] [options] srcfile [...srcfiles...] target\n"
+	 " Options:\n"
+	 "  -g   gather mode \n"
+	 "  -s   scatter mode (default) \n"
+	 "  -h   print a help message \n"
+	 "  -p   preserve modification times and permissions \n"
+	 "  -r   recursive copy \n") ;
   
   exit(1);
 }
@@ -93,7 +76,7 @@ int argument_status(struct stat *stbuf) {
 void striptrailingslashes(int argc, char ***argv) {
   
   int count ;
-  char temppath[MAX_PATH] ;
+  char temppath[PATH_MAX] ;
   int arglength ; 
   
   for(count=0;count<argc;count++) {
@@ -111,5 +94,18 @@ void striptrailingslashes(int argc, char ***argv) {
 
   }
   return ;
+}
+
+/*getfileattr: 'stat's the file "filename" and stores the necessary attributes 
+ * into f_att */
+int getfileattr(struct stat st_buf, struct FileAttr *f_att) {
+  
+  (*f_att).mode = st_buf.st_mode ;
+  (*f_att).filesize = st_buf.st_size ;
+  (*f_att).atime = st_buf.st_atime ;
+  (*f_att).mtime = st_buf.st_mtime ;
+  (*f_att).ctime = st_buf.st_ctime ;  
+  
+  return 1;
 }
 
