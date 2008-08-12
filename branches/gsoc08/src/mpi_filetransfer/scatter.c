@@ -1,12 +1,11 @@
 #include "fileattr.h"
 
-int basedir_jump ; // The number of characters to jump in the given argument to get to basedir
+int basedir_jump ; // The number of characters to jump in the given argument to get to basedir in the case of recursive directory scans
 char basedir[PATH_MAX] ; //The base directory for recursive directory scans
 char targetdir[PATH_MAX] ; //The target directory 
 char targetpath[PATH_MAX] ; //The target path
 int pflag=0, iamrecursive=0 ; //Flags which determine if the file permissions are to be preserved and if directories are to be recursively copied.
 int BLKSIZE = 32768; //The block size to use when reading files.
-long MEM_AVL ; //Total Physical memory on the system.
 extern int alphasort();
 
 int dirwalk_nfiles(char *pathname, int procID, int nproc) { 
@@ -18,7 +17,7 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
   char name[PATH_MAX] ;
 
   struct FileAttr att_file ;
-  int bytecount=0 ; //A count of bytes read or written
+  int bytes_read, bytes_write ; //A count of bytes read or written
   char *filedata ; //Stores the file data as an array of bytes
   struct utimbuf file_times ; //The structure to store the mod & access times
 
@@ -70,7 +69,10 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
     if(MPI_Bcast(&ArgStatus, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
 
     if(ArgStatus == 2) {        
-      mkdir((char *) att_file.pathname, 00755) ;
+      if(mkdir((char *) att_file.pathname, 00777)) {
+	printf("Could not create directory %s \n Exiting \n", att_file.pathname) ; 
+	MPI_Abort(MPI_COMM_WORLD, 1) ;
+      }
 
       filecount += dirwalk_nfiles(name, procID, nproc) ;      
       if(pflag) {
@@ -84,15 +86,23 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
     else if(ArgStatus == 1) {
       if(MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
       if(procID == 0) file_d_read = open(name, O_RDONLY) ;
-      file_d_write = creat((char *) att_file.pathname, 00644) ;
+      file_d_write = creat((char *) att_file.pathname, 00777) ;
+      if(file_d_write < 3)  MPI_Abort(MPI_COMM_WORLD, 1) ;
       filedata = (char *) malloc ((BLKSIZE)*sizeof(char)) ;
       file_rem = att_file.filesize ;
 
       while(file_rem > 0) {
 	file_read = (file_rem < BLKSIZE  ? file_rem : BLKSIZE) ;	
-	if(procID == 0) bytecount += read(file_d_read, &filedata[0], file_read) ;      
-	if(MPI_Bcast(filedata, file_read, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  	
-	bytecount += write(file_d_write, &filedata[0], file_read) ;
+	if(procID == 0) bytes_read = read(file_d_read, &filedata[0], file_read) ;      
+	if(bytes_read > 0) {
+	  if(MPI_Bcast(filedata, file_read, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  	
+	  bytes_write = write(file_d_write, &filedata[0], file_read) ;
+	}
+	else {
+	  printf("Could not broadcast file data \n") ;
+	  MPI_Abort(MPI_COMM_WORLD,1) ;
+	}
+
 	file_rem -= file_read ;
       }
 
@@ -145,7 +155,7 @@ int main(int argc, char **argv) {
   long int file_read, file_rem ; //Size of part of file to read and the remaining part 
 
   struct FileAttr att_file ;
-  int bytecount=0, count=0 ;
+  int bytes_read, bytes_write, count=0 ;
   char *filedata ;
   int rd_blocks ;
   struct utimbuf file_times ;
@@ -194,10 +204,6 @@ int main(int argc, char **argv) {
   if(MPI_Init(&argc, &argv) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER); // Initialize MPI
   if(MPI_Comm_rank(MPI_COMM_WORLD, &procID) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ; // Get process rank    
   if(MPI_Comm_size(MPI_COMM_WORLD, &nproc) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER); // Get total number of processes specificed at start of run
-
-  umask(022) ; //Setting the umask to 022   
-  //  MEM_AVL = sysconf(_SC_PAGESIZE)*sysconf(_SC_AVPHYS_PAGES) ; //Determining total memory of the system  
-  MEM_AVL = 1024*1024*1024 ;
   
   if (argc < 2) 
     usage();
@@ -289,15 +295,24 @@ int main(int argc, char **argv) {
       }
 
       if(MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
-      file_d_write = creat((char *) att_file.pathname, 00644) ;
+      file_d_write = creat((char *) att_file.pathname, 00777) ;
+      if(file_d_write < 3)  MPI_Abort(MPI_COMM_WORLD, 1) ;
       file_rem = att_file.filesize ;
       filedata = (char *) malloc ((BLKSIZE)*sizeof(char)) ;	
 
       while(file_rem > 0) {
 	file_read = (file_rem < BLKSIZE ? file_rem : BLKSIZE) ;
-	if(procID == 0) bytecount += read(file_d_read, &filedata[0], BLKSIZE) ;	      
-	if(MPI_Bcast(filedata, file_read, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  
-	bytecount += write(file_d_write, &filedata[0], file_read) ;
+	if(procID == 0) bytes_read = read(file_d_read, &filedata[0], BLKSIZE) ;	      
+	
+	if(bytes_read > 0) {
+	  if(MPI_Bcast(filedata, file_read, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  
+	  bytes_write = write(file_d_write, &filedata[0], file_read) ;
+	}
+	else {
+	  printf("Could not broadcast file data \n") ;
+	  MPI_Abort(MPI_COMM_WORLD,1) ;
+	}
+	  
 	file_rem -= file_read ;
       }
 
@@ -317,7 +332,7 @@ int main(int argc, char **argv) {
     filecount++ ;
   }
   
-  if(procID == 0) printf("The total number of files is %d \n", filecount) ;
+  if(procID == 0) printf("%d files transferred \n", filecount) ;
   
   MPI_Finalize();
   
