@@ -21,6 +21,7 @@
 #include <sys/param.h>
 #include <math.h>
 #include <utime.h>
+#include <unistd.h>
 
 #define FALSE 0
 #define TRUE !FALSE

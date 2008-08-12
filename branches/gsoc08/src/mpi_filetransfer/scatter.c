@@ -17,7 +17,7 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
   char name[PATH_MAX] ;
 
   struct FileAttr att_file ;
-  int bytes_read, bytes_write ; //A count of bytes read or written
+  ssize_t bytes_read, bytes_write ; //A count of bytes read or written
   char *filedata ; //Stores the file data as an array of bytes
   struct utimbuf file_times ; //The structure to store the mod & access times
 
@@ -33,7 +33,7 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
   int file_select(struct direct *); //Function to decide on selection of files to copy
   int file_d ; //A file descriptor
   int file_d_read, file_d_write ; // File descriptors to read and write files ;
-  long int file_read, file_rem ; //Size of part of file to read and the remaining part 
+  size_t file_read, file_rem ; //Size of part of file to read and the remaining part 
 
   if(procID == 0) {
     cdir_count = scandir(pathname, &files, file_select, &alphasort);
@@ -52,7 +52,7 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
     if(procID == 0) {
       sprintf(name, "%s/%s", pathname, files[i]->d_name);
       sprintf(targetpath, "%s/%s", targetdir, name+basedir_jump) ;
-      printf("Target is %s \n", targetpath) ;   
+      //      printf("Target is %s \n", targetpath) ;   
       if(stat(name, &stbuf)==0) {     
 	ArgStatus = argument_status(&stbuf) ;
       } else {	
@@ -85,7 +85,10 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
 
     else if(ArgStatus == 1) {
       if(MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
-      if(procID == 0) file_d_read = open(name, O_RDONLY) ;
+      if(procID == 0) {
+	file_d_read = open(name, O_RDONLY) ;
+	if(file_d_read < 3)  MPI_Abort(MPI_COMM_WORLD, 1) ;
+      }
       file_d_write = creat((char *) att_file.pathname, 00777) ;
       if(file_d_write < 3)  MPI_Abort(MPI_COMM_WORLD, 1) ;
       filedata = (char *) malloc ((BLKSIZE)*sizeof(char)) ;
@@ -94,12 +97,13 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
       while(file_rem > 0) {
 	file_read = (file_rem < BLKSIZE  ? file_rem : BLKSIZE) ;	
 	if(procID == 0) bytes_read = read(file_d_read, &filedata[0], file_read) ;      
+	if(MPI_Bcast(&bytes_read, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  	
 	if(bytes_read > 0) {
 	  if(MPI_Bcast(filedata, file_read, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  	
 	  bytes_write = write(file_d_write, &filedata[0], file_read) ;
 	}
 	else {
-	  printf("Could not broadcast file data \n") ;
+	  printf("Could not read file data \n") ;
 	  MPI_Abort(MPI_COMM_WORLD,1) ;
 	}
 
@@ -108,7 +112,8 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
 
       if(procID == 0) close(file_d_read) ;
       close(file_d_write) ;
-      
+      free(filedata) ;
+
       if(pflag) {
 	file_times.actime = att_file.atime ;
 	file_times.modtime = att_file.mtime ;
@@ -152,10 +157,11 @@ int main(int argc, char **argv) {
   char filename[PATH_MAX] ;
   int file_d ; // A file descriptor ;
   int file_d_read, file_d_write ; // File descriptors to read and write files ;
-  long int file_read, file_rem ; //Size of part of file to read and the remaining part 
+  size_t file_read, file_rem ; //Size of part of file to read and the remaining part 
 
   struct FileAttr att_file ;
-  int bytes_read, bytes_write, count=0 ;
+  ssize_t bytes_read, bytes_write ;  
+  int count=0 ;
   char *filedata ;
   int rd_blocks ;
   struct utimbuf file_times ;
@@ -291,6 +297,7 @@ int main(int argc, char **argv) {
 	if(getfileattr(stbuf, &att_file)) {
 	  strcpy((char *) att_file.pathname, targetpath);
 	  file_d_read = open(*argv, O_RDONLY) ;
+	  if(file_d_read < 3)  MPI_Abort(MPI_COMM_WORLD, 1) ;
 	}
       }
 
