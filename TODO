@@ -4,8 +4,6 @@ Copyright 2006, Ohio Supercomputer Center
 TODO List
 =========
 
-* Automate installation & site customization.
-
 * Add a global config file.
 
 * Move commonly used Perl routines (eg. &resourcelist()) into a Perl module.
