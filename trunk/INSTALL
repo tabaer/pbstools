@@ -1,5 +1,5 @@
 PBS tools
-Copyright 2005, 2006, 2007, Ohio Supercomputer Center
+Copyright 2005-2008, Ohio Supercomputer Center
 
 Installation and Site Customization
 ===================================
@@ -21,7 +21,6 @@ requirements:
 * A MySQL database server
 * PHP 4.x or 5.x with PEAR::DB and MySQL support
 * Perl 5.x DBI and DBD::MySQL modules
-* JPGraph
 
 Basic Installation:
 -------------------
@@ -32,14 +31,22 @@ script tools, such as /usr/local.  Then run the following commands:
 
 # ksh/bash syntax
 export PREFIX=/usr/local
-cp bin/* $PREFIX/bin
-ln -s $PREFIX/bin/qexec $PREFIX/bin/qlogin
-ln -s $PREFIX/bin/qexec $PREFIX/bin/qmpiexec
-ln -s $PREFIX/bin/qexec $PREFIX/bin/qmpirun
-ln -s $PREFIX/bin/qexec $PREFIX/bin/qrsh
-ln -s $PREFIX/bin/qexec $PREFIX/bin/qsh
-cp sbin/{dezombify,qtracejob.pbs-server,reaver,showscript.pbs-server} $PREFIX/sbin
+make install PREFIX=$PREFIX
 
+Installing the MPI-based tools
+------------------------------
+
+This package includes two optional MPI-based programs.  The first of
+these is a "parallel command processor" which can be used to run large
+numbers of serial programs in the context of a single large parallel
+job, while the second is an add-on to pbsdcp which improves its
+scalability in scatter mode..  To install them, run the following
+commands:
+
+# ksh/bash syntax
+export PREFIX=/usr/local
+export MPICC=mpicc
+make mpitools PREFIX=$PREFIX MPICC=$MPICC
 
 Installing the Stats Programs
 -----------------------------
@@ -50,8 +57,7 @@ months.  To install them, run the following commands:
 
 # ksh/bash syntax
 export PREFIX=/usr/local
-cp sbin/{jobstats,find-outlyers} $PREFIX/sbin
-
+make statstools PREFIX=$PREFIX
 
 Installing the DB System:
 -------------------------
@@ -64,12 +70,12 @@ although these need not run on the same host as the PBS daemons.
 
 # ksh/bash syntax
 export PREFIX=/usr/local
-cp sbin/{job-db-update,jobscript-to-db,spool-jobscripts} $PREFIX/sbin
-chmod 750 $PREFIX/sbin/{job-db-update,jobscript-to-db}
-mysql -u root -p < etc/create-tables.sql
+export WEBPREFIX=/var/www/html/pbsacct
+export DBSERVER=localhost
+make dbtools PREFIX=$PREFIX WEBPREFIX=$WEBPREFIX DBSERVER=$DBSERVER
 
-This will create a database called pbsacct with a single table in it
-called Jobs.  Two DB users are also created, "pbsacct" and "webapp";
+This will create a database called pbsacct with two tables in it, Jobs
+and Config.  Two DB users are also created, "pbsacct" and "webapp";
 the former can insert and update records, while the latter can only
 perform selects.  (Neither can delete records; that is intentional.)
 If you have multiple PBS servers that will be checking records into
@@ -121,12 +127,14 @@ the web server's document hierarchy.  The only modification that may
 need to be made to them is if the MySQL database server runs on a
 different host from the web server.  The layout of the PHP pages is
 controlled by web/page-layout.php, and the style sheet used is
-web/default.css.  The job statistics reports rely on JPGraph[3]; the
-path to where JPGraph is installed needs to be updated in
-web/metrics.php.
+web/default.css.  The ability to generate spreadsheet versions of
+reports requires additional PHP libraries to produce Excel [3] and ODS
+[4].  These must be installed in $WEBPREFIX/phplib/Excel and
+$WEBPREFIX/phplib/ODS, respectively.
 
 ---
 
 [1] http://www.student.lu.se/~nbi98oli/dnotify.html
 [2] http://www.25thandclement.com/~william/projects/watch.html
-[3] http://www.aditus.nu/jpgraph/index.php
+[3] http://www.phpclasses.org/browse/package/767.html
+[4] http://sourceforge.net/projects/ods-php/

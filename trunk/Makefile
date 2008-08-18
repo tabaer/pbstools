@@ -64,6 +64,8 @@ dbtools:
 	install -m 0750 sbin/spool-jobscripts $(PREFIX)/sbin
 	install -d $(WEBPREFIX)
 	install -m 0640 web/default.css $(WEBPREFIX)
+	install -m 0640 web/db.cfg $(WEBPREFIX)
+	sed -i 's/localhost/$(DBSERVER)/' $(WEBPREFIX)/db.cfg
 	install -m 0640 web/*.php $(WEBPREFIX)
 # note that the following will prompt for the DB admin password
 	mysql -h $(DBSERVER) -u $(DBADMIN) -p < etc/create-tables.sql

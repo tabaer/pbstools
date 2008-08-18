@@ -1,5 +1,5 @@
 PBS tools
-Copyright 2005, 2006, 2007, Ohio Supercomputer Center
+Copyright 2005-2008, Ohio Supercomputer Center
 
 Contained herein are several utilities that have been developed at OSC
 to aid in the administration and management of PBS variants (including
@@ -13,13 +13,19 @@ User tools:
 
 bin/ja -- Job accounting within a PBS job; similar to "ja" in NQE.
 
-bin/pbsdcp -- Distributed copy command within a PBS job.
+bin/pbsdcp -- Distributed copy command within a PBS job.  This can
+optionally include an MPI-based scatter functionality that should
+scale better than the default rcp-based approach.
 
 bin/qps -- ps for PBS jobs; relies on the "all" command.
 
 bin/qpeek -- Allows users to look at spooled output of running jobs.
 
 bin/qexec -- Workalike for SGE qlogin/qrsh/qsh
+
+bin/parallel-command-processor -- An MPI program for running an array
+of serial jobs in the context of a single parallel job (a.k.a. the poor
+man's job arrays).
 
 Admin tools:
 ------------
@@ -80,46 +86,23 @@ group (over an optional date range) from the job DB.
 web/jobs-by-node.php -- Presents information on all jobs on a given
 node (over an optional date range) from the job DB.
 
-web/jobstats.php -- Presents statistics on all jobs (over an optional
+web/jobstats*.php -- Presents statistics on all jobs (over an optional
 date range) from the job DB.
 
-web/jobstats-by-user.php -- Presents statistics on all jobs (over an optional
-date range) from the job DB, broken down by user.
+web/software-usage*.php -- Presents information on software
+usage on all jobs (over an optional date range) from the job DB.
 
-web/jobstats-by-group.php -- Presents statistics on all jobs (over an optional
-date range) from the job DB, broken down by month.
+web/active-users.php -- Presents a list of the most active users over
+a date range.
 
-web/jobstats-by-month.php -- Presents statistics on all jobs (over an optional
-date range) from the job DB, broken down by month.
+web/active-groups.php -- Presents a list of the most active groups over
+a date range.
 
-web/jobstats-by-queue.php -- Presents statistics on all jobs (over an optional
-date range) from the job DB, broken down by job queue/class.
+web/problem-jobs.php -- Searches for potentially problematic jobs over
+a date range.  (Note that what constitutes "problematic" is extremely
+site specific.)
 
-web/jobstats-by-nproc.php -- Presents statistics on all jobs (over an optional
-date range) from the job DB, broken down by processor count.
-
-web/jobstats-by-walltime.php -- Presents statistics on all jobs (over an optional
-date range) from the job DB, broken down by wallclock time.
-
-web/software-usage.php -- Presents information on software usage on
-all jobs (over an optional date range) from the job DB, broken down by
-system.
-
-web/software-usage-by-user.php -- Presents information on software
-usage on all jobs (over an optional date range) from the job DB,
-broken down by user.
-
-web/software-usage-by-group.php -- Presents information on software
-usage on all jobs (over an optional date range) from the job DB,
-broken down by group.
-
-web/software-usage-by-month.php -- Presents information on software
-usage on all jobs (over an optional date range) from the job DB,
-broken down by month.
-
-web/software-usage-by-walltime.php -- Presents information on software
-usage on all jobs (over an optional date range) from the job DB,
-broken down by wallclock time.
+web/usage-summary.php -- Presents a usage summary over a date range.
 
 web/site-specific.php -- Site specific settings.
 
