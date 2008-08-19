@@ -17,7 +17,7 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
   char name[PATH_MAX] ;
 
   struct FileAttr att_file ;
-  ssize_t bytes_read, bytes_write ; //A count of bytes read or written
+  int bytes_read, bytes_write ; //A count of bytes read or written
   char *filedata ; //Stores the file data as an array of bytes
   struct utimbuf file_times ; //The structure to store the mod & access times
 
@@ -26,14 +26,14 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
 
   int ArgStatus ; 
 /*   ArgStatus --> Indicates the status of the curent argument that is being dealt with. */
-/*   0  --> Neither a file nor a directory. Can be skipped */
-/*   1  --> File  */
-/*   2  --> Directory */
+/*   ARG_NOT_REG_FILE - 0  --> Neither a file nor a directory. Can be skipped */
+/*   ARG_IS_FILE      - 1  --> File  */
+/*   ARG_IS_DIR       - 2  --> Directory */
 
   int file_select(struct direct *); //Function to decide on selection of files to copy
   int file_d ; //A file descriptor
   int file_d_read, file_d_write ; // File descriptors to read and write files ;
-  size_t file_read, file_rem ; //Size of part of file to read and the remaining part 
+  int file_read, file_rem ; //Size of part of file to read and the remaining part 
 
   if(procID == 0) {
     cdir_count = scandir(pathname, &files, file_select, &alphasort);
@@ -56,11 +56,11 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
       if(stat(name, &stbuf)==0) {     
 	ArgStatus = argument_status(&stbuf) ;
       } else {	
-	ArgStatus = 0 ;
+	ArgStatus = ARG_NOT_REG_FILE ;
 	printf("Skipping irregular file - %s \n", name);
       }
       
-      if(ArgStatus != 0) {
+      if(ArgStatus != ARG_NOT_REG_FILE) {
 	if(getfileattr(stbuf, &att_file)) strcpy((char *) att_file.pathname, targetpath);
       }
     }
@@ -68,7 +68,7 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
     if(MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;      
     if(MPI_Bcast(&ArgStatus, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
 
-    if(ArgStatus == 2) {        
+    if(ArgStatus == ARG_IS_DIR) {        
       if(mkdir((char *) att_file.pathname, 00777)) {
 	printf("Could not create directory %s \n Exiting \n", att_file.pathname) ; 
 	MPI_Abort(MPI_COMM_WORLD, 1) ;
@@ -83,7 +83,7 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
       }
     } 
 
-    else if(ArgStatus == 1) {
+    else if(ArgStatus == ARG_IS_FILE) {
       if(MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
       if(procID == 0) {
 	file_d_read = open(name, O_RDONLY) ;
@@ -99,15 +99,16 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
 	if(procID == 0) bytes_read = read(file_d_read, &filedata[0], file_read) ;      
 	if(MPI_Bcast(&bytes_read, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  	
 	if(bytes_read > 0) {
-	  if(MPI_Bcast(filedata, file_read, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  	
-	  bytes_write = write(file_d_write, &filedata[0], file_read) ;
+	  if(MPI_Bcast(filedata, bytes_read, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  	
+	  bytes_write = write(file_d_write, &filedata[0], bytes_read) ;
+	  while(bytes_write < bytes_read) bytes_write += write(file_d_write, &filedata[bytes_write], bytes_read-bytes_write) ;	
 	}
 	else {
 	  printf("Could not read file data \n") ;
 	  MPI_Abort(MPI_COMM_WORLD,1) ;
 	}
 
-	file_rem -= file_read ;
+	file_rem -= bytes_read ;
       }
 
       if(procID == 0) close(file_d_read) ;
@@ -148,19 +149,19 @@ int main(int argc, char **argv) {
   int ArgStatus ;   
   
 /*   ArgStatus --> Indicates the status of the curent argument that is being dealt with. */
-/*   0  --> Neither a file nor a directory. Can be skipped */
-/*   1  --> File  */
-/*   2  --> Directory */
+/*   ARG_NOT_REG_FILE - 0  --> Neither a file nor a directory. Can be skipped */
+/*   ARG_IS_FILE      - 1  --> File  */
+/*   ARG_IS_DIR       - 2  --> Directory */
 
   int filecount = 0 ;
   int i ; //Iteration variable
   char filename[PATH_MAX] ;
   int file_d ; // A file descriptor ;
   int file_d_read, file_d_write ; // File descriptors to read and write files ;
-  size_t file_read, file_rem ; //Size of part of file to read and the remaining part 
+  int file_read, file_rem ; //Size of part of file to read and the remaining part 
 
   struct FileAttr att_file ;
-  ssize_t bytes_read, bytes_write ;  
+  int bytes_read, bytes_write ;  
   int count=0 ;
   char *filedata ;
   int rd_blocks ;
@@ -250,12 +251,12 @@ int main(int argc, char **argv) {
       if(stat(*argv, &stbuf)==0) {     
       //      printf("P: %d %s \n", procID, *argv) ;
 	ArgStatus = argument_status(&stbuf) ;
-      } else ArgStatus = 0 ;
+      } else ArgStatus = ARG_NOT_REG_FILE ;
     }
     
     if(MPI_Bcast(&ArgStatus, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
   
-    if(ArgStatus == 2) {
+    if(ArgStatus == ARG_IS_DIR) {
       if(iamrecursive == 1) {
 	if(procID == 0) {
 	  if(strrchr(*argv,'/') == NULL) {
@@ -287,7 +288,7 @@ int main(int argc, char **argv) {
       
     }
     
-    if(ArgStatus == 1) {
+    if(ArgStatus == ARG_IS_FILE) {
       if(procID == 0)     {
 	if(singlefileflag == 1) strcpy(targetpath, targetdir) ;
 	else {
@@ -310,21 +311,26 @@ int main(int argc, char **argv) {
       while(file_rem > 0) {
 	file_read = (file_rem < BLKSIZE ? file_rem : BLKSIZE) ;
 	if(procID == 0) bytes_read = read(file_d_read, &filedata[0], BLKSIZE) ;	      
-	
+	if(MPI_Bcast(&bytes_read, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  	
 	if(bytes_read > 0) {
-	  if(MPI_Bcast(filedata, file_read, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  
-	  bytes_write = write(file_d_write, &filedata[0], file_read) ;
+	  if(MPI_Bcast(filedata, bytes_read, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  
+	  bytes_write = write(file_d_write, &filedata[0], bytes_read) ;
+	  while(bytes_write < bytes_read) {
+	    printf("P:%d  - %d %d \n", procID, bytes_read, bytes_write) ;
+	    bytes_write += write(file_d_write, &filedata[bytes_write], bytes_read-bytes_write) ;
+	  }
 	}
 	else {
 	  printf("Could not broadcast file data \n") ;
 	  MPI_Abort(MPI_COMM_WORLD,1) ;
 	}
-	  
-	file_rem -= file_read ;
+	
+	file_rem -= bytes_read ;
       }
 
       if(procID == 0) close(file_d_read) ;
       close(file_d_write) ;
+      free(filedata) ;
 
       if(pflag) {
 	file_times.actime = att_file.atime ;

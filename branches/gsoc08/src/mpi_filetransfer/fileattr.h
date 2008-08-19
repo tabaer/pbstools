@@ -26,6 +26,12 @@
 #define FALSE 0
 #define TRUE !FALSE
 
+/*  ArgStatus --> Indicates the status of the curent argument that is being dealt with. */
+#define ARG_NOT_REG_FILE 0 // Neither a file nor a directory. Can be skipped
+#define ARG_IS_FILE      1 // File
+#define ARG_IS_DIR       2 // Directory
+
+
 struct FileAttr {
   unsigned char pathname[PATH_MAX] ;
   unsigned int mode ;
