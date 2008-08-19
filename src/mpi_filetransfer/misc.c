@@ -66,9 +66,9 @@ int verifyregfile(char *cp)   {
 /*   1  --> File  */
 /*   2  --> Directory */
 int argument_status(struct stat *stbuf) {
-  if (S_ISDIR((*stbuf).st_mode)) return 2;
-  else if(S_ISREG((*stbuf).st_mode)) return 1;
-  else return 0;
+  if (S_ISDIR((*stbuf).st_mode)) return ARG_IS_DIR;
+  else if(S_ISREG((*stbuf).st_mode)) return ARG_IS_FILE;
+  else return ARG_NOT_REG_FILE;
 }
 
 
