@@ -97,7 +97,12 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
 	file_d_read = open(name, O_RDONLY) ;
 	if(file_d_read < 3)  MPI_Abort(MPI_COMM_WORLD, 1) ;
       }
-      file_d_write = creat((char *) att_file.pathname, 00777) ;
+      if ( att_file.mode & (S_IXUSR|S_IXGRP|S_IXOTH) ) {
+	file_d_write = creat((char *) att_file.pathname, 00777) ;
+      }
+      else {
+	file_d_write = creat((char *) att_file.pathname, 00666) ;
+      }
       if(file_d_write < 3)  MPI_Abort(MPI_COMM_WORLD, 1) ;
       filedata = (char *) malloc ((BLKSIZE)*sizeof(char)) ;
       file_rem = att_file.filesize ;
