@@ -51,8 +51,8 @@ mpitools:
 	$(MPICC) src/parallel-command-processor.c -o $(PREFIX)/bin/parallel-command-processor $(MPILIBS)
 	install -d $(PREFIX)/man/man1
 	install -m 0644 doc/man1/parallel-command-processor.1 $(PREFIX)/man/man1
-	cd src/mpi_filetransfer ; make MPICC=$(MPICC)
-	install -m 0755 src/mpi_filetransfer/pbsdcp-scatter $(PREFIX)/bin
+	cd src/pbsdcp-scatter ; make MPICC=$(MPICC)
+	install -m 0755 src/pbsdcp-scatter/pbsdcp-scatter $(PREFIX)/bin
 
 statstools:
 	install -d $(PREFIX)/sbin
