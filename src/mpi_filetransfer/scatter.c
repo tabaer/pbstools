@@ -37,14 +37,14 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
 
   if(procID == 0) {
     cdir_count = scandir(pathname, &files, file_select, &alphasort);
-    printf("Total number of files in %s is %d \n", pathname, cdir_count) ;
+    //    printf("Total number of files in %s is %d \n", pathname, cdir_count) ;
   } 
   if(MPI_Barrier(MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
   if(MPI_Bcast(&cdir_count, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;  
   
   /* If no files found, make a non-selectable menu item */
   if (cdir_count <= 0) {
-    printf("No files in this directory \n");
+    //    printf("No files in this directory \n");
     return 0 ; 
   }
 
@@ -70,8 +70,16 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
 
     if(ArgStatus == ARG_IS_DIR) {        
       if(mkdir((char *) att_file.pathname, 00777)) {
-	printf("Could not create directory %s \n Exiting \n", att_file.pathname) ; 
-	MPI_Abort(MPI_COMM_WORLD, 1) ;
+	if(stat((char *) att_file.pathname, &stbuf)==0) {
+	  if(argument_status(&stbuf) != ARG_IS_DIR) {
+	    printf("Could not create directory %s \n Exiting \n", att_file.pathname) ; 
+	    MPI_Abort(MPI_COMM_WORLD, 1) ;
+	  }
+	}
+	else {
+	  printf("Could not create directory %s \n Exiting \n", att_file.pathname) ; 
+	  MPI_Abort(MPI_COMM_WORLD, 1) ;
+	}
       }
 
       filecount += dirwalk_nfiles(name, procID, nproc) ;      
@@ -274,7 +282,19 @@ int main(int argc, char **argv) {
 	}	
 	
 	if(MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
-	mkdir((char *) att_file.pathname, 00755) ;
+	if(mkdir((char *) att_file.pathname, 00777)) {
+	  if(stat((char *) att_file.pathname, &stbuf)==0) {
+	    if(argument_status(&stbuf) != ARG_IS_DIR) {
+	      printf("Could not create directory %s \n Exiting \n", att_file.pathname) ; 
+	      MPI_Abort(MPI_COMM_WORLD, 1) ;
+	    }
+	  }
+	  else {
+	    printf("Could not create directory %s \n Exiting \n", att_file.pathname) ; 
+	    MPI_Abort(MPI_COMM_WORLD, 1) ;
+	  }
+	}
+
 	
 	filecount += dirwalk_nfiles(*argv, procID, nproc) ;
 	
