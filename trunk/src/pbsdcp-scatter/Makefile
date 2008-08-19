@@ -1,7 +1,7 @@
 build: pbsdcp-scatter 
 
-pbsdcp-scatter: scatter.c misc.o  fileattr.o
-	$(MPICC) -o pbsdcp-scatter scatter.c misc.o fileattr.o
+pbsdcp-scatter: pbsdcp-scatter.c misc.o  fileattr.o
+	$(MPICC) -o pbsdcp-scatter pbsdcp-scatter.c misc.o fileattr.o
 
 misc.o: misc.c fileattr.h fileattr.o
 	$(MPICC) -c misc.c
