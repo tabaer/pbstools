@@ -1,0 +1,205 @@
+#!/usr/bin/perl -w
+#
+# reaver:  Kill any processes that are not owned by users with jobs assigned
+#          to this node.
+# Copyright 2006, 2007 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+# Originally intended to be run inside a PBS job epilogue:
+#   all -j$PBS_JOBID -p /usr/local/sbin/reaver
+# where jobid = (jobid to clean up)
+#
+# Why is this called "reaver" and not "reaper"?  Because I like
+# the TV show "Firefly", that's why. :)  --troy
+#
+use strict;
+use POSIX();
+use Getopt::Long;
+
+# Turn off output buffering so that "sleep" calls don't cause a delay
+# on standard output
+$|=1;
+
+# uids below this are assumed to be system accounts
+my $sysuid_threshold=100;
+
+# regexp of usernames with uids above $sysuid_threshold that are allowed
+# to have processes running on a node without a PBS job
+my $safelist="arraysvcs|oscmon|decypher";
+
+# Should we attempt to kill strays? (0 = no, 1 = yes)
+my $kill_mode = 0;
+
+# Output is either brief, normal, or verbose.  In brief mode, we output only
+# the PIDs for stray processes (one per line).  Normal mode displays "ps" 
+# listing for stray procs.  Verbose mode is same as brief mode with extras.
+my $brief_mode = 0;
+my $verbose_mode = 0;
+
+# Usage/help functions
+my $USAGE = "$0 [-hkbv]";
+my $HELP = "Options:
+ -h, --help
+    Print detailed help screen
+ -k, --kill
+    Attempt to kill all stray processes
+ -b, --brief
+    Display only the stray process IDs
+ -v, --verbose
+    Display extra info
+";
+
+# Find $PBS_HOME
+my $spool = undef;
+if ( defined($ENV{"PBS_HOME"}) )
+  {
+      $spool=$ENV{"PBS_HOME"};
+  }
+else
+{
+    my @defaults=("/usr/spool/PBS",
+		  "/var/spool/pbs",
+		  "/var/spool/torque",
+		  "/var/spool/batch/pbs",
+		  "/var/spool/batch/torque",
+		  "/var/spool/batch/pbs-piv",
+		  "/var/spool/batch/pbs-ipf",
+		  ".",
+		  );
+    foreach my $dir ( @defaults )
+    {
+        if ( -d $dir )
+	{
+            $spool=$dir;
+            last;
+	}
+    }
+}
+if ( !defined($spool) )
+{
+    die "Unable to find PBS spool directory!\n";
+}
+
+
+sub print_usage {
+        print "Usage: $USAGE\n";
+}
+
+sub print_help {
+        print "Usage: $USAGE\n";
+        print "$HELP\n";
+}
+
+sub usage_error {
+        my $MSG = shift || "";
+        print $MSG;
+        print_usage();
+        exit(1);
+}
+
+# Process command line options
+my ($opt_h, $opt_k, $opt_b, $opt_v);
+Getopt::Long::Configure('bundling');
+GetOptions(
+         "h"  => \$opt_h, "help"    => \$opt_h,
+         "k"  => \$opt_k, "kill"    => \$opt_k,
+         "b"  => \$opt_b, "brief"   => \$opt_b,
+         "v"  => \$opt_v, "verbose" => \$opt_v
+) || usage_error();
+
+if ($opt_h) { print_help(); exit(0); }
+if ($opt_k) { $kill_mode = 1; }
+if ($opt_b) { $brief_mode = 1; }
+if ($opt_v) { $verbose_mode = 1; $brief_mode = 0; }
+
+# Append to $safelist the names of all users who have jobs currently running
+# on this host
+# The following approach doesn't put any load on the PBS server, but forces
+# reaver to be run by root
+my $ptn = "$spool/mom_priv/jobs/*.JB";
+if ( glob($ptn) )
+{
+    my $jobuserlist = `cat $ptn | strings | grep PBS_O_LOGNAME | sed 's/PBS_O_LOGNAME=//g' | sort | uniq | tr '\n' '|'`;
+    chop($jobuserlist);
+    if ( $jobuserlist ne "" )
+    {
+	if ( $safelist eq "" )
+	{
+	    $safelist = $jobuserlist;
+	}
+	else
+	{
+	    $safelist .= "|".$jobuserlist;
+	}
+    }
+}
+
+# Append to $safelist the owner of /dev/console
+my $consoleowner = `stat -c %U /dev/console`;
+chop($consoleowner);
+if ( $consoleowner ne "root" )
+{
+    if ( $safelist eq "" )
+    {
+	$safelist = $consoleowner;
+    }
+    else
+    {
+	$safelist .= "|".$consoleowner;
+    }
+}
+
+  
+if ( $safelist ne "" )
+  {
+    print "Safe users:  $safelist\n" if $verbose_mode;
+  }
+
+# find all the target pids
+my @pids=();
+open(PS,"ps -A -o pid,state,uid,user,command |");
+# snarf the 1st line
+<PS>;
+print "Stray processes:\n" if $verbose_mode;
+while (<PS>)
+  {
+    chomp;
+    my ($pid,$state,$uid,$user,$command)=split(' ', $_, 5);
+    if ( ($uid > $sysuid_threshold) && !($user =~ /^($safelist)$/) && ($uid!=$>) )
+      {
+	push(@pids,$pid);
+	if ($brief_mode)
+	  {
+	    print "$pid\n";
+	  }
+	else
+	  {
+	    printf "%8d  %-3s %-9.9s %-10.50s\n", $pid, $state, $user, $command;
+	  }
+      }
+  }
+if ($verbose_mode)
+  {
+    print "  (none)\n" unless @pids;
+  }
+close(PS);
+die "ps failure" if ( ($?>>8)!=0 );
+
+# pull the trigger
+if ( @pids && $kill_mode)
+  {
+    # terminate-with-extreme-prejudice version
+    # the CONT signal is needed to reawaken processes that are
+    # in a breakpoint in a debugger
+    print "Sending SIGCONT...\n" if $verbose_mode;
+    kill(&POSIX::SIGCONT,@pids);
+    sleep(1);
+    print "Sending SIGTERM...\n" if $verbose_mode;
+    kill(&POSIX::SIGTERM,@pids);
+    sleep(5);
+    print "Sending SIGKILL...\n" if $verbose_mode;
+    kill(&POSIX::SIGKILL,@pids);
+  }

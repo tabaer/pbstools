@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+#
+# Usage:  fixup-pbsacct-jobids system newsuffix start_id end_id
+#
+# OpenPBS rolls over jobids at 1,000,000, so to maintain data integrity
+# in the DB (which assumes jobids are always unique), we may need to tack
+# a different suffix into the end of old jobids.  (This *COULD* also be a
+# consideration in TORQUE eventually as well, but TORQUE jobids don't roll
+# over until 100,000,000 so it will take considerably longer.)
+
+use strict;
+use POSIX;
+use DBI;
+
+if ( $#ARGV<3 )
+  {
+    print STDERR "Usage:  fixup-pbsacct-jobids system newsuffix start_id end_id\n";
+    die "$0:  Wrong number of arguments!\n";
+  }
+
+my $system = $ARGV[0];
+
+my $newsuffix = $ARGV[1];
+
+my $start = $ARGV[2];
+my $end = $ARGV[3];
+
+my $dbhost="localhost";
+my $dbuser="pbsacct";
+my $dbpasswd="pbsRroxor";
+my $dbname="pbsacct";
+my $dbtable="Jobs";
+
+# connect to DB
+my $dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
+my $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
+  die "$0:  unable to connect to DB!\n";
+
+# fix up records
+for ( my $jobid = $start ; $jobid <= $end ; $jobid++ )
+  {
+    my $query = "UPDATE ".$dbtable." SET jobid = '".$jobid.".".$newsuffix."' WHERE system = '".$system."' AND ( jobid LIKE '".$jobid.".%' AND NOT jobid = '".$jobid.".".$newsuffix."';";
+    #print $query."\n";
+    $dbh->do($query) || die "$0:  query failed -- ".$dbh::errstr;
+  }
+
+# disconnect from DB
+$dbh->disconnect();

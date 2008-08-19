@@ -1,0 +1,12 @@
+PBS tools
+Copyright 2006, Ohio Supercomputer Center
+
+TODO List
+=========
+
+* Add a global config file.
+
+* Move commonly used Perl routines (eg. &resourcelist()) into a Perl module.
+
+* Add wrappers to invoke the *.pbs_server programs with sudo for
+  non-root access.

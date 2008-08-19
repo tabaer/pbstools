@@ -1,0 +1,101 @@
+#!/usr/bin/perl
+#
+# job-db-update-contacts -- Update job records with no contact info
+# Copyright 2006, 2007, 2008 Ohio Supercomputer Center
+# Revision info:
+# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/sbin/job-db-update-contacts $
+# $Revision: 214 $
+# $Date: 2008-01-14 09:46:57 -0500 (Mon, 14 Jan 2008) $
+#
+# Usage:  job-db-update-contacts [-h system] [-s dbhost] [-d dbname]
+#                                [-t dbtable] [-u dbuser] [-p dbpasswd]
+
+#
+# This is largely site-specific logic, but it's example of what can be
+# done with the contact field in Jobs table.
+#
+
+use POSIX;
+use DBI;
+
+#
+# Main program starts here
+#
+my $dbhost="localhost";
+my $dbuser="pbsacct";
+my $dbpasswd="pbsRroxor";
+my $dbname="pbsacct";
+my $dbtable="Jobs";
+my $hostname=`hostname`;
+
+while ( $ARGV[0] =~ /^-.*/ )
+  {
+    if ( $ARGV[0] eq "-d" )
+      {
+	$dbname=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-h" )
+      {
+	$hostname=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-p" )
+      {
+	$dbpasswd=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-s" )
+      {
+	$dbhost=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-t" )
+      {
+	$dbtable=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-u" )
+      {
+	$dbuser=$ARGV[1];
+	shift(@ARGV);
+      }
+
+    shift(@ARGV);
+   }
+
+# connect to DB
+$dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
+$dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
+  die "$0:  unable to connect to DB!\n";
+
+my $select = "SELECT jobid, script FROM Jobs WHERE system='".$hostname."' AND contact IS NULL AND script IS NOT NULL AND script LIKE '%#OSC_PORTAL_LOGIN_NAME%';";
+#print $select."\n";
+
+my $sth = $dbh->prepare($select)or die "Could not prepare query:  ".$dbh::errstr;
+my $n = $sth->execute() or die "Could not execute query:  ".$sth::errstr;
+
+while ( @data = $sth->fetchrow_array() )
+  {
+    my $jobid = $data[0];
+    my $script = $data[1];
+    my $contact = "";
+    @line = split(/\n/,$script);
+    for ( $i=0 ; $i<=$#line ; $i++ )
+      {
+	if ( $line[$i] =~ /^#OSC_PORTAL_LOGIN_NAME/ )
+	  {
+	    $contact = $line[$i];
+	    last;
+	  }
+      }
+    if ( $contact ne "" )
+      {
+	$contact =~ s/^#OSC_PORTAL_LOGIN_NAME=//;
+	$contact =~ s/ *$//;
+	my $update = "UPDATE Jobs SET contact='".$contact."' WHERE jobid='".$jobid."';";
+	#print $update."\n";
+
+	$dbh->do($update) or die "Update failed for jobid ".$jobid.":  ".$dbh::errstr;
+      }
+  }
