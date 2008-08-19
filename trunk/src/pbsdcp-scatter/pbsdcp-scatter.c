@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
 	    strcpy(basedir,strrchr(*argv,'/')) ;
 	    basedir_jump = strrchr(*argv,'/') - *argv ;
 	  }
-	  printf("The base directory is %s \n", basedir) ;	  
+	  /* printf("The base directory is %s \n", basedir) ;	  */
 	  sprintf(targetpath, "%s%s", targetdir, basedir) ;
 	  if(getfileattr(stbuf, &att_file)) strcpy((char *) att_file.pathname, targetpath);
 	}	
@@ -365,7 +365,7 @@ int main(int argc, char **argv) {
     filecount++ ;
   }
   
-  if(procID == 0) printf("%d files transferred \n", filecount) ;
+  /* if(procID == 0) printf("%d files transferred \n", filecount) ; */
   
   MPI_Finalize();
   
