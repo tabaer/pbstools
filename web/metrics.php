@@ -60,7 +60,7 @@ function xaxis_column($x)
 	{
 	  $column .= " WHEN nproc > '".$maxs[$i-1]."' AND nproc <= '".$maxs[$i]."' THEN '&gt;".$maxs[$i-1]."-".$maxs[$i]."'";
 	}
-      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS nproc";
+      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS nproc_bucketed";
       return $column;
     }
   else
@@ -323,7 +323,7 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
     }
   if ( $xaxis=="nproc_bucketed" )
     {
-      $query .= " GROUP BY nproc";
+      $query .= " GROUP BY nproc_bucketed";
     }
   else
     {
