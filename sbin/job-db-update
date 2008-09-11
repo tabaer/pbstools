@@ -245,6 +245,10 @@ while ( defined($ARGV[0]) )
 		  {
 		    $qhead.=",software = \'".$resource{"Resource_List.software"}."\'";
 		  }
+		if ( defined($resource{"account"}) )
+		  {
+		    $qhead.=",account = \'".$resource{"account"}."\'";
+		  }
 	      }
 	    else
 	      {
@@ -368,6 +372,12 @@ while ( defined($ARGV[0]) )
 		    $qhead.=",software";
 		    $qtail.=",\'".$resource{"Resource_List.software"}."\'";
 		  }
+		if ( defined($resource{"account"}) )
+		  {
+		    $qhead.=",account";
+		    $qtail.=",\'".$resource{"account"}."\'";
+		  }
+
 		$qhead.="\)";
 		$qtail.="\);";
 	      }

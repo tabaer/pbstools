@@ -40,18 +40,18 @@ begin_form("jobstats.php");
 virtual_system_chooser();
 date_fields();
 
-// by groupname
+// by account
 jobstats_input_header();
-jobstats_input_metric("Job Count vs. Group","jobcount_vs_groupname");
-jobstats_input_metric("CPU Time vs. Group","cpuhours_vs_groupname");
-jobstats_input_metric("Job Length vs. Group","walltime_vs_groupname");
-jobstats_input_metric("Queue Time vs. Group","qtime_vs_groupname");
-jobstats_input_metric("Real Memory vs. Group","mem_kb_vs_groupname");
-jobstats_input_metric("Virtual Memory vs. Group","vmem_kb_vs_groupname");
-jobstats_input_metric("Walltime Accuracy vs. Group","walltime_acc_vs_groupname");
-jobstats_input_metric("CPU Efficiency vs. Group","cpu_eff_vs_groupname");
-jobstats_input_metric("Active Users vs. Group","users_vs_groupname");
-jobstats_input_metric("Processor Count vs. Group","nproc_vs_groupname");
+jobstats_input_metric("Job Count vs. Account","jobcount_vs_account");
+jobstats_input_metric("CPU Time vs. Account","cpuhours_vs_account");
+jobstats_input_metric("Job Length vs. Account","walltime_vs_account");
+jobstats_input_metric("Queue Time vs. Account","qtime_vs_account");
+jobstats_input_metric("Real Memory vs. Account","mem_kb_vs_account");
+jobstats_input_metric("Virtual Memory vs. Account","vmem_kb_vs_account");
+jobstats_input_metric("Walltime Accuracy vs. Account","walltime_acc_vs_account");
+jobstats_input_metric("CPU Efficiency vs. Account","cpu_eff_vs_account");
+jobstats_input_metric("Active Users vs. Account","users_vs_account");
+jobstats_input_metric("Processor Count vs. Account","nproc_vs_account");
 jobstats_input_footer();
 
 end_form();
