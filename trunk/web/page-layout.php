@@ -25,6 +25,7 @@ function page_header($title)
   echo "      <LI><A href=\"jobinfo.php\">Job id</A></LI>\n";
   echo "      <LI><A href=\"jobs-by-user.php\">User</A></LI>\n";
   echo "      <LI><A href=\"jobs-by-group.php\">Group</A></LI>\n";
+  echo "      <LI><A href=\"jobs-by-group.php\">Account</A></LI>\n";
   echo "      <LI><A href=\"jobs-by-node.php\">Node</A></LI>\n";
   echo "    </UL>\n";
   echo "    <UL><U>Job stats by</U>\n";
@@ -34,7 +35,8 @@ function page_header($title)
 # NOTE By-institution jobstats involves OSC site-specific logic.  You may
 # want to comment it out.
   echo "      <LI><A href=\"jobstats-by-institution.php\">Institution</A></LI>\n";
-  echo "      <LI><A href=\"jobstats-by-group.php\">Group/Project</A></LI>\n";
+  echo "      <LI><A href=\"jobstats-by-account.php\">Account</A></LI>\n";
+  echo "      <LI><A href=\"jobstats-by-group.php\">Group</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-user.php\">User</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-quarter.php\">Quarter</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-month.php\">Month</A></LI>\n";
@@ -48,7 +50,8 @@ function page_header($title)
 # NOTE By-institution jobstats involves OSC site-specific logic.  You may
 # want to comment it out.
   echo "      <LI><A href=\"software-usage-by-institution.php\">Institution</A></LI>\n";
-  echo "      <LI><A href=\"software-usage-by-group.php\">Group/Project</A></LI>\n";
+  echo "      <LI><A href=\"software-usage-by-account.php\">Account</A></LI>\n";
+  echo "      <LI><A href=\"software-usage-by-group.php\">Group</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-user.php\">User</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-quarter.php\">Quarter</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-month.php\">Month</A></LI>\n";
@@ -59,6 +62,7 @@ function page_header($title)
   echo "      <LI><A href=\"problem-jobs.php\">Problematic Jobs</A></LI>\n";
   echo "      <LI><A href=\"active-users.php\">Most Active Users</A></LI>\n";
   echo "      <LI><A href=\"active-groups.php\">Most Active Groups</A></LI>\n";
+  echo "      <LI><A href=\"active-accounts.php\">Most Active Accounts</A></LI>\n";
   echo "    </UL>\n";
   echo "  </TD>\n";
   echo "  <TD width=\"85%\" valign=\"top\" bgcolor=\"ghostwhite\">\n";
