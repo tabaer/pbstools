@@ -207,6 +207,7 @@ function software_list()
 	      "ansys",
 	      "autodock",
 	      "blat",
+	      "cactus",
 	      "casino",
 	      "cbl",
 	      "ccsm",
@@ -216,8 +217,11 @@ function software_list()
 	      "cpmd",
 	      "crystal",
 #	      "decypher",
+	      "dissens",
               "dlpoly",
+	      "dns2d",
 	      "dock",
+	      "enzo",
 	      "ex_e",
 	      "fidap",
 	      "fdl3di",
@@ -232,8 +236,10 @@ function software_list()
 	      "lammps",
 	      "lmf",
 	      "lsdyna",
+	      "lsms",
 	      "mathematica",
 	      "matlab",
+              "milc",
 	      "mm5",
 	      "molcas",
 	      "mrbayes",
@@ -244,6 +250,7 @@ function software_list()
 	      "octave",
 	      "openeye",
 	      "paup",
+	      "phasta"
               "polly",
               "propagators",
 	      "pwscf",
@@ -290,6 +297,8 @@ function software_match_list()
   $pkgmatch['cpmd']="script LIKE '%cpmd.x%'";
   $pkgmatch['crystal']="script LIKE '%Pcrystal%'";
   $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
+  $pkgmatch['dissens']="SCRIPT LIKE '%dissens.x%'";
+  $pkgmatch['dns2d']="( SCRIPT LIKE '%DNS2d.x%' OR SCRIPT LIKE '%code2.x%' )";
   $pkgmatch['dock']="( script LIKE '%dock5%' OR script LIKE '%dock6%' OR script LIKE '%sphgen%' OR script LIKE '%mopac%' )";
   $pkgmatch['ex_e']="script LIKE '%ex.e%'";
   $pkgmatch['fsweep']="script LIKE '%fsweep.exe%' OR script LIKE '%fsweep2.exe%'";
@@ -298,6 +307,7 @@ function software_match_list()
   $pkgmatch['glast']="( script LIKE '%glast%' OR script LIKE '%gp run%' )";
   $pkgmatch['gromacs']="( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' )";
   $pkgmatch['lammps']="( script LIKE '%lammps%' OR script LIKE '% lmp_%' )";
+  $pkgmatch['milc']="( script LIKE '%milc%' OR script LIKE '% su3_%' )";
   $pkgmatch['mrbayes']="( script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%' )";
   $pkgmatch['openeye']="( script LIKE '%babel3%' OR script LIKE '%checkcff%' OR script LIKE '%chunker%' OR script LIKE '%fred2%' OR script LIKE '%fredPA%' OR script LIKE '%ligand_info%' OR script LIKE '%makefraglib%' OR script LIKE '%makerocsdb%' OR script LIKE '%nam2mol%' OR script LIKE '%omega2%' OR script LIKE '%szybki%' )";
   $pkgmatch['ncbi']="( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )";
