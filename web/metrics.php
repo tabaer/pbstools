@@ -72,6 +72,7 @@ function xaxis_column($x)
 function clause($xaxis,$metric)
 {
   if ( $metric=="qtime" || $metric=="xfactor" ) return "( start_ts >= submit_ts )";
+  if ( $xaxis=="account" ) return "account IS NOT NULL";
   return "";
 }
 
