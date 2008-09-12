@@ -46,6 +46,8 @@ close(SERVERNAME);
 chop($pbsserver);
 # hack for sloppy admins who don't put the full hostname
 # in $PBS_HOME/server_name
+# ***WARNING*** you may have to comment out the following code if
+# the servername doesn't resolve for whatever reason
 if ( $pbsserver =~ /:/ )
   {
     ($host,$port) = split(/:/,$pbsserver);
@@ -105,9 +107,13 @@ while ( $ARGV[0] =~ /^-.*/ )
 $dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
 $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
   die "$0:  unable to connect to DB!\n";
-$query="INSERT INTO $dbtable \(jobid,system,script\) VALUES \(?,?,?\);";
-$sth=$dbh->prepare($query) ||
-  die "$0:  unable to prepare query -- ".$sth->errstr;
+$insertquery="INSERT INTO $dbtable \(jobid,system,script\) VALUES \(?,?,?\);";
+$insert=$dbh->prepare($insertquery) ||
+  die "$0:  unable to prepare query -- ".$insert->errstr;
+$updatequery="UPDATE $dbtable SET script=? WHERE system=? and jobid=?;";
+$update=$dbh->prepare($updatequery) ||
+  die "$0:  unable to prepare query -- ".$update->errstr;
+
 
 foreach $scriptfile (@ARGV)
 {
@@ -122,20 +128,26 @@ foreach $scriptfile (@ARGV)
 	if ( $jobid =~ /^[0-9]+$/ )
 	{
 	    $jobid .= ".".$pbsserver;
+
+            # suck the script into memory
+            open(SCRIPT,"<$scriptfile");
+            $script_length=read(SCRIPT,$script,(64*1024));
+            close(SCRIPT);
+            # may need to massage script contents...?
 	    
-	    # Check if this jobid key already exists in the DB -- if so,
-	    # do nothing
+	    # Check if this jobid key already exists in the DB -- if not,
+	    # insert the script
 	    if ( &keyval_exists("jobid",$jobid,$dbtable,$dbh)==0 )
 	    {
-		# suck the script into memory
-		open(SCRIPT,"<$scriptfile");
-		$script_length=read(SCRIPT,$script,(64*1024));
-		close(SCRIPT);
-		# may need to massage script contents...?
-		
 		# do the DB insert
-		$sth->execute($jobid,$system,$script) || die "problem executing query -- ".$sth->errstr;;
+		$insert->execute($jobid,$system,$script) || die "problem executing query -- ".$insert->errstr;;
 	    }
+            else
+            {
+                # do the DB update
+                # note that this is turned off by default
+                #$update->execute($script,$system,$jobid) || die "problem executing query -- ".$update->errstr;;
+            }
 	}
     }
 }
