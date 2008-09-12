@@ -135,6 +135,26 @@ if ( isset($_POST['system']) )
 	flush();
       }
 
+    # by account
+    if ( isset($_POST['account']) && isset($inst_summary) && $inst_summary==true )
+      {
+	echo "<H3>Usage By Account</H#>\n";
+	$result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	metric_as_table($result,'account','usage');
+	if ( isset($_POST['xls']) )
+	  {
+	    $xlsresult=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	    metric_as_xls($xlsresult,'account','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	  }
+	if ( isset($_POST['ods']) )
+	  {
+	    $odsresult=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	    metric_as_ods($odsresult,'account','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	  }
+	ob_flush();
+	flush();
+      }
+
     # software usage
     if ( isset($_POST['software']) )
       {
@@ -211,7 +231,7 @@ else
     date_fields();
 
     $orders=array("jobcount","cpuhours","users","groups");
-    checkboxes_from_array("Supplemental reports",array("institution","software"));
+    checkboxes_from_array("Supplemental reports",array("institution","account","software"));
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
     checkbox("Generate Excel files for supplemental reports","xls");
