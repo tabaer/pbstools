@@ -136,7 +136,7 @@ if ( isset($_POST['system']) )
       }
 
     # by account
-    if ( isset($_POST['account']) && isset($inst_summary) && $inst_summary==true )
+    if ( isset($_POST['account']) )
       {
 	echo "<H3>Usage By Account</H#>\n";
 	$result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
