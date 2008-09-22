@@ -45,7 +45,8 @@ jobstats_input_header();
 jobstats_input_metric("Job Count by Institution","jobcount_vs_institution");
 jobstats_input_metric("CPU Time by Institution","cpuhours_vs_institution");
 jobstats_input_metric("Active Users by Institution","users_vs_institution");
-jobstats_input_metric("Active Groups/Projects by Institution","groups_vs_institution");
+jobstats_input_metric("Active Groups by Institution","groups_vs_institution");
+jobstats_input_metric("Active Accounts by Institution","accounts_vs_institution");
 jobstats_input_footer();
 
 end_form();

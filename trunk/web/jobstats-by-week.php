@@ -49,7 +49,8 @@ jobstats_input_metric("Queue Time by Week","qtime_vs_week");
 jobstats_input_metric("Backlog by Week","backlog_vs_week");
 jobstats_input_metric("Expansion Factor by Week","xfactor_vs_week");
 jobstats_input_metric("Active Users by Week","users_vs_week");
-jobstats_input_metric("Active Groups/Projects by Week","groups_vs_week");
+jobstats_input_metric("Active Groups by Week","groups_vs_week");
+jobstats_input_metric("Active Accounts by Week","accounts_vs_week");
 jobstats_input_footer();
 
 end_form();

@@ -49,7 +49,8 @@ jobstats_input_metric("Queue Time by Quarter","qtime_vs_quarter");
 jobstats_input_metric("Backlog by Quarter","backlog_vs_quarter");
 jobstats_input_metric("Expansion Factor by Quarter","xfactor_vs_quarter");
 jobstats_input_metric("Active Users by Quarter","users_vs_quarter");
-jobstats_input_metric("Active Groups/Projects by Quarter","groups_vs_quarter");
+jobstats_input_metric("Active Groups by Quarter","groups_vs_quarter");
+jobstats_input_metric("Active Accounts by Quarter","accounts_vs_quarter");
 jobstats_input_footer();
 
 end_form();
