@@ -51,7 +51,8 @@ jobstats_input_metric("Virtual Memory vs. CPU Count","vmem_kb_vs_nproc");
 jobstats_input_metric("Walltime Accuracy vs. CPU Count","walltime_acc_vs_nproc");
 jobstats_input_metric("CPU Efficiency vs. CPU Count","cpu_eff_vs_nproc");
 jobstats_input_metric("Active Users vs. CPU Count","users_vs_nproc");
-jobstats_input_metric("Active Groups/Projects vs. CPU Count","groups_vs_nproc");
+jobstats_input_metric("Active Groups vs. CPU Count","groups_vs_nproc");
+jobstats_input_metric("Active Accounts vs. CPU Count","accounts_vs_nproc");
 jobstats_input_footer();
 
 end_form();

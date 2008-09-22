@@ -204,6 +204,7 @@ function columns($metric,$system)
   if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
   if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS users";
   if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS groups";
+  if ( $metric=='accounts' ) return "COUNT(DISTINCT(account)) AS accounts";
   if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system);
   if ( $metric=='nproc' ) return "MIN(nproc),MAX(nproc),AVG(nproc),STDDEV(nproc)";
   if ( $metric=='usage' ) return columns('cpuhours',$system).",".columns('usercount',$system);
@@ -229,6 +230,7 @@ function columnnames($metric)
   if ( $metric=='xfactor' ) return array("xfactor");
   if ( $metric=='users' ) return array("users");
   if ( $metric=='groups' ) return array("groups");
+  if ( $metric=='accounts' ) return array("accounts");
   if ( $metric=='dodmetrics' ) return array("users","projects","cpuhours");
   if ( $metric=='nproc' ) return array("MIN(nproc)","MAX(nproc)","AVG(nproc)","STDDEV(nproc)");
   if ( $metric=='usage' )

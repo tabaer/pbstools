@@ -49,7 +49,8 @@ jobstats_input_metric("Queue Time by Month","qtime_vs_month");
 jobstats_input_metric("Backlog by Month","backlog_vs_month");
 jobstats_input_metric("Expansion Factor by Month","xfactor_vs_month");
 jobstats_input_metric("Active Users by Month","users_vs_month");
-jobstats_input_metric("Active Groups/Projects by Month","groups_vs_month");
+jobstats_input_metric("Active Groups by Month","groups_vs_month");
+jobstats_input_metric("Active Accounts by Month","accounts_vs_month");
 jobstats_input_footer();
 
 end_form();

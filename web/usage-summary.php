@@ -55,10 +55,10 @@ if ( isset($_POST['system']) )
 
     # system overview
     echo "<H3>Overview</H3>\n";
-    $sql = "SELECT system, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, NULL AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY ".$_POST['order']." DESC";
+    $sql = "SELECT system, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, NULL AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY ".$_POST['order']." DESC";
     #echo "<PRE>\n".$sql."</PRE>\n";
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>system</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>%util</TH><TH>users</TH><TH>groups</TH></TR>\n";
+    echo "<TR><TH>system</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>%util</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
     ob_flush();
     flush();
 
@@ -94,7 +94,7 @@ if ( isset($_POST['system']) )
       }
     if ( $_POST['system']=="%" )
       {
-	$sql = "SELECT 'TOTAL', COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, 'N/A' AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
+	$sql = "SELECT 'TOTAL', COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, 'N/A' AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
 	$result = db_query($db,$sql);
 	while ($result->fetchInto($row))
 	  {
@@ -160,7 +160,7 @@ if ( isset($_POST['system']) )
       {
 	echo "<H3>Software Usage</H3>\n";
 	echo "<TABLE border=1>\n";
-	echo "<TR><TH>package</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH></TR>\n";
+	echo "<TR><TH>package</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
 	ob_flush();
 	flush();
 	
@@ -176,7 +176,7 @@ if ( isset($_POST['system']) )
 	      {
 		$sql .= "UNION\n";
 	      }
-	    $sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ";
+	    $sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ";
 	    if ( isset($pkgmatch[$pkg]) )
 	      {
 		$sql .= $pkgmatch[$pkg];
