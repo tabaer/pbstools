@@ -1,0 +1,171 @@
+#!/usr/bin/perl
+use strict;
+use Config;
+use File::Basename;
+use Getopt::Long;
+#use Sys::Syslog;
+
+# defaults
+my $inotify = "/usr/local/sbin/inotifywait";
+my $pidfile = "/var/run/jobscript-watcher.pid";
+my $use_syslog = "no";
+#my $syslog_facility = LOG_LOCAL2;
+#my $syslog_level = LOG_NOTICE;
+my $logfile = "/var/log/jobscript-watcher.log";
+my $action = "/usr/local/sbin/spool-jobscripts";
+my $daemonize = "yes";
+
+# signal handling
+# needed because killing this process doesn't seem to kill the
+# subordinate inotifywait process as well
+sub reap_children
+{
+    wait;
+    exit(0);
+}
+
+sub print_usage
+{
+    print STDERR "Usage:  ".basename($0)." [--action action] [--pbs-home pbs-home]\n\t\t[--inotifywait inotifywait] [--log-file log-file]\n\t\t[--pid-file pid-file] [--daemonize|--no-daemonize]\n\t\t[--use-syslog]\n";
+    print STDERR "\nDefaults:\n";
+    print STDERR "\taction = $action\n";
+    print STDERR "\tpbs-home = ".$ENV{'PBS_HOME'}."\n";
+    print STDERR "\tinotifywait = $inotify\n";
+    print STDERR "\tlog-file = $logfile\n";
+    print STDERR "\tpid-file = $pidfile\n";
+    print STDERR "\tdaemonize = $daemonize\n";
+    print STDERR "\tuse-syslog = $use_syslog\n";
+}
+
+sub usage_error
+{
+    my $MSG = shift || "";
+    print $MSG;
+    print_usage();
+    exit(1);
+}
+
+
+defined $Config{sig_name} || die "No sigs?";
+my %signo;
+my @signame;
+my $i = 0;
+foreach my $name (split(' ', $Config{sig_name}))
+{
+    $signo{$name} = $i;
+    $signame[$i] = $name;
+    $i++;
+}
+$SIG{CHLD} = 'IGNORE';
+$SIG{INT} = \&reap_children;
+
+# argument processing
+my ($opt_action,$opt_fork,$opt_help,$opt_inotify,$opt_log,$opt_nofork,$opt_pbs,$opt_pid,$opt_syslog);
+Getopt::Long::Configure('bundling');
+GetOptions(
+	   "a=s" => \$opt_action,
+	   "action=s" => \$opt_action,
+	   "d" => \$opt_fork,
+	   "daemonize" => \$opt_fork,
+	   "f" => \$opt_fork,
+	   "fork" => \$opt_fork,
+	   "h=s" => \$opt_pbs,
+	   "help" => \$opt_help,
+	   "i=s" => \$opt_inotify,
+	   "inotifywait=s" => \$opt_inotify,
+	   "l=s" => \$opt_log,
+	   "log-file=s" => \$opt_log,
+	   "no-daemonize" => \$opt_nofork,
+	   "p=s" => \$opt_pid,
+	   "pbs-home=s" => \$opt_pbs,
+	   "pid-file=s" => \$opt_pid,
+	   "s" => \$opt_syslog,
+	   "use-syslog" => \$opt_syslog
+	   ) || usage_error();
+if ( defined($opt_help) ) { usage_error(); }
+if ( defined($opt_action) ) { $action = $opt_action; }
+if ( defined($opt_nofork) ) { $daemonize = "no"; }
+if ( defined($opt_inotify) ) { $inotify = $opt_inotify; }
+if ( defined($opt_log) ) { $logfile = $opt_log; }
+if ( defined($opt_pbs) ) { $ENV{"PBS_HOME"} = $opt_pbs; }
+if ( defined($opt_pid) ) { $pidfile = $opt_pid; }
+if ( defined($opt_syslog) ) { $use_syslog = "yes"; }
+
+# sanity checks
+if ( !defined($ENV{'PBS_HOME'}) )
+{
+    die "PBS_HOME not set, exiting!";
+}
+my $targetdir=$ENV{'PBS_HOME'}."/server_priv/jobs";
+if ( ! -e $targetdir )
+{
+    die "$targetdir does not exist";
+}
+elsif ( ! -r $targetdir )
+{
+    die "Unable to read $targetdir";
+}
+chdir($targetdir) || die "Unable to chdir to $targetdir!";
+
+# daemonize
+my $pid;
+if ( $daemonize eq "yes" )
+{
+    # fork; parent exits
+    $pid = fork;
+    if ( !defined($pid) )
+    {
+	die "Unable to fork, exiting!";
+    }
+    elsif ( $pid>0 )
+    {
+	open(PIDFILE,">$pidfile");
+	print PIDFILE $pid;
+	close(PIDFILE);
+	exit(0);
+    }
+    # close file descriptors to stdin, stdout, and stderr
+    close(STDIN);
+    close(STDOUT);
+    close(STDERR);
+}
+    
+# set up logging
+if ( $use_syslog eq "yes" )
+{
+    #openlog("jobscript_watcher","cons,nofatal,pid",$syslog_facility);
+}
+
+# main loop
+while ( 1 )
+{
+  my $scriptfile=`$inotify --quiet --event CREATE --excludei '.*\.(J[BC]|TK)' --format $targetdir $targetdir`;
+  chomp($scriptfile);
+  my $worker = fork;
+  if ( !defined($worker) )
+  {
+      die "Unable to fork!";
+  }
+  elsif ( $worker==0 )
+  {
+      my $errmsg = `$action $scriptfile 2>&1`;
+      chomp($errmsg);
+      if ( $use_syslog eq "yes" )
+      {
+	  #syslog($syslog_level,"command \"%s %s\" returned \"%s\"",($action,$scriptfile,$errmsg));
+      }
+      else
+      {
+	  open(LOGFILE,">>$logfile");
+	  my $date = `date +"%Y-%m-%d %H:%M:%S"`;
+	  chomp($date);
+	  print LOGFILE "$date $0: command \"$action $scriptfile\" returned \"$errmsg\"\n";
+	  close(LOGFILE);
+      }
+      exit(0);
+  }
+  else
+  {
+      wait;
+  }
+}
