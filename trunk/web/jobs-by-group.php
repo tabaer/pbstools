@@ -107,7 +107,7 @@ else
     system_chooser();
     date_fields();
 
-    $props=array("jobname","nproc","mppe","mppssp",
+    $props=array("account","jobname","nproc","mppe","mppssp",
 		 "nodes","queue","submit_ts","start_ts","end_ts","cput_req",
 		 "cput","walltime_req","walltime","mem_req","mem_kb",
 		 "vmem_req","vmem_kb","software","hostlist","exit_status","script");
