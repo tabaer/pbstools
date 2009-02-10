@@ -118,7 +118,7 @@ if ( isset($_POST['system']) )
     $inst_summary=true;
     if ( isset($_POST['institution']) && isset($inst_summary) && $inst_summary==true )
       {
-	echo "<H3>Usage By Institution</H#>\n";
+	echo "<H3>Usage By Institution</H3>\n";
 	$result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
 	metric_as_table($result,'institution','usage');
 	if ( isset($_POST['xls']) )
