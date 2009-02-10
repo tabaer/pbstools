@@ -286,7 +286,8 @@ function software_match_list()
   # REGEXP match is ***MUCH*** slower than regular LIKE matching
   # in MySQL, so don't use REGEXP unless you really need it.
   $pkgmatch['a_out']="script LIKE '%a.out%'";
-  $pkgmatch['abinit']="script LIKE '%abinis%' OR script LIKE '%abinip%'";
+  $pkgmatch['abaqus']="( script LIKE '%abaqus%' OR script LIKE '%abaqus%' )";
+  $pkgmatch['abinit']="( script LIKE '%abinis%' OR script LIKE '%abinip%' )";
   $pkgmatch['aces2']="script LIKE '%xaces2%'";
   $pkgmatch['adf']="script LIKE '%adf%'";
   $pkgmatch['AliEn']="( script LIKE '%aliroot%' OR script LIKE '%agent.startup%' )";
@@ -306,15 +307,18 @@ function software_match_list()
   $pkgmatch['gaussian']="script LIKE '%g98%' OR script LIKE '%g03%'";
   $pkgmatch['glast']="( script LIKE '%glast%' OR script LIKE '%gp run%' )";
   $pkgmatch['gromacs']="( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' )";
+  $pkgmatch['hy3s']="( script LIKE '%SSA%' OR script LIKE '%HyJCMSS-%' )";
   $pkgmatch['lammps']="( script LIKE '%lammps%' OR script LIKE '% lmp_%' )";
+  $pkgmatch['matlab']="( script LIKE '%matlab%' OR software LIKE '%matlab%' )";
   $pkgmatch['milc']="( script LIKE '%milc%' OR script LIKE '% su3_%' )";
   $pkgmatch['mrbayes']="( script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%' )";
-  $pkgmatch['openeye']="( script LIKE '%babel3%' OR script LIKE '%checkcff%' OR script LIKE '%chunker%' OR script LIKE '%fred2%' OR script LIKE '%fredPA%' OR script LIKE '%ligand_info%' OR script LIKE '%makefraglib%' OR script LIKE '%makerocsdb%' OR script LIKE '%nam2mol%' OR script LIKE '%omega2%' OR script LIKE '%szybki%' )";
   $pkgmatch['ncbi']="( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )";
+  $pkgmatch['openeye']="( script LIKE '%babel3%' OR script LIKE '%checkcff%' OR script LIKE '%chunker%' OR script LIKE '%fred2%' OR script LIKE '%fredPA%' OR script LIKE '%ligand_info%' OR script LIKE '%makefraglib%' OR script LIKE '%makerocsdb%' OR script LIKE '%nam2mol%' OR script LIKE '%omega2%' OR script LIKE '%szybki%' )";
+  $pkgmatch['pwscf']="( script LIKE '%pwscf%' OR script LIKE '%pw.x%' )";
   $pkgmatch['rosetta']="( script LIKE '%rosetta.%' OR script LIKE '%/rr %' )";
   $pkgmatch['root']="script LIKE '%\nroot -q%'";
   $pkgmatch['sable']="( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )";
-  $pkgmatch['sas']="script LIKE '%\nsas%' OR software LIKE '%sas%' OR queue  LIKE '%sas%'";
+  $pkgmatch['sas']="( script LIKE '%\nsas%' OR software LIKE '%sas%' OR queue  LIKE '%sas%' )";
   $pkgmatch['turbo']="script LIKE '%pturbo.x%'";
   $pkgmatch['vasp']="script LIKE '%vasp%'";
 
