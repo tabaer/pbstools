@@ -1,5 +1,6 @@
 <?php
-# Copyright 2006 Ohio Supercomputer Center
+# Copyright 2006, 2008 Ohio Supercomputer Center
+# Copyright 2008 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
