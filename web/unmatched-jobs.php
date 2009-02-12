@@ -220,7 +220,7 @@ if ( isset($_POST['system']) )
   }
 else
   {
-    begin_form("unknown-jobs.php");
+    begin_form("unmatched-jobs.php");
 
     system_chooser();
     date_fields();
