@@ -2,9 +2,9 @@
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
 # Copyright 2009 University of Tennessee
 # Revision info:
-# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/unmatched-jobs.php $
-# $Revision: 236 $
-# $Date: 2008-02-29 10:15:26 -0500 (Fri, 29 Feb 2008) $
+# $HeadURL$
+# $Revision$
+# $Date$
 require_once 'page-layout.php';
 require_once 'dbutils.php';
 require_once 'metrics.php';

@@ -1,9 +1,9 @@
 <?php
 # Copyright 2006 Ohio Supercomputer Center
 # Revision info:
-# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/jobstats.php $
-# $Revision: 93 $
-# $Date: 2006-02-15 13:53:25 -0500 (Wed, 15 Feb 2006) $
+# $HeadURL$
+# $Revision$
+# $Date$
 require_once 'page-layout.php';
 require_once 'dbutils.php';
 require_once 'metrics.php';
