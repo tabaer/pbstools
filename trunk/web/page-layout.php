@@ -64,6 +64,8 @@ function page_header($title)
   echo "      <LI><A href=\"active-users.php\">Most Active Users</A></LI>\n";
   echo "      <LI><A href=\"active-groups.php\">Most Active Groups</A></LI>\n";
   echo "      <LI><A href=\"active-accounts.php\">Most Active Accounts</A></LI>\n";
+  echo "      <LI><A href=\"unmatched-jobs.php\">Unmatched Jobs</A></LI>\n";
+  echo "      <LI><A href=\"error-correlator.php\">Error Correlator</A></LI>\n";
   echo "    </UL>\n";
   echo "  </TD>\n";
   echo "  <TD width=\"85%\" valign=\"top\" bgcolor=\"ghostwhite\">\n";
