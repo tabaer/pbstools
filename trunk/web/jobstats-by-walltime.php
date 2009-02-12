@@ -2,9 +2,9 @@
 <?php
 # Copyright 2006, 2007 Ohio Supercomputer Center
 # Revision info:
-# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/jobstats-by-walltime.php $
-# $Revision: 144 $
-# $Date: 2006-08-04 14:47:32 -0400 (Fri, 04 Aug 2006) $
+# $HeadURL$
+# $Revision$
+# $Date$
 require_once 'page-layout.php';
 require_once 'dbutils.php';
 require_once 'metrics.php';

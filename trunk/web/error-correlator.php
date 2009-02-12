@@ -2,9 +2,9 @@
 # Copyright 2006 Ohio Supercomputer Center
 # Copyright 2008 University of Tennessee
 # Revision info:
-# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/jobinfo.php $
-# $Revision: 247 $
-# $Date: 2008-05-07 17:22:38 -0400 (Wed, 07 May 2008) $
+# $HeadURL$
+# $Revision$
+# $Date$
 require_once 'page-layout.php';
 require_once 'dbutils.php';
 

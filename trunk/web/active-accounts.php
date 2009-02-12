@@ -1,9 +1,9 @@
 <?php
 # Copyright 2007, 2008 Ohio Supercomputer Center
 # Revision info:
-# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/active-accounts.php $
-# $Revision: 199 $
-# $Date: 2007-09-12 13:39:15 -0400 (Wed, 12 Sep 2007) $
+# $HeadURL$
+# $Revision$
+# $Date$
 require_once 'dbutils.php';
 require_once 'page-layout.php';
 require_once 'metrics.php';
