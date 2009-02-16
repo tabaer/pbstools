@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008 University of Tennessee
+# Copyright 2008, 2009 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -65,7 +65,7 @@ if ( isset($_POST['account']) )
     $col[1]="username";
     $col[2]="account";
     $ncols=3;
-    echo "<TR><TH>jobid</TH><TH>username</TH><TH>account</TH>";
+    echo "<TR><TH>jobid</TH><TH>account</TH><TH>username</TH>";
     foreach ($keys as $key)
       {
 	if ( $key!='jobid' && $key!='username' && $key!='account' && $key!='start_date' && $key!='end_date' )
