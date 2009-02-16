@@ -181,7 +181,7 @@ else
     date_fields();
 
     $props=array("username","groupname","account","jobname","nproc","mppe","mppssp",
-		 "nodes","queue","submit_ts","start_ts","end_ts","cput_req",
+		 "nodes","feature","queue","qos","submit_ts","start_ts","end_ts","cput_req",
 		 "cput","walltime_req","walltime","mem_req","mem_kb",
 		 "vmem_req","vmem_kb","hostlist","exit_status","script");
     checkboxes_from_array("Properties",$props);
