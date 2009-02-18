@@ -139,7 +139,7 @@ if ( isset($_POST['system']) )
     # by account
     if ( isset($_POST['account']) )
       {
-	echo "<H3>Usage By Account</H#>\n";
+	echo "<H3>Usage By Account</H3>\n";
 	$result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
 	metric_as_table($result,'account','usage');
 	if ( isset($_POST['xls']) )
