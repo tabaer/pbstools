@@ -34,11 +34,11 @@
 
 struct FileAttr {
   unsigned char pathname[PATH_MAX] ;
-  unsigned int mode ;
-  unsigned long long int filesize ;    
-  unsigned long long int atime ;
-  unsigned long long int mtime ;
-  unsigned long long int ctime ;
+  mode_t mode ;
+  off_t filesize ;    
+  time_t atime ;
+  time_t mtime ;
+  time_t ctime ;
 } ;
 
 MPI_Datatype MPI_FileAttr ; //The corresponding MPI Datatype

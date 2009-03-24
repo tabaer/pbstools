@@ -33,10 +33,10 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
   int file_select(struct direct *); //Function to decide on selection of files to copy
   int file_d ; //A file descriptor
   int file_d_read, file_d_write ; // File descriptors to read and write files ;
-  int file_read, file_rem ; //Size of part of file to read and the remaining part 
+  off_t file_read, file_rem ; //Size of part of file to read and the remaining part 
 
   if(procID == 0) {
-    cdir_count = scandir(pathname, &files, file_select, &alphasort);
+      cdir_count = scandir(pathname, &files, file_select, &alphasort);
     //    printf("Total number of files in %s is %d \n", pathname, cdir_count) ;
   } 
   if(MPI_Barrier(MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
@@ -94,8 +94,9 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
     else if(ArgStatus == ARG_IS_FILE) {
       if(MPI_Bcast(&att_file,1,MPI_FileAttr, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
       if(procID == 0) {
-	file_d_read = open(name, O_RDONLY) ;
-	if(file_d_read < 3)  MPI_Abort(MPI_COMM_WORLD, 1) ;
+	  printf("Opening file %s\n", name);
+	  file_d_read = open(name, O_RDONLY) ;
+	  if(file_d_read < 3)  MPI_Abort(MPI_COMM_WORLD, 1) ;
       }
       if ( att_file.mode & (S_IXUSR|S_IXGRP|S_IXOTH) ) {
 	file_d_write = creat((char *) att_file.pathname, 00777) ;
@@ -109,12 +110,23 @@ int dirwalk_nfiles(char *pathname, int procID, int nproc) {
 
       while(file_rem > 0) {
 	file_read = (file_rem < BLKSIZE  ? file_rem : BLKSIZE) ;	
-	if(procID == 0) bytes_read = read(file_d_read, &filedata[0], file_read) ;      
+	if(procID == 0) {
+	    if ((bytes_read = read(file_d_read, &filedata[0], file_read)) < 0){
+		perror("read failed with");
+	    }
+	}
+
 	if(MPI_Bcast(&bytes_read, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  	
 	if(bytes_read > 0) {
 	  if(MPI_Bcast(filedata, bytes_read, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  	
 	  bytes_write = write(file_d_write, &filedata[0], bytes_read) ;
-	  while(bytes_write < bytes_read) bytes_write += write(file_d_write, &filedata[bytes_write], bytes_read-bytes_write) ;	
+	  while(bytes_write < bytes_read) {
+	      if ((bytes_write += write(file_d_write,
+				   &filedata[bytes_write], 
+					bytes_read-bytes_write)) < 0){
+		  perror("write failed with");
+	      }
+	  }
 	}
 	else {
 	  printf("Could not read file data \n") ;
@@ -171,7 +183,7 @@ int main(int argc, char **argv) {
   char filename[PATH_MAX] ;
   int file_d ; // A file descriptor ;
   int file_d_read, file_d_write ; // File descriptors to read and write files ;
-  int file_read, file_rem ; //Size of part of file to read and the remaining part 
+  off_t file_read, file_rem ; //Size of part of file to read and the remaining part 
 
   struct FileAttr att_file ;
   int bytes_read, bytes_write ;  
@@ -268,6 +280,8 @@ int main(int argc, char **argv) {
     }
     
     if(MPI_Bcast(&ArgStatus, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;
+
+
   
     if(ArgStatus == ARG_IS_DIR) {
       if(iamrecursive == 1) {
@@ -300,7 +314,6 @@ int main(int argc, char **argv) {
 	  }
 	}
 
-	
 	filecount += dirwalk_nfiles(*argv, procID, nproc) ;
 	
 	if(pflag) {
@@ -322,7 +335,7 @@ int main(int argc, char **argv) {
 	}
 	if(getfileattr(stbuf, &att_file)) {
 	  strcpy((char *) att_file.pathname, targetpath);
-	  file_d_read = open(*argv, O_RDONLY) ;
+	  file_d_read = open(*argv, O_RDONLY);
 	  if(file_d_read < 3)  MPI_Abort(MPI_COMM_WORLD, 1) ;
 	}
       }
@@ -332,10 +345,13 @@ int main(int argc, char **argv) {
       if(file_d_write < 3)  MPI_Abort(MPI_COMM_WORLD, 1) ;
       file_rem = att_file.filesize ;
       filedata = (char *) malloc ((BLKSIZE)*sizeof(char)) ;	
-
       while(file_rem > 0) {
 	file_read = (file_rem < BLKSIZE ? file_rem : BLKSIZE) ;
-	if(procID == 0) bytes_read = read(file_d_read, &filedata[0], BLKSIZE) ;	      
+	if(procID == 0) {
+	    if ((bytes_read = read(file_d_read, &filedata[0], BLKSIZE)) < 0){
+		perror("read failed with");
+	    }
+	}
 	if(MPI_Bcast(&bytes_read, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  	
 	if(bytes_read > 0) {
 	  if(MPI_Bcast(filedata, bytes_read, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER) ;	  
