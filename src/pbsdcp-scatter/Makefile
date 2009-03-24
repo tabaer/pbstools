@@ -1,3 +1,5 @@
+MPICC=mpicc
+
 build: pbsdcp-scatter 
 
 pbsdcp-scatter: pbsdcp-scatter.c misc.o  fileattr.o
