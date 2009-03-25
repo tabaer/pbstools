@@ -3,8 +3,8 @@
  * Author: Ganesh V
  *
  * Created on May 25, 2008, 10:53 AM
- */
-
+ */  
+    
 #ifndef _FILEATTR_H
 #define	_FILEATTR_H
 #include <mpi.h>
@@ -22,26 +22,33 @@
 #include <math.h>
 #include <utime.h>
 #include <unistd.h>
-
+    
 #define FALSE 0
 #define TRUE !FALSE
 
-/*  ArgStatus --> Indicates the status of the curent argument that is being dealt with. */
-#define ARG_NOT_REG_FILE 0 // Neither a file nor a directory. Can be skipped
-#define ARG_IS_FILE      1 // File
-#define ARG_IS_DIR       2 // Directory
+#define DEBUG 0
 
+#if DEBUG
+#define PRINTF(a...) do { printf(a) ; fflush(stdout); } while (0)
+#else
+#define PRINTF(a...)
+#endif
 
+    
+/*  ArgStatus --> Indicates the status of the curent argument that is
+ *  being dealt with.
+ */ 
+#define ARG_NOT_REG_FILE 0 /* Neither a file nor a directory, skip */
+#define ARG_IS_FILE      1 /* File */
+#define ARG_IS_DIR       2 /* Directory */
 struct FileAttr {
-  unsigned char pathname[PATH_MAX] ;
-  mode_t mode ;
-  off_t filesize ;    
-  time_t atime ;
-  time_t mtime ;
-  time_t ctime ;
-} ;
-
-MPI_Datatype MPI_FileAttr ; //The corresponding MPI Datatype
+    unsigned char pathname[PATH_MAX];
+    mode_t mode;
+    off_t filesize;
+    time_t atime;
+    time_t mtime;
+    time_t ctime;
+};
+MPI_Datatype MPI_FileAttr; /*The corresponding MPI Datatype */
 
 #endif	/* _FILEATTR_H */
-
