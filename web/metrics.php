@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008 University of Tennessee
+# Copyright 2008, 2009 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -20,7 +20,7 @@ function xaxis($fn)
   return preg_replace('/^.*_vs_/','',$fn);
 }
 
-function xaxis_column($x)
+function xaxis_column($x,$system)
 {
   if ( $x=="quarter" )
     {
@@ -36,7 +36,7 @@ function xaxis_column($x)
     }
   elseif ( $x=="institution" )
     {
-      return "SUBSTRING(username,1,3) AS institution";
+      return institution_match();
     }
   elseif ( $x=="qtime" )
     {
@@ -50,7 +50,7 @@ function xaxis_column($x)
 	{
 	  $column .= " WHEN ".$x." > '".$maxs[$i-1]."' AND ".$x." <= '".$maxs[$i]."' THEN '&gt;".$maxs[$i-1]."-".$maxs[$i]."'";
 	}
-      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS ".$x;
+      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS ".$x."_bucketed";
       return $column;
     }
   elseif ( $x=="nproc_bucketed")
@@ -64,6 +64,18 @@ function xaxis_column($x)
       $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS nproc_bucketed";
       return $column;
     }
+  elseif ( $x=="nproc_norm")
+    {
+      $maxs = bucket_maxs("nproc_norm");
+      $column = "CASE WHEN nproc/".nprocs($system)." <= '".$maxs[0]."' THEN '<=".$maxs[0]."'";
+      for ( $i=1 ; $i<count($maxs) ; $i++ )
+	{
+	  $column .= " WHEN nproc/".nprocs($system)." > '".$maxs[$i-1]."' AND nproc/".nprocs($system)." <= '".$maxs[$i]."' THEN '&gt;".$maxs[$i-1]."-".$maxs[$i]."'";
+	}
+      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS nproc_norm";
+      return $column;
+    }
+
   else
     {
       return $x;
@@ -120,7 +132,7 @@ function dateselect($action,$start_date,$end_date)
 	return $action."_date >= '".$start_date."'";
       }
     else if ( isset($end_date) && $end_date!="" )
-      {
+     {
 	return $action."_date <= '".$_POST['end_date']."'";
       }
     else
@@ -253,7 +265,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
   $query = "SELECT ";
    if ( $xaxis!="" )
     { 
-      $query .= xaxis_column($xaxis).",";
+      $query .= xaxis_column($xaxis,$system).",";
     }
    $query .= "COUNT(jobid) AS jobcount";
    if ( columns($metric,$system)!="" )
@@ -266,11 +278,13 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
      {
        if ( $xaxis=="institution" )
 	 {
+           # OSC site-specific logic begins here
 	   $query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' AND username NOT LIKE 'osc%' AND username NOT LIKE 'wrk%' AND username NOT LIKE 'test%')";
+           # OSC site-specific logic ends here
 	 }
 #       else
 #	 {
-#	   $query .= " AND (".xaxis_column($xaxis)." IS NOT NULL)";
+#	   $query .= " AND (".xaxis_column($xaxis,$system)." IS NOT NULL)";
 #	 }
        if ( clause($xaxis,$metric)!="" )
 	 {
@@ -280,18 +294,20 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
      }
    if ( $xaxis=="institution" )
      {
+       # OSC site-specific logic begins here
        $query .= " UNION SELECT 'osc' AS institution,COUNT(jobid) AS jobcount";
        if ( columns($metric,$system)!="" )
-	 {
-	   $query .= ",".columns($metric,$system);
-	 }
+        {
+          $query .= ",".columns($metric,$system);
+        }
        $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-	 dateselect("start",$start_date,$end_date).") AND ".
-	 "( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%' OR username LIKE 'test%') )";
+        dateselect("start",$start_date,$end_date).") AND ".
+        "( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%' OR username LIKE 'test%') )";
        if ( clause($xaxis,$metric)!="" )
-	 {
-	   $query .= " AND ".clause($xaxis,$metric);
-	 }
+        {
+          $query .= " AND ".clause($xaxis,$metric);
+        }
+       # OSC site-specific logic ends here
      }
    $query .= " ".sort_criteria($metric."_vs_".$xaxis);
    #print "<PRE>".$query."</PRE>\n";
@@ -302,7 +318,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 
 function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 {
-  $query = "SELECT ".xaxis_column($xaxis).",COUNT(jobid) AS jobcount";
+  $query = "SELECT ".xaxis_column($xaxis,$system).",COUNT(jobid) AS jobcount";
   if ( columns($metric,$system)!="" )
     {
       $query .= ",".columns($metric,$system);
@@ -311,7 +327,7 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
     {
       $query .= ",MIN(TIME_TO_SEC(".$xaxis.")) AS hidden";
     }
-  elseif ( $xaxis=="nproc_bucketed" )
+  elseif ( $xaxis=="nproc_bucketed" || $xaxis=="nproc_norm" )
     {
       $query .= ",MIN(nproc) AS hidden";
     }
@@ -329,9 +345,13 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
     {
       $query .= " GROUP BY nproc_bucketed";
     }
+  elseif ( $xaxis=="nproc_norm" )
+    {
+      $query .= " GROUP BY nproc_norm";
+    }  
   else
     {
-      $query .= " GROUP BY ".$xaxis;
+      $query .= " GROUP BY ".$xaxis."_bucketed";
     }
   $query .= " ORDER BY hidden;";
   #print "<PRE>".$query."</PRE>\n";
@@ -640,7 +660,7 @@ function metric_as_xls($result,$xaxis,$metric,$system,$start_date,$end_date)
 	}
     }
   $workbook->close();
-  echo "<P>Excel file:  <A href=\"".$cache.rawurlencode($xlsfile)."\">".$xlsfile."</A></P>\n";
+  echo "<P>Excel file:  <A href=\"/tmp/".$cache.rawurlencode($xlsfile)."\">".$xlsfile."</A></P>\n";
 }
 
 function metric_as_ods($result,$xaxis,$metric,$system,$start_date,$end_date)
@@ -688,7 +708,7 @@ function metric_as_ods($result,$xaxis,$metric,$system,$start_date,$end_date)
 	}
     }
   saveOds($workbook,"/tmp/".$cache.$odsfile);
-  echo "<P>ODF file:  <A href=\"".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";
+  echo "<P>ODF file:  <A href=\"/tmp/".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";
 }
 
 function result_as_xls($result,$mycolumnname,$filebase)
@@ -731,7 +751,7 @@ function result_as_xls($result,$mycolumnname,$filebase)
 	}
     }
   $workbook->close();
-  echo "<P>Excel file:  <A href=\"".$cache.rawurlencode($xlsfile)."\">".$xlsfile."</A></P>\n";
+  echo "<P>Excel file:  <A href=\"/tmp/".$cache.rawurlencode($xlsfile)."\">".$xlsfile."</A></P>\n";
 }
 
 function result_as_ods($result,$mycolumnname,$filebase)
@@ -774,7 +794,7 @@ function result_as_ods($result,$mycolumnname,$filebase)
 	}
     }
   saveOds($workbook,"/tmp/".$cache.$odsfile);
-  echo "<P>ODF file:  <A href=\"".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";  
+  echo "<P>ODF file:  <A href=\"/tmp/".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";  
 }
 
 function jobstats_input_header()

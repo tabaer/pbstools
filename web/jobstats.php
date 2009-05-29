@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008 University of Tennessee
+# Copyright 2008, 2009 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -769,8 +769,183 @@ if ( isset($_POST['system']) )
 			   $_POST['end_date']);
 
     // custom wackiness
+    jobstats_output_bucketed_metric('Job Count vs. Processor Count',
+				    'jobcount_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('CPU Time vs. Processor Count',
+				    'cpuhours_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Job Length vs. Processor Count',
+				    'walltime_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Queue Time vs. Processor Count',
+				    'qtime_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Real Memory vs. Processor Count',
+				    'mem_kb_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Virtual Memory vs. Processor Count',
+				    'vmem_kb_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Walltime Accuracy vs. Processor Count',
+				    'walltime_acc_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('CPU Efficiency vs. Processor Count',
+				    'cpu_eff_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Active Users vs. Processor Count',
+				    'users_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Active Groups vs. Processor Count',
+				    'groups_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Active Accounts vs. Processor Count',
+				    'accounts_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+
+    jobstats_output_bucketed_metric('Expansion Factor vs. Processor Count',
+				    'xfactor_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+
     jobstats_output_bucketed_metric('DoD Metrics vs. Processor Count',
 				    'dodmetrics_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+
+    jobstats_output_bucketed_metric('Job Count vs. Normalized Processor Count',
+				    'jobcount_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('CPU Time vs. Normalized Processor Count',
+				    'cpuhours_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Job Length vs. Normalized Processor Count',
+				    'walltime_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Queue Time vs. Normalized Processor Count',
+				    'qtime_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Real Memory vs. Normalized Processor Count',
+				    'mem_kb_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Virtual Memory vs. Normalized Processor Count',
+				    'vmem_kb_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Walltime Accuracy vs. Normalized Processor Count',
+				    'walltime_acc_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('CPU Efficiency vs. Normalized Processor Count',
+				    'cpu_eff_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Active Users vs. Normalized Processor Count',
+				    'users_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Active Groups vs. Normalized Processor Count',
+				    'groups_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+    
+    jobstats_output_bucketed_metric('Active Accounts vs. Normalized Processor Count',
+				    'accounts_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+
+    jobstats_output_bucketed_metric('Expansion Factor vs. Normalized Processor Count',
+				    'xfactor_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+
+    jobstats_output_bucketed_metric('DoD Metrics vs. Normalized Processor Count',
+				    'dodmetrics_vs_nproc_norm',
 				    $db,
 				    $_POST['system'],
 				    $_POST['start_date'],
@@ -919,7 +1094,32 @@ else
 
     // custom wackiness
     jobstats_input_spacer();
+    jobstats_input_metric("Job Count vs. Processor Count","jobcount_vs_nproc_bucketed");
+    jobstats_input_metric("CPU Time vs. Processor Count","cpuhours_vs_nproc_bucketed");
+    jobstats_input_metric("Job Length vs. Processor Count","walltime_vs_nproc_bucketed");
+    jobstats_input_metric("Queue Time vs. Processor Count","qtime_vs_nproc_bucketed");
+    jobstats_input_metric("Real Memory vs. Processor Count","mem_kb_vs_nproc_bucketed");
+    jobstats_input_metric("Virtual Memory vs. Processor Count","vmem_kb_vs_nproc_bucketed");
+    jobstats_input_metric("Walltime Accuracy vs. Processor Count","walltime_acc_vs_nproc_bucketed");
+    jobstats_input_metric("CPU Efficiency vs. Processor Count","cpu_eff_vs_nproc_bucketed");
+    jobstats_input_metric("Active Users vs. Processor Count","users_vs_nproc_bucketed");
+    jobstats_input_metric("Active Groups vs. Processor Count","groups_vs_nproc_bucketed");
+    jobstats_input_metric("Active Accounts vs. Processor Count","accounts_vs_nproc_bucketed");
+    jobstats_input_metric("Expansion Factor vs. Processor Count","xfactor_vs_nproc_bucketed");
     jobstats_input_metric("DoD Metrics vs. Processor Count","dodmetrics_vs_nproc_bucketed");
+    jobstats_input_metric("Job Count vs. Normalized Processor Count","jobcount_vs_nproc_norm");
+    jobstats_input_metric("CPU Time vs. Normalized Processor Count","cpuhours_vs_nproc_norm");
+    jobstats_input_metric("Job Length vs. Normalized Processor Count","walltime_vs_nproc_norm");
+    jobstats_input_metric("Queue Time vs. Normalized Processor Count","qtime_vs_nproc_norm");
+    jobstats_input_metric("Real Memory vs. Normalized Processor Count","mem_kb_vs_nproc_norm");
+    jobstats_input_metric("Virtual Memory vs. Normalized Processor Count","vmem_kb_vs_nproc_norm");
+    jobstats_input_metric("Walltime Accuracy vs. Normalized Processor Count","walltime_acc_vs_nproc_norm");
+    jobstats_input_metric("CPU Efficiency vs. Normalized Processor Count","cpu_eff_vs_nproc_norm");
+    jobstats_input_metric("Active Users vs. Normalized Processor Count","users_vs_nproc_norm");
+    jobstats_input_metric("Active Groups vs. Normalized Processor Count","groups_vs_nproc_norm");
+    jobstats_input_metric("Active Accounts vs. Normalized Processor Count","accounts_vs_nproc_norm");
+    jobstats_input_metric("Expansion Factor vs. Normalized Processor Count","xfactor_vs_nproc_norm");
+    jobstats_input_metric("DoD Metrics vs. Normalized Processor Count","dodmetrics_vs_nproc_norm");
 
     jobstats_input_footer();
 

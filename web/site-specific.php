@@ -67,6 +67,7 @@ if (!function_exists('file_put_contents')) {
 #        nodes.
 function sys_list()
 {
+#  return array("krakenpf","kraken","athena","verne");
   return array("amd",
 	       "apple",
 	       "bale",
@@ -170,6 +171,11 @@ function nprocs($system)
 #  if ( $system=='piv-noib' ) return 288;
   if ( $system=='piv-noib' ) return 56;
   if ( $system=='x1' ) return 48;
+  if ( $system=='athena' ) return 18048;
+  if ( $system=='kraken' ) return 18032;
+  if ( $system=='krakenpf' ) return 66048;
+  if ( $system=='jaguar' ) return 31328;
+  if ( $system=='verne' ) return 64;
   return 0;
 }
 
@@ -183,10 +189,20 @@ function sort_criteria($fn)
   return "";
 }
 
+# site-specific logic for determining institution
+function institution_match()
+{
+# OSC
+  return "SUBSTRING(username,1,3) AS institution";
+# NICS
+#  return "SUBSTRING(account,1,2) AS institution";
+}
+
 # bucket sizes
 function bucket_maxs($xaxis)
 {
   if ( $xaxis=='nproc' ) return array("1","4","8","16","32","64","128","256","512","1024");
+  if ( $xaxis=='nproc_norm' ) return array("0.01","0.10","0.25","0.5","0.75");
   if ( $xaxis=='walltime' ) return array("1:00:00","8:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
   if ( $xaxis=='walltime_req' ) return array("1:00:00","8:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
   if ( $xaxis=='qtime' ) return array("1:00:00","4:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
@@ -202,37 +218,75 @@ function software_list()
 	      "abaqus",
 	      "abinit",
 	      "aces2",
+	      "aces3",
 	      "adf",
+	      "agk",
 	      "AliEn",
 	      "amber",
 	      "ansys",
+	      "arps",
+	      "ash",
 	      "autodock",
 	      "blat",
+	      "bolztran",
+	      "bugget",
 	      "cactus",
+	      "cam",
 	      "casino",
 	      "cbl",
 	      "ccsm",
+	      "cctm",
+	      "cfd++",
 	      "cfl3d",
 	      "charmm",
 	      "chemshell",
+	      "chimera",
+	      "cilk",
+	      "cluster",
+	      "coarsen",
 	      "cpmd",
+	      "cql3d",
 	      "crystal",
+	      "dasquad",
 #	      "decypher",
+	      "delphi",
+	      "delta5d",
 	      "dissens",
               "dlpoly",
 	      "dns2d",
 	      "dock",
+	      "dolt",
 	      "enzo",
+	      "esmf",
+	      "eulacc",
 	      "ex_e",
+	      "f-plane",
+	      "falkon",
+	      "fd3d",
 	      "fidap",
 	      "fdl3di",
+	      "flotran",
 	      "flow3d",
 	      "fluent",
               "fsweep",
+	      "ftb",
 	      "gaussian",
 	      "gamess",
+	      "gdl",
+	      "geosgcm",
 	      "glast",
+	      "GreenSolver",
 	      "gromacs",
+	      "gtc",
+	      "halo",
+	      "hfodd",
+	      "hmc",
+	      "hmmer",
+	      "homme",
+	      "hpl",
+	      "hy3s",
+	      "idl",
+	      "inca",
 	      "jaguar",
 	      "lammps",
 	      "lmf",
@@ -240,34 +294,76 @@ function software_list()
 	      "lsms",
 	      "mathematica",
 	      "matlab",
+	      "mcrothers",
+	      "mctas",
+	      "mddriver",
+	      "mhdam",
               "milc",
+	      "mitgcmuv",
 	      "mm5",
 	      "molcas",
+	      "moldive",
+	      "mpcugles",
+	      "mpi-multi",
 	      "mrbayes",
 	      "nag",
 	      "namd",
 	      "ncbi",
 	      "nwchem",
+	      "ntsolve",
 	      "octave",
-	      "openeye",
+	      "omen",
+	      "onepartm",
+#	      "openeye",
+	      "overlap",
+	      "paratec",
 	      "paup",
 	      "phasta"
+	      "pkdgrav",
+	      "pmcl3d",
               "polly",
+	      "pop",
+	      "prog_ccm_sph",
+	      "prog_hf",
               "propagators",
+	      "psolve",
 	      "pwscf",
+	      "python",
               "qchem",
+	      "qmc",
+	      "qwalk",
 	      "R",
+	      "radhyd",
 	      "rosetta",
 	      "root",
+	      "s3d",
 	      "sable",
-#	      "sas",
+	      "sas",
 	      "scalapack",
+	      "sddt",
 	      "sfeles",
+	      "sigma",
+	      "simpleio",
+	      "sne3d",
+	      "sovereign",
+	      "spdcp",
+	      "sses",
 	      "stata",
+	      "stationaryAccretionShock3D",
+	      "sweqx",
+	      "tdcc2d",
+	      "tdse",
+	      "tetradpost",
+	      "tfe",
+	      "tsc",
 	      "turbo",
 	      "turbomole",
 	      "vasp",
-              "wrf");
+	      "vhone",
+	      "vmd",
+              "wrf",
+	      "xgc",
+	      "xmfdn");
   
   return $list;
 }
@@ -293,29 +389,37 @@ function software_match_list()
   $pkgmatch['adf']="script LIKE '%adf%'";
   $pkgmatch['AliEn']="( script LIKE '%aliroot%' OR script LIKE '%agent.startup%' )";
   $pkgmatch['amber']="( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' )";
+  $pkgmatch['ash']="script LIKE '%ash_1%'";
   $pkgmatch['blat']="script LIKE '%blat %'";
+  $pkgmatch['boltztran']="(script LIKE '%boltzpar%')";
   $pkgmatch['cbl']="( script LIKE '% cbl%' OR script LIKE '%pcbl%' OR script LIKE '%biolib%' )";
+  $pkgmatch['ccsm']="( script LIKE '%ccsm%' OR script LIKE '%cpl%csim%clm%pop%cam%' )";
   $pkgmatch['chemshell']="script LIKE '%chemsh%'";
   $pkgmatch['cpmd']="script LIKE '%cpmd.x%'";
   $pkgmatch['crystal']="script LIKE '%Pcrystal%'";
   $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
   $pkgmatch['dissens']="SCRIPT LIKE '%dissens.x%'";
-  $pkgmatch['dns2d']="( SCRIPT LIKE '%DNS2d.x%' OR SCRIPT LIKE '%code2.x%' )";
+  $pkgmatch['dns2d']="( script LIKE '%DNS2d.x%' OR script LIKE '%DNS2d_%.x%' OR script LIKE '%code2.x%' OR script LIKE '%spcal2d.x%' )";
   $pkgmatch['dock']="( script LIKE '%dock5%' OR script LIKE '%dock6%' OR script LIKE '%sphgen%' OR script LIKE '%mopac%' )";
   $pkgmatch['ex_e']="script LIKE '%ex.e%'";
+  $pkgmatch['fluent']="( script like '%fluent%' OR software LIKE '%fluent%' )";
   $pkgmatch['fsweep']="script LIKE '%fsweep.exe%' OR script LIKE '%fsweep2.exe%'";
   $pkgmatch['gamess']="script LIKE '%gamess%' OR script LIKE '%rungms%' OR script LIKE '%rungmx%'";
   $pkgmatch['gaussian']="script LIKE '%g98%' OR script LIKE '%g03%'";
   $pkgmatch['glast']="( script LIKE '%glast%' OR script LIKE '%gp run%' )";
   $pkgmatch['gromacs']="( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' )";
+  $pkgmatch['gtc']="( script LIKE '%gtc%' OR script LIKE '%gts%' )";
+  $pkgmatch['hmmer']="( script LIKE '%hmmer%' OR script LIKE '%hmmp%' )";
+  $pkgmatch['hsi']="( script LIKE '%hsi %' OR script LIKE '%htar %' )";
   $pkgmatch['hy3s']="( script LIKE '%SSA%' OR script LIKE '%HyJCMSS-%' )";
-  $pkgmatch['lammps']="( script LIKE '%lammps%' OR script LIKE '% lmp_%' )";
+  $pkgmatch['lammps']="( script LIKE '%lammps%' OR script LIKE '% lmp_%' OR script LIKE '%/lmp_%')";
   $pkgmatch['matlab']="( script LIKE '%matlab%' OR software LIKE '%matlab%' )";
   $pkgmatch['milc']="( script LIKE '%milc%' OR script LIKE '% su3_%' )";
   $pkgmatch['mrbayes']="( script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%' )";
   $pkgmatch['ncbi']="( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )";
   $pkgmatch['openeye']="( script LIKE '%babel3%' OR script LIKE '%checkcff%' OR script LIKE '%chunker%' OR script LIKE '%fred2%' OR script LIKE '%fredPA%' OR script LIKE '%ligand_info%' OR script LIKE '%makefraglib%' OR script LIKE '%makerocsdb%' OR script LIKE '%nam2mol%' OR script LIKE '%omega2%' OR script LIKE '%szybki%' )";
-  $pkgmatch['pwscf']="( script LIKE '%pwscf%' OR script LIKE '%pw.x%' )";
+  $pkgmatch['overlap']="script LIKE '%overlap_%'";
+  $pkgmatch['pwscf']="( script LIKE '%pwscf%' OR script LIKE '%pw.x%' OR script LIKE '%dos.x%' )";
   $pkgmatch['rosetta']="( script LIKE '%rosetta.%' OR script LIKE '%/rr %' )";
   $pkgmatch['root']="script LIKE '%\nroot -q%'";
   $pkgmatch['sable']="( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )";
@@ -326,7 +430,10 @@ function software_match_list()
 # package matches with dependencies on other package matches
   $pkgmatch['R']="( script LIKE '%\nR %' AND NOT ( ".$pkgmatch['gaussian'].
     " OR ".$pkgmatch['adf']." ) )";
+  $pkgmatch['arps'] = "( script LIKE '%arps%' AND NOT ( ".$pkgmatch['wrf']." ) )";
+  $pkgmatch['cam'] = "( script LIKE '%cam%' AND NOT ( ".$pkgmatch['ccsm']." ) )";
   $pkgmatch['charmm'] = "( script LIKE '%charmm%' AND NOT ( ".$pkgmatch['chemshell']." ) )";
+  $pkgmatch['pop'] = "( script LIKE '%pop%' AND NOT ( ".$pkgmatch['ccsm']." ) )";
   $pkgmatch['turbomole'] = "( script LIKE '%turbomole%' AND NOT ( ".$pkgmatch['chemshell']." ) )";
   
   return $pkgmatch;
