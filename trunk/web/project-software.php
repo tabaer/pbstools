@@ -2,9 +2,9 @@
 # Copyright 2007, 2008 Ohio Supercomputer Center
 # Copyright 2009 University of Tennessee
 # Revision info:
-# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/usage-summary.php $
-# $Revision: 168 $
-# $Date: 2007-06-26 16:53:55 -0400 (Tue, 26 Jun 2007) $
+# $HeadURL$
+# $Revision$
+# $Date$
 require_once 'dbutils.php';
 require_once 'page-layout.php';
 require_once 'metrics.php';
