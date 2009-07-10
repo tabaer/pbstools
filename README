@@ -27,6 +27,10 @@ bin/parallel-command-processor -- An MPI program for running an array
 of serial jobs in the context of a single parallel job (a.k.a. the poor
 man's job arrays).
 
+bin/dagsub -- A workalike for condor_submit_dag.  This allows the
+submission of large, complex sets of dependent jobs using a relatively
+simple syntax.
+
 Admin tools:
 ------------
 
