@@ -8,7 +8,8 @@
 #        supermover [args] -f file
 #
 # Arguments:
-#        -c cfg -- use alternate config file; default is ./supermover.cfg
+#        -c cfg -- use alternate config file; default is $SUPERMOVER_CFG,
+#         or failing that, /usr/local/etc/supermover.cfg
 #        -f urllist -- use file urllist as the list of src/dest urls
 #
 # Supported URL protocols:
@@ -178,7 +179,9 @@ def usage():
     sys.stderr.write("Usage:  supermover srcURL destURL\n")
     sys.exit(0)
 
-cfgfile = "supermover.cfg"
+cfgfile = "/usr/local/etc/supermover.cfg"
+if ( "SUPERMOVER_CFG" in os.environ ):
+    cfgfile = os.environ["SUPERMOVER_CFG"]
 log = sys.stdout
 urllist = None
 
