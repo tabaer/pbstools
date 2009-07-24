@@ -176,7 +176,14 @@ def do_xfer(src,dest,methods,log):
         raise RuntimeException("No method defined for protocol pair "+src_proto+":"+dest_proto)
 
 def usage():
-    sys.stderr.write("Usage:  supermover srcURL destURL\n")
+    sys.stderr.write("Usage:  supermover [args] srcURL destURL\n")
+    sys.stderr.write("   or:  supermover [args] -f urlPairList\n\n")
+    sys.stderr.write("Arguments:\n")
+    sys.stderr.write(" -c cfgfile, --config=cfgfile\n\tRead config file \"cfgfile\" (default is "+cfgfile+")\n")
+    sys.stderr.write(" -d, --debug\n\tEnable extra logging for debugging\n")
+    sys.stderr.write(" -f urlPairList, --file=urlPairList\n\tRead src/edest URL pairs from file urlPairList rather than\n\tcommand line arguments\n")
+    sys.stderr.write(" -h, --help\n\tPrint this help message\n")
+    sys.stderr.write(" -l logfile, --log=logfile\n\tWrite log messages to file \"logfile\" (default is stdout)\n")
     sys.exit(0)
 
 cfgfile = "/usr/local/etc/supermover.cfg"
