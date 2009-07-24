@@ -541,6 +541,8 @@ generateDotFile = False
 overwrite = False
 logFile = None
 timeout = 30
+jobsubmit = "qsub"
+datasubmit = "dmsub"
 
 try:
     # The convention is to use single dash for short command (i.e. -h), and double dashes
@@ -556,7 +558,28 @@ try:
             pcmd.append(each)
 
     # Command line argument processing
-    opts, args = getopt.getopt(pcmd,"hv",["allowversionmismatch","DumpRescue","force","help","no_fork","no_recurse","no_submit","update_submit","usedagdir","verbose","append=","autorescue=","config=","dorescuefrom","insert_sub_file","log=","maxidle=","maxjobs=","notification=","oldrescue","outfile_dir="])
+    opts, args = getopt.getopt(pcmd,"hv",
+                               ["allowversionmismatch",
+                                "DumpRescue",
+                                "force",
+                                "help",
+                                "no_fork",
+                                "no_recurse",
+                                "no_submit",
+                                "update_submit",
+                                "usedagdir",
+                                "verbose",
+                                "append=",
+                                "autorescue=",
+                                "config=",
+                                "dorescuefrom",
+                                "insert_sub_file",
+                                "log=",
+                                "maxidle=",
+                                "maxjobs=",
+                                "notification=",
+                                "oldrescue",
+                                "outfile_dir="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
