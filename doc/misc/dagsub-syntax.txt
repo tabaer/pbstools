@@ -6,11 +6,16 @@ JOB jobname submit-file [DIR workdir] [DONE]
 * workdir = optional working directory
 * DONE = job has already completed (i.e. is a no-op)
 
-DATA jobname script-to-submit [DIR workdir] [DONE]
+DATA jobname script-to-submit [DIR workdir] [extensions] [DONE]
 * jobname must be unique
 * submit-file = script to submit
 * workdir = optional working directory
 * DONE = job has already completed (i.e. is a no-op)
+* Proposed extensions (all optional):
+  FORMAT type -- script is in "type" format (e.g. stork, rft, dmover)
+  MOVER type -- use "mover" to do data movement (e.g. stork, rft, dmover,
+                globus-url-copy, supermover)
+  QUEUE name -- submit data job to queue "name", if available
 
 SCRIPT (PRE|POST) jobname executable [arguments]
 
