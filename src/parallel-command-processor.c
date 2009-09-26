@@ -26,8 +26,9 @@
 
 void remove_EOL(char *string)
 {
+  int i = 0;
   int len = strlen(string);
-  for ( int i=0 ; i<len ; i++ )
+  for ( i=0 ; i<len ; i++ )
     {
       if ( string[i]=='\n' ) string[i]=='\0';
     }
@@ -77,6 +78,7 @@ void minion(int rank)
 
 void mastermind(int nminions, FILE *input)
 {
+  int i = 0;
   int cont = 1;
   int stop = 0;
   int ncmds = 0;
@@ -135,7 +137,7 @@ void mastermind(int nminions, FILE *input)
   /* cleanup */
   MPI_Request *req;
   req = (MPI_Request *)calloc((size_t)(2*nminions),sizeof(MPI_Request));
-  for ( int i = 1 ; i <= nminions ; i++ )
+  for ( i = 1 ; i <= nminions ; i++ )
     {
       char exitcmd[] = "exit";
       MPI_Isend(exitcmd,strlen(exitcmd),MPI_CHAR,i,DATA_TAG,MPI_COMM_WORLD,
