@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008 University of Tennessee
+# Copyright 2008, 2009 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -11,17 +11,20 @@ function page_header($title)
 {
   echo "<HTML>\n<HEAD>\n";
   echo "<TITLE>".$title."</TITLE>\n";
-  echo "<LINK rel=stylesheet type=\"text/css\" href=\"default.css\">\n</HEAD>\n<BODY>\n";
-  echo "<TABLE height=\"100%\" width=\"100%\" bgcolor=\"gray\">\n";
+  echo "<LINK rel=stylesheet type=\"text/css\" href=\"default.css\">\n";
+  echo "<SCRIPT type='text/javascript' src='http://jqueryui.com/latest/jquery-1.3.2.js'></SCRIPT>\n";
+  echo "<SCRIPT type='text/javascript' src='utils.js'></SCRIPT>\n";
+  echo "</HEAD>\n<BODY>\n";
+  echo "<TABLE height=\"100%\" width=\"100%\">\n";
   echo "<TR height=\"10%\">\n";
-  echo "  <TD width=\"15%\" bgcolor=\"#dedfdf\">\n";
+  echo "  <TD width=\"15%\">\n";
   echo "  </TD>\n";
-  echo "  <TD bgcolor=\"#dedfdf\">\n";
+  echo "  <TD>\n";
   echo "    <H1>".$title."</H1>\n";
   echo "  </TD>\n";
   echo "</TR>\n";
   echo "<TR height=\"90%\">\n";
-  echo "  <TD width=\"15%\" valign=\"top\" bgcolor=\"#dedfdf\">\n";
+  echo "  <TD width=\"15%\" valign=\"top\">\n";
   echo "    <UL><U>Job info by</U>\n";
   echo "      <LI><A href=\"jobinfo.php\">Job id</A></LI>\n";
   echo "      <LI><A href=\"jobs-by-user.php\">User</A></LI>\n";
@@ -33,7 +36,7 @@ function page_header($title)
   echo "      <LI><A href=\"jobstats-by-nproc.php\">CPU Count</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-queue.php\">Job Class</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-walltime.php\">Job Length</A></LI>\n";
-# NOTE By-institution jobstats involves OSC site-specific logic.  You may
+# NOTE By-institution jobstats involves site-specific logic.  You may
 # want to comment it out.
   echo "      <LI><A href=\"jobstats-by-institution.php\">Institution</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-account.php\">Account</A></LI>\n";
@@ -48,7 +51,7 @@ function page_header($title)
   echo "      <LI><A href=\"software-usage.php\">System</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-queue.php\">Job Class</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-walltime.php\">Job Length</A></LI>\n";
-# NOTE By-institution jobstats involves OSC site-specific logic.  You may
+# NOTE By-institution jobstats involves site-specific logic.  You may
 # want to comment it out.
   echo "      <LI><A href=\"software-usage-by-institution.php\">Institution</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-account.php\">Account</A></LI>\n";
@@ -60,6 +63,8 @@ function page_header($title)
   echo "    </UL>\n";
   echo "    <UL><U>Miscellaneous reports</U>\n";
   echo "      <LI><A href=\"usage-summary.php\">Usage Summary</A></LI>\n";
+# NOTE Identifying problematic jobs involves site-specific logic.  You may
+# want to comment it out.
   echo "      <LI><A href=\"problem-jobs.php\">Problematic Jobs</A></LI>\n";
   echo "      <LI><A href=\"active-users.php\">Most Active Users</A></LI>\n";
   echo "      <LI><A href=\"active-groups.php\">Most Active Groups</A></LI>\n";
@@ -106,8 +111,9 @@ function checkboxes_from_array($label,$array)
   echo $label.":<BR>\n";
   foreach ($array as $value)
     {
-      echo "<INPUT type=\"checkbox\" name=\"".$value."\" value=\"1\"> ".$value."<BR>\n";
+      echo "<INPUT class='checkbox_item' type=\"checkbox\" name=\"".$value."\" value=\"1\"> ".$value."<BR>\n";
     }
+  echo "<INPUT type=\"checkbox\" id=\"select_all\">Select All\n<BR>";
 }
 
 function system_chooser()
