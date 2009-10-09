@@ -13,3 +13,7 @@ dagsub:
   http://www.supercluster.org/pipermail/torqueusers/2009-July/009282.html for
   details.
 
+dagsub/dmsub
+* It does not seem to be possible to get the exit status of a process
+  started by Python 2.4's popen3(), so success of job submission must be
+  inferred from whether or not a jobid is received from qsub's stdout.

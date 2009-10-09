@@ -171,6 +171,7 @@ class ScheduledDataTransfer(object):
         self._outlog = None
         self._joinlogs = None
         self._dep = None
+        self._vars = None
 
     def setFileName(self,filename):
         self._file = filename
@@ -261,6 +262,16 @@ class ScheduledDataTransfer(object):
 
     def getDependency(self):
         return self._dep
+
+    def setVars(self,vars):
+        if ( self._vars is None ):
+            self._vars = []
+        varlist = vars.split(",")
+        for var in varlist:
+            self._vars.append(var)
+
+    def getVars(self):
+        return self._vars
 
     def setServer(self,server):
         self._server = server
@@ -476,6 +487,7 @@ class ScheduledDataTransfer(object):
         if ( debug ):
             sys.stderr.write("mover="+self.getMoverType()+"\n")
         if ( dosubmit ):
+            cmd = "qsub"
             pin,pout,perr = os.popen3(cmd)
         else:
             pin = sys.stdout
@@ -493,9 +505,16 @@ class ScheduledDataTransfer(object):
         if ( self.getQueue() is not None ):
             pin.write("#PBS -q "+self.getQueue()+"\n")
         if ( self.getDependency() is not None ):
-            pin.write("#PBS -w depend=afterok:"+self.getDependency()+"\n")
+            pin.write("#PBS -W depend=afterok:"+self.getDependency()+"\n")
         if ( hold ):
             pin.write("#PBS -h\n")
+        if ( self.getVars() is not None ):
+            myvars = self.getVars()
+            pin.write("#PBS -v "+myvars[0])
+            if ( len(myvars)>1 ):
+                for var in myvars[1:]:
+                    pin.write(","+var)
+            pin.write("\n")
         list = self.transferList()
         if ( list.getOption("x509proxy")!="default" ):
             if ( debug ):
@@ -546,7 +565,7 @@ class ScheduledDataTransfer(object):
                 sys.stderr.write("parsing qsub stderr\n")
             stderr = perr.readlines()
             if ( len(stderr)>0 ):
-                for line in perr.readlines():
+                for line in stderr:
                     sys.stderr.write(line)
                     sys.stderr.flush()
         except IndexError, err:
@@ -554,6 +573,9 @@ class ScheduledDataTransfer(object):
             sys.stderr.flush()
         pout.close()
         perr.close()
+        if ( jobid is None or jobid=="" ):
+            sys.stderr.write("No job id, assuming failure\n")
+            sys.exit(-1)
         return jobid
 
     def _tmpDir(self):
@@ -711,6 +733,7 @@ def usage():
 ##     global hold
     sys.stderr.write("Usage:  dmsub [arguments] [-f] xfer_file\n\n")
     sys.stderr.write("Arguments:\n")
+    sys.stderr.write(" -b rm, --batch=rm, --rm=rm\n\tUse \"rm\" batch environment (default is "+str(rm)+")\n")
     sys.stderr.write(" -C cfgfile, --config=cfgfile\n\tRead config file \"cfgfile\"\n")
     sys.stderr.write(" -c credfile, --credential=credfile\n\tUse file \"credfile\" as GSI credential\n")
     sys.stderr.write(" -D jobid[:jobid], --dependency=jobid[:jobid]\n\tDo not run data transfer job till after jobid completes\n")
@@ -729,7 +752,6 @@ def usage():
     sys.stderr.write(" -q dest, --queue=dest\n\tSubmit data transfer job to batch queue \"dest\" (default is "+str(queue)+")\n")
     sys.stderr.write(" -s n, --streams=n\n\tUse up to n striped data streams whenever possible (default is "+str(streams)+")\n")
     sys.stderr.write(" -S svr, --server=svr\n\tConnect to data transfer service on server \"svr\"\n")
-    sys.stderr.write(" -t rm, --batch=rm, --rm=rm\n\tUse \"rm\" batch environment (default is "+str(rm)+")\n")
     sys.stderr.write("\nSupported batch environments:  pbs, torque, condor, stork, rft\n")
     sys.stderr.write("Supported transfer descriptions:  urlpair, dmover, rft, stork\n")
     sys.stderr.write("Supported data movers:  globus-url-copy, supermover, stork, rft\n")
@@ -747,6 +769,7 @@ def read_cfg(file):
     global streams
     global stripesize
     global blksize
+    global vars
     if ( not os.path.exists(file) ):
         raise IOError,file+" does not exist"
     elif ( not os.path.isfile(file) ):
@@ -793,7 +816,7 @@ try:
     if ( debug ):
         sys.stderr.write("invoking getopt\n")
     opts, args = getopt.getopt(sys.argv[1:],
-                               "C:c:D:de:F:f:Hhj:l:M:no:N:P:q:S:s:t:w:",
+                               "b:C:c:D:de:F:f:Hhj:l:M:no:N:P:q:S:s:v:w:",
                                ["batch=",
                                 "credential=",
                                 "config=s",
@@ -813,7 +836,8 @@ try:
                                 "queue=",
                                 "rm=",
                                 "server=",
-                                "streams="])
+                                "streams=",
+                                "vars="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -904,6 +928,8 @@ for opt in opts:
         if ( debug ):
             sys.stderr.write("setting streams to "+opt[1]+"\n")
         streams = opt[1]
+    if ( opt[0]=="-v" ):
+        vars = opt[1]
     if ( opt[0]=="-w" ):
         walltime = opt[1]+":00"
         
@@ -925,6 +951,8 @@ for file in args:
         job.setJoinLogs(joinlogs)
     if ( dependency is not None ):
         job.setDependency(dependency)
+    if ( vars is not None ):
+        job.setVars(vars)
     if ( debug ):
         sys.stderr.write("submitting job from file "+file+" as job "+job.getName()+"\n")
     jobid = job.submit(dosubmit)

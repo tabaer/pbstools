@@ -32,7 +32,7 @@ JOB postproc_hr6 postproc.pbs
 VARS postproc_hr6 day="20090531" hr="0600"
 SCRIPT PRE postproc_hr6 ./waitforfile 20090531-0600.nc
 
-DATA archive archive.dmover FORMAT dmover
+DATA archive archive.dmover QUEUE hpss
 VARS archive day="20090531"
 SCRIPT POST archive ./cleanup
 
