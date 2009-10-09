@@ -102,10 +102,11 @@ def unique(s):
 ### end code from Python Cookbook
 
 
-class DAGNode(object):
+class JobNode(object):
     def __init__(self,name,script):
         self._name = name
         self._script = script
+        self._queue = None
         self._retries = 0
         self._priority = 0
         self._prescript = None
@@ -179,6 +180,9 @@ class DAGNode(object):
     def postScriptHasRun(self):
         return self._postscript_run
 
+    def queue(self):
+        return self._queue
+
     def isDone(self):
         return self._done
 
@@ -196,6 +200,9 @@ class DAGNode(object):
 
     def setPriority(self,priority):
         self._priority = priority
+
+    def setQueue(self,queue):
+        self._queue = queue
 
     def setScript(self, script):
         self._script = self._script + script
@@ -280,7 +287,6 @@ class DAGNode(object):
             condition = self.job_success()
         return tryout
 
-
     def submit(self,dag,log):
         if ( self.isSubmitted() ):
             return self.isSubmitted()
@@ -350,7 +356,10 @@ class DAGNode(object):
                     if ( len(self.vars())>1 ):
                         for var in self.vars()[1:]:
                             vars = vars+","+var
-                cmd = "qsub -N "+self.name()+" "+dependency+" "+vars+" "+self.script()
+                queue = ""
+                if ( self.queue() is not None ):
+                    queue = "-q "+self.queue()
+                cmd = jobsubmit+" -N "+self.name()+" "+queue+" "+dependency+" "+vars+" "+self.script()
                 if ( verbose ):
                     log.write(str(datetime.datetime.now())+": "+cmd+"\n")
                     log.flush()
@@ -369,6 +378,9 @@ class DAGNode(object):
                     if(verbose):
                         sys.stderr.write(str(err) + "\n") 
                 perr.close()
+                if ( jobid is None or jobid=="" ):
+                    sys.stderr.write("No jobid, assuming failure")
+                    os.exit(-1)
                 self.setJobId(jobid)
                 log.write(str(datetime.datetime.now())+":  submitted job "+self.name()+" as jobid "+self.jobId()+"\n")
                 log.flush()
@@ -410,6 +422,171 @@ class DAGNode(object):
 
         # if nothing failed, return success
         return True
+
+
+class DataJobNode(JobNode):
+    def __init__(self,name,script):
+        super(DataJobNode,self).__init__(name,script)
+        self._format = None
+        self._mover = None
+
+    def setFormat(self,format):
+        self._format = format
+
+    def format(self):
+        return self._format
+
+    def setMover(self,mover):
+        self._mover = mover
+
+    def mover(self):
+        return 
+
+    def submit(self,dag,log):
+        if ( self.isSubmitted() ):
+            return self.isSubmitted()
+        
+        # make sure all parents are submitted, if necessary
+        parentjobs = None
+        if ( self.parents() is not None ):
+            node_list = []
+            for parent in self.parents():
+                if (len(node_list) == 0):
+                    node_list = [dag.getNode(parent)]
+                else:
+                    node_list.append(dag.getNode(parent))
+            node_list.sort()
+
+            for parentnode in node_list:
+                success = parentnode.submit(dag,log)
+                if ( not success ):
+                    return success
+                else:
+                    if ( parentjobs is None and parentnode.jobId() is not None):
+                        parentjobs = [parentnode.jobId()]
+                    elif ( parentnode.jobId() is not None ):
+                        parentjobs.append(parentnode.jobId())
+                
+        # do prologue, if needed
+        if ( self.preScript() is not None and not self.preScriptHasRun() ):
+            cmd = self.preScript()[0]
+            if ( len(self.preScript())>1 ):
+                for arg in self.preScript()[1:]:
+                    cmd = cmd+" "+arg
+            log.write(str(datetime.datetime.now())+":  running PRE script for job "+self.name()+" -- \""+cmd+"\"\n")
+            log.flush()
+            exit_status = os.system(cmd)
+            if ( exit_status!=0 ):
+                raise RuntimeError,self.name()+": preScript failed"
+            self.setPreScriptHasRun(True)
+
+        # do actual job submission
+        if ( not self.isSubmitted() ):
+            if ( not self.isDone() ):
+                dependencies = None
+                if ( parentjobs is not None ):
+                    for parent in self.parents():
+                        jobid = dag.getNode(parent).jobId()
+                        if ( jobid is not None ):
+                            # Need to check if jobids still exist before adding them
+                            # as a dependency
+                            if ( os.system("qstat "+jobid+" 2>/dev/null 1>/dev/null")==0 ):
+                                if ( dependencies is None ):
+                                    dependencies = [jobid]
+                                else:
+                                    dependencies.append(jobid)
+                dependency = ""
+                if ( dependencies is not None ):
+                    # Filter dependencies to get the unique values; otherwise PBS gets confused.
+                    dependencies = unique(dependencies)
+                    dependencies.sort()
+                    #dependencies.reverse()
+                    dependency = "-D "+dependencies[0]
+                    if ( len(dependencies)>1 ):
+                        for dep in dependencies[1:]:
+                            dependency += ":" + dep
+                vars = ""
+                if ( self.vars() is not None ):
+                    vars = "-v "+self.vars()[0]
+                    if ( len(self.vars())>1 ):
+                        for var in self.vars()[1:]:
+                            vars = vars+","+var
+                queue = ""
+                if ( self.queue() is not None ):
+                    queue = "-q "+self.queue()
+                format = ""
+                if ( self.format() is not None ):
+                    format = "-F "+self.format()
+                mover = ""
+                if ( self.mover() is not None ):
+                    queue = "-M "+self.mover()
+                cmd = datasubmit+" -N "+self.name()+" "+queue+" "+dependency+" "+" "+format+" "+mover+" "+vars+" "+self.script()
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+": "+cmd+"\n")
+                    log.flush()
+                pin, pout, perr = os.popen3(cmd)
+                pin.close()
+                jobid = ""
+                try:
+                    stdout = pout.readlines()
+                    if ( len(stdout)>0 ):
+                        jobid = stdout[0]
+                        if ( jobid[-1]=="\n" ):
+                            jobid = jobid[:-1]
+                    stderr = perr.readlines()
+                    for line in stderr:
+                        log.write(line)
+                        log.flush()
+                except IndexError, err:
+                    if(verbose):
+                        sys.stderr.write(str(err) + "\n") 
+                pout.close()
+                perr.close()
+                if ( jobid is None or jobid=="" ):
+                    sys.stderr.write("No jobid, assuming failure\n")
+                    sys.exit(-1)
+                self.setJobId(jobid)
+                log.write(str(datetime.datetime.now())+":  submitted job "+self.name()+" as jobid "+self.jobId()+"\n")
+                log.flush()
+
+        
+                # if RETRY is defined, call retry()
+                if ( self.retries()>0 ):
+                    self.retry(cmd)
+            
+        self.setSubmitted(True)
+        
+        # do epilogue, if needed
+        if ( self.postScript() is not None and not self.postScriptHasRun() ):
+            cmd = self.postScript()[0]
+            if ( len(self.postScript())>1 ):
+                for arg in self.postScript()[1:]:
+                    cmd = cmd+" "+arg
+            log.write(str(datetime.datetime.now())+":  running POST script for job "+self.name()+" -- \""+cmd+"\"\n")
+            log.flush()
+            exit_status = os.system(cmd)
+            if ( exit_status!=0 ):
+                raise RuntimeError,self.name()+": postScript failed"
+            self.setPostScriptHasRun(True)
+            
+        # make sure all children are submitted, if necessary
+        if ( self.children() is not None ):
+            node_list = []
+            for child in self.children():
+                if(len(node_list) == 0):
+                    node_list = [dag.getNode(child)]
+                else:
+                    node_list.append(dag.getNode(child))
+            node_list.sort()
+
+            for childnode in node_list:
+                success = childnode.submit(dag,log)
+                if ( not success ):
+                    return success
+
+        # if nothing failed, return success
+        return True
+
 
 class DAG(object):
     def __init__(self,file=None):
@@ -642,7 +819,7 @@ for file in args:
                         generateDotFile = True
                         dotFile = token[1]
                     elif ( token[0]=="JOB" ):
-                        node = DAGNode(token[1],token[2])
+                        node = JobNode(token[1],token[2])
                         dag.addNode(node)
                         try:
                             if(token[3] == "DONE"):
@@ -654,7 +831,21 @@ for file in args:
                         except IndexError, err:
                             pass
                     elif ( token[0]=="DATA" ):
-                        sys.stderr.write(file+":  DATA not supported, ignoring\n")
+                        #sys.stderr.write(file+":  DATA not supported, ignoring\n")
+                        node = DataJobNode(token[1],token[2])
+                        dag.addNode(node)
+                        try:
+                            for i in range(3,len(token),2):
+                                if ( token[i]=="DONE" ):
+                                    node.setDone(True)
+                                elif ( token[i]=="FORMAT" ):
+                                    node.setFormat(token[i+1])
+                                elif ( token[i]=="MOVER" ):
+                                    node.setMover(token[i+1])
+                                elif ( token[i]=="QUEUE" ):
+                                    node.setQueue(token[i+1])
+                        except IndexError, err:
+                            pass
                     elif ( token[0]=="PARENT" ):
                         foundchild = False
                         parents = [token[1]]
