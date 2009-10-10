@@ -912,6 +912,8 @@ for file in args:
                 if ( dumpRescueAndExit ):
                     dag.rescueDAG(base,dotFile,log)
                 elif ( doSubmit ):
+                    if ( dotFile is not None ):
+                        dag.writeDotFile(dotFile,base)
                     finish = False
                     for root in dag.getRootNodes():
                         rootnode = dag.getNode(root)
