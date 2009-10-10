@@ -1,4 +1,10 @@
 dagsub:
+* Restart DAGs will not work reliably unless pbs_server is configured to
+  keep jobs for some period of time after they end (e.g. qmgr -c "set
+  server keep_completed = 300").  Without this setting, dagsub is not
+  able to determine whether or not a job completed successfully unless
+  it happens to check while the completed job is in the 'E' state
+  (which is typically only a few seconds).
 * When specify "RETRY" on one of the parents (i.e.job1), a child will
   sometimes be missing any other dependencies (i.e. job5 will only depend
   on job1, even if the job5 has other parents, e.g. job2-4). In other words,
@@ -12,8 +18,7 @@ dagsub:
   a bug in TORQUE; see
   http://www.supercluster.org/pipermail/torqueusers/2009-July/009282.html for
   details.
-
-dagsub/dmsub
 * It does not seem to be possible to get the exit status of a process
   started by Python 2.4's popen3(), so success of job submission must be
-  inferred from whether or not a jobid is received from qsub's stdout.
+  inferred from whether or not a jobid is received from qsub's
+  stdout.  (This problem also occurs wth dmsub.)
