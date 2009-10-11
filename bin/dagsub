@@ -24,10 +24,10 @@ import os.path
 import sys
 import operator
 import time
-import string
 import shutil
+import string
+import subprocess
 
-DELAY       = 30
 SUCCESS     = 0
 FAIL        = -1
 NOT_FOUND   = 1
@@ -196,7 +196,7 @@ class JobNode(object):
         return self._vars
 
     def setRetries(self,retries):
-        self._retries = retries
+        self._retries = int(retries)
 
     def setPriority(self,priority):
         self._priority = priority
@@ -233,19 +233,35 @@ class JobNode(object):
             childnode = dag.getNode(child)
             childnode.isSick()
 
-    def job_success(self):
-        if(self.jobId() is not None):
+    def jobStatus(self, log):
+        if ( self.jobId() is not None ):
+            if ( verbose ):
+                log.write(str(datetime.datetime.now())+":  checking status of job "+self.name()+", jobid "+self.jobId()+"\n")
             cmd = "qstat -f "+str(self.jobId())
-            pin,tempFile,perr = os.popen3(cmd)
+            p = subprocess.Popen(cmd, shell=True,
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 close_fds=True)
+            pin = p.stdin
+            perr = p.stderr
+            pout = p.stdout
             pin.close()
+            stderr = perr.readlines()
             perr.close()
-            buffer = tempFile.readlines()
-            tempFile.close()
-            if(len(buffer) == 0):
+            if ( len(stderr)>0 ):
+                for line in stderr:
+                    log.write(str(datetime.datetime.now())+":  "+line)
+            stdout = pout.readlines()
+            pout.close()
+            p.wait()
+            if ( p.returncode!=0 ):
                 return NOT_FOUND
-            for each in buffer:
-                if(each.find('exit_status') != -1):
-                    if(each.find('exit_status = 0') != -1):
+            if( len(stdout)==0 ):
+                return NOT_FOUND
+            for line in stdout:
+                if( line.find('exit_status')!=-1 ):
+                    if( line.find('exit_status = 0')!=-1 ):
                         self.setDone(True)
                         return SUCCESS
                     else:
@@ -254,38 +270,73 @@ class JobNode(object):
         else:
             return NOT_FOUND
             
-    def retry(self, cmd):
-        tryout = 0
-        condition = self.job_success()
-        while ((condition in (IN_PROGRESS, FAIL, NOT_FOUND)) and (tryout <= self.retries())):
+    def retry(self, cmd, log):
+        tries = 0
+        condition = self.jobStatus(log)
+        while ( (condition==IN_PROGRESS or condition==FAIL or condition==NOT_FOUND) and (tries<=self.retries()) ):
             # There are two possibilities where a job is not found. 
-            #   1. The job is in 'C' state for more than 5 minutes, so the job is flush out.
+            #   1. The job is in 'C' state for more than the length of
+            #      time that the server keeps completed jobs, so the job has
+            #      been flushed out.
             #   2. The job is somehow deleted in 'Q' or 'H' state(s).
             # Implementation:
             #   We assume that "NOT_FOUND" is same as "FAIL", and we will resubmit the job 
             #   if "NOT_FOUND" is detected.
-            if(condition in (FAIL, NOT_FOUND)):
-                pin, pout, perr = os.popen3(cmd)
+            if ( tries>=self.retries() and (condition==FAIL or condition==NOT_FOUND) ):
+                log.write(str(datetime.datetime.now())+":  job "+self.name()+" retries exhausted\n")
+                return tries
+            else:
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+":  job "+self.name()+" "+str(self.retries()-tries)+" retries left\n")
+            if ( condition==IN_PROGRESS ):
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" is in progress\n")
+            elif ( condition==FAIL or condition==NOT_FOUND ):
+                log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has failed\n")
+                self.setJobId(None)
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+": "+cmd+"\n")
+                p = subprocess.Popen(cmd, shell=True,
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     close_fds=True)
+                pin = p.stdin
+                perr = p.stderr
+                pout = p.stdout
                 pin.close()
                 jobid = ""
                 try:
-                    jobid = pout.readlines()[0]
-                    if(jobid[-1] == "\n"):
-                        jobid = jobid[:-1] 
-                    for line in perr.readlines():
-                        sys.stderr.write(line)
+                    stdout = pout.readlines()
+                    if ( len(stdout)>0 ):
+                        jobid = stdout[0]
+                        if ( jobid[-1]=="\n" ):
+                            jobid = jobid[:-1]
+                    stderr = perr.readlines()
+                    for line in stderr:
+                        log.write(str(datetime.datetime.now())+":  "+line)
                     pout.close()
                 except IndexError, err:
-                    log.write(datetime.datetime.now()+":  "+str(err)+"\n")
+                    log.write(str(datetime.datetime.now())+":  "+str(err)+"\n")
                     log.flush()
+                stderr = perr.readlines()
                 perr.close()
-                self.setJobId(jobid)
-                tryout += 1    
-                log.write(str(datetime.datetime.now())+":  submitted retried job "+self.name()+" "+str(tryout)+" time(s), as jobid "+str(self.jobId())+"\n")
+                for line in stderr:
+                    log.write(line)
+                p.wait()
+                tries += 1    
+                if ( p.returncode!=0 or jobid is None or jobid=="" ):
+                    self.setJobId(None)
+                    log.write(str(datetime.datetime.now())+":  submission of retry "+str(tries)+" (max "+str(self.retries())+") for job "+self.name()+" failed\n")
+                else:
+                    self.setJobId(jobid)
+                    log.write(str(datetime.datetime.now())+":  submitted job "+self.name()+" retry "+str(tries)+" (max "+str(self.retries())+") as jobid "+str(self.jobId())+"\n")
                 log.flush()
-            time.sleep(DELAY)
-            condition = self.job_success()
-        return tryout
+            if ( verbose ):
+                log.write(str(datetime.datetime.now())+":  sleeping for "+str(timeout)+" seconds\n")
+            time.sleep(timeout)
+            condition = self.jobStatus(log)
+        return tries
 
     def submit(self,dag,log):
         if ( self.isSubmitted() ):
@@ -363,24 +414,34 @@ class JobNode(object):
                 if ( verbose ):
                     log.write(str(datetime.datetime.now())+": "+cmd+"\n")
                     log.flush()
-                pin, pout, perr = os.popen3(cmd)
+                p = subprocess.Popen(cmd, shell=True,
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     close_fds=True)
+                pin = p.stdin
+                perr = p.stderr
+                pout = p.stdout
                 pin.close()
                 jobid = ""
                 try:
-                    jobid = pout.readlines()[0]
-                    if ( jobid[-1]=="\n" ):
-                        jobid = jobid[:-1]
+                    stdout = pout.readlines()
+                    if ( len(stdout)>0 ):
+                        jobid = stdout[0]
+                        if ( jobid[-1]=="\n" ):
+                            jobid = jobid[:-1]
                     for line in perr.readlines():
-                        log.write(line)
+                        log.write(str(datetime.datetime.now())+":  "+line)
                         log.flush()
                     pout.close()
                 except IndexError, err:
                     if(verbose):
                         sys.stderr.write(str(err) + "\n") 
                 perr.close()
-                if ( jobid is None or jobid=="" ):
-                    sys.stderr.write("No jobid, assuming failure")
-                    os.exit(-1)
+                p.wait()
+                if ( p.returncode!=0 or jobid is None or jobid=="" ):
+                    log.write(str(datetime.datetime.now())+":  job submission failed for job "+self.name()+", aborting\n")
+                    sys.exit(-1)
                 self.setJobId(jobid)
                 log.write(str(datetime.datetime.now())+":  submitted job "+self.name()+" as jobid "+self.jobId()+"\n")
                 log.flush()
@@ -388,7 +449,7 @@ class JobNode(object):
         
                 # if RETRY is defined, call retry()
                 if ( self.retries()>0 ):
-                    self.retry(cmd)
+                    self.retry(cmd,log)
             
         self.setSubmitted(True)
         
@@ -409,7 +470,7 @@ class JobNode(object):
         if ( self.children() is not None ):
             node_list = []
             for child in self.children():
-                if(len(node_list) == 0):
+                if( len(node_list)==0 ):
                     node_list = [dag.getNode(child)]
                 else:
                     node_list.append(dag.getNode(child))
@@ -524,7 +585,14 @@ class DataJobNode(JobNode):
                 if ( verbose ):
                     log.write(str(datetime.datetime.now())+": "+cmd+"\n")
                     log.flush()
-                pin, pout, perr = os.popen3(cmd)
+                p = subprocess.Popen(cmd, shell=True,
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     close_fds=True)
+                pin = p.stdin
+                perr = p.stderr
+                pout = p.stdout
                 pin.close()
                 jobid = ""
                 try:
@@ -535,15 +603,16 @@ class DataJobNode(JobNode):
                             jobid = jobid[:-1]
                     stderr = perr.readlines()
                     for line in stderr:
-                        log.write(line)
+                        log.write(str(datetime.datetime.now())+":  "+line)
                         log.flush()
                 except IndexError, err:
                     if(verbose):
                         sys.stderr.write(str(err) + "\n") 
                 pout.close()
                 perr.close()
-                if ( jobid is None or jobid=="" ):
-                    sys.stderr.write("No jobid, assuming failure\n")
+                p.wait()
+                if ( p.returncode!=0 or jobid is None or jobid=="" ):
+                    log.write(str(datetime.datetime.now())+":  job submission failed for job "+self.name()+", aborting\n")
                     sys.exit(-1)
                 self.setJobId(jobid)
                 log.write(str(datetime.datetime.now())+":  submitted job "+self.name()+" as jobid "+self.jobId()+"\n")
@@ -573,7 +642,7 @@ class DataJobNode(JobNode):
         if ( self.children() is not None ):
             node_list = []
             for child in self.children():
-                if(len(node_list) == 0):
+                if( len(node_list)==0 ):
                     node_list = [dag.getNode(child)]
                 else:
                     node_list.append(dag.getNode(child))
@@ -656,37 +725,56 @@ class DAG(object):
     ## If so, write "DONE" to the file.
         if ( file=="-" or file=="--" ):
             raise RuntimeException,"Cannot reread stdin to create rescue DAG"
-        if ( os.path.exists(file+".rescue") ):
-            tempRFile = open(file+".rescue", 'r')
+        if ( os.path.exists(file+".rescue") and not os.path.exists(file+".rescue.lck") ):
+            oldRescueDAG = open(file+".rescue", 'r')
         else:
-            tempRFile = open(file, 'r')
-        buffer = tempRFile.readlines()
-        tempRFile.close()
-        tempWFile = open(file+".rescue", 'w')
+            if ( os.path.exists(file+".rescue") and os.path.exists(file+".rescue.lck") ):
+                log.write(str(datetime.datetime.now())+":  ignoring "+file+".rescue due to possible corruption -- "+file+".rescue.lck present\n")
+            oldRescueDAG = open(file, 'r')
+        buffer = oldRescueDAG.readlines()
+        oldRescueDAG.close()
+        newRescueDAG = open(file+".rescue", 'w')
+        # create "lock" file
+        open(file+".rescue.lck", 'w').close()
         finish = True
         for line in buffer:
-            if( ( ('JOB' or 'DATA') in line ) and ( 'DONE' not in line ) and ( not line.startswith("#") )  ):
+            if ( (line.startswith("JOB") or line.startswith('DATA')) and
+                 ( 'DONE' not in line ) ):
                 try:
                     nodename = line.split()[1]
                     node = dag.getNode(nodename)
                     if ( node is not None ):
-                        cond = node.job_success()
-                        if ( not node.isHealthy() or cond==NOT_FOUND ):
-                            tempWFile.write(line)
+                        cond = node.jobStatus(log)
+                        if ( not node.isHealthy() ):
+                            if ( verbose ):
+                                log.write(str(datetime.datetime.now())+":  "+node.name()+" is unhealthy\n")
+                                log.flush()
+                            newRescueDAG.write(line)
+                        elif ( cond==NOT_FOUND ):
+                            if ( verbose ):
+                                log.write(str(datetime.datetime.now())+":  "+node.name()+" not found\n")
+                                log.flush()
+                            newRescueDAG.write(line)
                         elif( cond==FAIL ):
+                            if ( verbose ):
+                                log.write(str(datetime.datetime.now())+":  "+node.name()+" has failed\n")
+                                log.flush()
                             node.childrenAreSick()
-                            tempWFile.write(line)
+                            newRescueDAG.write(line)
                         elif( cond==IN_PROGRESS ):
+                            if ( verbose ):
+                                log.write(str(datetime.datetime.now())+":  "+node.name()+" is in progress\n")
+                                log.flush()
                             finish = False
-                            tempWFile.write(line)
+                            newRescueDAG.write(line)
                         elif( node.isDone() ):
                             if ( verbose ):
                                 log.write(str(datetime.datetime.now())+":  "+node.name()+" is done\n")
                                 log.flush()
                             if(line[-2].isspace()):
-                                tempWFile.write(line[:-1] + "DONE\n")
+                                newRescueDAG.write(line[:-1] + "DONE\n")
                             else:
-                                tempWFile.write(line[:-1] + " DONE\n")
+                                newRescueDAG.write(line[:-1] + " DONE\n")
                             if ( generateDotFile ):
                                 base = file.split(".")[0]
                                 dag.writeDotFile(dotFile,base)
@@ -698,9 +786,11 @@ class DAG(object):
                     log.flush()
 
             else:
-                tempWFile.write(line)
-        tempWFile.close()       
-        if(verbose):
+                newRescueDAG.write(line)
+        # destroy "lock" file
+        os.remove(file+".rescue.lck")
+        newRescueDAG.close()       
+        if ( verbose ):
             log.write(str(datetime.datetime.now())+":  Finished - "+str(finish)+"\n")
             log.flush()
         return finish

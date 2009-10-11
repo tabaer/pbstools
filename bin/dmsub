@@ -8,6 +8,7 @@
 import getopt
 import datetime
 import os.path
+import subprocess
 import sys
 
 debug = False
@@ -488,7 +489,15 @@ class ScheduledDataTransfer(object):
             sys.stderr.write("mover="+self.getMoverType()+"\n")
         if ( dosubmit ):
             cmd = "qsub"
-            pin,pout,perr = os.popen3(cmd)
+            #pin,pout,perr = os.popen3(cmd)
+            p = subprocess.Popen(cmd, shell=True,
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 close_fds=True)
+            pin = p.stdin
+            perr = p.stderr
+            pout = p.stdout
         else:
             pin = sys.stdout
             pout = open("/dev/null")
@@ -619,7 +628,15 @@ class ScheduledDataTransfer(object):
         if ( debug ):
             sys.stderr.write("executing command \""+cmd+"\"\n")
         if ( dosubmit ):
-            pin,pout,perr = os.popen3(cmd)
+            #pin,pout,perr = os.popen3(cmd)
+            p = subprocess.Popen(cmd, shell=True,
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 close_fds=True)
+            pin = p.stdin
+            perr = p.stderr
+            pout = p.stdout
             pin.close()
             stdout = pout.readlines()
             for line in stdout:
@@ -657,7 +674,15 @@ class ScheduledDataTransfer(object):
         if ( debug ):
             sys.stderr.write("executing command \""+cmd+"\"\n")
         if ( dosubmit ):
-            pin,pout,perr = os.popen3(cmd)
+            #pin,pout,perr = os.popen3(cmd)
+            p = subprocess.Popen(cmd, shell=True,
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 close_fds=True)
+            pin = p.stdin
+            perr = p.stderr
+            pout = p.stdout
             pin.close()
             stdout = pout.readlines()
             for line in stdout:
@@ -688,7 +713,15 @@ class ScheduledDataTransfer(object):
         if ( debug ):
             sys.stderr.write("executing command \""+cmd+"\"\n")
         if ( dosubmit ):
-            pin,pout,perr = os.popen3(cmd)
+            #pin,pout,perr = os.popen3(cmd)
+            p = subprocess.Popen(cmd, shell=True,
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 close_fds=True)
+            pin = p.stdin
+            perr = p.stderr
+            pout = p.stdout
             pin.close()
             if ( len(stdout)>0 ):
                 jobid = stdout[0].rstrip('\n')           

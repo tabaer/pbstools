@@ -6,7 +6,7 @@ VARS preproc day="20090531"
 
 JOB forecast forecast.pbs
 VARS forecast day="20090531"
-#RETRY forecast 3
+RETRY forecast 3
 
 JOB postproc_hr1 postproc.pbs
 VARS postproc_hr1 day="20090531" hr="0100"
