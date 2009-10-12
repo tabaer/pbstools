@@ -524,6 +524,10 @@ class ScheduledDataTransfer(object):
                 for var in myvars[1:]:
                     pin.write(","+var)
             pin.write("\n")
+        if ( pbs_prologue is not None ):
+            lines = pbs_prologue.split("\\n")
+            for line in lines:
+                pin.write(line+"\n")
         list = self.transferList()
         if ( list.getOption("x509proxy")!="default" ):
             if ( debug ):
@@ -752,6 +756,8 @@ joinlogs = None
 server = None
 port = None
 dependency = None
+vars = None
+pbs_prologue = None
 
 def usage():
 ##     global informat
@@ -803,6 +809,7 @@ def read_cfg(file):
     global stripesize
     global blksize
     global vars
+    global pbs_prologue
     if ( not os.path.exists(file) ):
         raise IOError,file+" does not exist"
     elif ( not os.path.isfile(file) ):
@@ -844,6 +851,8 @@ def read_cfg(file):
                         debug = True
                     else:
                         debug = False
+                elif ( keyword=="pbs_prologue" ):
+                    pbs_prologue = value
 
 try:
     if ( debug ):
