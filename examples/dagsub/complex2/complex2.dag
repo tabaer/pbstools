@@ -1,6 +1,7 @@
 # complex2.dag
 
 JOB A stage1.pbs
+RETRY A 3
 
 JOB B stage2.pbs
 VARS B node="1"
