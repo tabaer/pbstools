@@ -228,10 +228,11 @@ class JobNode(object):
     def isSick(self):
         self._isHealthy = False
 
-    def childrenAreSick(self):
-        for child in self._children:
-            childnode = dag.getNode(child)
-            childnode.isSick()
+    def childrenAreSick(self,dag):
+        if ( self._children is not None ):
+            for child in self._children:
+                childnode = dag.getNode(child)
+                childnode.isSick()
 
     def jobStatus(self, log):
         if ( self.jobId() is not None ):
@@ -256,21 +257,35 @@ class JobNode(object):
             pout.close()
             p.wait()
             if ( p.returncode!=0 ):
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" not found\n")
                 return NOT_FOUND
             if( len(stdout)==0 ):
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" not found\n")
                 return NOT_FOUND
             for line in stdout:
                 if( line.find('exit_status')!=-1 ):
                     if( line.find('exit_status = 0')!=-1 ):
+                        if ( verbose ):
+                            log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has completed\n")
                         self.setDone(True)
                         return SUCCESS
                     else:
+                        if ( verbose ):
+                            log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has failed\n")
                         return FAIL
+            if ( verbose ):
+                log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" is in progress\n")
             return IN_PROGRESS
         else:
+            if ( verbose and self.jobId() is not None ):
+                log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" not found\n")
+            elif ( verbose and self.jobId() is None ):
+                log.write(str(datetime.datetime.now())+":  job "+self.name()+" not found\n")
             return NOT_FOUND
             
-    def retry(self, cmd, log):
+    def retry(self, cmd, dag, log):
         tries = 0
         condition = self.jobStatus(log)
         while ( (condition==IN_PROGRESS or condition==FAIL or condition==NOT_FOUND) and (tries<=self.retries()) ):
@@ -288,11 +303,7 @@ class JobNode(object):
             else:
                 if ( verbose ):
                     log.write(str(datetime.datetime.now())+":  job "+self.name()+" "+str(self.retries()-tries)+" retries left\n")
-            if ( condition==IN_PROGRESS ):
-                if ( verbose ):
-                    log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" is in progress\n")
-            elif ( condition==FAIL or condition==NOT_FOUND ):
-                log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has failed\n")
+            if ( condition==FAIL or condition==NOT_FOUND ):
                 self.setJobId(None)
                 if ( verbose ):
                     log.write(str(datetime.datetime.now())+": "+cmd+"\n")
@@ -334,6 +345,7 @@ class JobNode(object):
                 log.flush()
             if ( verbose ):
                 log.write(str(datetime.datetime.now())+":  sleeping for "+str(timeout)+" seconds\n")
+            dag.writeRescueDAG(log)
             time.sleep(timeout)
             condition = self.jobStatus(log)
         return tries
@@ -449,7 +461,7 @@ class JobNode(object):
         
                 # if RETRY is defined, call retry()
                 if ( self.retries()>0 ):
-                    self.retry(cmd,log)
+                    self.retry(cmd,dag,log)
             
         self.setSubmitted(True)
         
@@ -581,7 +593,7 @@ class DataJobNode(JobNode):
                 mover = ""
                 if ( self.mover() is not None ):
                     queue = "-M "+self.mover()
-                cmd = datasubmit+" -N "+self.name()+" "+queue+" "+dependency+" "+" "+format+" "+mover+" "+vars+" "+self.script()
+                cmd = datasubmit+" -j oe -N "+self.name()+" "+queue+" "+dependency+" "+" "+format+" "+mover+" "+vars+" "+self.script()
                 if ( verbose ):
                     log.write(str(datetime.datetime.now())+": "+cmd+"\n")
                     log.flush()
@@ -621,7 +633,7 @@ class DataJobNode(JobNode):
         
                 # if RETRY is defined, call retry()
                 if ( self.retries()>0 ):
-                    self.retry(cmd)
+                    self.retry(cmd,dag,log)
             
         self.setSubmitted(True)
         
@@ -720,16 +732,23 @@ class DAG(object):
         dotfile.write("}\n")
         dotfile.close()
 
-    def rescueDAG(self, file, dotFile, log):
+    def writeRescueDAG(self, log):
     ## After all jobs are submitted, check if self.Done() is true.
     ## If so, write "DONE" to the file.
+        if ( verbose ):
+            log.write(str(datetime.datetime.now())+":  writing rescue DAG\n")
+        file = self.fileName()
         if ( file=="-" or file=="--" ):
             raise RuntimeException,"Cannot reread stdin to create rescue DAG"
-        if ( os.path.exists(file+".rescue") and not os.path.exists(file+".rescue.lck") ):
+        if ( os.path.exists(file+".rescue") and not os.path.exists(file+".rescue.lck") and 
+             os.stat(file).st_mtime<os.stat(file+".rescue").st_mtime ):
             oldRescueDAG = open(file+".rescue", 'r')
         else:
             if ( os.path.exists(file+".rescue") and os.path.exists(file+".rescue.lck") ):
                 log.write(str(datetime.datetime.now())+":  ignoring "+file+".rescue due to possible corruption -- "+file+".rescue.lck present\n")
+            elif ( os.path.exists(file+".rescue") and os.stat(file).st_mtime>os.stat(file+".rescue").st_mtime ):
+                log.write(str(datetime.datetime.now())+":  ignoring "+file+".rescue because it is older than "+file+"\n")
+            log.flush()
             oldRescueDAG = open(file, 'r')
         buffer = oldRescueDAG.readlines()
         oldRescueDAG.close()
@@ -751,20 +770,11 @@ class DAG(object):
                                 log.flush()
                             newRescueDAG.write(line)
                         elif ( cond==NOT_FOUND ):
-                            if ( verbose ):
-                                log.write(str(datetime.datetime.now())+":  "+node.name()+" not found\n")
-                                log.flush()
                             newRescueDAG.write(line)
                         elif( cond==FAIL ):
-                            if ( verbose ):
-                                log.write(str(datetime.datetime.now())+":  "+node.name()+" has failed\n")
-                                log.flush()
-                            node.childrenAreSick()
+                            node.childrenAreSick(dag)
                             newRescueDAG.write(line)
                         elif( cond==IN_PROGRESS ):
-                            if ( verbose ):
-                                log.write(str(datetime.datetime.now())+":  "+node.name()+" is in progress\n")
-                                log.flush()
                             finish = False
                             newRescueDAG.write(line)
                         elif( node.isDone() ):
@@ -775,9 +785,6 @@ class DAG(object):
                                 newRescueDAG.write(line[:-1] + "DONE\n")
                             else:
                                 newRescueDAG.write(line[:-1] + " DONE\n")
-                            if ( generateDotFile ):
-                                base = file.split(".")[0]
-                                dag.writeDotFile(dotFile,base)
                     else:
                         log.write(str(datetime.datetime.now())+":  node "+nodename+" is None while writing rescue DAG\n")
                         log.flush()
@@ -791,7 +798,8 @@ class DAG(object):
         os.remove(file+".rescue.lck")
         newRescueDAG.close()       
         if ( verbose ):
-            log.write(str(datetime.datetime.now())+":  Finished - "+str(finish)+"\n")
+            log.write(str(datetime.datetime.now())+":  done writing rescue DAG\n")
+            log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
             log.flush()
         return finish
 
@@ -1000,7 +1008,7 @@ for file in args:
                 # Current implementation: 
                 #       Only allow the custom logname, if single input file submitted.
                 if ( dumpRescueAndExit ):
-                    dag.rescueDAG(base,dotFile,log)
+                    dag.writeRescueDAG(log)
                 elif ( doSubmit ):
                     if ( dotFile is not None ):
                         dag.writeDotFile(dotFile,base)
@@ -1008,12 +1016,12 @@ for file in args:
                     for root in dag.getRootNodes():
                         rootnode = dag.getNode(root)
                         rootnode.submit(dag,log)
-                        finish = dag.rescueDAG(file,dotFile,log)
+                        finish = dag.writeRescueDAG(log)
 
                     # Monitor the DAG and write out rescue DAGs periodically
                     while ( not finish ):
                         time.sleep(timeout)
-                        finish = dag.rescueDAG(file,dotFile,log)
+                        finish = dag.writeRescueDAG(log)
             else:
                 usage()
    
