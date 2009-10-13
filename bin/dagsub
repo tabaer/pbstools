@@ -120,6 +120,10 @@ class JobNode(object):
         self._done = False
         self._submitted = False
         self._isHealthy = True
+        self._exitcode = None
+        self._abortstatus = []
+        self._abortreturn = dict()
+        self._noretrystatus = 0
         if ( not os.path.exists(script) ):
             raise IOError, "File "+script+" not found"
 
@@ -143,6 +147,13 @@ class JobNode(object):
             self._vars = [var]
         else:
             self._vars.append(var)
+
+    def addAbortStatus(self,abort,returncode=None):
+        self._abortstatus.append(abort)
+        if ( returncode is None ):
+            self._abortreturn[abort] = abort
+        else:
+            self._abortreturn[abort] = returncode
 
     def setJobId(self, jobid):
         self._jobid = jobid
@@ -183,6 +194,9 @@ class JobNode(object):
     def queue(self):
         return self._queue
 
+    def noRetryStatus(self):
+        return self._noretrystatus
+
     def isDone(self):
         return self._done
 
@@ -194,6 +208,9 @@ class JobNode(object):
 
     def vars(self):
         return self._vars
+
+    def exitCode(self):
+        return self._exitcode
 
     def setRetries(self,retries):
         self._retries = int(retries)
@@ -224,6 +241,12 @@ class JobNode(object):
 
     def setSubmitted(self,submitted):
         self._submitted = submitted
+
+    def setExitCode(self,exitcode):
+        self._exitcode = exitcode
+
+    def setNoRetryStatus(self,noretry):
+        self._noretrystatus = noretry
     
     def isSick(self):
         self._isHealthy = False
@@ -266,13 +289,18 @@ class JobNode(object):
                 return NOT_FOUND
             for line in stdout:
                 if( line.find('exit_status')!=-1 ):
-                    if( line.find('exit_status = 0')!=-1 ):
+                    exit_status = int(line.split(" = ")[1])
+                    self.setExitCode(exit_status)
+                    if( exit_status==0 ):
                         if ( verbose ):
                             log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has completed\n")
                         self.setDone(True)
                         return SUCCESS
                     else:
                         log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has failed\n")
+                        if ( exit_status in self._abortstatus ):
+                            log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" had fatal exit status "+str(exit_status)+", aborting\n")
+                            sys.exit(self._abortreturn[exit_status])
                         return FAIL
             if ( verbose ):
                 log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" is in progress\n")
@@ -296,6 +324,9 @@ class JobNode(object):
             #   if "NOT_FOUND" is detected.
             if ( tries>=self.retries() and (condition==FAIL or condition==NOT_FOUND) ):
                 log.write(str(datetime.datetime.now())+":  job "+self.name()+" retries exhausted\n")
+                return tries
+            elif ( self.exitCode() is not None and self.exitCode()==self.noRetryStatus() ):
+                log.write(str(datetime.datetime.now())+":  job "+self.name()+" failed with exit status "+str(self.noRetryStatus())+", not retrying\n")
                 return tries
             else:
                 if ( verbose ):
@@ -347,10 +378,7 @@ class JobNode(object):
             condition = self.jobStatus(log)
         return tries
 
-    def submit(self,dag,log):
-        if ( self.isSubmitted() ):
-            return self.isSubmitted()
-        
+    def _presubmit(self,dag,log):
         # make sure all parents are submitted, if necessary
         parentjobs = None
         if ( self.parents() is not None ):
@@ -384,13 +412,57 @@ class JobNode(object):
             if ( exit_status!=0 ):
                 raise RuntimeError,self.name()+": preScript failed"
             self.setPreScriptHasRun(True)
+        return True
+
+    def _postsubmit(self,dag,log):
+        # do epilogue, if needed
+        if ( self.postScript() is not None and not self.postScriptHasRun() ):
+            cmd = self.postScript()[0]
+            if ( len(self.postScript())>1 ):
+                for arg in self.postScript()[1:]:
+                    cmd = cmd+" "+arg
+            log.write(str(datetime.datetime.now())+":  running POST script for job "+self.name()+" -- \""+cmd+"\"\n")
+            log.flush()
+            exit_status = os.system(cmd)
+            if ( exit_status!=0 ):
+                raise RuntimeError,self.name()+": postScript failed"
+            self.setPostScriptHasRun(True)
+            
+        # dump out a rescue DAG just in case
+        dag.writeRescueDAG(log)
+            
+        # make sure all children are submitted, if necessary
+        if ( self.children() is not None ):
+            node_list = []
+            for child in self.children():
+                if( len(node_list)==0 ):
+                    node_list = [dag.getNode(child)]
+                else:
+                    node_list.append(dag.getNode(child))
+            node_list.sort()
+
+            for childnode in node_list:
+                success = childnode.submit(dag,log)
+                if ( not success ):
+                    return success
+        return True
+
+    def submit(self,dag,log):
+        if ( self.isSubmitted() ):
+            return self.isSubmitted()
+
+        # do generic pre-submission stuff
+        success = self._presubmit(dag,log)
+        if ( not success ):
+            return success
 
         # do actual job submission
         if ( not self.isSubmitted() ):
             if ( not self.isDone() ):
                 dependencies = None
-                if ( parentjobs is not None ):
-                    for parent in self.parents():
+                parents = self.parents()
+                if ( parents is not None and len(parents)>0 ):
+                    for parent in parents:
                         jobid = dag.getNode(parent).jobId()
                         if ( jobid is not None ):
                             # Need to check if jobids still exist before adding them
@@ -456,42 +528,14 @@ class JobNode(object):
                 log.flush()
 
         
-                # if RETRY is defined, call retry()
-                if ( self.retries()>0 ):
+                # if RETRY is defined or there is a POST script to run, call retry()
+                if ( self.retries()>0 or (self.postScript() is not None and not self.postScriptHasRun()) ):
                     self.retry(cmd,dag,log)
             
         self.setSubmitted(True)
         
-        # do epilogue, if needed
-        if ( self.postScript() is not None and not self.postScriptHasRun() ):
-            cmd = self.postScript()[0]
-            if ( len(self.postScript())>1 ):
-                for arg in self.postScript()[1:]:
-                    cmd = cmd+" "+arg
-            log.write(str(datetime.datetime.now())+":  running POST script for job "+self.name()+" -- \""+cmd+"\"\n")
-            log.flush()
-            exit_status = os.system(cmd)
-            if ( exit_status!=0 ):
-                raise RuntimeError,self.name()+": postScript failed"
-            self.setPostScriptHasRun(True)
-            
-        # make sure all children are submitted, if necessary
-        if ( self.children() is not None ):
-            node_list = []
-            for child in self.children():
-                if( len(node_list)==0 ):
-                    node_list = [dag.getNode(child)]
-                else:
-                    node_list.append(dag.getNode(child))
-            node_list.sort()
-
-            for childnode in node_list:
-                success = childnode.submit(dag,log)
-                if ( not success ):
-                    return success
-
-        # if nothing failed, return success
-        return True
+        # if nothing failed, do generic post-submission stuff
+        return self._postsubmit(dag,log)
 
 
 class DataJobNode(JobNode):
@@ -516,45 +560,17 @@ class DataJobNode(JobNode):
         if ( self.isSubmitted() ):
             return self.isSubmitted()
         
-        # make sure all parents are submitted, if necessary
-        parentjobs = None
-        if ( self.parents() is not None ):
-            node_list = []
-            for parent in self.parents():
-                if (len(node_list) == 0):
-                    node_list = [dag.getNode(parent)]
-                else:
-                    node_list.append(dag.getNode(parent))
-            node_list.sort()
-
-            for parentnode in node_list:
-                success = parentnode.submit(dag,log)
-                if ( not success ):
-                    return success
-                else:
-                    if ( parentjobs is None and parentnode.jobId() is not None):
-                        parentjobs = [parentnode.jobId()]
-                    elif ( parentnode.jobId() is not None ):
-                        parentjobs.append(parentnode.jobId())
-                
-        # do prologue, if needed
-        if ( self.preScript() is not None and not self.preScriptHasRun() ):
-            cmd = self.preScript()[0]
-            if ( len(self.preScript())>1 ):
-                for arg in self.preScript()[1:]:
-                    cmd = cmd+" "+arg
-            log.write(str(datetime.datetime.now())+":  running PRE script for job "+self.name()+" -- \""+cmd+"\"\n")
-            log.flush()
-            exit_status = os.system(cmd)
-            if ( exit_status!=0 ):
-                raise RuntimeError,self.name()+": preScript failed"
-            self.setPreScriptHasRun(True)
+        # do generic pre-submission stuff
+        success = self._presubmit(dag,log)
+        if ( not success ):
+            return success
 
         # do actual job submission
         if ( not self.isSubmitted() ):
             if ( not self.isDone() ):
                 dependencies = None
-                if ( parentjobs is not None ):
+                parents = self.parents()
+                if ( parents is not None and len(parents)>0 ):
                     for parent in self.parents():
                         jobid = dag.getNode(parent).jobId()
                         if ( jobid is not None ):
@@ -628,42 +644,14 @@ class DataJobNode(JobNode):
                 log.flush()
 
         
-                # if RETRY is defined, call retry()
-                if ( self.retries()>0 ):
+                # if RETRY is defined or there is a POST script, call retry()
+                if ( self.retries()>0 or (self.postScript() is not None and not self.postScriptHasRun()) ):
                     self.retry(cmd,dag,log)
             
         self.setSubmitted(True)
-        
-        # do epilogue, if needed
-        if ( self.postScript() is not None and not self.postScriptHasRun() ):
-            cmd = self.postScript()[0]
-            if ( len(self.postScript())>1 ):
-                for arg in self.postScript()[1:]:
-                    cmd = cmd+" "+arg
-            log.write(str(datetime.datetime.now())+":  running POST script for job "+self.name()+" -- \""+cmd+"\"\n")
-            log.flush()
-            exit_status = os.system(cmd)
-            if ( exit_status!=0 ):
-                raise RuntimeError,self.name()+": postScript failed"
-            self.setPostScriptHasRun(True)
-            
-        # make sure all children are submitted, if necessary
-        if ( self.children() is not None ):
-            node_list = []
-            for child in self.children():
-                if( len(node_list)==0 ):
-                    node_list = [dag.getNode(child)]
-                else:
-                    node_list.append(dag.getNode(child))
-            node_list.sort()
 
-            for childnode in node_list:
-                success = childnode.submit(dag,log)
-                if ( not success ):
-                    return success
-
-        # if nothing failed, return success
-        return True
+        # if nothing failed, do generic post-submission stuff
+        return self._postsubmit(dag,log)
 
 
 class DAG(object):
@@ -707,10 +695,10 @@ class DAG(object):
 
     def _writeDotSubtree(self,rootnode,fd,iswritten):
         rootname = rootnode.name()
-        if ( rootnode.children() is not None and rootnode.isDone()):
+        if ( rootnode.children() is not None and rootnode.isDone() ):
             for childname in rootnode.children():
                 childnode = dag.getNode(childname)
-                if(childnode.isDone()):
+                if( childnode.isDone() ):
                     fd.write("\t"+rootname+" -> "+childname+";\n")
                     childnode = self.getNode(childname)
                     if ( not iswritten[childname] ):
@@ -752,7 +740,6 @@ class DAG(object):
         newRescueDAG = open(file+".rescue", 'w')
         # create "lock" file
         open(file+".rescue.lck", 'w').close()
-        finish = True
         for line in buffer:
             if ( (line.startswith("JOB") or line.startswith('DATA')) and
                  ( 'DONE' not in line ) ):
@@ -772,7 +759,6 @@ class DAG(object):
                             node.childrenAreSick(dag)
                             newRescueDAG.write(line)
                         elif( cond==IN_PROGRESS ):
-                            finish = False
                             newRescueDAG.write(line)
                         elif( node.isDone() ):
                             if ( verbose ):
@@ -796,6 +782,34 @@ class DAG(object):
         newRescueDAG.close()       
         if ( verbose ):
             log.write(str(datetime.datetime.now())+":  done writing rescue DAG\n")
+            log.flush()
+
+    def _subtreeIsComplete(self, rootnode, log):
+        done = True
+        if ( rootnode is None ):
+            done = True
+        elif  ( rootnode.children() is None ):
+            rootstatus = rootnode.jobStatus(log)
+            if ( rootstatus==FAIL or rootstatus==NOT_FOUND ):
+                done = True
+            else:
+                done = rootnode.isDone()
+        elif ( rootnode.children() is not None and rootnode.isDone() ):
+            for childname in rootnode.children():
+                childnode = dag.getNode(childname)
+                if ( done ):
+                    done = self._subtreeIsComplete(childnode,log)
+        else:
+            done = False
+        return done
+
+    def isComplete(self, log):
+        finish = True
+        for root in self.getRootNodes():
+            rootnode = self.getNode(root)
+            if ( finish ):
+                finish = self._subtreeIsComplete(rootnode,log)
+        if ( verbose ):
             log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
             log.flush()
         return finish
@@ -961,6 +975,8 @@ for file in args:
                     elif ( token[0]=="RETRY" ):
                         node = dag.getNode(token[1])
                         node.setRetries(token[2])
+                        if ( len(token)==5 ):
+                            node.setNoRetryStatus(int(token[4]))
                     elif ( token[0]=="SCRIPT" ):
                         node = dag.getNode(token[2])
                         script = token[3:]
@@ -975,6 +991,12 @@ for file in args:
                     elif ( token[0]=="PRIORITY" ):
                         node = dag.getNode(token[1])
                         node.setPriority(token[2])
+                    elif ( token[0]=="ABORT-DAG-ON" ):
+                        node = dag.getNode(token[1])
+                        if ( len(token)==3 ):
+                            node.addAbortStatus(int(token[2]))
+                        elif ( len(token)==5 ):
+                            node.addAbortStatus(int(token[2]),int(token[4]))
                     elif ( token[0]=="CATEGORY" ):
                         sys.stderr.write(file+":  CATEGORY not supported, ignoring\n")
                     elif ( token[0]=="MAXJOBS" ):
@@ -1016,9 +1038,9 @@ for file in args:
                         finish = dag.writeRescueDAG(log)
 
                     # Monitor the DAG and write out rescue DAGs periodically
-                    while ( not finish ):
+                    while ( not dag.isComplete(log) ):
                         time.sleep(timeout)
-                        finish = dag.writeRescueDAG(log)
+                        dag.writeRescueDAG(log)
             else:
                 usage()
    

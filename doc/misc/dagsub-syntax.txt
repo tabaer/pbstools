@@ -38,7 +38,7 @@ MAXJOBS category maxjobs
 * "If the number of submitted jobs for a given category reaches the limit,
    no further jobs in that category will be submitted until other jobs in the
    category terminate."
-* "Note that a single invocation of condor_ submit counts as one job, even if
+* "Note that a single invocation of condor_submit counts as one job, even if
    the submit file produces a multi-job cluster."
 
 CONFIG cfgfile
@@ -46,6 +46,9 @@ CONFIG cfgfile
 
 DOT filename
 * Generates a graph file compatible with the dot program from graphviz.org.
+
+ABORT-DAG-ON jobname abortexitvalue [RETURN dagreturnvalue]
+* abort entire DAG if one node fails with a specific status
 
 -----
 Fixed bug(s):
@@ -55,14 +58,15 @@ Fixed bug(s):
 *** Implementation Priority ***
 
 Done:
-* JOB (modulo DIR and DONE)
+* JOB
+* DATA (modulo DIR)
 * PARENT
 * SCRIPT PRE and POST
 * VARS
-** JOB DONE subdirective
 ** PRIORITY
-** DOT (complete)
-** RETRY (partial)
+** DOT
+** RETRY
+** ABORT-DAG-ON
 ** Rescue DAGs (http://www.cs.wisc.edu/condor/manual/v7.0/2_10DAGMan_Applications.html#SECTION003106000000000000000) (complete)
 ** parallelize for multiple dag files (fork)
 ** Command line option compatibility with condor_submit_dag (partial)
@@ -79,17 +83,14 @@ Need:
     For use as an argument to POST scripts, the $RETURN variable evaluates to the return value of the Condor or Stork job. 
     A job that dies due to a signal is reported with a $RETURN value representing the negative signal number. 
     For example, SIGKILL (signal 9) is reported as -9. A job whose batch system submission fails is reported as -1001. 
-    A job that is externally removed from the batch system queue (by something other than condor_ dagman) is reported as -1002. 
-** Consider how dagman handles fail/success node base on the return values of pre,post scripts and job.
-** RETRY (modulo UNLESS-EXIT value)
+    A job that is externally removed from the batch system queue (by something other than condor_ dagman) is reported as -1002.
+** Consider how dagman handles fail/success node based on the return values of pre,post scripts and job.
 
 Optional:
-* DATA
 * CATEGORY
 * MAXJOBS
 * CONFIG
 * Inner DAGs (http://www.cs.wisc.edu/condor/manual/v7.0/2_10DAGMan_Applications.html#SECTION003108000000000000000)
-** ABORT-DAG-ON
 
 
 
