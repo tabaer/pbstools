@@ -6,34 +6,42 @@ VARS preproc day="20090531"
 
 JOB forecast forecast.pbs
 VARS forecast day="20090531"
+PRIORITY forecast 7
 
 JOB postproc_hr1 postproc.pbs
 VARS postproc_hr1 day="20090531" hr="0100"
 SCRIPT PRE postproc_hr1 ./waitforfile 20090531-0100.nc
+PRIORITY postproc_hr1 6
 
 JOB postproc_hr2 postproc.pbs
 VARS postproc_hr2 day="20090531" hr="0200"
 SCRIPT PRE postproc_hr2 ./waitforfile 20090531-0200.nc
+PRIORITY postproc_hr2 5
 
 JOB postproc_hr3 postproc.pbs
 VARS postproc_hr3 day="20090531" hr="0300"
 SCRIPT PRE postproc_hr3 ./waitforfile 20090531-0300.nc
+PRIORITY postproc_hr3 4
 
 JOB postproc_hr4 postproc.pbs
 VARS postproc_hr4 day="20090531" hr="0400"
 SCRIPT PRE postproc_hr4 ./waitforfile 20090531-0400.nc
+PRIORITY postproc_hr4 3
 
 JOB postproc_hr5 postproc.pbs
 VARS postproc_hr5 day="20090531" hr="0500"
 SCRIPT PRE postproc_hr5 ./waitforfile 20090531-0500.nc
+PRIORITY postproc_hr5 2
 
 JOB postproc_hr6 postproc.pbs
 VARS postproc_hr6 day="20090531" hr="0600"
 SCRIPT PRE postproc_hr6 ./waitforfile 20090531-0600.nc
+PRIORITY postproc_hr6 1
 
 DATA archive archive.dmover QUEUE hpss
 VARS archive day="20090531"
 SCRIPT POST archive ./cleanup
+ABORT-DAG-ON archive 127
 
 PARENT preproc CHILD forecast postproc_hr1 postproc_hr2 postproc_hr3 postproc_hr4 postproc_hr5 postproc_hr6
 PARENT forecast postproc_hr1 postproc_hr2 postproc_hr3 postproc_hr4 postproc_hr5 postproc_hr6 CHILD archive
