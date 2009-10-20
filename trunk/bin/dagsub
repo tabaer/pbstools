@@ -755,12 +755,12 @@ class DAG(object):
                             newRescueDAG.write(line)
                         elif ( cond==NOT_FOUND ):
                             newRescueDAG.write(line)
-                        elif( cond==FAIL ):
+                        elif ( cond==FAIL ):
                             node.childrenAreSick(dag)
                             newRescueDAG.write(line)
-                        elif( cond==IN_PROGRESS ):
+                        elif ( cond==IN_PROGRESS ):
                             newRescueDAG.write(line)
-                        elif( node.isDone() ):
+                        elif ( node.isDone() ):
                             if ( verbose ):
                                 log.write(str(datetime.datetime.now())+":  "+node.name()+" is done\n")
                                 log.flush()
