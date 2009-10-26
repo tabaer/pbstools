@@ -2,6 +2,8 @@
 #
 # showscript:  Display the script associated with a job.
 # Copyright 2006 Ohio Supercomputer Center
+#
+# License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
 # $HeadURL$
 # $Revision$
