@@ -4,9 +4,9 @@
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
-# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/sbin/job-db-update-contacts $
-# $Revision: 214 $
-# $Date: 2008-01-14 09:46:57 -0500 (Mon, 14 Jan 2008) $
+# $HeadURL$
+# $Revision$
+# $Date$
 #
 # Usage:  fixup-pbsacct-jobids system newsuffix start_id end_id
 #

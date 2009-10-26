@@ -5,9 +5,9 @@
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
-# $HeadURL: https://svn.nics.utk.edu/repos/pbstools/trunk/sbin/dezombify $
-# $Revision: 93 $
-# $Date: 2006-02-15 13:53:25 -0500 (Wed, 15 Feb 2006) $
+# $HeadURL$
+# $Revision$
+# $Date$
 #
 # Usage: supermover [args] src_url dest_url
 #        ***or***
