@@ -5,9 +5,9 @@
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
-# $HeadURL: https://svn.nics.utk.edu/repos/pbstools/trunk/bin/qpeek $
-# $Revision: 199 $
-# $Date: 2007-09-12 13:39:15 -0400 (Wed, 12 Sep 2007) $
+# $HeadURL$
+# $Revision$
+# $Date$
 #
 #use strict;
 use POSIX;
