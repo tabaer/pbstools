@@ -5,9 +5,9 @@
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
-# $HeadURL: https://svn.nics.utk.edu/repos/pbstools/trunk/sbin/jobstats $
-# $Revision: 281 $
-# $Date: 2008-09-03 10:13:59 -0400 (Wed, 03 Sep 2008) $
+# $HeadURL$
+# $Revision$
+# $Date$
 
 use strict;
 use Config;

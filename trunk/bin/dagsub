@@ -8,9 +8,9 @@
 #
 # License:  GNU GPL v2, see ../CPOYING for details.
 # Revision info:
-# $HeadURL: https://svn.nics.utk.edu/repos/pbstools/trunk/bin/dagsub $
-# $Revision: 341 $
-# $Date: 2009-10-20 15:34:29 -0400 (Tue, 20 Oct 2009) $
+# $HeadURL$
+# $Revision$
+# $Date$
 #
 # Usage:  dagsub [options] file [file]
 # Options:       
