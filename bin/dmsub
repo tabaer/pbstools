@@ -1,9 +1,13 @@
 #!/usr/bin/python
 #
 # dmsub:  Submit a data movement job using a variety of methods.
-#
 # Copyright 2009, University of Tennessee
 #
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL: https://svn.nics.utk.edu/repos/pbstools/trunk/sbin/dezombify $
+# $Revision: 93 $
+# $Date: 2006-02-15 13:53:25 -0500 (Wed, 15 Feb 2006) $
 
 import getopt
 import datetime

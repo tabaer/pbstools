@@ -3,6 +3,8 @@
 # job-db-update -- Insert job records into a MySQL DB
 # Copyright 2006, 2007 Ohio Supercomputer Center
 # Copyright 2008, 2009 University of Tennessee
+#
+# License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
 # $HeadURL$
 # $Revision$

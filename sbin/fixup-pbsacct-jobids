@@ -1,5 +1,13 @@
 #!/usr/bin/perl
 #
+# Copyright 2007 Ohio Supercomputer Center
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/sbin/job-db-update-contacts $
+# $Revision: 214 $
+# $Date: 2008-01-14 09:46:57 -0500 (Mon, 14 Jan 2008) $
+#
 # Usage:  fixup-pbsacct-jobids system newsuffix start_id end_id
 #
 # OpenPBS rolls over jobids at 1,000,000, so to maintain data integrity
