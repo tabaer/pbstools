@@ -60,7 +60,7 @@ if ( isset($_POST['system']) )
 
     # software usage
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>package</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH></TR>\n";
+    echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH></TR>\n";
     ob_flush();
     flush();
     
@@ -76,7 +76,7 @@ if ( isset($_POST['system']) )
 	  {
 	    $sql .= "UNION\n";
 	  }
-	$sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND account LIKE '".$_POST['project']."' AND ( ";
+	$sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND account LIKE '".$_POST['project']."' AND ( ";
 	if ( isset($pkgmatch[$pkg]) )
 	  {
 	    $sql .= $pkgmatch[$pkg];
@@ -110,13 +110,13 @@ if ( isset($_POST['system']) )
     if ( isset($_POST['xls']) )
       {
 	$xlsresult = db_query($db,$sql);
-	$columns = array("package","jobcount","cpuhours","users","groups");
+	$columns = array("package","jobs","cpuhours","users","groups");
 	result_as_xls($xlsresult,$columns,$_POST['system']."-".$_POST['project']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
       }
     if ( isset($_POST['ods']) )
       {
 	$odsresult = db_query($db,$sql);
-	$columns = array("package","jobcount","cpuhours","users","groups");
+	$columns = array("package","jobs","cpuhours","users","groups");
 	result_as_ods($odsresult,$columns,$_POST['system']."-".$_POST['project']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
       }
 
@@ -131,7 +131,7 @@ else
     system_chooser();
     date_fields();
 
-    $orders=array("jobcount","cpuhours","users","groups");
+    $orders=array("jobs","cpuhours","users","groups");
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
     textfield("limit","Max shown","10",4);

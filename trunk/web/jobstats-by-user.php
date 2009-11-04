@@ -42,7 +42,7 @@ date_fields();
 
 // by username
 jobstats_input_header();
-jobstats_input_metric("Job Count vs. User","jobcount_vs_username");
+jobstats_input_metric("Job Count vs. User","jobs_vs_username");
 jobstats_input_metric("CPU Time vs. User","cpuhours_vs_username");
 jobstats_input_metric("Job Length vs. User","walltime_vs_username");
 jobstats_input_metric("Queue Time vs. User","qtime_vs_username");
