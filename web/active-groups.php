@@ -47,7 +47,7 @@ $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
     $db = db_connect();
-    $sql = "SELECT groupname, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600 AS cpuhrs FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY groupname ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
+    $sql = "SELECT groupname, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600 AS cpuhrs FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY groupname ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     echo "<TABLE border=\"1\">\n";
@@ -75,7 +75,7 @@ else
     system_chooser();
     date_fields();
 
-    $choices=array("cpuhrs","jobcount","users");
+    $choices=array("cpuhrs","jobs","users");
     $defaultchoice="cpuhrs";
     pulldown("order","Order by",$choices,$defaultchoice);
     textfield("limit","Max shown","10",4);

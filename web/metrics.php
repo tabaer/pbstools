@@ -267,7 +267,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
     { 
       $query .= xaxis_column($xaxis,$system).",";
     }
-   $query .= "COUNT(jobid) AS jobcount";
+   $query .= "COUNT(jobid) AS jobs";
    if ( columns($metric,$system)!="" )
      {
        $query .= ",".columns($metric,$system);
@@ -295,7 +295,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
    if ( $xaxis=="institution" )
      {
        # OSC site-specific logic begins here
-       $query .= " UNION SELECT 'osc' AS institution,COUNT(jobid) AS jobcount";
+       $query .= " UNION SELECT 'osc' AS institution,COUNT(jobid) AS jobs";
        if ( columns($metric,$system)!="" )
         {
           $query .= ",".columns($metric,$system);
@@ -318,7 +318,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 
 function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 {
-  $query = "SELECT ".xaxis_column($xaxis,$system).",COUNT(jobid) AS jobcount";
+  $query = "SELECT ".xaxis_column($xaxis,$system).",COUNT(jobid) AS jobs";
   if ( columns($metric,$system)!="" )
     {
       $query .= ",".columns($metric,$system);
@@ -388,7 +388,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
 	  $ysigma[2*$i+1]="";
 	}
     }
-  if ( $metric=='jobcount' )
+  if ( $metric=='jobs' )
     {
       for ($i=0; $i<$nrows; $i++)
 	{
@@ -529,7 +529,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
     {
       $graph->yscale->SetAutoMin(1.0);
     }
-  if ( $metric!="jobcount" && $metric!="cpuhours" && 
+  if ( $metric!="jobs" && $metric!="cpuhours" && 
        $metric!="backlog" && $metric!="xfactor" &&
        $metric!="users" && $metric!="groups" )
     {
@@ -549,7 +549,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
     }
   $ybar = new BarPlot($y);
   $ybar->SetWidth(1.0);
-  if ( $metric!="jobcount" && $metric!="cpuhours" && 
+  if ( $metric!="jobs" && $metric!="cpuhours" && 
        $metric!="backlog" && $metric!="xfactor" &&
        $metric!="users" && $metric!="groups" )
     {
@@ -560,7 +560,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
       $ybar->SetLegend("Queue Hours");      
     }  
   $graph->Add($ybar);
-  if ( $metric!="jobcount" && $metric!="cpuhours" &&
+  if ( $metric!="jobs" && $metric!="cpuhours" &&
        $metric!="backlog" && $metric!="xfactor" &&
        $metric!="users" && $metric!="groups" )
     {
@@ -584,7 +584,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
 
 function metric_as_table($result,$xaxis,$metric)
 {
-  $mycolumnname=array($xaxis,"jobcount");
+  $mycolumnname=array($xaxis,"jobs");
   foreach (columnnames($metric) as $columnname)
     {
       array_push($mycolumnname,$columnname);
@@ -633,7 +633,7 @@ function metric_as_xls($result,$xaxis,$metric,$system,$start_date,$end_date)
   $format_hdr->set_bold();
   $format_hdr->set_align('center');
 
-  $mycolumnname=array($xaxis,"jobcount");
+  $mycolumnname=array($xaxis,"jobs");
   foreach (columnnames($metric) as $columnname)
     {
       array_push($mycolumnname,$columnname);
@@ -679,7 +679,7 @@ function metric_as_ods($result,$xaxis,$metric,$system,$start_date,$end_date)
   $rowctr=0;
   $colctr=0;
 
-  $mycolumnname=array($xaxis,"jobcount");
+  $mycolumnname=array($xaxis,"jobs");
   foreach (columnnames($metric) as $columnname)
     {
       array_push($mycolumnname,$columnname);
@@ -910,9 +910,9 @@ function jobstats_summary($db,$system,$start_date,$end_date)
 {
   $result=get_metric($db,$system,"","cpuhours",$start_date,$end_date);
   $result->fetchInto($row);
-  $jobcount=$row[0];
+  $jobs=$row[0];
   $cpuhours=$row[1];
-  echo "<P><B>".$jobcount." jobs run<BR>\n";
+  echo "<P><B>".$jobs." jobs run<BR>\n";
   echo $cpuhours." CPU-hours consumed";
   $nproc=nprocs($system);
   if ( $nproc>0 )

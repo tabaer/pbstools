@@ -44,7 +44,7 @@ date_fields();
 jobstats_input_header();
 
 // by walltime_req
-jobstats_input_metric("Job Count vs. Job Length Requested","jobcount_vs_walltime_req");
+jobstats_input_metric("Job Count vs. Job Length Requested","jobs_vs_walltime_req");
 jobstats_input_metric("CPU Time vs. Job Length Requested","cpuhours_vs_walltime_req");
 jobstats_input_metric("Queue Time vs. Job Length Requested","qtime_vs_walltime_req");
 jobstats_input_metric("Job Length vs. Job Length Requested","walltime_vs_walltime_req");
@@ -56,7 +56,7 @@ jobstats_input_metric("CPU Efficiency vs. Job Length Requested","cpu_eff_vs_wall
 
 // by walltime
 jobstats_input_spacer();
-jobstats_input_metric("Job Count vs. Job Length","jobcount_vs_walltime");
+jobstats_input_metric("Job Count vs. Job Length","jobs_vs_walltime");
 jobstats_input_metric("CPU Time vs. Job Length","cpuhours_vs_walltime");
 jobstats_input_metric("Queue Time vs. Job Length","qtime_vs_walltime");
 jobstats_input_metric("Job Length vs. Job Length","walltime_vs_walltime");
