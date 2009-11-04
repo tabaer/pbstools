@@ -60,7 +60,7 @@ if ( isset($_POST['system']) )
 
     # software usage
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>package</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>accounts</TH></TR>\n";
+    echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>accounts</TH></TR>\n";
     ob_flush();
     flush();
     
@@ -76,7 +76,7 @@ if ( isset($_POST['system']) )
 	  {
 	    $sql .= "UNION\n";
 	  }
-	$sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username LIKE '".$_POST['username']."' AND ( ";
+	$sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username LIKE '".$_POST['username']."' AND ( ";
 	if ( isset($pkgmatch[$pkg]) )
 	  {
 	    $sql .= $pkgmatch[$pkg];
@@ -110,13 +110,13 @@ if ( isset($_POST['system']) )
     if ( isset($_POST['xls']) )
       {
 	$xlsresult = db_query($db,$sql);
-	$columns = array("package","jobcount","cpuhours","accounts");
+	$columns = array("package","jobs","cpuhours","accounts");
 	result_as_xls($xlsresult,$columns,$_POST['system']."-".$_POST['username']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
       }
     if ( isset($_POST['ods']) )
       {
 	$odsresult = db_query($db,$sql);
-	$columns = array("package","jobcount","cpuhours","accounts");
+	$columns = array("package","jobs","cpuhours","accounts");
 	result_as_ods($odsresult,$columns,$_POST['system']."-".$_POST['username']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
       }
 
@@ -131,7 +131,7 @@ else
     system_chooser();
     date_fields();
 
-    $orders=array("jobcount","cpuhours","accounts");
+    $orders=array("jobs","cpuhours","accounts");
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
     textfield("limit","Max shown","10",4);

@@ -56,7 +56,7 @@ if ( isset($_POST['system']) )
 	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT username, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
+	    $sql = "SELECT username, COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
 	    if ( isset($pkgmatch[$key]) )
 	      {
 		$sql .= $pkgmatch[$key];
@@ -65,7 +65,7 @@ if ( isset($_POST['system']) )
 	      {
 		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
 	      }
-	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username UNION SELECT 'TOTAL:',COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
+	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
 	    if ( isset($pkgmatch[$key]) )
 	      {
 		$sql .= $pkgmatch[$key];
@@ -78,7 +78,7 @@ if ( isset($_POST['system']) )
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
 	    echo "<TABLE border=1>\n";
-	    echo "<TR><TH>username</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH></TR>\n";
+	    echo "<TR><TH>username</TH><TH>jobs</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH></TR>\n";
 	    while ($result->fetchInto($row))
 	      {
 		$rkeys=array_keys($row);

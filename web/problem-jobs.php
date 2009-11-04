@@ -51,11 +51,11 @@ if ( isset($_POST['system']) )
 
     # system summary table
     echo "<H3>System Summary</H3>\n";
-    $sql = "SELECT system, COUNT(jobid) AS jobcount, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY jobcount DESC";
+    $sql = "SELECT system, COUNT(jobid) AS jobs, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY jobs DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>system</TH><TH>jobcount</TH><TH>users</TH><TH>groups</TH></TR>\n";
+    echo "<TR><TH>system</TH><TH>jobs</TH><TH>users</TH><TH>groups</TH></TR>\n";
     while ($result->fetchInto($row))
       {
 	echo "<TR>";
@@ -92,11 +92,11 @@ if ( isset($_POST['system']) )
 
     # user summary table
     echo "<H3>User Summary</H3>\n";
-    $sql = "SELECT DISTINCT(username) AS username, groupname, system, COUNT(jobid) AS jobcount FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, system ORDER BY jobcount DESC";
+    $sql = "SELECT DISTINCT(username) AS username, groupname, system, COUNT(jobid) AS jobs FROM Jobs WHERE ( script IS NOT NULL AND ( script NOT LIKE '%TMPDIR%' AND script NOT LIKE '%/tmp%' AND script NOT LIKE '%PFSDIR%' ) AND walltime_req > '1:00:00' ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, system ORDER BY jobs DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>user</TH><TH>group</TH><TH>system</TH><TH>jobcount</TH></TR>\n";
+    echo "<TR><TH>user</TH><TH>group</TH><TH>system</TH><TH>jobs</TH></TR>\n";
     while ($result->fetchInto($row))
       {
 	echo "<TR>";
