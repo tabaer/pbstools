@@ -37,6 +37,7 @@ CREATE TABLE Jobs (
 CREATE INDEX system_jobs ON Jobs (system);
 CREATE INDEX user_jobs ON Jobs (username);
 CREATE INDEX group_jobs ON Jobs (groupname);
+CREATE INDEX account_jobs ON Jobs (account);
 CREATE INDEX queue_jobs ON Jobs (queue(16));
 CREATE INDEX submit_jobs ON Jobs (submit_date);
 CREATE INDEX start_jobs ON Jobs (start_date);
