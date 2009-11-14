@@ -1,0 +1,140 @@
+PBS tools
+Copyright 2005-2008, Ohio Supercomputer Center
+
+Installation and Site Customization
+===================================
+
+Prerequisites:
+--------------
+
+These tools rely on the presence of a number of other pieces of
+software.  The following are needed for basic functionality:
+* A PBS implementation -- either OpenPBS, PBS Pro, or TORQUE.
+* Perl 5.x
+* all, a parallel wrapper around rsh -- http://svn.osc.edu/repos/all
+  Other parallel rsh commands may also work if they support the -j
+  (only run on nodes assigned to job) and -p (parallel) flags.
+
+The included job tracking and reporting database system has additional
+requirements:
+* A web server that supports PHP
+* A MySQL database server
+* PHP 4.x or 5.x with PEAR::DB and MySQL support
+* Perl 5.x DBI and DBD::MySQL modules
+
+Basic Installation:
+-------------------
+
+The basic tools include several scripts that are generally useful on
+most PBS system.  You need to select a central location to install
+script tools, such as /usr/local.  Then run the following commands:
+
+# ksh/bash syntax
+export PREFIX=/usr/local
+make install PREFIX=$PREFIX
+
+Installing the MPI-based tools
+------------------------------
+
+This package includes two optional MPI-based programs.  The first of
+these is a "parallel command processor" which can be used to run large
+numbers of serial programs in the context of a single large parallel
+job, while the second is an add-on to pbsdcp which improves its
+scalability in scatter mode..  To install them, run the following
+commands:
+
+# ksh/bash syntax
+export PREFIX=/usr/local
+export MPICC=mpicc
+make mpitools PREFIX=$PREFIX MPICC=$MPICC
+
+Installing the Stats Programs
+-----------------------------
+
+This package includes a pair of Perl scripts that can be used to
+generate HTML reports on usage statistics over periods of one or
+months.  To install them, run the following commands:
+
+# ksh/bash syntax
+export PREFIX=/usr/local
+make statstools PREFIX=$PREFIX
+
+Installing the DB System:
+-------------------------
+
+This package also includes several scripts and some PHP pages that
+allow the tracking of jobs through their life cycle for support
+purposes as well as historical analysis.  This requires access to a
+MySQL database server as well as a web server with PHP support,
+although these need not run on the same host as the PBS daemons.
+
+# ksh/bash syntax
+export PREFIX=/usr/local
+export WEBPREFIX=/var/www/html/pbsacct
+export DBSERVER=localhost
+make dbtools PREFIX=$PREFIX WEBPREFIX=$WEBPREFIX DBSERVER=$DBSERVER
+
+This will create a database called pbsacct with two tables in it, Jobs
+and Config.  Two DB users are also created, "pbsacct" and "webapp";
+the former can insert and update records, while the latter can only
+perform selects.  (Neither can delete records; that is intentional.)
+If you have multiple PBS servers that will be checking records into
+the database, each one needs to have its own pbsacct entry (and
+potentially its own password for pbsacct):
+
+-- in a "mysql pbsacct -u root -p" session:
+GRANT INSERT,UPDATE,SELECT ON Jobs TO 'pbsacct'@'pbs_server.host'
+IDENTIFIED BY 'pbs_server.host.passwd';
+
+Once the database is created, you will need to set up one or more data
+sources for it.  The first thing to do it to select a "system"
+identifier for each of your PBS instances.  These can be up to eight
+characters long.  On each of your systems, you will want to set the
+$system variable in job-db-update and jobscript-to-db to that
+identifier.  Once that is done, you can import all your existing
+exiusting accounting records into the database by running the
+following command:
+
+# ksh/bash syntax
+export system="mysysid"
+$PREFIX/sbin/job-db-update -h $system $PBS_HOME/server_priv/accounting/*
+
+In addition, examples/db-example is an example of how to import
+historical PBS accounting records from multiple systems into the
+database.
+
+From there on, you can simply use the cron daemon to do a nightly
+update of the database from the previous day's accounting records.
+The script etc/job-db-update.cron shows how to do this on a system
+with the GNU date command.
+
+Importing job scripts into the database is a more complex and
+system-specific affair.  The basic mechanism of inserting a script
+into the database is performed sbin/jobscript-to-db.  However, this
+script does not have any mechanism for determining when to insert the
+script or from where to get it.  One approach is to have something
+that watches the directory $PBS_HOME/server_priv/jobs directory for
+newly created files with the suffix ".SC".  For Linux, this can be
+done with a utility called "dnotify"[1]; for *BSD and OSX, there is a
+similar tool called "watch" [2].  (sbin/spool-jobscripts has in its
+comments an example of how to do this with dnotify.)  A second
+approach, and one which is attractive on systems where there is only a
+single pbs_mom (eg. Cray X1), is to have the job's prologue invoke
+jobscript-to-db.
+
+The files in the web directory can be installed virtually anywhere in
+the web server's document hierarchy.  The only modification that may
+need to be made to them is if the MySQL database server runs on a
+different host from the web server.  The layout of the PHP pages is
+controlled by web/page-layout.php, and the style sheet used is
+web/default.css.  The ability to generate spreadsheet versions of
+reports requires additional PHP libraries to produce Excel [3] and ODS
+[4].  These must be installed in $WEBPREFIX/phplib/Excel and
+$WEBPREFIX/phplib/ODS, respectively.
+
+---
+
+[1] http://www.student.lu.se/~nbi98oli/dnotify.html
+[2] http://www.25thandclement.com/~william/projects/watch.html
+[3] http://www.phpclasses.org/browse/package/767.html
+[4] http://sourceforge.net/projects/ods-php/

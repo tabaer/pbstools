@@ -1,0 +1,21 @@
+dagsub:
+* Restart DAGs will not work reliably unless pbs_server is configured to
+  keep jobs for some period of time after they end (e.g. qmgr -c "set
+  server keep_completed = 300").  Without this setting, dagsub is not
+  able to determine whether or not a job completed successfully unless
+  it happens to check while the completed job is in the 'E' state
+  (which is typically only a few seconds).
+* When specify "RETRY" on one of the parents (i.e.job1), a child will
+  sometimes be missing any other dependencies (i.e. job5 will only depend
+  on job1, even if the job5 has other parents, e.g. job2-4). In other words,
+  after job1 is complete, job2-4 + job5 can run concurrently, when job5
+  supposed to wait for job2-4 finishing first.  The problem appears to
+  be in dependency handling; if one of the afterok jobs is in the 'C' state,
+  state, the child job will only add it to the dependency, and the rest of
+  the parents job are left out.  Uncomment the RETRY in
+  examples/dagsub/forecast/forecast.dag to see an example of this.
+* Jobs sometimes fail to follow the "afterok" dependency.  This appears to be
+  a bug in TORQUE; see
+  http://www.supercluster.org/pipermail/torqueusers/2009-July/009282.html for
+  details.
+

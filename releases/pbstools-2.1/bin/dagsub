@@ -1,0 +1,1052 @@
+#!/usr/bin/python
+# dagsub:  Submit one or more directed acyclic graphs of jobs to TORQUE
+#          using a language compatible with Condor DAGman.
+#
+# Copyright 2009, University of Tennessee
+# Authors:  Troy Baer <tbaer@utk.edu>
+#           Patrick Lu <ylu14@utk.edu>
+#
+# License:  GNU GPL v2, see ../CPOYING for details.
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+# Usage:  dagsub [options] file [file]
+# Options:       
+#        -no_submit
+#        -verbose
+#        -force (currently unused)
+#        -maxjobs NumberOfJobs (currently unused)
+#        -log LogFileName
+
+import getopt
+import datetime
+import os.path
+import sys
+import operator
+import time
+import shutil
+import string
+import subprocess
+
+SUCCESS     = 0
+FAIL        = -1
+NOT_FOUND   = 1
+IN_PROGRESS = 2
+
+### begin code from Python Cookbook
+def unique(s):
+    """Return a list of the elements in s, but without duplicates.
+    For example, unique([1,2,3,1,2,3]) is some permutation of [1,2,3],
+    unique("abcabc") some permutation of ["a", "b", "c"], and
+    unique(([1, 2], [2, 3], [1, 2])) some permutation of
+    [[2, 3], [1, 2]].
+
+    For best speed, all sequence elements should be hashable.  Then
+    unique() will usually work in linear time.
+
+    If not possible, the sequence elements should enjoy a total
+    ordering, and if list(s).sort() doesn't raise TypeError it's
+    assumed that they do enjoy a total ordering.  Then unique() will
+    usually work in O(N*log2(N)) time.
+
+    If that's not possible either, the sequence elements must support
+    equality-testing.  Then unique() will usually work in quadratic
+    time.
+    """
+
+    n = len(s)
+    if n == 0:
+        return []
+
+    # Try using a dict first, as that's the fastest and will usually
+    # work.  If it doesn't work, it will usually fail quickly, so it
+    # usually doesn't cost much to *try* it.  It requires that all the
+    # sequence elements be hashable, and support equality comparison.
+    u = {}
+    try:
+        for x in s:
+            u[x] = 1
+    except TypeError:
+        del u  # move on to the next method
+    else:
+        return u.keys()
+
+    # We can't hash all the elements.  Second fastest is to sort,
+    # which brings the equal elements together; then duplicates are
+    # easy to weed out in a single pass.
+    # NOTE:  Python's list.sort() was designed to be efficient in the
+    # presence of many duplicate elements.  This isn't true of all
+    # sort functions in all languages or libraries, so this approach
+    # is more effective in Python than it may be elsewhere.
+    try:
+        t = list(s)
+        t.sort()
+    except TypeError:
+        del t  # move on to the next method
+    else:
+        assert n > 0
+        last = t[0]
+        lasti = i = 1
+        while i << n:
+            if t[i] != last:
+                t[lasti] = last = t[i]
+                lasti += 1
+            i += 1
+        return t[:lasti]
+    # Brute force is all that's left.
+    u = []
+    for x in s:
+        if x not in u:
+            u.append(x)
+    return u
+### end code from Python Cookbook
+
+
+class JobNode(object):
+    def __init__(self,name,script):
+        self._name = name
+        self._script = script
+        self._queue = None
+        self._retries = 0
+        self._priority = 0
+        self._prescript = None
+        self._prescript_run = False
+        self._postscript = None
+        self._postscript_run = False
+        self._parents = None
+        self._children = None
+        self._vars = None
+        self._jobid = None
+        self._done = False
+        self._submitted = False
+        self._isHealthy = True
+        self._exitcode = None
+        self._abortstatus = []
+        self._abortreturn = dict()
+        self._noretrystatus = 0
+        if ( not os.path.exists(script) ):
+            raise IOError, "File "+script+" not found"
+
+    def __cmp__(self, other):
+        return cmp(other._priority, self._priority)
+
+    def addChild(self,child):
+        if ( self._children is None ):
+            self._children = [child]
+        else:
+            self._children.append(child)
+
+    def addParent(self,parent):
+        if ( self._parents is None ):
+            self._parents = [parent]
+        else:
+            self._parents.append(parent)
+
+    def addVar(self,var):
+        if ( self._vars is None ):
+            self._vars = [var]
+        else:
+            self._vars.append(var)
+
+    def addAbortStatus(self,abort,returncode=None):
+        self._abortstatus.append(abort)
+        if ( returncode is None ):
+            self._abortreturn[abort] = abort
+        else:
+            self._abortreturn[abort] = returncode
+
+    def setJobId(self, jobid):
+        self._jobid = jobid
+
+    def name(self):
+        return self._name
+
+    def script(self):
+        return self._script
+
+    def retries(self):
+        return self._retries
+
+    def priority(self):
+        return self._priority
+
+    def parents(self):
+        return self._parents
+
+    def children(self):
+        return self._children
+
+    def jobId(self):
+        return self._jobid
+
+    def preScript(self):
+        return self._prescript
+
+    def preScriptHasRun(self):
+        return self._prescript_run
+
+    def postScript(self):
+        return self._postscript
+
+    def postScriptHasRun(self):
+        return self._postscript_run
+
+    def queue(self):
+        return self._queue
+
+    def noRetryStatus(self):
+        return self._noretrystatus
+
+    def isDone(self):
+        return self._done
+
+    def isHealthy(self):
+        return self._isHealthy
+
+    def isSubmitted(self):
+        return self._submitted
+
+    def vars(self):
+        return self._vars
+
+    def exitCode(self):
+        return self._exitcode
+
+    def setRetries(self,retries):
+        self._retries = int(retries)
+
+    def setPriority(self,priority):
+        self._priority = priority
+
+    def setQueue(self,queue):
+        self._queue = queue
+
+    def setScript(self, script):
+        self._script = self._script + script
+
+    def setPreScript(self,prescript):
+        self._prescript = prescript
+
+    def setPreScriptHasRun(self,flag):
+        self._prescript_run = flag
+
+    def setPostScript(self,postscript):
+        self._postscript = postscript
+
+    def setPostScriptHasRun(self,flag):
+        self._postscript_run = flag
+
+    def setDone(self,done):
+        self._done = done
+
+    def setSubmitted(self,submitted):
+        self._submitted = submitted
+
+    def setExitCode(self,exitcode):
+        self._exitcode = exitcode
+
+    def setNoRetryStatus(self,noretry):
+        self._noretrystatus = noretry
+    
+    def isSick(self):
+        self._isHealthy = False
+
+    def childrenAreSick(self,dag):
+        if ( self._children is not None ):
+            for child in self._children:
+                childnode = dag.getNode(child)
+                childnode.isSick()
+
+    def jobStatus(self, log):
+        if ( self.jobId() is not None ):
+            if ( verbose ):
+                log.write(str(datetime.datetime.now())+":  checking status of job "+self.name()+", jobid "+self.jobId()+"\n")
+            cmd = "qstat -f "+str(self.jobId())
+            p = subprocess.Popen(cmd, shell=True,
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 close_fds=True)
+            pin = p.stdin
+            perr = p.stderr
+            pout = p.stdout
+            pin.close()
+            stderr = perr.readlines()
+            perr.close()
+            if ( verbose and len(stderr)>0 ):
+                for line in stderr:
+                    log.write(str(datetime.datetime.now())+":  "+line)
+            stdout = pout.readlines()
+            pout.close()
+            p.wait()
+            if ( p.returncode!=0 ):
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" not found\n")
+                return NOT_FOUND
+            if( len(stdout)==0 ):
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" not found\n")
+                return NOT_FOUND
+            for line in stdout:
+                if( line.find('exit_status')!=-1 ):
+                    exit_status = int(line.split(" = ")[1])
+                    self.setExitCode(exit_status)
+                    if( exit_status==0 ):
+                        if ( verbose ):
+                            log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has completed\n")
+                        self.setDone(True)
+                        return SUCCESS
+                    else:
+                        log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has failed\n")
+                        if ( exit_status in self._abortstatus ):
+                            log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" had fatal exit status "+str(exit_status)+", aborting\n")
+                            sys.exit(self._abortreturn[exit_status])
+                        return FAIL
+            if ( verbose ):
+                log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" is in progress\n")
+            return IN_PROGRESS
+        else:
+            if ( verbose ):
+                log.write(str(datetime.datetime.now())+":  job "+self.name()+" not found\n")
+            return NOT_FOUND
+            
+    def retry(self, cmd, dag, log):
+        tries = 0
+        condition = self.jobStatus(log)
+        while ( (condition==IN_PROGRESS or condition==FAIL or condition==NOT_FOUND) and (tries<=self.retries()) ):
+            # There are two possibilities where a job is not found. 
+            #   1. The job is in 'C' state for more than the length of
+            #      time that the server keeps completed jobs, so the job has
+            #      been flushed out.
+            #   2. The job is somehow deleted in 'Q' or 'H' state(s).
+            # Implementation:
+            #   We assume that "NOT_FOUND" is same as "FAIL", and we will resubmit the job 
+            #   if "NOT_FOUND" is detected.
+            if ( tries>=self.retries() and (condition==FAIL or condition==NOT_FOUND) ):
+                log.write(str(datetime.datetime.now())+":  job "+self.name()+" retries exhausted\n")
+                return tries
+            elif ( self.exitCode() is not None and self.exitCode()==self.noRetryStatus() ):
+                log.write(str(datetime.datetime.now())+":  job "+self.name()+" failed with exit status "+str(self.noRetryStatus())+", not retrying\n")
+                return tries
+            else:
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+":  job "+self.name()+" "+str(self.retries()-tries)+" retries left\n")
+            if ( condition==FAIL or condition==NOT_FOUND ):
+                self.setJobId(None)
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+": "+cmd+"\n")
+                p = subprocess.Popen(cmd, shell=True,
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     close_fds=True)
+                pin = p.stdin
+                perr = p.stderr
+                pout = p.stdout
+                pin.close()
+                jobid = ""
+                try:
+                    stdout = pout.readlines()
+                    if ( len(stdout)>0 ):
+                        jobid = stdout[0]
+                        if ( jobid[-1]=="\n" ):
+                            jobid = jobid[:-1]
+                    stderr = perr.readlines()
+                    for line in stderr:
+                        log.write(str(datetime.datetime.now())+":  "+line)
+                    pout.close()
+                except IndexError, err:
+                    log.write(str(datetime.datetime.now())+":  "+str(err)+"\n")
+                    log.flush()
+                stderr = perr.readlines()
+                perr.close()
+                for line in stderr:
+                    log.write(line)
+                p.wait()
+                tries += 1    
+                if ( p.returncode!=0 or jobid is None or jobid=="" ):
+                    self.setJobId(None)
+                    log.write(str(datetime.datetime.now())+":  submission of retry "+str(tries)+" (max "+str(self.retries())+") for job "+self.name()+" failed\n")
+                else:
+                    self.setJobId(jobid)
+                    log.write(str(datetime.datetime.now())+":  submitted job "+self.name()+" retry "+str(tries)+" (max "+str(self.retries())+") as jobid "+str(self.jobId())+"\n")
+                log.flush()
+            if ( verbose ):
+                log.write(str(datetime.datetime.now())+":  sleeping for "+str(timeout)+" seconds\n")
+            dag.writeRescueDAG(log)
+            time.sleep(timeout)
+            condition = self.jobStatus(log)
+        return tries
+
+    def _presubmit(self,dag,log):
+        # make sure all parents are submitted, if necessary
+        parentjobs = None
+        if ( self.parents() is not None ):
+            node_list = []
+            for parent in self.parents():
+                if (len(node_list) == 0):
+                    node_list = [dag.getNode(parent)]
+                else:
+                    node_list.append(dag.getNode(parent))
+            node_list.sort()
+
+            for parentnode in node_list:
+                success = parentnode.submit(dag,log)
+                if ( not success ):
+                    return success
+                else:
+                    if ( parentjobs is None and parentnode.jobId() is not None):
+                        parentjobs = [parentnode.jobId()]
+                    elif ( parentnode.jobId() is not None ):
+                        parentjobs.append(parentnode.jobId())
+                
+        # do prologue, if needed
+        if ( self.preScript() is not None and not self.preScriptHasRun() ):
+            cmd = self.preScript()[0]
+            if ( len(self.preScript())>1 ):
+                for arg in self.preScript()[1:]:
+                    cmd = cmd+" "+arg
+            log.write(str(datetime.datetime.now())+":  running PRE script for job "+self.name()+" -- \""+cmd+"\"\n")
+            log.flush()
+            exit_status = os.system(cmd)
+            if ( exit_status!=0 ):
+                raise RuntimeError,self.name()+": preScript failed"
+            self.setPreScriptHasRun(True)
+        return True
+
+    def _postsubmit(self,dag,log):
+        # do epilogue, if needed
+        if ( self.postScript() is not None and not self.postScriptHasRun() ):
+            cmd = self.postScript()[0]
+            if ( len(self.postScript())>1 ):
+                for arg in self.postScript()[1:]:
+                    cmd = cmd+" "+arg
+            log.write(str(datetime.datetime.now())+":  running POST script for job "+self.name()+" -- \""+cmd+"\"\n")
+            log.flush()
+            exit_status = os.system(cmd)
+            if ( exit_status!=0 ):
+                raise RuntimeError,self.name()+": postScript failed"
+            self.setPostScriptHasRun(True)
+            
+        # dump out a rescue DAG just in case
+        dag.writeRescueDAG(log)
+            
+        # make sure all children are submitted, if necessary
+        if ( self.children() is not None ):
+            node_list = []
+            for child in self.children():
+                if( len(node_list)==0 ):
+                    node_list = [dag.getNode(child)]
+                else:
+                    node_list.append(dag.getNode(child))
+            node_list.sort()
+
+            for childnode in node_list:
+                success = childnode.submit(dag,log)
+                if ( not success ):
+                    return success
+        return True
+
+    def submit(self,dag,log):
+        if ( self.isSubmitted() ):
+            return self.isSubmitted()
+
+        # do generic pre-submission stuff
+        success = self._presubmit(dag,log)
+        if ( not success ):
+            return success
+
+        # do actual job submission
+        if ( not self.isSubmitted() ):
+            if ( not self.isDone() ):
+                dependencies = None
+                parents = self.parents()
+                if ( parents is not None and len(parents)>0 ):
+                    for parent in parents:
+                        jobid = dag.getNode(parent).jobId()
+                        if ( jobid is not None ):
+                            # Need to check if jobids still exist before adding them
+                            # as a dependency
+                            if ( os.system("qstat "+jobid+" 2>/dev/null 1>/dev/null")==0 ):
+                                if ( dependencies is None ):
+                                    dependencies = [jobid]
+                                else:
+                                    dependencies.append(jobid)
+                dependency = ""
+                if ( dependencies is not None ):
+                    # Filter dependencies to get the unique values; otherwise PBS gets confused.
+                    dependencies = unique(dependencies)
+                    dependencies.sort()
+                    #dependencies.reverse()
+                    dependency = "-W depend=afterok:"+dependencies[0]
+                    if ( len(dependencies)>1 ):
+                        for dep in dependencies[1:]:
+                            dependency += ":" + dep
+                vars = ""
+                if ( self.vars() is not None ):
+                    vars = "-v "+self.vars()[0]
+                    if ( len(self.vars())>1 ):
+                        for var in self.vars()[1:]:
+                            vars = vars+","+var
+                queue = ""
+                if ( self.queue() is not None ):
+                    queue = "-q "+self.queue()
+                cmd = jobsubmit+" -N "+self.name()+" "+queue+" "+dependency+" "+vars+" "+self.script()
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+": "+cmd+"\n")
+                    log.flush()
+                p = subprocess.Popen(cmd, shell=True,
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     close_fds=True)
+                pin = p.stdin
+                perr = p.stderr
+                pout = p.stdout
+                pin.close()
+                jobid = ""
+                try:
+                    stdout = pout.readlines()
+                    if ( len(stdout)>0 ):
+                        jobid = stdout[0]
+                        if ( jobid[-1]=="\n" ):
+                            jobid = jobid[:-1]
+                    for line in perr.readlines():
+                        log.write(str(datetime.datetime.now())+":  "+line)
+                        log.flush()
+                    pout.close()
+                except IndexError, err:
+                    if(verbose):
+                        sys.stderr.write(str(err) + "\n") 
+                perr.close()
+                p.wait()
+                if ( p.returncode!=0 or jobid is None or jobid=="" ):
+                    log.write(str(datetime.datetime.now())+":  job submission failed for job "+self.name()+", aborting\n")
+                    sys.exit(-1)
+                self.setJobId(jobid)
+                log.write(str(datetime.datetime.now())+":  submitted job "+self.name()+" as jobid "+self.jobId()+"\n")
+                log.flush()
+
+        
+                # if RETRY is defined or there is a POST script to run, call retry()
+                if ( self.retries()>0 or (self.postScript() is not None and not self.postScriptHasRun()) ):
+                    self.retry(cmd,dag,log)
+            
+        self.setSubmitted(True)
+        
+        # if nothing failed, do generic post-submission stuff
+        return self._postsubmit(dag,log)
+
+
+class DataJobNode(JobNode):
+    def __init__(self,name,script):
+        super(DataJobNode,self).__init__(name,script)
+        self._format = None
+        self._mover = None
+
+    def setFormat(self,format):
+        self._format = format
+
+    def format(self):
+        return self._format
+
+    def setMover(self,mover):
+        self._mover = mover
+
+    def mover(self):
+        return 
+
+    def submit(self,dag,log):
+        if ( self.isSubmitted() ):
+            return self.isSubmitted()
+        
+        # do generic pre-submission stuff
+        success = self._presubmit(dag,log)
+        if ( not success ):
+            return success
+
+        # do actual job submission
+        if ( not self.isSubmitted() ):
+            if ( not self.isDone() ):
+                dependencies = None
+                parents = self.parents()
+                if ( parents is not None and len(parents)>0 ):
+                    for parent in self.parents():
+                        jobid = dag.getNode(parent).jobId()
+                        if ( jobid is not None ):
+                            # Need to check if jobids still exist before adding them
+                            # as a dependency
+                            if ( os.system("qstat "+jobid+" 2>/dev/null 1>/dev/null")==0 ):
+                                if ( dependencies is None ):
+                                    dependencies = [jobid]
+                                else:
+                                    dependencies.append(jobid)
+                dependency = ""
+                if ( dependencies is not None ):
+                    # Filter dependencies to get the unique values; otherwise PBS gets confused.
+                    dependencies = unique(dependencies)
+                    dependencies.sort()
+                    #dependencies.reverse()
+                    dependency = "-D "+dependencies[0]
+                    if ( len(dependencies)>1 ):
+                        for dep in dependencies[1:]:
+                            dependency += ":" + dep
+                vars = ""
+                if ( self.vars() is not None ):
+                    vars = "-v "+self.vars()[0]
+                    if ( len(self.vars())>1 ):
+                        for var in self.vars()[1:]:
+                            vars = vars+","+var
+                queue = ""
+                if ( self.queue() is not None ):
+                    queue = "-q "+self.queue()
+                format = ""
+                if ( self.format() is not None ):
+                    format = "-F "+self.format()
+                mover = ""
+                if ( self.mover() is not None ):
+                    queue = "-M "+self.mover()
+                cmd = datasubmit+" -j oe -N "+self.name()+" "+queue+" "+dependency+" "+" "+format+" "+mover+" "+vars+" "+self.script()
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+": "+cmd+"\n")
+                    log.flush()
+                p = subprocess.Popen(cmd, shell=True,
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     close_fds=True)
+                pin = p.stdin
+                perr = p.stderr
+                pout = p.stdout
+                pin.close()
+                jobid = ""
+                try:
+                    stdout = pout.readlines()
+                    if ( len(stdout)>0 ):
+                        jobid = stdout[0]
+                        if ( jobid[-1]=="\n" ):
+                            jobid = jobid[:-1]
+                    stderr = perr.readlines()
+                    for line in stderr:
+                        log.write(str(datetime.datetime.now())+":  "+line)
+                        log.flush()
+                except IndexError, err:
+                    if(verbose):
+                        sys.stderr.write(str(err) + "\n") 
+                pout.close()
+                perr.close()
+                p.wait()
+                if ( p.returncode!=0 or jobid is None or jobid=="" ):
+                    log.write(str(datetime.datetime.now())+":  job submission failed for job "+self.name()+", aborting\n")
+                    sys.exit(-1)
+                self.setJobId(jobid)
+                log.write(str(datetime.datetime.now())+":  submitted job "+self.name()+" as jobid "+self.jobId()+"\n")
+                log.flush()
+
+        
+                # if RETRY is defined or there is a POST script, call retry()
+                if ( self.retries()>0 or (self.postScript() is not None and not self.postScriptHasRun()) ):
+                    self.retry(cmd,dag,log)
+            
+        self.setSubmitted(True)
+
+        # if nothing failed, do generic post-submission stuff
+        return self._postsubmit(dag,log)
+
+
+class DAG(object):
+    def __init__(self,file=None):
+        self._nodes = dict()
+        self._filename = file
+
+    def setFileName(self,file):
+        self._filename = file
+
+    def fileName(self):
+        return self._filename
+
+    def getNodes(self):
+        return self._nodes
+
+    def addNode(self,node):
+        nodename = node.name()
+        self._nodes[nodename] = node
+
+    def getNode(self,name):
+        if ( name in self._nodes ):
+            return self._nodes[name]
+        else:
+            return None
+
+    def getRootNodes(self):
+        roots = None
+        for name in self._nodes.keys():
+            node = self.getNode(name)
+            if ( node.parents() is None ):
+                if ( roots is None ):
+                    roots = [name]
+                else:
+                    roots.append(name)
+        return roots
+
+    def check(self):
+        root = self.getRootNodes()
+        return True
+
+    def _writeDotSubtree(self,rootnode,fd,iswritten):
+        rootname = rootnode.name()
+        if ( rootnode.children() is not None and rootnode.isDone() ):
+            for childname in rootnode.children():
+                childnode = dag.getNode(childname)
+                if( childnode.isDone() ):
+                    fd.write("\t"+rootname+" -> "+childname+";\n")
+                    childnode = self.getNode(childname)
+                    if ( not iswritten[childname] ):
+                        self._writeDotSubtree(childnode,fd,iswritten)
+                        iswritten[childname] = True
+        
+    def writeDotFile(self,filename,graphname):
+        iswritten = dict()
+        for nodename in self._nodes.keys():
+            iswritten[nodename] = False
+        dotfile = open(filename,"w")
+        dotfile.write("digraph "+graphname+" {\n")
+        for root in self.getRootNodes():
+            rootnode = self.getNode(root)
+            self._writeDotSubtree(rootnode,dotfile,iswritten)
+        dotfile.write("}\n")
+        dotfile.close()
+
+    def writeRescueDAG(self, log):
+    ## After all jobs are submitted, check if self.Done() is true.
+    ## If so, write "DONE" to the file.
+        if ( verbose ):
+            log.write(str(datetime.datetime.now())+":  writing rescue DAG\n")
+        file = self.fileName()
+        if ( file=="-" or file=="--" ):
+            raise RuntimeException,"Cannot reread stdin to create rescue DAG"
+        if ( os.path.exists(file+".rescue") and not os.path.exists(file+".rescue.lck") and 
+             os.stat(file).st_mtime<os.stat(file+".rescue").st_mtime ):
+            oldRescueDAG = open(file+".rescue", 'r')
+        else:
+            if ( os.path.exists(file+".rescue") and os.path.exists(file+".rescue.lck") ):
+                log.write(str(datetime.datetime.now())+":  ignoring "+file+".rescue due to possible corruption -- "+file+".rescue.lck present\n")
+            elif ( os.path.exists(file+".rescue") and os.stat(file).st_mtime>os.stat(file+".rescue").st_mtime ):
+                log.write(str(datetime.datetime.now())+":  ignoring "+file+".rescue because it is older than "+file+"\n")
+            log.flush()
+            oldRescueDAG = open(file, 'r')
+        buffer = oldRescueDAG.readlines()
+        oldRescueDAG.close()
+        newRescueDAG = open(file+".rescue", 'w')
+        # create "lock" file
+        open(file+".rescue.lck", 'w').close()
+        for line in buffer:
+            if ( (line.startswith("JOB") or line.startswith('DATA')) and
+                 ( 'DONE' not in line ) ):
+                try:
+                    nodename = line.split()[1]
+                    node = dag.getNode(nodename)
+                    if ( node is not None ):
+                        cond = node.jobStatus(log)
+                        if ( not node.isHealthy() ):
+                            if ( verbose ):
+                                log.write(str(datetime.datetime.now())+":  "+node.name()+" is unhealthy\n")
+                                log.flush()
+                            newRescueDAG.write(line)
+                        elif ( cond==NOT_FOUND ):
+                            newRescueDAG.write(line)
+                        elif ( cond==FAIL ):
+                            node.childrenAreSick(dag)
+                            newRescueDAG.write(line)
+                        elif ( cond==IN_PROGRESS ):
+                            newRescueDAG.write(line)
+                        elif ( node.isDone() ):
+                            if ( verbose ):
+                                log.write(str(datetime.datetime.now())+":  "+node.name()+" is done\n")
+                                log.flush()
+                            if(line[-2].isspace()):
+                                newRescueDAG.write(line[:-1] + "DONE\n")
+                            else:
+                                newRescueDAG.write(line[:-1] + " DONE\n")
+                    else:
+                        log.write(str(datetime.datetime.now())+":  node "+nodename+" is None while writing rescue DAG\n")
+                        log.flush()
+                except AttributeError, err:
+                    log.write(str(datetime.datetime.now())+": "+str(err)+'\n')
+                    log.flush()
+
+            else:
+                newRescueDAG.write(line)
+        # destroy "lock" file
+        os.remove(file+".rescue.lck")
+        newRescueDAG.close()       
+        if ( verbose ):
+            log.write(str(datetime.datetime.now())+":  done writing rescue DAG\n")
+            log.flush()
+
+    def _subtreeIsComplete(self, rootnode, log):
+        done = True
+        if ( rootnode is None ):
+            done = True
+        elif  ( rootnode.children() is None ):
+            rootstatus = rootnode.jobStatus(log)
+            if ( rootstatus==FAIL or rootstatus==NOT_FOUND ):
+                done = True
+            else:
+                done = rootnode.isDone()
+        elif ( rootnode.children() is not None and rootnode.isDone() ):
+            for childname in rootnode.children():
+                childnode = dag.getNode(childname)
+                if ( done ):
+                    done = self._subtreeIsComplete(childnode,log)
+        else:
+            done = False
+        return done
+
+    def isComplete(self, log):
+        finish = True
+        for root in self.getRootNodes():
+            rootnode = self.getNode(root)
+            if ( finish ):
+                finish = self._subtreeIsComplete(rootnode,log)
+        if ( verbose ):
+            log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
+            log.flush()
+        return finish
+
+def usage():
+    sys.stderr.write("Usage:  dagsub [options] file [file]\n")
+    sys.stderr.write("Options:\n\t-help\n\t-force\n\t-no_fork\n\t-no_submit\n\t-verbose\n\t-log logfile\n\t-maxidle NumberOfJobs\n\t-maxjobs NumberOfJobs\n")
+
+verbose = False
+doFork = True
+doSubmit = True
+dotFile = None
+dumpRescueAndExit = False
+generateDotFile = False
+overwrite = False
+logFile = None
+timeout = 30
+jobsubmit = "qsub"
+datasubmit = "dmsub"
+
+try:
+    # The convention is to use single dash for short command (i.e. -h), and double dashes
+    # (i.e. --no_submit) for long command.  In condor submit dag, user uses single dash
+    # to submit long command line option (i.e. -no_submit) process the long command line
+    # options with one more dash
+    cmdline = sys.argv[1:]
+    pcmd = []
+    for each in cmdline:
+        if(each[0] == "-"):
+            pcmd.append('-' + each)
+        else:
+            pcmd.append(each)
+
+    # Command line argument processing
+    opts, args = getopt.getopt(pcmd,"hv",
+                               ["allowversionmismatch",
+                                "DumpRescue",
+                                "force",
+                                "help",
+                                "no_fork",
+                                "no_recurse",
+                                "no_submit",
+                                "update_submit",
+                                "usedagdir",
+                                "verbose",
+                                "append=",
+                                "autorescue=",
+                                "config=",
+                                "dorescuefrom",
+                                "insert_sub_file",
+                                "log=",
+                                "maxidle=",
+                                "maxjobs=",
+                                "notification=",
+                                "oldrescue",
+                                "outfile_dir="])
+except getopt.GetoptError, err:
+    sys.stderr.write(str(err)+"\n")
+    usage()
+try:
+    for opt, value in opts:
+        if ( opt=="--force" ):
+            overwrite = True
+        if ( opt in ("-h", "--help") ):
+            usage()
+            sys.exit(0)
+        if ( opt=="--DumpRescue" ):
+            dumpRescueAndExit = False
+        if ( opt=="--log" ):
+            logFile = value
+        if (opt=="--maxidle"):
+            maxIdle = value
+        if (opt=="--maxjobs"):
+            maxJobs = value
+        if (opt=="--notification"):
+            notification = value
+        if ( opt=="--no_fork" ):
+            doFork = False
+        if ( opt=="--no_submit" ):
+            doSubmit = False
+        if ( opt in ("-v", "--verbose") ):
+            verbose = True
+except NameError, err:
+    sys.stderr.write(str(err)+"\n")
+    usage()
+    sys.exit(1)          
+
+for file in args:
+    # We fork off a separate process for each DAG and leave them running
+    # in the background.  Otherwise, it's virtually impossible to do
+    # things like retries without running an additional daemon/service.
+    if ( doFork ):
+        child = os.fork()
+    else:
+        child = 0
+    dag = None
+    if( child==0 ):
+        pid = os.getpid()
+        dag = DAG()
+        if ( not os.path.exists(file) ):
+            sys.stderr.write(file+" does not exist, ignoring\n")
+        elif ( not os.path.isfile(file) ):
+            sys.stderr.write(file+" is not a file, ignoring\n")
+        else:
+            dag.setFileName(file)
+            if ( file=="-" ):
+                fd = sys.stdin
+            else:
+                fd = open(file,"r")
+            lines = fd.readlines()
+            for line in lines:
+                token = line.split()
+                # parse DAG file
+                if ( token!=[] and token[0].find("#")!=0 ):
+                    if ( token[0]=="DOT" ):
+                        generateDotFile = True
+                        dotFile = token[1]
+                    elif ( token[0]=="JOB" ):
+                        node = JobNode(token[1],token[2])
+                        dag.addNode(node)
+                        try:
+                            if(token[3] == "DONE"):
+                                node.setDone(True)
+                            elif(token[3] == "DIR"):
+                                node.setScript(" -d " + token[4])
+                                if(token[5] == "DONE"):
+                                    node.setDone(True)
+                        except IndexError, err:
+                            pass
+                    elif ( token[0]=="DATA" ):
+                        #sys.stderr.write(file+":  DATA not supported, ignoring\n")
+                        node = DataJobNode(token[1],token[2])
+                        dag.addNode(node)
+                        try:
+                            for i in range(3,len(token),2):
+                                if ( token[i]=="DONE" ):
+                                    node.setDone(True)
+                                elif ( token[i]=="FORMAT" ):
+                                    node.setFormat(token[i+1])
+                                elif ( token[i]=="MOVER" ):
+                                    node.setMover(token[i+1])
+                                elif ( token[i]=="QUEUE" ):
+                                    node.setQueue(token[i+1])
+                        except IndexError, err:
+                            pass
+                    elif ( token[0]=="PARENT" ):
+                        foundchild = False
+                        parents = [token[1]]
+                        children = []
+                        for name in token[2:]:
+                            if ( name=="CHILD" ):
+                                foundchild = True
+                            elif ( foundchild ):
+                                children.append(name)
+                            else:
+                                parents.append(name)
+                        for parent in parents:
+                            parentnode = dag.getNode(parent)
+                            for child in children:
+                                parentnode.addChild(child)
+                                childnode = dag.getNode(child)
+                                childnode.addParent(parent)
+                    elif ( token[0]=="RETRY" ):
+                        node = dag.getNode(token[1])
+                        node.setRetries(token[2])
+                        if ( len(token)==5 ):
+                            node.setNoRetryStatus(int(token[4]))
+                    elif ( token[0]=="SCRIPT" ):
+                        node = dag.getNode(token[2])
+                        script = token[3:]
+                        if ( token[1]=="PRE" ):
+                            node.setPreScript(script)
+                        elif ( token[1]=="POST" ):
+                            node.setPostScript(script)
+                    elif ( token[0]=="VARS" ):
+                        node = dag.getNode(token[1])
+                        for var in token[2:]:
+                            node.addVar(var)
+                    elif ( token[0]=="PRIORITY" ):
+                        node = dag.getNode(token[1])
+                        node.setPriority(token[2])
+                    elif ( token[0]=="ABORT-DAG-ON" ):
+                        node = dag.getNode(token[1])
+                        if ( len(token)==3 ):
+                            node.addAbortStatus(int(token[2]))
+                        elif ( len(token)==5 ):
+                            node.addAbortStatus(int(token[2]),int(token[4]))
+                    elif ( token[0]=="CATEGORY" ):
+                        sys.stderr.write(file+":  CATEGORY not supported, ignoring\n")
+                    elif ( token[0]=="MAXJOBS" ):
+                        sys.stderr.write(file+":  MAXJOBS not supported, ignoring\n")
+                    elif ( token[0]=="CONFIG" ):
+                        sys.stderr.write(file+":  CONFIG not supported, ignoring\n")
+                    else:
+                        sys.stderr.write(file+":  unknown keyword "+token[0]+", abort\n")
+                        sys.exit(1)
+            fd.close()
+
+            base = file.split(".")[0]
+            
+            log = None
+            if ( logFile is None ):
+                log = open(base+".log","w")
+            elif ( logFile=="-" or logFile=="--" ):
+                log = sys.stdout
+            else:
+                log = open(logFile,"w")
+                
+            if ( verbose ):
+                log.write(str(datetime.datetime.now())+":  "+file+" being processed by pid "+str(pid)+"\n")
+                log.flush()
+
+            if ( dag.getRootNodes() is not None ):
+                # Not sure how to handle log name, if multiple input files are present?
+                # Current implementation: 
+                #       Only allow the custom logname, if single input file submitted.
+                if ( dumpRescueAndExit ):
+                    dag.writeRescueDAG(log)
+                elif ( doSubmit ):
+                    if ( dotFile is not None ):
+                        dag.writeDotFile(dotFile,base)
+                    finish = False
+                    for root in dag.getRootNodes():
+                        rootnode = dag.getNode(root)
+                        rootnode.submit(dag,log)
+                        finish = dag.writeRescueDAG(log)
+
+                    # Monitor the DAG and write out rescue DAGs periodically
+                    while ( not dag.isComplete(log) ):
+                        time.sleep(timeout)
+                        dag.writeRescueDAG(log)
+            else:
+                usage()
+   
+            log.write(str(datetime.datetime.now())+":  processing of "+file+" complete.\n")                
+            sys.exit(0)
+# if we get here, we're the parent process, so exit
+sys.exit(0)
