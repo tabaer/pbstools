@@ -1,0 +1,59 @@
+.TH qps 1 "$Date$" "$Revision$" "PBS TOOLS"
+
+.SH NAME
+qps \- Process listing for PBS jobs
+
+.SH SYNOPSIS
+qps [-apf] [-n <hostname>] [<jobid>...]
+
+.SH DESCRIPTION
+
+qps lists the active processes associated with the specified PBS
+jobids.  If no jobids are specified, qps defaults to showing the
+active process associated with all currently running jobs.
+
+.SH OPTIONS
+.TP
+.B \-a
+Show all processes, including those that have accumulated no CPU time.
+.TP
+.B \-f
+Show full process listings, including process id and memory usage
+.TP
+.B \-n <hostname>
+Only show process listings for processes on <hostname>.
+.TP
+.B \-p
+Communicate with all nodes assigned to the job in parallel.
+
+.SH EXAMPLES
+
+Show all active processs associated with jobid 12345:
+.nf
+.B qps 12345
+.if
+.PP
+
+Show all processes associated with jobid 12346:
+.nf
+.B qps -a 12346
+.fi
+.PP
+
+Show all active processes associated with jobid 12347, including
+process ids and memory usage:
+.nf
+.B qps -f 12347
+.fi
+.PP
+
+.SH BUGS
+If a user has multiple jobs running on the same node, qps will show
+processes associated with all of them rather than only the job
+specified.
+
+.SH AUTHOR
+Pete Wyckoff (pw (at) osc.edu)
+
+.SH SEE ALSO
+ps(1), qsub(1B), rsh(1)
