@@ -24,6 +24,8 @@ usertools:
 	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qmpirun
 	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qrsh
 	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qsh
+	install -m 0755 bin/supermover $(PREFIX)/bin
+	install -m 0755 bin/ddmsub $(PREFIX)/bin
 	install -m 0755 bin/dagsub $(PREFIX)/bin
 	install -d $(PREFIX)/man/man1
 	install -m 0644 doc/man1/ja.1 $(PREFIX)/man/man1
@@ -62,6 +64,9 @@ statstools:
 	install -m 0750 sbin/find-outlyers $(PREFIX)/sbin
 
 dbtools:
+	install -d $(PREFIX)/bin
+	install -m 0755 bin/js $(PREFIX)/bin
+	install -m 0755 bin/jobinfo $(PREFIX)/bin
 	install -d $(PREFIX)/sbin
 	install -m 0750 sbin/job-db-update $(PREFIX)/sbin
 	install -m 0750 sbin/jobscript-to-db $(PREFIX)/sbin
