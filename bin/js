@@ -96,6 +96,7 @@ $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
 foreach $jobid ( @ARGV )
   {
     # job script query
+    $jobid =~ s/-[0-9]+.*//;
     $query = "SELECT script FROM Jobs WHERE system=\'".$system."\' AND jobid LIKE \'".$jobid.".\%\';";
     #print STDERR $query."\n";
     $sth = $dbh->prepare($query) or die "Could not prepare query:  ".$dbh::errstr;
