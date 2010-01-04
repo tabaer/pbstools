@@ -540,6 +540,63 @@ if ( isset($_POST['system']) )
 			   $_POST['start_date'],
 			   $_POST['end_date']);
 
+    // by QOS
+    jobstats_output_metric('Job Count vs. QOS',
+			   'jobs_vs_qos',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('CPU Time vs. QOS',
+			   'cpuhours_vs_qos',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Job Length vs. QOS',
+			   'walltime_vs_qos',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Queue Time vs. QOS',
+			   'qtime_vs_qos',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Real Memory vs. QOS',
+			   'mem_kb_vs_qos',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Virtual Memory vs. QOS',
+			   'vmem_kb_vs_qos',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Walltime Accuracy vs. QOS',
+			   'walltime_acc_vs_qos',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('CPU Efficiency vs. QOS',
+			   'cpu_eff_vs_qos',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
     // by quarter
     jobstats_output_metric('Job Count vs. Quarter',
 			   'jobs_vs_quarter',
@@ -860,6 +917,13 @@ if ( isset($_POST['system']) )
 				    $_POST['start_date'],
 				    $_POST['end_date']);
 
+    jobstats_output_bucketed_metric('PSC Metrics vs. Processor Count',
+				    'pscmetrics_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date']);
+
     jobstats_output_bucketed_metric('Job Count vs. Normalized Processor Count',
 				    'jobs_vs_nproc_norm',
 				    $db,
@@ -1048,6 +1112,17 @@ else
     jobstats_input_metric("Walltime Accuracy vs. User","walltime_acc_vs_username");
     jobstats_input_metric("CPU Efficiency vs. User","cpu_eff_vs_username");
 
+    // by QOS
+    jobstats_input_spacer();
+    jobstats_input_metric("Job Count vs. QOS","jobs_vs_qos");
+    jobstats_input_metric("CPU Time vs. QOS","cpuhours_vs_qos");
+    jobstats_input_metric("Job Length vs. QOS","walltime_vs_qos");
+    jobstats_input_metric("Queue Time vs. QOS","qtime_vs_qos");
+    jobstats_input_metric("Real Memory vs. QOS","mem_kb_vs_qos");
+    jobstats_input_metric("Virtual Memory vs. QOS","vmem_kb_vs_qos");
+    jobstats_input_metric("Walltime Accuracy vs. QOS","walltime_acc_vs_qos");
+    jobstats_input_metric("CPU Efficiency vs. QOS","cpu_eff_vs_qos");
+
     // by quarter
     jobstats_input_spacer();
     jobstats_input_metric("Job Count by Quarter","jobs_vs_quarter");
@@ -1107,6 +1182,7 @@ else
     jobstats_input_metric("Active Accounts vs. Processor Count","accounts_vs_nproc_bucketed");
     jobstats_input_metric("Expansion Factor vs. Processor Count","xfactor_vs_nproc_bucketed");
     jobstats_input_metric("DoD Metrics vs. Processor Count","dodmetrics_vs_nproc_bucketed");
+    jobstats_input_metric("PSC Metrics vs. Processor Count","pscmetrics_vs_nproc_bucketed");
     jobstats_input_metric("Job Count vs. Normalized Processor Count","jobs_vs_nproc_norm");
     jobstats_input_metric("CPU Time vs. Normalized Processor Count","cpuhours_vs_nproc_norm");
     jobstats_input_metric("Job Length vs. Normalized Processor Count","walltime_vs_nproc_norm");
