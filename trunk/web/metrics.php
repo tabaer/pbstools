@@ -122,7 +122,7 @@ function units($metric)
 // date selector
 function dateselect($action,$start_date,$end_date)
 {
-    if ( isset($start_date) && isset($end_date) &&
+  if ( isset($start_date) && isset($end_date) &&
 	 $start_date!="" && $end_date!="" )
       {
 	return $action."_date >= '".$start_date."' AND ".$action."_date <= '".$end_date."'";
@@ -221,6 +221,18 @@ function columns($metric,$system)
   if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system);
   if ( $metric=='nproc' ) return "MIN(nproc),MAX(nproc),AVG(nproc),STDDEV(nproc)";
   if ( $metric=='usage' ) return columns('cpuhours',$system).",".columns('usercount',$system);
+  if ( $metric=='pscmetrics' )
+    {
+      $first = 0;
+      $maxs = bucket_maxs("walltime");
+      $column = "SUM( CASE WHEN TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[0]."') THEN nproc*TIME_TO_SEC(walltime)/3600.0 ELSE 0 END ) AS '<=".$maxs[0]."'";
+      for ( $i=1 ; $i<count($maxs) ; $i++ )
+	{
+	  $column .= ", SUM( CASE WHEN TIME_TO_SEC(walltime)>TIME_TO_SEC('".$maxs[$i-1]."') AND TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[$i]."') THEN nproc*TIME_TO_SEC(walltime)/3600.0 ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
+	}
+      $column .= ", SUM( CASE WHEN TIME_TO_SEC(walltime)>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN nproc*TIME_TO_SEC(walltime)/3600.0 ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
+      return $column;
+    }
 
   return "";
 }
@@ -255,7 +267,18 @@ function columnnames($metric)
 	}
       return $output;
     }
-
+  if ( $metric=='pscmetrics' )
+    {
+      $maxs = bucket_maxs("walltime");
+      $output = array("&lt;=".$maxs[0]);
+      for ( $i=1 ; $i<count($maxs) ; $i++ )
+	{
+	  $output[] = $maxs[$i-1]."-".$maxs[$i];
+	}
+      $output[] = "&gt;".$maxs[count($maxs)-1];
+      return $output;
+    }
+  
   return array();
 }
 
