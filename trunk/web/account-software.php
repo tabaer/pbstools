@@ -60,12 +60,12 @@ if ( isset($_POST['system']) )
 
     # software usage
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>users</TH><TH>accounts</TH></TR>\n";
+    echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH></TR>\n";
     ob_flush();
     flush();
     
     $first=1;
-    $sql = "";
+    $sql = "SELECT * FROM ( \n";
     foreach ( $packages as $pkg )
       {
 	if ( $first==1 )
@@ -88,8 +88,7 @@ if ( isset($_POST['system']) )
 	$sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
 	$sql .= "\n";
       }
-    $sql .= " ORDER BY ".$_POST['order']." DESC";
-    $sql .= " LIMIT ".$_POST['limit'];
+    $sql .= " ) AS prjsofttmp WHERE jobs > 0 ORDER BY ".$_POST['order']." DESC";
     
     #echo "<PRE>\n".$sql."</PRE>\n";
     $result = db_query($db,$sql);
@@ -134,7 +133,6 @@ else
     $orders=array("jobs","cpuhours","users");
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
-    textfield("limit","Max shown","10",4);
     checkbox("Generate Excel file","xls");
     checkbox("Generate ODF file","ods");
 
