@@ -288,7 +288,7 @@ while ( defined($ARGV[0]) )
 		    $submithost = $resource{"owner"};
 		    $submithost =~ s/^.+\@//;
 		    $qhead.=",submithost";
-		    $qtail.="\'".$submithost."\'";
+		    $qtail.=",\'".$submithost."\'";
 		  }
 		if ( defined($resource{"jobname"}) )
 		  {
