@@ -6,6 +6,7 @@ CREATE TABLE Jobs (
   username     VARCHAR(8),
   groupname    VARCHAR(8),
   account      VARCHAR(32),
+  submithost   VARCHAR(32),
   jobname      TINYTEXT,
   nproc        INT UNSIGNED DEFAULT 1,
   mppe         INT UNSIGNED,
