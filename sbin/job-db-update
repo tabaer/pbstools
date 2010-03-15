@@ -165,6 +165,12 @@ while ( defined($ARGV[0]) )
 		  {
 		    $qhead.=",groupname = \'".$resource{"group"}."\'";
 		  }
+		if ( defined($resource{"owner"}) )
+		  {
+		    $submithost = $resource{"owner"}
+		    $submithost =~ s/^.+\@//;
+		    $qhead.=",submithost = \'".$submithost."\'";
+		  }
 		if ( defined($resource{"jobname"}) )
 		  {
 		    $qhead.=",jobname = \'".$resource{"jobname"}."\'";
@@ -276,6 +282,13 @@ while ( defined($ARGV[0]) )
 		  {
 		    $qhead.=",groupname";
 		    $qtail.=",\'".$resource{"group"}."\'";
+		  }
+		if ( defined($resource{"owner"}) )
+		  {
+		    $submithost = $resource{"owner"}
+		    $submithost =~ s/^.+\@//;
+		    $qhead.=",submithost";
+		    $qtail.="\'".$submithost."\'";
 		  }
 		if ( defined($resource{"jobname"}) )
 		  {
