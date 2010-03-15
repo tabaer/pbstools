@@ -167,7 +167,7 @@ while ( defined($ARGV[0]) )
 		  }
 		if ( defined($resource{"owner"}) )
 		  {
-		    $submithost = $resource{"owner"}
+		    $submithost = $resource{"owner"};
 		    $submithost =~ s/^.+\@//;
 		    $qhead.=",submithost = \'".$submithost."\'";
 		  }
@@ -285,7 +285,7 @@ while ( defined($ARGV[0]) )
 		  }
 		if ( defined($resource{"owner"}) )
 		  {
-		    $submithost = $resource{"owner"}
+		    $submithost = $resource{"owner"};
 		    $submithost =~ s/^.+\@//;
 		    $qhead.=",submithost";
 		    $qtail.="\'".$submithost."\'";
