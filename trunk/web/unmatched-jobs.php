@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2009 University of Tennessee
+# Copyright 2009, 2010 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -228,7 +228,7 @@ else
     $props=array("username","groupname","account","jobname","nproc","mppe","mppssp",
 		 "nodes","feature","queue","qos","submit_ts","start_ts","end_ts","cput_req",
 		 "cput","walltime_req","walltime","mem_req","mem_kb",
-		 "vmem_req","vmem_kb","hostlist","exit_status","script");
+		 "vmem_req","vmem_kb","submithost","hostlist","exit_status","script");
     checkboxes_from_array("Properties",$props);
 
     end_form();
