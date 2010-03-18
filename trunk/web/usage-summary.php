@@ -1,6 +1,6 @@
 <?php
 # Copyright 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008, 2009 University of Tennessee
+# Copyright 2008, 2009, 2010 University of Tennessee 
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -166,7 +166,7 @@ if ( isset($_POST['system']) )
 	flush();
 	
 	$first=1;
-	$sql = "";
+	$sql = "SELECT * FROM ( ";
 	foreach ( $packages as $pkg )
 	  {
 	    if ( $first==1 )
@@ -189,7 +189,7 @@ if ( isset($_POST['system']) )
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
 	    $sql .= "\n";
 	  }
-	$sql .= " ORDER BY ".$_POST['order']." DESC";
+	$sql .= " ) AS usgsofttmp WHERE jobs>0 ORDER BY ".$_POST['order']." DESC";
 	
 #echo "<PRE>\n".$sql."</PRE>\n";
 	$result = db_query($db,$sql);
