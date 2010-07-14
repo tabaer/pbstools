@@ -214,48 +214,63 @@ function bucket_maxs($xaxis)
 # list of software packages to look for in job scripts
 function software_list()
 {
-  $list=array("a_out",
+  $list=array(
+	      "3dcavity",
+	      "3dh",
+	      "a_out",
 	      "abaqus",
 	      "abinit",
+	      "accorrsf",
 	      "aces2",
 	      "aces3",
 	      "adf",
 	      "agk",
 	      "AliEn",
 	      "amber",
+	      "anolis",
 	      "ansys",
 	      "arps",
 	      "ash",
 	      "autodock",
+	      "awm",
+	      "bam",
 	      "blat",
 	      "bolztran",
+	      "brams-opt",
 	      "bugget",
 	      "cactus",
+	      "calc_group_stats",
 	      "cam",
+	      "cando",
 	      "casino",
 	      "cbl",
 	      "ccsm",
 	      "cctm",
+	      "cdp",
 	      "cfd++",
 	      "cfl3d",
 	      "charmm",
 	      "chemshell",
 	      "chimera",
+	      "chroma",
 	      "cilk",
 	      "cluster",
 	      "coarsen",
 	      "cpmd",
 	      "cql3d",
 	      "crystal",
+	      "csurfs",
 	      "dasquad",
 #	      "decypher",
 	      "delphi",
 	      "delta5d",
 	      "dissens",
+	      "distuf",
               "dlpoly",
 	      "dns2d",
 	      "dock",
 	      "dolt",
+	      "dtms",
 	      "enzo",
 	      "esmf",
 	      "eulacc",
@@ -263,72 +278,112 @@ function software_list()
 	      "f-plane",
 	      "falkon",
 	      "fd3d",
+	      "fedvr",
 	      "fidap",
 	      "fdl3di",
 	      "flotran",
 	      "flow3d",
 	      "fluent",
+	      "foam",
+	      "foxexe",
               "fsweep",
 	      "ftb",
-	      "gaussian",
+	      "gadget",
 	      "gamess",
+	      "gaussian",
 	      "gdl",
 	      "geosgcm",
 	      "glast",
 	      "GreenSolver",
 	      "gromacs",
 	      "gtc",
+	      "h2mol",
+	      "h3d",
 	      "halo",
+	      "harness",
+	      "hd_nonuma",
 	      "hfodd",
 	      "hmc",
 	      "hmmer",
 	      "homme",
+	      "hpcc",
 	      "hpl",
+	      "hsi",
 	      "hy3s",
 	      "idl",
+	      "ifs",
+	      "imb",
 	      "inca",
+	      "intestine3d",
 	      "jaguar",
 	      "lammps",
 	      "lmf",
 	      "lsdyna",
 	      "lsms",
+	      "m2md",
+	      "madness",
 	      "mathematica",
 	      "matlab",
 	      "mcrothers",
 	      "mctas",
 	      "mddriver",
+	      "mdsim",
+	      "measurements",
+	      "meep",
+	      "meta",
+	      "mhd3d",
 	      "mhdam",
               "milc",
 	      "mitgcmuv",
 	      "mm5",
+	      "molaf3di",
 	      "molcas",
+	      "moldife",
 	      "moldive",
+	      "molpro",
 	      "mpcugles",
+	      "mpi_dgels",
+	      "mpi_dgesv",
+	      "mpi_dpos"
 	      "mpi-multi",
+	      "mpiasm",
+	      "mpiblast",
 	      "mrbayes",
 	      "nag",
+	      "mrobb6dipzz",
+	      "mykim9dgt",
 	      "namd",
 	      "ncbi",
-	      "nwchem",
+	      "nektar",
+	      "newseriesrun",
+	      "nga_cfb",
+	      "nicam",
 	      "ntsolve",
+	      "nwchem",
 	      "octave",
 	      "omen",
 	      "onepartm",
 #	      "openeye",
 	      "overlap",
+#	      "param",
 	      "paratec",
 	      "paup",
+	      "pcg",
+	      "perseus",
 	      "phasta"
 	      "pkdgrav",
 	      "pmcl3d",
               "polly",
 	      "pop",
+	      "preps"
 	      "prog_ccm_sph",
 	      "prog_hf",
               "propagators",
 	      "psolve",
+	      "pstg",
 	      "pwscf",
 	      "python",
+	      "qb",
               "qchem",
 	      "qmc",
 	      "qwalk",
@@ -345,6 +400,7 @@ function software_list()
 	      "sigma",
 	      "simpleio",
 	      "sne3d",
+	      "sord",
 	      "sovereign",
 	      "spdcp",
 	      "sses",
@@ -354,16 +410,25 @@ function software_list()
 	      "tdcc2d",
 	      "tdse",
 	      "tetradpost",
+	      "testpio",
 	      "tfe",
 	      "tsc",
 	      "turbo",
 	      "turbomole",
+	      "upc",
 	      "vasp",
+	      "vbc",
 	      "vhone",
+	      "visit",
 	      "vmd",
+	      "vpic",
               "wrf",
 	      "xgc",
-	      "xmfdn");
+	      "xmfdn"
+	      "zeus",
+	      "zk3",
+	      "zNtoM"
+	      );
   
   return $list;
 }
@@ -382,14 +447,15 @@ function software_match_list()
   # exceptions
   # REGEXP match is ***MUCH*** slower than regular LIKE matching
   # in MySQL, so don't use REGEXP unless you really need it.
+  $pkgmatch['3dh']="script LIKE '%./3dh%'";
   $pkgmatch['a_out']="script LIKE '%a.out%'";
   $pkgmatch['abaqus']="( script LIKE '%abaqus%' OR script LIKE '%abaqus%' )";
   $pkgmatch['abinit']="( script LIKE '%abinis%' OR script LIKE '%abinip%' )";
   $pkgmatch['aces2']="script LIKE '%xaces2%'";
   $pkgmatch['adf']="script LIKE '%adf%'";
   $pkgmatch['AliEn']="( script LIKE '%aliroot%' OR script LIKE '%agent.startup%' )";
-  $pkgmatch['amber']="( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' )";
-  $pkgmatch['ash']="script LIKE '%ash_1%'";
+  $pkgmatch['amber']="( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' OR script LIKE '%SingleJob%' OR script LIKE '%MINJob%' OR script LIKE '%run_md_mpi.csh%' OR script LIKE '%./MD%' )";
+  $pkgmatch['ash']="script LIKE '%/ash%'";
   $pkgmatch['blat']="script LIKE '%blat %'";
   $pkgmatch['boltztran']="(script LIKE '%boltzpar%')";
   $pkgmatch['cbl']="( script LIKE '% cbl%' OR script LIKE '%pcbl%' OR script LIKE '%biolib%' )";
@@ -398,42 +464,58 @@ function software_match_list()
   $pkgmatch['cpmd']="script LIKE '%cpmd.x%'";
   $pkgmatch['crystal']="script LIKE '%Pcrystal%'";
   $pkgmatch['decypher']="script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
-  $pkgmatch['dissens']="SCRIPT LIKE '%dissens.x%'";
+  $pkgmatch['dissens']="script LIKE '%dissens.x%'";
   $pkgmatch['dns2d']="( script LIKE '%DNS2d.x%' OR script LIKE '%DNS2d_%.x%' OR script LIKE '%code2.x%' OR script LIKE '%spcal2d.x%' )";
   $pkgmatch['dock']="( script LIKE '%dock5%' OR script LIKE '%dock6%' OR script LIKE '%sphgen%' OR script LIKE '%mopac%' )";
   $pkgmatch['ex_e']="script LIKE '%ex.e%'";
   $pkgmatch['fluent']="( script like '%fluent%' OR software LIKE '%fluent%' )";
-  $pkgmatch['fsweep']="script LIKE '%fsweep.exe%' OR script LIKE '%fsweep2.exe%'";
-  $pkgmatch['gamess']="script LIKE '%gamess%' OR script LIKE '%rungms%' OR script LIKE '%rungmx%'";
-  $pkgmatch['gaussian']="script LIKE '%g98%' OR script LIKE '%g03%'";
+  $pkgmatch['fsweep']="( script LIKE '%fsweep.exe%' OR script LIKE '%fsweep2.exe%' )";
+  $pkgmatch['gamess']="( script LIKE '%gamess%' OR script LIKE '%rungms%' OR script LIKE '%rungmx%' )";
+  $pkgmatch['gaussian']="( script LIKE '%g98%' OR script LIKE '%g03%' OR script LIKE '%g09%' )";
   $pkgmatch['glast']="( script LIKE '%glast%' OR script LIKE '%gp run%' )";
   $pkgmatch['gromacs']="( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' )";
   $pkgmatch['gtc']="( script LIKE '%gtc%' OR script LIKE '%gts%' )";
+  $pkgmatch['harness']="script LIKE '%test_harness_driver.py%'";
   $pkgmatch['hmmer']="( script LIKE '%hmmer%' OR script LIKE '%hmmp%' )";
-  $pkgmatch['hsi']="( script LIKE '%hsi %' OR script LIKE '%htar %' )";
-  $pkgmatch['hy3s']="( script LIKE '%SSA%' OR script LIKE '%HyJCMSS-%' )";
-  $pkgmatch['lammps']="( script LIKE '%lammps%' OR script LIKE '% lmp_%' OR script LIKE '%/lmp_%')";
+  $pkgmatch['hpl']="script LIKE '%xhpl%'";
+  $pkgmatch['ifs']="script LIKE '%ifsMASTER%'";
+  $pkgmatch['imb']="script LIKE '%IMB-%'";
+  $pkgmatch['lammps']="( script LIKE '%lammps%' OR script LIKE '% lmp_%' OR script LIKE '%/lmp_%' )";
+  $pkgmatch['madness']="( script LIKE '%m-a-d-n-e-s-s%' OR script LIKE '%slda%' )";
   $pkgmatch['matlab']="( script LIKE '%matlab%' OR software LIKE '%matlab%' )";
-  $pkgmatch['milc']="( script LIKE '%milc%' OR script LIKE '% su3_%' )";
+  $pkgmatch['meta']="( script LIKE '%anti.meta%' OR script LIKE '%para.meta%' OR script LIKE '%xray.meta%' )";
+  $pkgmatch['mm5']="( SCRIPT LIKE '%mm5%' AND NOT SCRIPT LIKE '%womm5%' )";
   $pkgmatch['mrbayes']="( script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%' )";
-  $pkgmatch['ncbi']="( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )";
+  $pkgmatch['ncbi']="( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%blastpgp%' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )";
   $pkgmatch['openeye']="( script LIKE '%babel3%' OR script LIKE '%checkcff%' OR script LIKE '%chunker%' OR script LIKE '%fred2%' OR script LIKE '%fredPA%' OR script LIKE '%ligand_info%' OR script LIKE '%makefraglib%' OR script LIKE '%makerocsdb%' OR script LIKE '%nam2mol%' OR script LIKE '%omega2%' OR script LIKE '%szybki%' )";
-  $pkgmatch['overlap']="script LIKE '%overlap_%'";
   $pkgmatch['pwscf']="( script LIKE '%pwscf%' OR script LIKE '%pw.x%' OR script LIKE '%dos.x%' )";
   $pkgmatch['rosetta']="( script LIKE '%rosetta.%' OR script LIKE '%/rr %' )";
   $pkgmatch['root']="script LIKE '%\nroot -q%'";
   $pkgmatch['sable']="( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )";
   $pkgmatch['sas']="( script LIKE '%\nsas%' OR software LIKE '%sas%' OR queue  LIKE '%sas%' )";
+  $pkgmatch['tbms']="( script LIKE '%tbms%dvm%' OR script LIKE '%distr%dvm%' OR script LIKE '%jac%dvm%' OR script LIKE '%mt%dvm%' )";
   $pkgmatch['turbo']="script LIKE '%pturbo.x%'";
+  $pkgmatch['upc']="script LIKE '%upcrun%'";
   $pkgmatch['vasp']="script LIKE '%vasp%'";
+  $pkgmatch['vpic']="( script LIKE '%npic%' OR script LIKE '%open.cxx.op%' )";
+  $pkgmatch['zNtoM']="( script LIKE '%z1to3%' OR script LIKE '%z4to6%' OR script LIKE '%z7to9%' OR script LIKE '%z10to12%' OR script LIKE '%z13to15%' )";
 
 # package matches with dependencies on other package matches
   $pkgmatch['R']="( script LIKE '%\nR %' AND NOT ( ".$pkgmatch['gaussian'].
     " OR ".$pkgmatch['adf']." ) )";
   $pkgmatch['arps'] = "( script LIKE '%arps%' AND NOT ( ".$pkgmatch['wrf']." ) )";
   $pkgmatch['cam'] = "( script LIKE '%cam%' AND NOT ( ".$pkgmatch['ccsm']." ) )";
+  $pkgmatch['cdp'] = "( script LIKE '%cdp%' AND NOT ( ".$pkgmatch['ifs']." ) )";
   $pkgmatch['charmm'] = "( script LIKE '%charmm%' AND NOT ( ".$pkgmatch['chemshell']." ) )";
-  $pkgmatch['pop'] = "( script LIKE '%pop%' AND NOT ( ".$pkgmatch['ccsm']." ) )";
+  $pkgmatch['hmc']="( ( script LIKE '%hmc%' OR script LIKE '%./run_%.sh%' ) AND NOT ( ".$pkgmatch['namd']." ) )";
+  $pkgmatch['hsi']="( ( script LIKE '%hsi %' OR script LIKE '%htar %' ) AND NOT ( ".$pkgmatch['nicam']." ) AND NOT ( ".$pkgmatch['ifs']." ) )";
+  $pkgmatch['hy3s']="( ( script LIKE '%SSA%' OR script LIKE '%HyJCMSS-%' ) AND NOT ( ".$pkgmatch['ccsm']." ) AND NOT ( ".$pkgmatch['milc']." ) AND NOT ( ".$pkgmatch['wrf']." ) AND NOT ( ".$pkgmatch['nicam']." ) )";
+  $pkgmatch['milc']="( ( script LIKE '%milc%' OR script LIKE '%su3_%' OR script LIKE '%switch%.csh%' ) AND NOT ( ".$pkgmatch['nicam']." ) )";
+  $pkgmatch['omen'] = "( script LIKE '%omen%' AND NOT ( ".$pkgmatch['milc']." ) )";
+  $pkgmatch['overlap']="( script LIKE '%overlap_%' AND NOT ( ".$pkgmatch['nicam']." ) )";
+  $pkgmatch['pop'] = "( script LIKE '%pop%' AND NOT ( ".$pkgmatch['ccsm']." ) AND NOT ( ".$pkgmatch['hmc']." ) )";
+  $pkgmatch['qb'] = "( script LIKE '%qb%' AND NOT ( ".$pkgmatch['milc']." ) AND NOT ( ".$pkgmatch['amber']." ) )";
+  $pkgmatch['radhyd'] = "( script LIKE '%radhyd%' AND NOT ( ".$pkgmatch['chimera']." ) )";
   $pkgmatch['turbomole'] = "( script LIKE '%turbomole%' AND NOT ( ".$pkgmatch['chemshell']." ) )";
   
   return $pkgmatch;
