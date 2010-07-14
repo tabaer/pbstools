@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008, 2009 University of Tennessee
+# Copyright 2008, 2009, 2010 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -214,7 +214,8 @@ function columns($metric,$system)
   if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),MAX(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),AVG(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),STDDEV(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime)))";
   if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups";
   if ( $metric=='backlog' ) return "SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(start_ts-submit_ts)/3600.0 AS 'SUM(qtime)'";
-  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
+#  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
+  if ( $metric=='xfactor' ) return "MIN(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MIN(xfactor)', MAX(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MAX(xfactor)', AVG(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'AVG(xfactor)', STDDEV(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'STDDEV(xfactor)'";
   if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS users";
   if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS groups";
   if ( $metric=='accounts' ) return "COUNT(DISTINCT(account)) AS accounts";
@@ -252,7 +253,8 @@ function columnnames($metric)
   if ( $metric=='cpu_eff' ) return array("MIN(cpu_eff)","MAX(cpu_eff)","AVG(cpu_eff)","STDDEV(cpu_eff)");
   if ( $metric=='usercount' ) return array("users","groups");
   if ( $metric=='backlog' ) return array("cpuhours","SUM(qtime)");
-  if ( $metric=='xfactor' ) return array("xfactor");
+#  if ( $metric=='xfactor' ) return array("xfactor");
+  if ( $metric=='xfactor' ) return array("MIN(xfactor)","MAX(xfactor)","AVG(xfactor)","STDDEV(xfactor)");
   if ( $metric=='users' ) return array("users");
   if ( $metric=='groups' ) return array("groups");
   if ( $metric=='accounts' ) return array("accounts");
