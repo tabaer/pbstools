@@ -13,6 +13,7 @@ CREATE TABLE Jobs (
   mppssp       INT UNSIGNED,
   nodes        TEXT,
   feature      TINYTEXT,
+  gres         TINYTEXT,
   queue        TINYTEXT,
   qos          TINYTEXT,
   submit_ts    INT,

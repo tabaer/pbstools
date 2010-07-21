@@ -187,6 +187,10 @@ while ( defined($ARGV[0]) )
                   {
                     $qhead.=",feature = \'".$resource{"Resource_List.feature"}."\'";
                   }
+		if ( defined($resource{"Resource_List.gres"}) )
+                  {
+                    $qhead.=",gres = \'".$resource{"Resource_List.gres"}."\'";
+                  }
 		if ( defined($resource{"queue"}) )
 		  {
 		    $qhead.=",queue = \'".$resource{"queue"}."\'";
@@ -309,6 +313,11 @@ while ( defined($ARGV[0]) )
                   {
                     $qhead.=",feature";
                     $qtail.=",\'".$resource{"Resource_List.feature"}."\'";
+                  }
+		if ( defined($resource{"Resource_List.gres"}) )
+                  {
+                    $qhead.=",gres";
+                    $qtail.=",\'".$resource{"Resource_List.gres"}."\'";
                   }
 		if ( defined($resource{"queue"}) )
 		  {
