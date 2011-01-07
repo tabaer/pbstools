@@ -469,11 +469,17 @@ class JobNode(object):
                         if ( jobid is not None ):
                             # Need to check if jobids still exist before adding them
                             # as a dependency
+                            log.write(str(datetime.datetime.now())+": job "+self.name()+" checking for existence of parent job "+jobid+"\n")
+                            log.flush()
                             if ( os.system("qstat "+jobid+" 2>/dev/null 1>/dev/null")==0 ):
+                                log.write(str(datetime.datetime.now())+": job "+self.name()+" parent "+jobid+" found, adding to dependency list\n")
                                 if ( dependencies is None ):
                                     dependencies = [jobid]
                                 else:
                                     dependencies.append(jobid)
+                            else:
+                                log.write(str(datetime.datetime.now())+": job "+self.name()+" parent "+jobid+" not found, ignoring\n")
+                            log.flush()
                 dependency = ""
                 if ( dependencies is not None ):
                     # Filter dependencies to get the unique values; otherwise PBS gets confused.
@@ -495,7 +501,7 @@ class JobNode(object):
                     queue = "-q "+self.queue()
                 cmd = jobsubmit+" -N "+self.name()+" "+queue+" "+dependency+" "+vars+" "+self.script()
                 if ( verbose ):
-                    log.write(str(datetime.datetime.now())+": "+cmd+"\n")
+                    log.write(str(datetime.datetime.now())+": job "+self.name()+"submitting using command \""+cmd+"\"\n")
                     log.flush()
                 p = subprocess.Popen(cmd, shell=True,
                                      stdin=subprocess.PIPE,
@@ -578,11 +584,17 @@ class DataJobNode(JobNode):
                         if ( jobid is not None ):
                             # Need to check if jobids still exist before adding them
                             # as a dependency
+                            log.write(str(datetime.datetime.now())+": job "+self.name()+" checking for existence of parent job "+jobid+"\n")
+                            log.flush()
                             if ( os.system("qstat "+jobid+" 2>/dev/null 1>/dev/null")==0 ):
+                                log.write(str(datetime.datetime.now())+": job "+self.name()+" parent "+jobid+" found, adding to dependency list\n")
                                 if ( dependencies is None ):
                                     dependencies = [jobid]
                                 else:
                                     dependencies.append(jobid)
+                            else:
+                                log.write(str(datetime.datetime.now())+": job "+self.name()+" parent "+jobid+" not found, ignoring\n")
+                            log.flush()
                 dependency = ""
                 if ( dependencies is not None ):
                     # Filter dependencies to get the unique values; otherwise PBS gets confused.
