@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/suidperl
 #
 # jobinfo -- Example of getting job info from pbsacct DB
 #
