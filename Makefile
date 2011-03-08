@@ -25,7 +25,7 @@ usertools:
 	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qrsh
 	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qsh
 	install -m 0755 bin/supermover $(PREFIX)/bin
-	install -m 0755 bin/ddmsub $(PREFIX)/bin
+	install -m 0755 bin/dmsub $(PREFIX)/bin
 	install -m 0755 bin/dagsub $(PREFIX)/bin
 	install -d $(PREFIX)/man/man1
 	install -m 0644 doc/man1/ja.1 $(PREFIX)/man/man1
@@ -38,6 +38,7 @@ usertools:
 	ln -s $(PREFIX)/man/man1/qexec.1 $(PREFIX)/man/man1/qmpirun.1
 	ln -s $(PREFIX)/man/man1/qexec.1 $(PREFIX)/man/man1/qrsh.1
 	ln -s $(PREFIX)/man/man1/qexec.1 $(PREFIX)/man/man1/qsh.1
+	install -m 0644 doc/man1/supermover.1 $(PREFIX)/man/man1
 	install -m 0644 doc/man1/dagsub.1 $(PREFIX)/man/man1
 
 admintools:
