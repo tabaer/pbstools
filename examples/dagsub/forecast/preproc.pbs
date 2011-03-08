@@ -5,4 +5,4 @@
 
 cd $PBS_O_WORKDIR
 echo $day
-sleep 10
+sleep 120
