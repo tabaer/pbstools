@@ -53,7 +53,7 @@ function xaxis_column($x,$system)
       $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS ".$x."_bucketed";
       return $column;
     }
-  elseif ( $x=="nproc_bucketed")
+  elseif ( $x=="nproc_bucketed" )
     {
       $maxs = bucket_maxs("nproc");
       $column = "CASE WHEN nproc <= '".$maxs[0]."' THEN '<=".$maxs[0]."'";
@@ -64,7 +64,7 @@ function xaxis_column($x,$system)
       $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS nproc_bucketed";
       return $column;
     }
-  elseif ( $x=="nproc_norm")
+  elseif ( $x=="nproc_norm" )
     {
       $maxs = bucket_maxs("nproc_norm");
       $column = "CASE WHEN nproc/".nprocs($system)." <= '".$maxs[0]."' THEN '<=".$maxs[0]."'";
@@ -73,6 +73,11 @@ function xaxis_column($x,$system)
 	  $column .= " WHEN nproc/".nprocs($system)." > '".$maxs[$i-1]."' AND nproc/".nprocs($system)." <= '".$maxs[$i]."' THEN '&gt;".$maxs[$i-1]."-".$maxs[$i]."'";
 	}
       $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS nproc_norm";
+      return $column;
+    }
+  elseif ( $x=="qos" )
+    {
+      $column = "CASE WHEN qos IS NULL THEN 'default' ELSE qos END as qos";
       return $column;
     }
 
