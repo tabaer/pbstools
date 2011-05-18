@@ -124,7 +124,7 @@ if ($opt_v) { $verbose_mode = 1; $brief_mode = 0; }
 my $ptn = "$spool/mom_priv/jobs/*.JB";
 if ( glob($ptn) )
 {
-    my $jobuserlist = `cat $ptn | strings | grep PBS_O_LOGNAME | sed 's/PBS_O_LOGNAME=//g' | sort | uniq | tr '\n' '|'`;
+    my $jobuserlist = `cat $ptn | strings | grep -A 1 euser | grep -v euser | sort | uniq | tr '\n' '|'`;
     chop($jobuserlist);
     if ( $jobuserlist ne "" )
     {
