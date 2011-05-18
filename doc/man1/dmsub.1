@@ -41,7 +41,8 @@ is functionally equivalent to the dmover format.)
 
 .SH DATA MOVERS
 
-.B dmsub also a number of mechanisms to transfer data:
+.B dmsub
+also supports a number of mechanisms to transfer data:
 .TP
 .B globus-url-copy, guc
 Globus GridFTP
@@ -55,7 +56,7 @@ Condor Stork
 .B supermover
 PBS Tools supermover, which is a configurable wrapper around
 globus-url-copy, scp, and a number of other tools.
-
+.PP
 Note that it is not necessary for
 .B dmsub
 to use the data mover associated with a given transfer description
@@ -80,7 +81,7 @@ The PBS family of batch systems (OpenPBS, PBS Pro, and TORQUE)
 .TP
 .B rft
 Globus RFT (required to use rft data mover)
-
+.PP
 As described above, it is not necessary for
 .B dmsub
 to use the data mover associated with a given transfer description
@@ -177,11 +178,12 @@ Default server, equivalent to --server=
 .TP
 .B streams
 Default number of concurrent GridFTP data streams, equivalent to --streams=
-.TP stripe_size
+.TP
+.B stripe_size
 Default GridFTP stripe size
 .TP
 .B walltime
-Equivalent to -l walltime=
+Default walltime limit, equivalent to -l walltime=
 
 .SH Config file example
 
