@@ -30,3 +30,7 @@ VARS I INPUT=I
 
 JOB J worker.pbs
 VARS J INPUT=J
+
+JOB final worker.pbs
+VARS final INPUT=final
+PARENT A B C D E F G H I J CHILD final
