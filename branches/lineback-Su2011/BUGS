@@ -1,0 +1,10 @@
+dagsub:
+* Restart DAGs will not work reliably unless pbs_server is configured to
+  keep jobs for some period of time after they end (e.g. qmgr -c "set
+  server keep_completed = 300").  Without this setting, dagsub is not
+  able to determine whether or not a job completed successfully unless
+  it happens to check while the completed job is in the 'E' state
+  (which is typically only a few seconds).
+* Generation of DOT files is currently broken.
+
+

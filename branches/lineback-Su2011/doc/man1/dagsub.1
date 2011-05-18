@@ -1,0 +1,126 @@
+.TH dagsub 1 "$Date" "$Revision$" "PBS TOOLS"
+
+.SH NAME
+dagsub \- Submit directed acyclic graphs of jobs, similar to that of condor_submit_dag
+
+.SH SYNOPSIS
+.B dagsub
+[arguments] dagfile [dagfiles...]
+
+.SH DESCRIPTION
+.B dagsub
+submits directed acyclic graphs of jobs using a syntax similar to that
+used by
+.B condor_submit_dag.
+It does this by invoking the PBS/TORQUE
+.B qsub
+command for each job/node in the job dependency graph with the
+necessary dependency arguments.
+
+.SH OPTIONS
+.TP
+.B \-h or \-help
+Print usage/help summary
+.TP
+.B \-force
+Overwrite files that normally wouldn't be overwritten.
+.TP
+.B \-no\_fork
+Process DAGs synchronously in the foreground.  Normally, 
+.B dagsub
+will fork off a copy of itself per DAG file, with the the parent
+process exiting immediately.
+.TP
+.B \-no\_submit
+Process DAGs but do not actually submit jobs.
+.TP
+.B \-v or \-verbose
+Log additional information.
+.TP
+.B \-log logfile
+Log informational messages to
+.B logfile.
+The default is [basename].log.  "\-" can be used to indicate logging
+to stdout.
+.TP
+.B -maxidle NumberOfJobs
+Allow at most NumberOfJobs idle jobs in DAG at any time.  (This is currently ignored.)
+.TP
+.B -maxjobs NumberOfJobs
+Allow at most NumberOfJobs jobs in DAG at any time.  (This is currently ignored.)
+
+.SH EXAMPLES
+
+.nf
+.B cat diamond.dag
+.fi
+.PP
+JOB A A.pbs
+.fi
+JOB B B.pbs 
+.fi
+JOB C C.pbs
+.fi
+JOB D D.pbs
+.fi
+PARENT A CHILD B C
+.fi
+PARENT B C CHILD D
+.fi
+PRIORITY C 1
+.fi
+DOT diamond.dot
+.PP
+
+.nf
+.B dagsub diamond.dag
+.PP
+
+Log messages will be written to diamond.log.
+
+.SH LIMITATIONS
+
+.B dagsub
+does not support the full DAG syntax described at
+http://www.cs.wisc.edu/condor/manual/v7.0/2_10DAGMan_Applications.html.
+In particular, it does not currently support the following keywords
+and features:
+.PP
+.B DATA
+.fi
+.B CATEGORY
+.fi
+.B MAXJOBS
+.fi
+.B CONFIG
+.fi
+.B ABORT-DAG-ON
+.fi
+Inner DAGs
+.PP
+
+.SH BUGS
+
+When specifying "RETRY" on one of the parents (i.e.job1), a child will
+sometimes be missing any other dependencies (i.e. job5 will only
+depend on job1, even if the job5 has other parents, e.g. job2-4). In
+other words, after job1 is complete, job2-4 + job5 can run
+concurrently, when job5 supposed to wait for job2-4 finishing first.
+The problem appears to be in dependency handling; if one of the
+afterok jobs is in the 'C' state, state, the child job will only add
+it to the dependency, and the rest of the parents job are left out.
+Uncomment the RETRY in examples/dagsub/forecast/forecast.dag to see an
+example of this.
+
+Jobs sometimes fail to follow the "afterok" dependency.  This appears
+to be a bug in TORQUE; see
+http://www.supercluster.org/pipermail/torqueusers/2009-July/009282.html
+for details.
+
+.SH AUTHORS
+Troy Baer (tbaer (at) utk.edu)
+.fi
+Patrick Lu (ylu14 (at) utk.edu)
+
+.SH SEE ALSO
+qsub(1B)
