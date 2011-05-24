@@ -508,7 +508,7 @@ class JobNode(object):
             if ( not self.isDone() ):
                 if self.category() is not None:
                     while self.num_category(categories, dag.getNodes()) >= categories[self.category()].get_max():
-                        time.sleep(30)
+                        time.sleep(maxJobWait)
                 dependencies = None
                 parents = self.parents()
                 if ( parents is not None and len(parents)>0 ):
@@ -930,7 +930,7 @@ class DAG(object):
 
 def usage():
     sys.stderr.write("Usage:  dagsub [options] file [file]\n")
-    sys.stderr.write("Options:\n\t-help\n\t-force\n\t-no_fork\n\t-no_submit\n\t-verbose\n\t-log logfile\n\t-maxidle NumberOfJobs\n\t-maxjobs NumberOfJobs\n")
+    sys.stderr.write("Options:\n\t-help\n\t-force\n\t-no_fork\n\t-no_submit\n\t-verbose\n\t-log logfile\n\t-maxidle NumberOfJobs\n\t-maxjobs NumberOfJobs\n\t-maxjobwait TimeToWait\n")
 
 
 verbose = False
@@ -944,7 +944,7 @@ logFile = None
 timeout = 30
 jobsubmit = "qsub"
 datasubmit = "dmsub"
-
+maxJobWait = 30
 try:
     # The convention is to use single dash for short command (i.e. -h), and double dashes
     # (i.e. --no_submit) for long command.  In condor submit dag, user uses single dash
@@ -980,7 +980,8 @@ try:
                                 "maxjobs=",
                                 "notification=",
                                 "oldrescue",
-                                "outfile_dir="])
+                                "outfile_dir=",
+                                "maxjobwait="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -1007,6 +1008,8 @@ try:
             doSubmit = False
         if ( opt in ("-v", "--verbose") ):
             verbose = True
+        if ( opt=="--maxjobwait" ):
+            maxJobWait = int(value)
 except NameError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
