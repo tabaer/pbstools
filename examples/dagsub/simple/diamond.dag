@@ -1,8 +1,13 @@
 # diamond.dag
-JOB A A.pbs DIR "/nics/a/home/ytlu/dagsub/examples/simple"
+JOB A A.pbs DIR 
 JOB B B.pbs 
 JOB C C.pbs 
-JOB D D.pbs 
+JOB D D.pbs
+CATEGORY A root
+CATEGORY B middle
+CATEGORY C middle
+CATEGORY D leaf 
+MAXJOBS middle 1
 PARENT A CHILD B C
 PARENT B C CHILD D
 PRIORITY C 1
