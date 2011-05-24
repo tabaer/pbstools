@@ -103,6 +103,26 @@ def unique(s):
     return u
 ### end code from Python Cookbook
 
+class Category(object):
+    def __init__(self,name):
+        self._name = name
+        self._max  = float('infinity')
+        self._job_nodes = []
+    
+    def get_name(self):
+        return self._name
+    
+    def get_max(self):
+        return self._max
+    
+    def set_max(self,maximum):
+        self._max = maximum
+
+    def add_job_node(self,node):
+        self._job_nodes.append(node)
+
+    def get_job_nodes(self):
+        return self._job_nodes
 
 class JobNode(object):
     def __init__(self,name,script):
@@ -126,6 +146,7 @@ class JobNode(object):
         self._abortstatus = []
         self._abortreturn = dict()
         self._noretrystatus = 0
+        self._category = None
         if ( not os.path.exists(script) ):
             raise IOError, "File "+script+" not found"
 
@@ -196,6 +217,9 @@ class JobNode(object):
     def queue(self):
         return self._queue
 
+    def category(self):
+        return self._category
+    
     def noRetryStatus(self):
         return self._noretrystatus
 
@@ -250,6 +274,9 @@ class JobNode(object):
     def setNoRetryStatus(self,noretry):
         self._noretrystatus = noretry
     
+    def set_category(self,category):
+        self._category = category
+
     def isSick(self):
         self._isHealthy = False
 
@@ -397,7 +424,7 @@ class JobNode(object):
             condition = self.jobStatus(log)
         return tries
 
-    def _presubmit(self,dag,log):
+    def _presubmit(self,dag,log,categories):
         # make sure all parents are submitted, if necessary
         parentjobs = None
         if ( self.parents() is not None ):
@@ -410,7 +437,7 @@ class JobNode(object):
             node_list.sort()
 
             for parentnode in node_list:
-                success = parentnode.submit(dag,log)
+                success = parentnode.submit(dag,log,categories)
                 if ( not success ):
                     return success
                 else:
@@ -433,7 +460,7 @@ class JobNode(object):
             self.setPreScriptHasRun(True)
         return True
 
-    def _postsubmit(self,dag,log):
+    def _postsubmit(self,dag,log,categories):
         # do epilogue, if needed
         if ( self.postScript() is not None and not self.postScriptHasRun() ):
             cmd = self.postScript()[0]
@@ -461,23 +488,27 @@ class JobNode(object):
             node_list.sort()
 
             for childnode in node_list:
-                success = childnode.submit(dag,log)
+                success = childnode.submit(dag,log,categories)
                 if ( not success ):
                     return success
         return True
 
-    def submit(self,dag,log):
+    def submit(self,dag,log,categories):
         if ( self.isSubmitted() ):
             return self.isSubmitted()
 
         # do generic pre-submission stuff
-        success = self._presubmit(dag,log)
+        success = self._presubmit(dag,log,categories)
         if ( not success ):
             return success
-
+        print self.num_category(categories, dag.getNodes())
+        print categories[self.category()].get_name()
         # do actual job submission
         if ( not self.isSubmitted() ):
             if ( not self.isDone() ):
+                if self.category() is not None:
+                    while self.num_category(categories, dag.getNodes()) >= categories[self.category()].get_max():
+                        time.sleep(30)
                 dependencies = None
                 parents = self.parents()
                 if ( parents is not None and len(parents)>0 ):
@@ -556,8 +587,7 @@ class JobNode(object):
                 self.setJobId(jobid)
                 log.write(str(datetime.datetime.now())+":  submitted job "+self.name()+" as jobid "+self.jobId()+"\n")
                 log.flush()
-
-        
+             
                 # if RETRY is defined or there is a POST script to run, call retry()
                 if ( self.retries()>0 or (self.postScript() is not None and not self.postScriptHasRun()) ):
                     self.retry(cmd,dag,log)
@@ -565,8 +595,54 @@ class JobNode(object):
         self.setSubmitted(True)
         
         # if nothing failed, do generic post-submission stuff
-        return self._postsubmit(dag,log)
-
+        return self._postsubmit(dag,log,categories)
+    
+    def num_category(self, categories, nodes):
+        num_in_category = 0
+        reg_ex = ""
+        q = subprocess.Popen("logname",shell=True,
+                             stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             close_fds=True)
+        qin = q.stdin
+        qerr = q.stderr
+        qout = q.stdout
+        qin.close()
+        stderr = qerr.readlines()
+        qerr.close()
+        stdout = qout.readlines()
+        qout.close()
+        q.wait()
+        tokens = stdout[0].split()
+        if len(stdout)>0:
+            user_name = tokens[0]
+        if self._category is not None:
+            cat_siblings = categories[self._category].get_job_nodes()
+            for x in cat_siblings:
+                if nodes[x].jobId() is not None:
+                    if reg_ex == "":
+                        reg_ex = str(nodes[x].jobId())
+                    else:
+                        reg_ex = reg_ex + "\|" + str(nodes[x].jobId())
+            cmd = "qselect -u "+user_name+" | egrep -c "+ reg_ex
+            p = subprocess.Popen(cmd, shell=True,
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 close_fds=True)
+            pin = p.stdin
+            perr = p.stderr
+            pout = p.stdout
+            pin.close()
+            stderr = perr.readlines()
+            perr.close()
+            stdout = pout.readlines()
+            pout.close()
+            p.wait()
+            if len(stdout)>0:
+                num_in_category = int(stdout[0])
+        return num_in_category
 
 class DataJobNode(JobNode):
     def __init__(self,name,script):
@@ -866,6 +942,7 @@ def usage():
     sys.stderr.write("Usage:  dagsub [options] file [file]\n")
     sys.stderr.write("Options:\n\t-help\n\t-force\n\t-no_fork\n\t-no_submit\n\t-verbose\n\t-log logfile\n\t-maxidle NumberOfJobs\n\t-maxjobs NumberOfJobs\n")
 
+
 verbose = False
 doFork = True
 doSubmit = True
@@ -954,6 +1031,7 @@ for file in args:
     else:
         child = 0
     dag = None
+    categories = {}
     if( child==0 ):
         pid = os.getpid()
         dag = DAG()
@@ -1046,9 +1124,17 @@ for file in args:
                         elif ( len(token)==5 ):
                             node.addAbortStatus(int(token[2]),int(token[4]))
                     elif ( token[0]=="CATEGORY" ):
-                        sys.stderr.write(file+":  CATEGORY not supported, ignoring\n")
+                        node = dag.getNode(token[1])
+                        if not token[2] in categories.keys():
+                            categories[token[2]] = Category(token[2])
+                        node.set_category(token[2])
+                        categories[token[2]].add_job_node(token[1])
+                       # sys.stderr.write(file+":  CATEGORY not supported, ignoring\n")
                     elif ( token[0]=="MAXJOBS" ):
-                        sys.stderr.write(file+":  MAXJOBS not supported, ignoring\n")
+                        if not token[1] in categories.keys():
+                            sys.stderr.write(file+":  CATEGORY = "+token[1]+" not defined, ignoring MAXJOBS\n")
+                        else:
+                            categories[token[1]].set_max(int(token[2]))
                     elif ( token[0]=="CONFIG" ):
                         sys.stderr.write(file+":  CONFIG not supported, ignoring\n")
                     else:
@@ -1083,7 +1169,7 @@ for file in args:
                     finish = False
                     for root in dag.getRootNodes():
                         rootnode = dag.getNode(root)
-                        rootnode.submit(dag,log)
+                        rootnode.submit(dag,log,categories)
                         finish = dag.writeRescueDAG(log)
                         if ( dotFile is not None ):
                             dag.writeDotFile(dotFile,base,log,False)
