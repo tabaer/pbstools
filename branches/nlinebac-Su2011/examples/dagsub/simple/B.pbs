@@ -1,4 +1,4 @@
 #PBS -j oe
 #PBS -l walltime=1:00:00
 
-sleep 600
+sleep 10
