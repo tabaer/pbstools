@@ -29,6 +29,7 @@ import time
 import shutil
 import string
 import subprocess
+import getpass
 
 SUCCESS     = 0
 FAIL        = -1
@@ -501,8 +502,7 @@ class JobNode(object):
         success = self._presubmit(dag,log,categories)
         if ( not success ):
             return success
-        print self.num_category(categories, dag.getNodes())
-        print categories[self.category()].get_name()
+        
         # do actual job submission
         if ( not self.isSubmitted() ):
             if ( not self.isDone() ):
@@ -599,25 +599,13 @@ class JobNode(object):
     
     def num_category(self, categories, nodes):
         num_in_category = 0
-        reg_ex = ""
-        q = subprocess.Popen("logname",shell=True,
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             close_fds=True)
-        qin = q.stdin
-        qerr = q.stderr
-        qout = q.stdout
-        qin.close()
-        stderr = qerr.readlines()
-        qerr.close()
-        stdout = qout.readlines()
-        qout.close()
-        q.wait()
-        tokens = stdout[0].split()
-        if len(stdout)>0:
-            user_name = tokens[0]
+
         if self._category is not None:
+            #initialize regular expression
+            reg_ex = ""
+            #get user name
+            user_name = getpass.getuser()
+            #get names of job nodes in my category and build regular expression of the jobIDs
             cat_siblings = categories[self._category].get_job_nodes()
             for x in cat_siblings:
                 if nodes[x].jobId() is not None:
@@ -625,7 +613,8 @@ class JobNode(object):
                         reg_ex = str(nodes[x].jobId())
                     else:
                         reg_ex = reg_ex + "\|" + str(nodes[x].jobId())
-            cmd = "qselect -u "+user_name+" | egrep -c "+ reg_ex
+            cmd = "qselect -s RHQ -u "+user_name+" | egrep -c "+ reg_ex
+            #create subprocess to search number of jobs in category
             p = subprocess.Popen(cmd, shell=True,
                                  stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE,
@@ -642,6 +631,7 @@ class JobNode(object):
             p.wait()
             if len(stdout)>0:
                 num_in_category = int(stdout[0])
+                
         return num_in_category
 
 class DataJobNode(JobNode):
