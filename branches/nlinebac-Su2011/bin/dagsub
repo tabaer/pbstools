@@ -288,6 +288,9 @@ class JobNode(object):
                 childnode.isSick()
 
     def jobStatus(self, log):
+        if self.isSubmitted():
+            if job_exists(self.jobId()):
+                return NOT_FOUND
         if ( self.jobId() is not None ):
             if ( verbose ):
                 log.write(str(datetime.datetime.now())+":  checking status of job "+self.name()+", jobid "+self.jobId()+"\n")
@@ -506,8 +509,9 @@ class JobNode(object):
         # do actual job submission
         if ( not self.isSubmitted() ):
             if ( not self.isDone() ):
+                #check number of jobs in category and wait with user specified wait time
                 if self.category() is not None:
-                    while self.num_category(categories, dag.getNodes()) >= categories[self.category()].get_max():
+                    while self.num_category(categories, dag.getNodes()) >= categories[self.category()].get_max():        
                         time.sleep(maxJobWait)
                 dependencies = None
                 parents = self.parents()
@@ -520,7 +524,8 @@ class JobNode(object):
                             if ( verbose ):
                                 log.write(str(datetime.datetime.now())+": job "+self.name()+" checking for existence of parent job "+jobid+"\n")
                                 log.flush()
-                            if ( os.system("qstat "+jobid+" 2>/dev/null 1>/dev/null")==0 ):
+                            #if ( os.system("qstat "+jobid+" 2>/dev/null 1>/dev/null")==0 ):
+                            if job_exists(jobid):
                                 if ( verbose ):
                                     log.write(str(datetime.datetime.now())+": job "+self.name()+" parent "+jobid+" found, adding to dependency list\n")
                                     log.flush()
@@ -599,7 +604,7 @@ class JobNode(object):
     
     def num_category(self, categories, nodes):
         num_in_category = 0
-
+        
         if self._category is not None:
             #initialize regular expression
             reg_ex = ""
@@ -634,6 +639,30 @@ class JobNode(object):
                 
         return num_in_category
 
+def job_exists(jobid):
+    user_name = getpass.getuser()
+    cmd = "qselect -s RHQ -u "+user_name+" | egrep -c "+ jobid
+    p = subprocess.Popen(cmd, shell=True,
+                         stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         close_fds=True)
+    pin = p.stdin
+    perr = p.stderr
+    pout = p.stdout
+    pin.close()
+    stderr = perr.readlines()
+    perr.close()
+    stdout = pout.readlines()
+    pout.close()
+    p.wait()
+    if len(stdout)>0:
+        num_jobid = int(stdout[0])
+    if num_jobid > 0:
+        return True
+    else:
+        return False
+                                                                                                                                     
 class DataJobNode(JobNode):
     def __init__(self,name,script):
         super(DataJobNode,self).__init__(name,script)
