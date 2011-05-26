@@ -3,11 +3,11 @@ JOB A A.pbs DIR
 JOB B B.pbs 
 JOB C C.pbs 
 JOB D D.pbs
-CATEGORY A root
+CATEGORY A middle
 CATEGORY B middle
 CATEGORY C middle
-CATEGORY D leaf 
-MAXJOBS middle 1
+CATEGORY D middle
+MAXJOBS middle 3
 PARENT A CHILD B C
 PARENT B C CHILD D
 PRIORITY C 1
