@@ -288,13 +288,11 @@ class JobNode(object):
                 childnode.isSick()
 
     def jobStatus(self, log):
-        if self.isSubmitted():
-            if job_exists(self.jobId()):
-                return NOT_FOUND
         if ( self.jobId() is not None ):
             if ( verbose ):
                 log.write(str(datetime.datetime.now())+":  checking status of job "+self.name()+", jobid "+self.jobId()+"\n")
                 log.flush()
+
             cmd = "qstat -f "+str(self.jobId())
             p = subprocess.Popen(cmd, shell=True,
                                  stdin=subprocess.PIPE,
@@ -319,7 +317,7 @@ class JobNode(object):
                     log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" not found\n")
                     log.flush()
                 return NOT_FOUND
-            if( len(stdout)==0 ):
+            if( len(stdout)==0 ): 
                 if ( verbose ):
                     log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" not found\n")
                     log.flush()
@@ -511,7 +509,9 @@ class JobNode(object):
             if ( not self.isDone() ):
                 #check number of jobs in category and wait with user specified wait time
                 if self.category() is not None:
-                    while self.num_category(categories, dag.getNodes()) >= categories[self.category()].get_max():        
+                    while self.num_category(categories, dag.getNodes()) >= categories[self.category()].get_max():         
+                        dag.writeRescueDAG(log)
+                        log.write(str(datetime.datetime.now())+":  waiting "+str(maxJobWait)+" sec for CATEGORY "+self.category()+"\n")
                         time.sleep(maxJobWait)
                 dependencies = None
                 parents = self.parents()
@@ -956,7 +956,32 @@ class DAG(object):
             log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
             log.flush()
         return finish
-
+    def altIsComplete(self,log):
+        finish = True
+        nodes = self.getNodes()
+        for name in nodes:
+            node = nodes[name]
+            jobID = node.jobId()
+            if node.isSubmitted():
+                if job_exists(jobID):
+                    finish = False
+            else:
+                finish = False
+        if verbose:
+            log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
+            log.flush
+        return finish
+    def alt2IsComplete(self,log):
+        finish = True
+        nodes = self.getNodes()
+        for name in nodes:
+            node = nodes[name]
+            if not node.isDone():
+                finish = False
+        if verbose:
+            log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
+            log.flush                        
+        return finish
 def usage():
     sys.stderr.write("Usage:  dagsub [options] file [file]\n")
     sys.stderr.write("Options:\n\t-help\n\t-force\n\t-no_fork\n\t-no_submit\n\t-verbose\n\t-log logfile\n\t-maxidle NumberOfJobs\n\t-maxjobs NumberOfJobs\n\t-maxjobwait TimeToWait\n")
@@ -1197,7 +1222,7 @@ for file in args:
                             dag.writeDotFile(dotFile,base,log,False)
 
                     # Monitor the DAG and write out rescue DAGs periodically
-                    while ( not dag.isComplete(log) ):
+                    while ( not dag.alt2IsComplete(log) ):
                         time.sleep(timeout)
                         dag.writeRescueDAG(log)
                         if ( dotFile is not None ):
