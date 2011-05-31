@@ -603,6 +603,13 @@ class JobNode(object):
         return self._postsubmit(dag,log,categories)
     
     def num_category(self, categories, nodes):
+        """OVERVIEW: finds the number of jobs submitted or running in 
+                  self._category
+        PARAMETERS:
+                  categories, dictionary of all categories
+                  nodes, dictionary of all job nodes
+        RETURNS:  the number of jobs submitted or running in self._category 
+        """
         num_in_category = 0
         
         if self._category is not None:
@@ -640,6 +647,12 @@ class JobNode(object):
         return num_in_category
 
 def job_exists(jobid):
+    """OVERVIEW: finds if a job is in the queue
+    PARAMETERS: jobid, the job ID to find
+    RETURNS: 
+           True, if job is found
+           False, if job is not found
+    """
     user_name = getpass.getuser()
     cmd = "qselect -s RHQ -u "+user_name+" | egrep -c "+ jobid
     p = subprocess.Popen(cmd, shell=True,
@@ -957,6 +970,7 @@ class DAG(object):
             log.flush()
         return finish
     def altIsComplete(self,log):
+        """OVERVIEW: uses calls to job_exists() to see if each job has completed"""
         finish = True
         nodes = self.getNodes()
         for name in nodes:
@@ -972,6 +986,9 @@ class DAG(object):
             log.flush
         return finish
     def alt2IsComplete(self,log):
+        """OVERVIEW: uses the isDone() method from jobNode to see if each job is done.
+                  has the benefit of fewer system calls
+        """
         finish = True
         nodes = self.getNodes()
         for name in nodes:
