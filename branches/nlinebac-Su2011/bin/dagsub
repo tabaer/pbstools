@@ -705,18 +705,25 @@ class DataJobNode(JobNode):
     def mover(self):
         return 
 
-    def submit(self,dag,log):
+    def submit(self,dag,log,categories):
         if ( self.isSubmitted() ):
             return self.isSubmitted()
         
         # do generic pre-submission stuff
-        success = self._presubmit(dag,log)
+        success = self._presubmit(dag,log,categories)
         if ( not success ):
             return success
 
         # do actual job submission
         if ( not self.isSubmitted() ):
             if ( not self.isDone() ):
+                #check number of jobs in category and wait with user specified wait time
+                if self.category() is not None:
+                    while self.num_category(categories, dag.getNodes()) >= categories[self.category()].get_max():
+                        dag.writeRescueDAG(log)
+                        log.write(str(datetime.datetime.now())+":  waiting "+str(maxJobWait)+" sec for CATEGORY "+self.category()+"\n")
+                        log.flush()
+                        time.sleep(maxJobWait)             
                 dependencies = None
                 parents = self.parents()
                 if ( parents is not None and len(parents)>0 ):
@@ -728,7 +735,8 @@ class DataJobNode(JobNode):
                             if ( verbose ):
                                 log.write(str(datetime.datetime.now())+": job "+self.name()+" checking for existence of parent job "+jobid+"\n")
                                 log.flush()
-                            if ( os.system("qstat "+jobid+" 2>/dev/null 1>/dev/null")==0 ):
+                            #if ( os.system("qstat "+jobid+" 2>/dev/null 1>/dev/null")==0 ):
+                            if job_exists(jobid):
                                 if ( verbose ):
                                     log.write(str(datetime.datetime.now())+": job "+self.name()+" parent "+jobid+" found, adding to dependency list\n")
                                     log.flush()
@@ -808,10 +816,10 @@ class DataJobNode(JobNode):
                 if ( self.retries()>0 or (self.postScript() is not None and not self.postScriptHasRun()) ):
                     self.retry(cmd,dag,log)
             
-        self.setSubmitted(True)
-
+            self.setSubmitted(True)
+            self.setExists(True)
         # if nothing failed, do generic post-submission stuff
-        return self._postsubmit(dag,log)
+        return self._postsubmit(dag,log, categories)
 
 
 class DAG(object):
