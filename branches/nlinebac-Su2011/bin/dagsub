@@ -148,6 +148,7 @@ class JobNode(object):
         self._abortreturn = dict()
         self._noretrystatus = 0
         self._category = None
+        self._jobExists = False
         if ( not os.path.exists(script) ):
             raise IOError, "File "+script+" not found"
 
@@ -224,6 +225,9 @@ class JobNode(object):
     def noRetryStatus(self):
         return self._noretrystatus
 
+    def exists(self):
+        return self._jobExists
+    
     def isDone(self):
         return self._done
 
@@ -266,6 +270,9 @@ class JobNode(object):
     def setDone(self,done):
         self._done = done
 
+    def setExists(self, exists):
+        self._jobExists = exists
+        
     def setSubmitted(self,submitted):
         self._submitted = submitted
 
@@ -316,11 +323,13 @@ class JobNode(object):
                 if ( verbose ):
                     log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" not found\n")
                     log.flush()
+                    self.setExists(False)
                 return NOT_FOUND
             if( len(stdout)==0 ): 
                 if ( verbose ):
                     log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" not found\n")
                     log.flush()
+                    self.setExists(False)
                 return NOT_FOUND
             for line in stdout:
                 if( line.find('exit_status')!=-1 ):
@@ -331,6 +340,7 @@ class JobNode(object):
                             log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has completed\n")
                             log.flush()
                         self.setDone(True)
+                        self.setExists(False)
                         return SUCCESS
                     else:
                         log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has failed\n")
@@ -348,6 +358,7 @@ class JobNode(object):
             if ( verbose ):
                 log.write(str(datetime.datetime.now())+":  job "+self.name()+" not found\n")
                 log.flush()
+                self.setExists(False)
             return NOT_FOUND
             
     def retry(self, cmd, dag, log):
@@ -597,8 +608,8 @@ class JobNode(object):
                 if ( self.retries()>0 or (self.postScript() is not None and not self.postScriptHasRun()) ):
                     self.retry(cmd,dag,log)
             
-        self.setSubmitted(True)
-        
+            self.setSubmitted(True)
+            self.setExists(True)
         # if nothing failed, do generic post-submission stuff
         return self._postsubmit(dag,log,categories)
     
@@ -983,7 +994,7 @@ class DAG(object):
                 finish = False
         if verbose:
             log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
-            log.flush
+            log.flush()
         return finish
     def alt2IsComplete(self,log):
         """OVERVIEW: uses the isDone() method from jobNode to see if each job is done.
@@ -997,8 +1008,23 @@ class DAG(object):
                 finish = False
         if verbose:
             log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
-            log.flush                        
+            log.flush()                        
         return finish
+    def alt3IsComplete(self,log):
+        """OVERVIEW: uses the exists() method from jobNode to see if each job is has completed.
+                  Has the benefit of fewer system calls
+        """
+        finish = True
+        nodes = self.getNodes()
+        for name in nodes:
+            node = nodes[name]
+            if node.exists():
+                finish = False
+        if verbose:
+            log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
+            log.flush()
+        return finish
+                                                                                            
 def usage():
     sys.stderr.write("Usage:  dagsub [options] file [file]\n")
     sys.stderr.write("Options:\n\t-help\n\t-force\n\t-no_fork\n\t-no_submit\n\t-verbose\n\t-log logfile\n\t-maxidle NumberOfJobs\n\t-maxjobs NumberOfJobs\n\t-maxjobwait TimeToWait\n")
@@ -1016,6 +1042,7 @@ timeout = 30
 jobsubmit = "qsub"
 datasubmit = "dmsub"
 maxJobWait = 30
+
 try:
     # The convention is to use single dash for short command (i.e. -h), and double dashes
     # (i.e. --no_submit) for long command.  In condor submit dag, user uses single dash
@@ -1239,7 +1266,7 @@ for file in args:
                             dag.writeDotFile(dotFile,base,log,False)
 
                     # Monitor the DAG and write out rescue DAGs periodically
-                    while ( not dag.alt2IsComplete(log) ):
+                    while ( not dag.isComplete(log) ):
                         time.sleep(timeout)
                         dag.writeRescueDAG(log)
                         if ( dotFile is not None ):
