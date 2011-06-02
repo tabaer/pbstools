@@ -48,7 +48,13 @@ $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
     $db =db_connect();
-    $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, submit_ts, start_ts, end_ts, walltime_req, walltime, ".cpuhours($db,$_POST['system'])." AS cpuhours, queue, IF(script IS NULL,'interactive','batch') AS type, software FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("end",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
+    $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, submit_ts, start_ts, end_ts, walltime_req, walltime, ".cpuhours($db,$_POST['system'])." AS cpuhours, queue, IF(script IS NULL,'interactive','batch') AS type, CASE ";
+    $pkgmatch = software_match_list();
+    foreach (array_keys($pkgmatch ) as $pkg)
+      {
+	$sql .= "WHEN ".$pkgmatch[$pkg]." THEN '".$pkg."' ";
+      }
+    $sql .= "ELSE NULL END AS software FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("end",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     echo "<TABLE border=\"1\">\n";
