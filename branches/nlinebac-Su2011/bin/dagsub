@@ -148,7 +148,6 @@ class JobNode(object):
         self._abortreturn = dict()
         self._noretrystatus = 0
         self._category = None
-        self._jobExists = False
         if ( not os.path.exists(script) ):
             raise IOError, "File "+script+" not found"
 
@@ -225,9 +224,6 @@ class JobNode(object):
     def noRetryStatus(self):
         return self._noretrystatus
 
-    def exists(self):
-        return self._jobExists
-    
     def isDone(self):
         return self._done
 
@@ -270,9 +266,6 @@ class JobNode(object):
     def setDone(self,done):
         self._done = done
 
-    def setExists(self, exists):
-        self._jobExists = exists
-        
     def setSubmitted(self,submitted):
         self._submitted = submitted
 
@@ -323,13 +316,11 @@ class JobNode(object):
                 if ( verbose ):
                     log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" not found\n")
                     log.flush()
-                    self.setExists(False)
                 return NOT_FOUND
             if( len(stdout)==0 ): 
                 if ( verbose ):
                     log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" not found\n")
                     log.flush()
-                    self.setExists(False)
                 return NOT_FOUND
             for line in stdout:
                 if( line.find('exit_status')!=-1 ):
@@ -340,7 +331,6 @@ class JobNode(object):
                             log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has completed\n")
                             log.flush()
                         self.setDone(True)
-                        self.setExists(False)
                         return SUCCESS
                     else:
                         log.write(str(datetime.datetime.now())+":  job "+self.name()+" jobid "+self.jobId()+" has failed\n")
@@ -358,7 +348,6 @@ class JobNode(object):
             if ( verbose ):
                 log.write(str(datetime.datetime.now())+":  job "+self.name()+" not found\n")
                 log.flush()
-                self.setExists(False)
             return NOT_FOUND
             
     def retry(self, cmd, dag, log):
@@ -609,7 +598,6 @@ class JobNode(object):
                     self.retry(cmd,dag,log)
             
             self.setSubmitted(True)
-            self.setExists(True)
         # if nothing failed, do generic post-submission stuff
         return self._postsubmit(dag,log,categories)
     
@@ -988,50 +976,6 @@ class DAG(object):
             log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
             log.flush()
         return finish
-    def altIsComplete(self,log):
-        """OVERVIEW: uses calls to job_exists() to see if each job has completed"""
-        finish = True
-        nodes = self.getNodes()
-        for name in nodes:
-            node = nodes[name]
-            jobID = node.jobId()
-            if node.isSubmitted():
-                if job_exists(jobID):
-                    finish = False
-            else:
-                finish = False
-        if verbose:
-            log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
-            log.flush()
-        return finish
-    def alt2IsComplete(self,log):
-        """OVERVIEW: uses the isDone() method from jobNode to see if each job is done.
-                  has the benefit of fewer system calls
-        """
-        finish = True
-        nodes = self.getNodes()
-        for name in nodes:
-            node = nodes[name]
-            if not node.isDone():
-                finish = False
-        if verbose:
-            log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
-            log.flush()                        
-        return finish
-    def alt3IsComplete(self,log):
-        """OVERVIEW: uses the exists() method from jobNode to see if each job is has completed.
-                  Has the benefit of fewer system calls
-        """
-        finish = True
-        nodes = self.getNodes()
-        for name in nodes:
-            node = nodes[name]
-            if node.exists():
-                finish = False
-        if verbose:
-            log.write(str(datetime.datetime.now())+":  DAG completed == "+str(finish)+"\n")
-            log.flush()
-        return finish
                                                                                             
 def usage():
     sys.stderr.write("Usage:  dagsub [options] file [file]\n")
@@ -1125,6 +1069,13 @@ for file in args:
     # We fork off a separate process for each DAG and leave them running
     # in the background.  Otherwise, it's virtually impossible to do
     # things like retries without running an additional daemon/service.
+    rescue_file = file + ".rescue"
+    if (os.path.exists(rescue_file)):
+        print "Rescue Dag found..."
+        print "Please remove " + rescue_file + "..."
+        print "Exiting"
+        sys.exit(1)
+        
     if ( doFork ):
         child = os.fork()
     else:
