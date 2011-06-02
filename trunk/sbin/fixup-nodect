@@ -1,0 +1,142 @@
+#!/usr/bin/perl
+#
+# Copyright 2007 Ohio Supercomputer Center
+# Copyright 2011 University of Tennessee
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL: https://svn.nics.utk.edu/repos/pbstools/trunk/sbin/nodect-fixup $
+# $Revision: 344 $
+# $Date: 2009-10-26 11:53:37 -0400 (Mon, 26 Oct 2009) $
+#
+# Usage:  nodect-fixup
+#
+
+use strict;
+use POSIX;
+use DBI;
+
+sub max
+  {
+    my @item = @_;
+    my $nitems=$#item;
+    my $maxval=$item[0];
+
+    if ( $nitems > 0 )
+      {
+	for ( my $i=0 ; $i <= $nitems ; $i++ )
+	  {
+	    if ( $item[$i] > $maxval )
+	      {
+		$maxval=$item[$i];
+	      }
+	  }
+      }
+    $maxval;
+  }
+
+my $dbhost="localhost";
+my $dbuser="pbsacct";
+my $dbpasswd="pbsRroxor";
+my $dbname="pbsacct";
+my $dbtable="Jobs";
+
+while ( $ARGV[0] =~ /^-.*/ )
+  {
+    if ( $ARGV[0] eq "-d" )
+      {
+        $dbname=$ARGV[1];
+        shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-p" )
+      {
+        $dbpasswd=$ARGV[1];
+        shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-s" )
+      {
+        $dbhost=$ARGV[1];
+        shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-t" )
+      {
+        $dbtable=$ARGV[1];
+        shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-u" )
+      {
+        $dbuser=$ARGV[1];
+        shift(@ARGV);
+      }
+
+    shift(@ARGV);
+  }
+
+# connect to DB
+my $dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
+my $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
+  die "$0:  unable to connect to DB!\n";
+
+my $query = "SELECT jobid,system,nodes,nproc,mem_req FROM Jobs WHERE nodect=0 AND nproc>1";
+#print STDERR $query."\n";
+my $sth = $dbh->prepare($query) or die "Could not prepare query:  ".$dbh::errstr;
+$sth->execute() or die "Could not execute query:  ".$dbh::errstr;
+while ( my @data = $sth->fetchrow_array() )
+  {
+    # note that this is very site-specific
+    my $nodect = 0;
+    my $jobid = $data[0];
+    my $system = $data[1];
+    my $nodes = $data[2];
+    my $nproc = $data[3];
+    my $mem_req = $data[4];
+    #print "jobid=$jobid system=$system nodes=$nodes nproc=$nproc mem_req=$mem_req\n";
+    if ( $system eq "kraken" || $system eq "athena" )
+      {
+	$nodect = int(ceil($nproc/4));
+      }
+    elsif ( $system eq "krakenpf" )
+      {
+	$nodect = int(ceil($nproc/12));
+      }
+    elsif ( $system eq "nautilus" )
+      {
+	$mem_req =~ /([0-9]+)([GgKkMm])([BbWw])/;
+	my $mem = $1;
+	my $factor = $2;
+	my $unit = $3;
+	if ( $factor eq "K" || $factor eq "k" )
+	  {
+	    $mem = $mem/(1024*1024);
+	  }
+	elsif ( $factor eq "M" || $factor eq "m" )
+	  {
+	    $mem = $mem/1024;
+	  }
+	if ( $unit eq "W" || $unit eq "w" )
+	  {
+	    $mem = $mem*8;
+	  }
+	$nodect = max(int(ceil($nproc/8)),int(ceil($mem/32)));
+      }
+    elsif ( defined($nodes) )
+      {
+	# cluster
+	my @nodelist = split(/\+/,$nodes);
+	foreach my $node ( @nodelist )
+	  {
+	    my @elt = split(/:/,$node);
+	    if ( $elt[0] =~ /(^[0-9]+$)/ )
+	      {
+		$nodect += $1;
+	      }
+	    else
+	      {
+		$nodect++;
+	      }
+	  }
+      }
+    my $update = "UPDATE Jobs SET nodect=".$nodect." WHERE jobid='".$jobid."'";
+    #print $update."\n";
+    $dbh->do($update) or die "Could not execute update:  ".$dbh::errstr;
+  }

@@ -1,6 +1,6 @@
 <?php
 # Copyright 2007, 2008 Ohio Supercomputer Center
-# Copyright 2009 University of Tennessee
+# Copyright 2009, 2011 University of Tennessee
 # Revision info:
 # $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/queue-software.php $
 # $Revision: 315 $
@@ -92,7 +92,7 @@ if ( isset($_POST['system']) )
 	      {
 		$sql .= "UNION\n";
 	      }
-	    $sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND queue LIKE '".$queue."' AND ( ";
+	    $sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND queue LIKE '".$queue."' AND ( ";
 	    if ( isset($pkgmatch[$pkg]) )
 	      {
 		$sql .= $pkgmatch[$pkg];

@@ -12,7 +12,7 @@ CREATE TABLE Jobs (
   mppe         INT UNSIGNED,
   mppssp       INT UNSIGNED,
   nodes        TEXT,
-  nodect       INT UNSIGNED,
+  nodect       INT UNSIGNED DEFAULT 0,
   feature      TINYTEXT,
   gres         TINYTEXT,
   queue        TINYTEXT,
