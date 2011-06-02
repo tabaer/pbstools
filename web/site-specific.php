@@ -111,7 +111,7 @@ function sys_list()
 #	       "piv-serial",
 #	       "piv-parallel",
 #	       "x1");
-#}
+}
 
 # system selector
 function sysselect($system)
@@ -368,6 +368,7 @@ function software_list()
 	      "geosgcm",
 	      "glast",
 	      "GreenSolver",
+              "grads",
 	      "grib",
 	      "grmhd",
 	      "gromacs",
@@ -377,7 +378,7 @@ function software_list()
 	      "halo",
 	      "harness",
 	      "harris",
-	      "hchbm"
+	      "hchbm",
 	      "hd",
 	      "hd_nonuma",
 	      "hdfsubdomain",
@@ -471,13 +472,13 @@ function software_list()
 	      "pbar",
 	      "pcg",
 	      "perseus",
-	      "phasta"
+	      "phasta",
 	      "pic-star",
 	      "pkdgrav",
 	      "pmcl3d",
               "polly",
 	      "pop",
-	      "preps"
+	      "preps",
 	      "preqx",
 	      "prog_ccm_sph",
 	      "prog_hf",
@@ -518,10 +519,10 @@ function software_list()
 	      "stationaryAccretionShock3D",
 	      "sus",
 	      "sweqx",
-	      "swh1b"
+	      "swh1b",
 	      "swiftwrap",
 	      "tantalus",
-	      "tbms"
+	      "tbms",
 	      "tdcc2d",
 	      "tdse",
 	      "tetradpost",
@@ -539,7 +540,7 @@ function software_list()
 	      "vpic",
               "wrf",
 	      "xgc",
-	      "xmfdn"
+	      "xmfdn",
               "yt",
 	      "zeus",
 	      "zk3",
@@ -650,8 +651,7 @@ function software_match_list()
 ['hmc']." ) )";
   $pkgmatch['omen'] = "( script LIKE '%omen%' AND NOT ( ".$pkgmatch['milc']." ) )";
   $pkgmatch['overlap']="( script LIKE '%overlap_%' AND NOT ( ".$pkgmatch['nicam']." ) )";
-  $pkgmatch['pcg'] = "( script LIKE '%pcg%' AND script NOT LIKE '%request%' AND
- NOT ( ".$pkgmatch['gen.v4']." ) )";
+  $pkgmatch['pcg'] = "( script LIKE '%pcg%' AND script NOT LIKE '%request%' AND NOT ( ".$pkgmatch['gen.v4']." ) )";
   $pkgmatch['pop'] = "( script LIKE '%pop%' AND NOT ( ".$pkgmatch['ccsm']." ) AND NOT ( ".$pkgmatch['hmc']." ) )";
   $pkgmatch['propagators'] = "( script LIKE '%propagators%' AND NOT ( ".$pkgmatch['milc']." ) )";
   $pkgmatch['qb'] = "( script LIKE '%qb%' AND NOT ( ".$pkgmatch['milc']." ) AND NOT ( ".$pkgmatch['amber']." ) )";
