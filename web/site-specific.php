@@ -464,6 +464,7 @@ function software_list()
               "wrf",
 	      "xgc",
 	      "xmfdn"
+              "yt",
 	      "zeus",
 	      "zk3",
 	      "zNtoM"
