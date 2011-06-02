@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2009, 2010 University of Tennessee
+# Copyright 2009, 2010, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -92,6 +92,51 @@ if ( isset($_POST['system']) )
 
     ob_flush();
     flush();
+
+    # account summary table
+    echo "<H3>Account Summary</H3>\n";
+    $sql = "SELECT account, system, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours FROM Jobs WHERE ( ";
+    $isfirst = 1;
+    foreach ( $packages as $pkg )
+      {
+	if ( $isfirst==1 )
+	  {
+	    $isfirst = 0;
+	  }
+	else
+	  {
+	    $sql .= " AND ";
+	  }
+	if ( isset($pkgmatch[$pkg]) )
+	  {
+	    $sql .= "NOT (".$pkgmatch[$pkg].")";
+	  }
+	else
+	  {
+	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
+	  }
+      }
+    $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account, system ORDER BY cpuhours DESC";
+    #echo "<PRE>".$sql."</PRE>\n";
+    $result = db_query($db,$sql);
+    echo "<TABLE border=1>\n";
+    echo "<TR><TH>account</TH><TH>system</TH><TH>users</TH><TH>jobs</TH><TH>cpuhours</TH></TR>\n";
+    while ($result->fetchInto($row))
+      {
+	echo "<TR>";
+	$rkeys=array_keys($row);
+	foreach ($rkeys as $key)
+	  {
+	    $data=array();
+	    $data[$key] = $row[$key];
+	    echo "<TD align=\"right\"><PRE>".$data[$key]."</PRE></TD>";
+	  }
+	echo "</TR>\n";
+      }
+    echo "</TABLE>\n";
+
+    ob_flush();
+    flush();    
 
     # user summary table
     echo "<H3>User Summary</H3>\n";

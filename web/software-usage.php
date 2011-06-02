@@ -1,5 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
+# Copyright 2009, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -56,7 +57,7 @@ if ( isset($_POST['system']) )
 	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ";
+	    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).")AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ";
 	    if ( isset($pkgmatch[$key]) )
 	      {
 		$sql .= $pkgmatch[$key];
@@ -69,7 +70,7 @@ if ( isset($_POST['system']) )
 	    if ( $_POST['system']=="%" )
 	      {
 # compute totals iff wildcarding on all systems
-		$sql .= " UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( ";
+		$sql .= " UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( ";
 		if ( isset($pkgmatch[$key]) )
 		  {
 		    $sql .= $pkgmatch[$key];

@@ -1,13 +1,13 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008, 2009 University of Tennessee
+# Copyright 2008, 2009, 2010, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
 # $Date$
 
 # The site-specific logic of the reporting system goes here!
-# Below are settings for OSC.
+# Below are settings for OSC and NICS.
 
 # PHP4 workaround for use of PHP5 file_put_contents in ods.php
 # from http://www.phpbuilder.com/board/showthread.php?t=10292234
@@ -177,6 +177,45 @@ function nprocs($system)
   if ( $system=='jaguar' ) return 31328;
   if ( $system=='verne' ) return 64;
   return 0;
+}
+
+function cpuhours($db,$system)
+{
+  $retval = "nproc*TIME_TO_SEC(walltime)/3600.0";
+  if ( $system=="%" )
+    {
+      	# get list of systems
+	$sql = "SELECT DISTINCT(system) FROM Jobs;";
+	$result = db_query($db,$sql);
+	$systems = array();
+	while ($result->fetchInto($row))
+	  {
+	    $rkeys = array_keys($row);
+	    foreach ($rkeys as $rkey)
+	      {
+		$systems[] = $row[$rkey];
+	      }
+	  }
+	# build case statement
+	$retval = "CASE system ";
+	foreach ($systems as $thissystem)
+	  {
+	    if ( $thissystem!="%" )
+	      {
+		$retval .= " WHEN '".$thissystem."' THEN ".cpuhours($db,$thissystem)."\n";
+	      }
+	  }
+	$retval .= " END";
+    }
+  elseif ( $system=="nautilus" )
+    {
+      $retval = "8*nodect*TIME_TO_SEC(walltime)/3600.0";
+    }
+  else if ( $system=="kid" )
+    {
+      $retval = "12*nodect*TIME_TO_SEC(walltime)/3600.0";
+    }
+  return $retval;
 }
 
 # sorting criteria for each metric
