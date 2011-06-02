@@ -72,6 +72,7 @@ dbtools:
 	install -m 0750 sbin/job-db-update $(PREFIX)/sbin
 	install -m 0750 sbin/jobscript-to-db $(PREFIX)/sbin
 	install -m 0750 sbin/spool-jobscripts $(PREFIX)/sbin
+	install -m 0750 sbin/fixup-nodect $(PREFIX)/sbin
 	install -d $(WEBPREFIX)
 	install -m 0640 web/default.css $(WEBPREFIX)
 	install -m 0640 web/db.cfg $(WEBPREFIX)
