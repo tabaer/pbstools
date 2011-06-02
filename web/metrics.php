@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008, 2009, 2010 University of Tennessee
+# Copyright 2008, 2009, 2010, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -127,7 +127,7 @@ function units($metric)
 // date selector
 function dateselect($action,$start_date,$end_date)
 {
-  if ( isset($start_date) && isset($end_date) &&
+    if ( isset($start_date) && isset($end_date) &&
 	 $start_date!="" && $end_date!="" )
       {
 	return $action."_date >= '".$start_date."' AND ".$action."_date <= '".$end_date."'";
@@ -196,47 +196,37 @@ function ndays($db,$system,$start_date,$end_date)
 
 
 // metric -> column mapping
-function columns($metric,$system)
+function columns($metric,$system,$db)
 {
-  if ( $metric=='cpuhours' ) 
-    {
-      if ( $system=='x1' )
-	return "SUM(TIME_TO_SEC(cput)/3600) AS cpuhours";
-      else
-	return "SUM(nproc*TIME_TO_SEC(walltime)/3600) AS cpuhours";
-    }
+  if ( $metric=='cpuhours' ) return "SUM(".cpuhours($db,$system).") AS cpuhours";
   if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(start_ts-submit_ts)) AS 'MIN(qtime)',SEC_TO_TIME(MAX(start_ts-submit_ts)) AS 'MAX(qtime)',SEC_TO_TIME(AVG(start_ts-submit_ts)) AS 'AVG(qtime)',SEC_TO_TIME(STDDEV(start_ts-submit_ts))  AS 'STDDEV(qtime)'";
   if ( $metric=='mem_kb' ) return "MIN(mem_kb),MAX(mem_kb),AVG(mem_kb),STDDEV(mem_kb)";
   if ( $metric=='vmem_kb' ) return "MIN(vmem_kb),MAX(vmem_kb),AVG(vmem_kb),STDDEV(vmem_kb)";
   if ( $metric=='walltime' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(walltime))) AS 'MIN(walltime)',SEC_TO_TIME(MAX(TIME_TO_SEC(walltime))) AS 'MAX(walltime)',SEC_TO_TIME(AVG(TIME_TO_SEC(walltime))) AS 'AVG(walltime)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(walltime))) AS 'STDDEV(walltime)'";
   if ( $metric=='cput' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(cput))) AS 'MIN(cput)',SEC_TO_TIME(MAX(TIME_TO_SEC(cput))) AS 'MAX(cput)',SEC_TO_TIME(AVG(TIME_TO_SEC(cput))) AS 'AVG(cput)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(cput))) AS 'STDDEV(cput)'";
-  if ( $metric=='cputime' )
-    if ( $system=='x1' )
-      return "SEC_TO_TIME(MIN(TIME_TO_SEC(cput))) AS 'MIN(cputime)',SEC_TO_TIME(MAX(TIME_TO_SEC(cput))) AS 'MAX(cputime)',SEC_TO_TIME(AVG(TIME_TO_SEC(cput))) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(cput))) AS 'STDDEV(cputime)'";      
-    else
-      return "SEC_TO_TIME(MIN(nproc*TIME_TO_SEC(walltime))) AS 'MIN(cputime)',SEC_TO_TIME(MAX(nproc*TIME_TO_SEC(walltime))) AS 'MAX(cputime)',SEC_TO_TIME(AVG(nproc*TIME_TO_SEC(walltime))) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(nproc*TIME_TO_SEC(walltime))) AS 'STDDEV(cputime)'";
+  if ( $metric=='cputime' ) return "SEC_TO_TIME(MIN(3600*".cpuhours($db,$system).")) AS 'MIN(cputime)',SEC_TO_TIME(MAX(3600*".cpuhours($db,$system).")) AS 'MAX(cputime)',SEC_TO_TIME(AVG(3600*".cpuhours($db,$system).")) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(3600*".cpuhours($db,$system).")) AS 'STDDEV(cputime)'";
   if ( $metric=='walltime_acc' ) return "MIN(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MIN(walltime_acc)',MAX(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MAX(walltime_acc)',AVG(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'AVG(walltime_acc)',STDDEV(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'STDDEV(walltime_acc)'";
-  if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),MAX(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),AVG(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),STDDEV(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime)))";
+  if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system).")),MAX(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system).")),AVG(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system).")),STDDEV(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system)."))";
   if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups";
-  if ( $metric=='backlog' ) return "SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(start_ts-submit_ts)/3600.0 AS 'SUM(qtime)'";
+  if ( $metric=='backlog' ) return cpuhours($db,$system)." AS cpuhours, SUM(start_ts-submit_ts)/3600.0 AS 'SUM(qtime)'";
 #  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
   if ( $metric=='xfactor' ) return "MIN(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MIN(xfactor)', MAX(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MAX(xfactor)', AVG(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'AVG(xfactor)', STDDEV(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'STDDEV(xfactor)'";
   if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS users";
   if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS groups";
   if ( $metric=='accounts' ) return "COUNT(DISTINCT(account)) AS accounts";
-  if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system);
+  if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system,$db);
   if ( $metric=='nproc' ) return "MIN(nproc),MAX(nproc),AVG(nproc),STDDEV(nproc)";
-  if ( $metric=='usage' ) return columns('cpuhours',$system).",".columns('usercount',$system);
+  if ( $metric=='usage' ) return columns('cpuhours',$system,$db).",".columns('usercount',$system,$db);
   if ( $metric=='pscmetrics' )
     {
       $first = 0;
       $maxs = bucket_maxs("walltime");
-      $column = "SUM( CASE WHEN TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[0]."') THEN nproc*TIME_TO_SEC(walltime)/3600.0 ELSE 0 END ) AS '<=".$maxs[0]."'";
+      $column = "SUM( CASE WHEN TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[0]."') THEN ".cpuhours($db,$system)." ELSE 0 END ) AS '<=".$maxs[0]."'";
       for ( $i=1 ; $i<count($maxs) ; $i++ )
 	{
-	  $column .= ", SUM( CASE WHEN TIME_TO_SEC(walltime)>TIME_TO_SEC('".$maxs[$i-1]."') AND TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[$i]."') THEN nproc*TIME_TO_SEC(walltime)/3600.0 ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
+	  $column .= ", SUM( CASE WHEN TIME_TO_SEC(walltime)>TIME_TO_SEC('".$maxs[$i-1]."') AND TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[$i]."') THEN ".cpuhours($db,$system)." ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
 	}
-      $column .= ", SUM( CASE WHEN TIME_TO_SEC(walltime)>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN nproc*TIME_TO_SEC(walltime)/3600.0 ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
+      $column .= ", SUM( CASE WHEN TIME_TO_SEC(walltime)>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN ".cpuhours($db,$system)." ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
       return $column;
     }
 
@@ -285,7 +275,7 @@ function columnnames($metric)
       $output[] = "&gt;".$maxs[count($maxs)-1];
       return $output;
     }
-  
+
   return array();
 }
 
@@ -298,9 +288,9 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
       $query .= xaxis_column($xaxis,$system).",";
     }
    $query .= "COUNT(jobid) AS jobs";
-   if ( columns($metric,$system)!="" )
+   if ( columns($metric,$system,$db)!="" )
      {
-       $query .= ",".columns($metric,$system);
+       $query .= ",".columns($metric,$system,$db);
      }
    $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
      dateselect("start",$start_date,$end_date).")";
@@ -309,7 +299,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
        if ( $xaxis=="institution" )
 	 {
            # OSC site-specific logic begins here
-	   $query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' AND username NOT LIKE 'osc%' AND username NOT LIKE 'wrk%' AND username NOT LIKE 'test%')";
+	   #$query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' AND username NOT LIKE 'osc%' AND username NOT LIKE 'wrk%' AND username NOT LIKE 'test%')";
            # OSC site-specific logic ends here
 	 }
 #       else
@@ -325,18 +315,18 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
    if ( $xaxis=="institution" )
      {
        # OSC site-specific logic begins here
-       $query .= " UNION SELECT 'osc' AS institution,COUNT(jobid) AS jobs";
-       if ( columns($metric,$system)!="" )
-        {
-          $query .= ",".columns($metric,$system);
-        }
-       $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-        dateselect("start",$start_date,$end_date).") AND ".
-        "( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%' OR username LIKE 'test%') )";
-       if ( clause($xaxis,$metric)!="" )
-        {
-          $query .= " AND ".clause($xaxis,$metric);
-        }
+       #$query .= " UNION SELECT 'osc' AS institution,COUNT(jobid) AS jobs";
+       #if ( columns($metric,$system,$db)!="" )
+       # {
+       #   $query .= ",".columns($metric,$system,$db);
+       # }
+       #$query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
+       # dateselect("start",$start_date,$end_date).") AND ".
+       # "( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%' OR username LIKE 'test%') )";
+       #if ( clause($xaxis,$metric)!="" )
+       # {
+       #   $query .= " AND ".clause($xaxis,$metric);
+       # }
        # OSC site-specific logic ends here
      }
    $query .= " ".sort_criteria($metric."_vs_".$xaxis);
@@ -349,9 +339,9 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 {
   $query = "SELECT ".xaxis_column($xaxis,$system).",COUNT(jobid) AS jobs";
-  if ( columns($metric,$system)!="" )
+  if ( columns($metric,$system,$db)!="" )
     {
-      $query .= ",".columns($metric,$system);
+      $query .= ",".columns($metric,$system,$db);
     }
   if ( $xaxis=="walltime" || $xaxis=="walltime_req" )
     {
