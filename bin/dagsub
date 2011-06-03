@@ -21,6 +21,25 @@
 #        -maxjobwait seconds 
 #        -log LogFileName
 
+"""
+dagsub:  Submit one or more directed acyclic graphs of jobs to TORQUE
+         using a language compatible with Condor DAGman.
+
+Usage:  dagsub [options] file [file]
+Options:
+       -no_submit
+       -verbose
+       -force (currently unused)
+       -maxjobs NumberOfJobs (currently unused)
+       -maxjobswait TimeToWait
+       -log LogFileName
+
+For information on the inpuy file desribing the DAG please see
+http://www.cs.wisc.edu/condor/manual/v7.0/2_10DAGMan_Applications.html
+All file options EXCEPT CONFIG are currently supported
+"""
+
+
 import getopt
 import datetime
 import os.path
@@ -1072,6 +1091,7 @@ try:
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
+    sys.exit(1)
 try:
     for opt, value in opts:
         if ( opt=="--force" ):
@@ -1100,16 +1120,24 @@ try:
 except NameError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
-    sys.exit(1)          
-
+    sys.exit(1)
+    
+if args == []:
+    print "At least one file must be inclued"
+    usage()
+    sys.exit(1)
+    
 for file in args:
     # We fork off a separate process for each DAG and leave them running
     # in the background.  Otherwise, it's virtually impossible to do
     # things like retries without running an additional daemon/service.
     rescue_file = file + ".rescue"
     if (os.path.exists(rescue_file)):
-        print "Rescue Dag found..."
-        print "Please remove " + rescue_file + "..."
+        print "Rescue Dag found ..."
+        print "Please do ONE of the following: "
+        print "1. Remove "+ rescue_file + " and submit using "+ file
+        print "\t\t OR"
+        print "2. Submit using " + rescue_file
         print "Exiting"
         sys.exit(1)
         
