@@ -21,8 +21,7 @@
 #        -maxjobwait seconds 
 #        -log LogFileName
 
-"""
-dagsub:  Submit one or more directed acyclic graphs of jobs to TORQUE
+"""dagsub:  Submit one or more directed acyclic graphs of jobs to TORQUE
          using a language compatible with Condor DAGman.
 
 Usage:  dagsub [options] file [file]
@@ -36,10 +35,27 @@ Options:
 
 For information on the inpuy file desribing the DAG please see
 http://www.cs.wisc.edu/condor/manual/v7.0/2_10DAGMan_Applications.html
-All file options EXCEPT CONFIG are currently supported
+All file options EXCEPT CONFIG are currently supported.
+
+Example DAG file:
+   # maxjobs.dag
+   JOB A A.pbs
+   JOB B B.pbs
+   JOB C C.pbs
+   JOB D D.pbs
+   CATEGORY A root
+   CATEGORY B middle
+   CATEGORY C middle
+   CATEGORY D leaf
+   MAXJOBS root 1
+   MAXJOBS middle 1
+   MAXJOBS leaf 1
+   PARENT A CHILD B C
+   PARENT B C CHILD D
+   PRIORITY C 1
+   DOT maxjobs.dot
+
 """
-
-
 import getopt
 import datetime
 import os.path
@@ -905,7 +921,7 @@ class DAG(object):
         rootname = rootnode.name()
         if ( rootnode.children() is not None and ( rootnode.isDone() or forceoutput ) ):
             for childname in rootnode.children():
-                childnode = dag.getNode(childname)
+                childnode = self.getNode(childname)
                 if( childnode.isDone() or forceoutput ):
                     fd.write("\t"+rootname+" -> "+childname+";\n")
                     childnode = self.getNode(childname)
@@ -962,7 +978,7 @@ class DAG(object):
                  ( 'DONE' not in line ) ):
                 try:
                     nodename = line.split()[1]
-                    node = dag.getNode(nodename)
+                    node = self.getNode(nodename)
                     if ( node is not None ):
                         cond = node.jobStatus(log)
                         if ( not node.isHealthy() ):
@@ -1014,7 +1030,7 @@ class DAG(object):
                 done = rootnode.isDone()
         elif ( rootnode.children() is not None and rootnode.isDone() ):
             for childname in rootnode.children():
-                childnode = dag.getNode(childname)
+                childnode = self.getNode(childname)
                 if ( done ):
                     done = self._subtreeIsComplete(childnode,log)
         else:
@@ -1037,7 +1053,6 @@ def usage():
     sys.stderr.write("Options:\n\t-help\n\t-force\n\t-no_fork\n\t-no_submit\n\t-verbose\n\t-log "+
                      "logfile\n\t-maxidle NumberOfJobs\n\t-maxjobs NumberOfJobs\n\t-maxjobwait TimeToWait\n")
 
-
 verbose = False
 doFork = True
 doSubmit = True
@@ -1050,256 +1065,272 @@ timeout = 30
 jobsubmit = "qsub"
 datasubmit = "dmsub"
 maxJobWait = 30
-
-try:
-    # The convention is to use single dash for short command (i.e. -h), and double dashes
-    # (i.e. --no_submit) for long command.  In condor submit dag, user uses single dash
-    # to submit long command line option (i.e. -no_submit) process the long command line
-    # options with one more dash
-    cmdline = sys.argv[1:]
-    pcmd = []
-    for each in cmdline:
-        if(each[0] == "-"):
-            pcmd.append('-' + each)
-        else:
-            pcmd.append(each)
-
-    # Command line argument processing
-    opts, args = getopt.getopt(pcmd,"hv",
-                               ["allowversionmismatch",
-                                "DumpRescue",
-                                "force",
-                                "help",
-                                "no_fork",
-                                "no_recurse",
-                                "no_submit",
-                                "update_submit",
-                                "usedagdir",
-                                "verbose",
-                                "append=",
-                                "autorescue=",
-                                "config=",
-                                "dorescuefrom",
-                                "insert_sub_file",
-                                "log=",
-                                "maxidle=",
-                                "maxjobs=",
-                                "notification=",
-                                "oldrescue",
-                                "outfile_dir=",
-                                "maxjobwait="])
-except getopt.GetoptError, err:
-    sys.stderr.write(str(err)+"\n")
-    usage()
-    sys.exit(1)
-try:
-    for opt, value in opts:
-        if ( opt=="--force" ):
-            overwrite = True
-        if ( opt in ("-h", "--help") ):
-            usage()
-            sys.exit(0)
-        if ( opt=="--DumpRescue" ):
-            dumpRescueAndExit = False
-        if ( opt=="--log" ):
-            logFile = value
-        if (opt=="--maxidle"):
-            maxIdle = value
-        if (opt=="--maxjobs"):
-            maxJobs = value
-        if (opt=="--notification"):
-            notification = value
-        if ( opt=="--no_fork" ):
-            doFork = False
-        if ( opt=="--no_submit" ):
-            doSubmit = False
-        if ( opt in ("-v", "--verbose") ):
-            verbose = True
-        if ( opt=="--maxjobwait" ):
-            maxJobWait = int(value)
-except NameError, err:
-    sys.stderr.write(str(err)+"\n")
-    usage()
-    sys.exit(1)
+                                            
+def main():
+    global verbose
+    global doFork
+    global doSubmit
+    global dotFile
+    global dumpRescueAndExit
+    global generateDotFile
+    global overwrite
+    global logFile
+    global timeout
+    global jobsubmit
+    global maxJobWait
     
-if args == []:
-    print "At least one file must be inclued"
-    usage()
-    sys.exit(1)
-    
-for file in args:
-    # We fork off a separate process for each DAG and leave them running
-    # in the background.  Otherwise, it's virtually impossible to do
-    # things like retries without running an additional daemon/service.
-    rescue_file = file + ".rescue"
-    if (os.path.exists(rescue_file)):
-        print "Rescue Dag found ..."
-        print "Please do ONE of the following: "
-        print "1. Remove "+ rescue_file + " and submit using "+ file
-        print "\t\t OR"
-        print "2. Submit using " + rescue_file
-        print "Exiting"
+    try:
+        # The convention is to use single dash for short command (i.e. -h), and double dashes
+        # (i.e. --no_submit) for long command.  In condor submit dag, user uses single dash
+        # to submit long command line option (i.e. -no_submit) process the long command line
+        # options with one more dash
+        cmdline = sys.argv[1:]
+        pcmd = []
+        for each in cmdline:
+            if(each[0] == "-"):
+                pcmd.append('-' + each)
+            else:
+                pcmd.append(each)
+
+        # Command line argument processing
+        opts, args = getopt.getopt(pcmd,"hv",
+                                   ["allowversionmismatch",
+                                    "DumpRescue",
+                                    "force",
+                                    "help",
+                                    "no_fork",
+                                    "no_recurse",
+                                    "no_submit",
+                                    "update_submit",
+                                    "usedagdir",
+                                    "verbose",
+                                    "append=",
+                                    "autorescue=",
+                                    "config=",
+                                    "dorescuefrom",
+                                    "insert_sub_file",
+                                    "log=",
+                                    "maxidle=",
+                                    "maxjobs=",
+                                    "notification=",
+                                    "oldrescue",
+                                    "outfile_dir=",
+                                    "maxjobwait="])
+    except getopt.GetoptError, err:
+        sys.stderr.write(str(err)+"\n")
+        usage()
         sys.exit(1)
-        
-    if ( doFork ):
-        child = os.fork()
-    else:
-        child = 0
-    dag = None
-    categories = {}
-    if( child==0 ):
-        pid = os.getpid()
-        dag = DAG()
-        if ( not os.path.exists(file) ):
-            sys.stderr.write(file+" does not exist, ignoring\n")
-        elif ( not os.path.isfile(file) ):
-            sys.stderr.write(file+" is not a file, ignoring\n")
-        else:
-            dag.setFileName(file)
-            if ( file=="-" ):
-                fd = sys.stdin
-            else:
-                fd = open(file,"r")
-            lines = fd.readlines()
-            for line in lines:
-                token = line.split()
-                # parse DAG file
-                if ( token!=[] and token[0].find("#")!=0 ):
-                    if ( token[0]=="DOT" ):
-                        generateDotFile = True
-                        dotFile = token[1]
-                    elif ( token[0]=="JOB" ):
-                        node = JobNode(token[1],token[2])
-                        dag.addNode(node)
-                        try:
-                            if(token[3] == "DONE"):
-                                node.setDone(True)
-                            elif(token[3] == "DIR"):
-                                node.setScript(" -d " + token[4])
-                                if(token[5] == "DONE"):
-                                    node.setDone(True)
-                        except IndexError, err:
-                            pass
-                    elif ( token[0]=="DATA" ):
-                        #sys.stderr.write(file+":  DATA not supported, ignoring\n")
-                        node = DataJobNode(token[1],token[2])
-                        dag.addNode(node)
-                        try:
-                            for i in range(3,len(token),2):
-                                if ( token[i]=="DONE" ):
-                                    node.setDone(True)
-                                elif ( token[i]=="FORMAT" ):
-                                    node.setFormat(token[i+1])
-                                elif ( token[i]=="MOVER" ):
-                                    node.setMover(token[i+1])
-                                elif ( token[i]=="QUEUE" ):
-                                    node.setQueue(token[i+1])
-                        except IndexError, err:
-                            pass
-                    elif ( token[0]=="PARENT" ):
-                        foundchild = False
-                        parents = [token[1]]
-                        children = []
-                        for name in token[2:]:
-                            if ( name=="CHILD" ):
-                                foundchild = True
-                            elif ( foundchild ):
-                                children.append(name)
-                            else:
-                                parents.append(name)
-                        for parent in parents:
-                            parentnode = dag.getNode(parent)
-                            for child in children:
-                                parentnode.addChild(child)
-                                childnode = dag.getNode(child)
-                                childnode.addParent(parent)
-                    elif ( token[0]=="RETRY" ):
-                        node = dag.getNode(token[1])
-                        node.setRetries(token[2])
-                        if ( len(token)==5 ):
-                            node.setNoRetryStatus(int(token[4]))
-                    elif ( token[0]=="SCRIPT" ):
-                        node = dag.getNode(token[2])
-                        script = token[3:]
-                        if ( token[1]=="PRE" ):
-                            node.setPreScript(script)
-                        elif ( token[1]=="POST" ):
-                            node.setPostScript(script)
-                    elif ( token[0]=="VARS" ):
-                        node = dag.getNode(token[1])
-                        for var in token[2:]:
-                            node.addVar(var)
-                    elif ( token[0]=="PRIORITY" ):
-                        node = dag.getNode(token[1])
-                        node.setPriority(token[2])
-                    elif ( token[0]=="ABORT-DAG-ON" ):
-                        node = dag.getNode(token[1])
-                        if ( len(token)==3 ):
-                            node.addAbortStatus(int(token[2]))
-                        elif ( len(token)==5 ):
-                            node.addAbortStatus(int(token[2]),int(token[4]))
-                    elif ( token[0]=="CATEGORY" ):
-                        node = dag.getNode(token[1])
-                        if not token[2] in categories.keys():
-                            categories[token[2]] = Category(token[2])
-                        node.set_category(token[2])
-                        categories[token[2]].add_job_node(token[1])
-                       # sys.stderr.write(file+":  CATEGORY not supported, ignoring\n")
-                    elif ( token[0]=="MAXJOBS" ):
-                        if not token[1] in categories.keys():
-                            sys.stderr.write(file+":  CATEGORY = "+token[1]+" not defined, ignoring MAXJOBS\n")
-                        else:
-                            categories[token[1]].set_max(int(token[2]))
-                    elif ( token[0]=="CONFIG" ):
-                        sys.stderr.write(file+":  CONFIG not supported, ignoring\n")
-                    else:
-                        sys.stderr.write(file+":  unknown keyword "+token[0]+", abort\n")
-                        sys.exit(1)
-            fd.close()
-
-            base = file.split(".")[0]
-            
-            log = None
-            if ( logFile is None ):
-                log = open(base+".log","w")
-            elif ( logFile=="-" or logFile=="--" ):
-                log = sys.stdout
-            else:
-                log = open(logFile,"w")
-                
-            if ( verbose ):
-                log.write(str(datetime.datetime.now())+":  "+file+" being processed by pid "+str(pid)+"\n")
-                log.flush()
-
-            if ( dag.getRootNodes() is not None ):
-                # Not sure how to handle log name, if multiple input files are present?
-                # Current implementation: 
-                #       Only allow the custom logname, if single input file submitted.
-                if ( dumpRescueAndExit ):
-                    dag.writeRescueDAG(log)
-                    dag.writeDotFile(dotFile,base,log,True)
-                elif ( doSubmit ):
-                    if ( dotFile is not None ):
-                        dag.writeDotFile(dotFile,base,log,False)
-                    finish = False
-                    for root in dag.getRootNodes():
-                        rootnode = dag.getNode(root)
-                        rootnode.submit(dag,log,categories)
-                        finish = dag.writeRescueDAG(log)
-                        if ( dotFile is not None ):
-                            dag.writeDotFile(dotFile,base,log,False)
-
-                    # Monitor the DAG and write out rescue DAGs periodically
-                    while ( not dag.isComplete(log) ):
-                        time.sleep(timeout)
-                        dag.writeRescueDAG(log)
-                        if ( dotFile is not None ):
-                            dag.writeDotFile(dotFile,base,log,False)
-            else:
+    try:
+        for opt, value in opts:
+            if ( opt=="--force" ):
+                overwrite = True
+            if ( opt in ("-h", "--help") ):
                 usage()
+                sys.exit(0)
+            if ( opt=="--DumpRescue" ):
+                dumpRescueAndExit = False
+            if ( opt=="--log" ):
+                logFile = value
+            if (opt=="--maxidle"):
+                maxIdle = value
+            if (opt=="--maxjobs"):
+                maxJobs = value
+            if (opt=="--notification"):
+                notification = value
+            if ( opt=="--no_fork" ):
+                doFork = False
+            if ( opt=="--no_submit" ):
+                doSubmit = False
+            if ( opt in ("-v", "--verbose") ):
+                verbose = True
+            if ( opt=="--maxjobwait" ):
+                maxJobWait = int(value)
+    except NameError, err:
+        sys.stderr.write(str(err)+"\n")
+        usage()
+        sys.exit(1)
+    
+    if args == []:
+        print "At least one file must be inclued"
+        usage()
+        sys.exit(1)
+    
+    for file in args:
+        # We fork off a separate process for each DAG and leave them running
+        # in the background.  Otherwise, it's virtually impossible to do
+        # things like retries without running an additional daemon/service.
+        rescue_file = file + ".rescue"
+        if (os.path.exists(rescue_file)):
+            print "Rescue Dag found ..."
+            print "Please do ONE of the following: "
+            print "1. Remove "+ rescue_file + " and submit using "+ file
+            print "\t\t OR"
+            print "2. Submit using " + rescue_file
+            print "Exiting"
+            sys.exit(1)
+        
+        if ( doFork ):
+            child = os.fork()
+        else:
+            child = 0
+
+        dag = None
+        categories = {}
+        if( child==0 ):
+            pid = os.getpid()
+            dag = DAG()
+            if ( not os.path.exists(file) ):
+                sys.stderr.write(file+" does not exist, ignoring\n")
+            elif ( not os.path.isfile(file) ):
+                sys.stderr.write(file+" is not a file, ignoring\n")
+            else:
+                dag.setFileName(file)
+                if ( file=="-" ):
+                    fd = sys.stdin
+                else:
+                    fd = open(file,"r")
+                lines = fd.readlines()
+                for line in lines:
+                    token = line.split()
+                    # parse DAG file
+                    if ( token!=[] and token[0].find("#")!=0 ):
+                        if ( token[0]=="DOT" ):
+                            generateDotFile = True
+                            dotFile = token[1]
+                        elif ( token[0]=="JOB" ):
+                            node = JobNode(token[1],token[2])
+                            dag.addNode(node)
+                            try:
+                                if(token[3] == "DONE"):
+                                    node.setDone(True)
+                                elif(token[3] == "DIR"):
+                                    node.setScript(" -d " + token[4])
+                                    if(token[5] == "DONE"):
+                                        node.setDone(True)
+                            except IndexError, err:
+                                pass
+                        elif ( token[0]=="DATA" ):
+                            node = DataJobNode(token[1],token[2])
+                            dag.addNode(node)
+                            try:
+                                for i in range(3,len(token),2):
+                                    if ( token[i]=="DONE" ):
+                                        node.setDone(True)
+                                    elif ( token[i]=="FORMAT" ):
+                                        node.setFormat(token[i+1])
+                                    elif ( token[i]=="MOVER" ):
+                                        node.setMover(token[i+1])
+                                    elif ( token[i]=="QUEUE" ):
+                                        node.setQueue(token[i+1])
+                            except IndexError, err:
+                                pass
+                        elif ( token[0]=="PARENT" ):
+                            foundchild = False
+                            parents = [token[1]]
+                            children = []
+                            for name in token[2:]:
+                                if ( name=="CHILD" ):
+                                    foundchild = True
+                                elif ( foundchild ):
+                                    children.append(name)
+                                else:
+                                    parents.append(name)
+                            for parent in parents:
+                                parentnode = dag.getNode(parent)
+                                for child in children:
+                                    parentnode.addChild(child)
+                                    childnode = dag.getNode(child)
+                                    childnode.addParent(parent)
+                        elif ( token[0]=="RETRY" ):
+                            node = dag.getNode(token[1])
+                            node.setRetries(token[2])
+                            if ( len(token)==5 ):
+                                node.setNoRetryStatus(int(token[4]))
+                        elif ( token[0]=="SCRIPT" ):
+                            node = dag.getNode(token[2])
+                            script = token[3:]
+                            if ( token[1]=="PRE" ):
+                                node.setPreScript(script)
+                            elif ( token[1]=="POST" ):
+                                node.setPostScript(script)
+                        elif ( token[0]=="VARS" ):
+                            node = dag.getNode(token[1])
+                            for var in token[2:]:
+                                node.addVar(var)
+                        elif ( token[0]=="PRIORITY" ):
+                            node = dag.getNode(token[1])
+                            node.setPriority(token[2])
+                        elif ( token[0]=="ABORT-DAG-ON" ):
+                            node = dag.getNode(token[1])
+                            if ( len(token)==3 ):
+                                node.addAbortStatus(int(token[2]))
+                            elif ( len(token)==5 ):
+                                node.addAbortStatus(int(token[2]),int(token[4]))
+                        elif ( token[0]=="CATEGORY" ):
+                            node = dag.getNode(token[1])
+                            if not token[2] in categories.keys():
+                                categories[token[2]] = Category(token[2])
+                            node.set_category(token[2])
+                            categories[token[2]].add_job_node(token[1])
+                            # sys.stderr.write(file+":  CATEGORY not supported, ignoring\n")
+                        elif ( token[0]=="MAXJOBS" ):
+                            if not token[1] in categories.keys():
+                                sys.stderr.write(file+":  CATEGORY = "+token[1]+" not defined, ignoring MAXJOBS\n")
+                            else:
+                                categories[token[1]].set_max(int(token[2]))
+                        elif ( token[0]=="CONFIG" ):
+                            sys.stderr.write(file+":  CONFIG not supported, ignoring\n")
+                        else:
+                            sys.stderr.write(file+":  unknown keyword "+token[0]+", abort\n")
+                            sys.exit(1)
+                fd.close()
+
+                base = file.split(".")[0]
+            
+                log = None
+                if ( logFile is None ):
+                    log = open(base+".log","w")
+                elif ( logFile=="-" or logFile=="--" ):
+                    log = sys.stdout
+                else:
+                    log = open(logFile,"w")
+                
+                if ( verbose ):
+                    log.write(str(datetime.datetime.now())+":  "+file+" being processed by pid "+str(pid)+"\n")
+                    log.flush()
+
+                if ( dag.getRootNodes() is not None ):
+                    # Not sure how to handle log name, if multiple input files are present?
+                    # Current implementation: 
+                    #       Only allow the custom logname, if single input file submitted.
+                    if ( dumpRescueAndExit ):
+                        dag.writeRescueDAG(log)
+                        dag.writeDotFile(dotFile,base,log,True)
+                    elif ( doSubmit ):
+                        if ( dotFile is not None ):
+                            dag.writeDotFile(dotFile,base,log,False)
+                        finish = False
+                        for root in dag.getRootNodes():
+                            rootnode = dag.getNode(root)
+                            rootnode.submit(dag,log,categories)
+                            finish = dag.writeRescueDAG(log)
+                            if ( dotFile is not None ):
+                                dag.writeDotFile(dotFile,base,log,False)
+
+                                # Monitor the DAG and write out rescue DAGs periodically
+                            while ( not dag.isComplete(log) ):
+                                time.sleep(timeout)
+                                dag.writeRescueDAG(log)
+                            if ( dotFile is not None ):
+                                dag.writeDotFile(dotFile,base,log,False)
+                else:
+                    usage()
    
-            log.write(str(datetime.datetime.now())+":  processing of "+file+" complete.\n")
-            log.flush()
-            sys.exit(0)
-# if we get here, we're the parent process, so exit
-sys.exit(0)
+                    log.write(str(datetime.datetime.now())+":  processing of "+file+" complete.\n")
+                    log.flush()
+                    sys.exit(0)
+    # if we get here, we're the parent process, so exit
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()
