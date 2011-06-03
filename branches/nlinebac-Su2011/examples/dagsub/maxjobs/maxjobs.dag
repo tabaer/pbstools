@@ -1,5 +1,5 @@
 # diamond.dag
-JOB A A.pbs DIR 
+JOB A A.pbs 
 JOB B B.pbs 
 JOB C C.pbs 
 JOB D D.pbs
