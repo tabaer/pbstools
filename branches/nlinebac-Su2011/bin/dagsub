@@ -33,7 +33,10 @@ Options:
        -maxjobswait TimeToWait
        -log LogFileName
 
-For information on the inpuy file desribing the DAG please see
+Example submisson:
+    dagsub -verbose mydag.dag
+    
+For information on the input file desribing the DAG please see
 http://www.cs.wisc.edu/condor/manual/v7.0/2_10DAGMan_Applications.html
 All file options EXCEPT CONFIG are currently supported.
 
@@ -141,28 +144,59 @@ def unique(s):
 ### end code from Python Cookbook
 
 class Category(object):
+    """
+    Defines a category for implementing CATEGORY and MAXJOBS
+    Attributes
+    ----------
+    private:
+           _name, the name of the category
+           _max, the maximum number of jobs in queue or running
+           _job_nodes , list of job nodes in category
+    """
     def __init__(self,name):
+        """
+        Creates a new category with _name, name
+        sets _max to infinity and _job_nodes to an empty list
+        """
         self._name = name
         self._max  = float('infinity')
         self._job_nodes = []
     
     def get_name(self):
+        """
+        Returns private attribute _name
+        """
         return self._name
     
     def get_max(self):
+        """
+        Returns private attribute _max
+        """
         return self._max
     
     def set_max(self,maximum):
+        """
+        Sets _max to maximum
+        """
         self._max = maximum
 
     def add_job_node(self,node):
+        """
+        Adds a node to the _job_nodes list
+        """
         self._job_nodes.append(node)
 
     def get_job_nodes(self):
+        """
+        Returns private attribute _job_nodes
+        """
         return self._job_nodes
 
 class JobNode(object):
-    def __init__(self,name,script):
+    """
+    Defines a job node in the DAG
+    """
+    def __initx__(self,name,script):
         self._name = name
         self._script = script
         self._queue = None
@@ -324,6 +358,21 @@ class JobNode(object):
                 childnode.isSick()
 
     def jobStatus(self, log):
+        """
+        OVERVIEW: returns the status of the job node.
+                  Writes long messages to log if verbose.
+                  
+        MODIFIES: self._done , if job is done
+                  self._exitCode, if job is done
+                  
+        OUTCOMES: returns normally if job is completed, not found, or in progress.
+                  exits program if job has failed
+                  
+        RETURNS: SUCCESS     = 0    job has completed successfully
+                 FAIL        = -1   job has failed
+                 NOT_FOUND   = 1    job is not found, status of job unknown
+                 IN_PROGRESS = 2    job is currently in queue  
+        """
         if ( self.jobId() is not None ):
             if ( verbose ):
                 log.write(str(datetime.datetime.now())+":  checking status of job "+
@@ -549,6 +598,23 @@ class JobNode(object):
         return True
 
     def submit(self,dag,log,categories):
+        """
+        OVERVIEW: Submits job for self with dependencies 
+
+        OUTCOMES:
+                  1) if job is submitted successfully
+                  postsubmission script is run and
+                  child nodes are submitted using self._postsubmit
+                  2) if job submission fails
+                  message is printed to log and program exits
+
+        MODIFIES:
+                  self._submitted
+                  self._jobid
+
+        RETURNS:
+                  self._postsubmit(dag,log,categories)
+        """
         if ( self.isSubmitted() ):
             return self.isSubmitted()
 
@@ -736,6 +802,9 @@ def job_exists(jobid):
         return False
                                                                                                                                      
 class DataJobNode(JobNode):
+    """
+    Extension of JobNode class for jobs that need data movers
+    """
     def __init__(self,name,script):
         super(DataJobNode,self).__init__(name,script)
         self._format = None
@@ -879,6 +948,9 @@ class DataJobNode(JobNode):
 
 
 class DAG(object):
+    """
+    The directed acyclic graph of JobNodes
+    """
     def __init__(self,file=None):
         self._nodes = dict()
         self._filename = file
@@ -903,6 +975,9 @@ class DAG(object):
             return None
 
     def getRootNodes(self):
+        """
+        Returns a list of all root nodes, i.e. all nodes with no parents
+        """
         roots = None
         for name in self._nodes.keys():
             node = self.getNode(name)
@@ -930,6 +1005,10 @@ class DAG(object):
                         iswritten[childname] = True
         
     def writeDotFile(self,filename,graphname,log,forceoutput):
+        """
+        OVERVIEW:
+        Writes graph to filename using the .dot format associated with graphviz
+        """
         if ( verbose ):
             log.write(str(datetime.datetime.now())+":  writing DOT file "+dotFile+"\n")
             log.flush()
@@ -948,6 +1027,10 @@ class DAG(object):
             log.flush()
 
     def writeRescueDAG(self, log):
+        """
+        OVERVIEW:
+               Rewrites rescue.dag
+        """
     ## After all jobs are submitted, check if self.Done() is true.
     ## If so, write "DONE" to the file.
         if ( verbose ):
@@ -1049,6 +1132,9 @@ class DAG(object):
         return finish
                                                                                             
 def usage():
+    """
+    Prints usage to the screen
+    """
     sys.stderr.write("Usage:  dagsub [options] file [file]\n")
     sys.stderr.write("Options:\n\t-help\n\t-force\n\t-no_fork\n\t-no_submit\n\t-verbose\n\t-log "+
                      "logfile\n\t-maxidle NumberOfJobs\n\t-maxjobs NumberOfJobs\n\t-maxjobwait TimeToWait\n")
@@ -1067,6 +1153,14 @@ datasubmit = "dmsub"
 maxJobWait = 30
                                             
 def main():
+    """
+    Main work flow:
+    1) parse command line
+    2) parse DAG file(s)
+    3) create DAG(s)
+    4) initiate root node submission
+    5) wait for DAG completion
+    """
     global verbose
     global doFork
     global doSubmit
@@ -1151,7 +1245,7 @@ def main():
         sys.exit(1)
     
     if args == []:
-        print "At least one file must be inclued"
+        print "At least one file must be included"
         usage()
         sys.exit(1)
     
