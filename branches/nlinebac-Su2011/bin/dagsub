@@ -196,7 +196,7 @@ class JobNode(object):
     """
     Defines a job node in the DAG
     """
-    def __initx__(self,name,script):
+    def __init__(self,name,script):
         self._name = name
         self._script = script
         self._queue = None
@@ -942,7 +942,7 @@ class DataJobNode(JobNode):
                     self.retry(cmd,dag,log)
             
             self.setSubmitted(True)
-            self.setExists(True)
+
         # if nothing failed, do generic post-submission stuff
         return self._postsubmit(dag,log, categories)
 
