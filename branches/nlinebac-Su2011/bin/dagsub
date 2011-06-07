@@ -601,19 +601,16 @@ class JobNode(object):
         """
         OVERVIEW: Submits job for self with dependencies 
 
-        OUTCOMES:
-                  1) if job is submitted successfully
+        OUTCOMES: 1) if job is submitted successfully
                   postsubmission script is run and
                   child nodes are submitted using self._postsubmit
                   2) if job submission fails
                   message is printed to log and program exits
 
-        MODIFIES:
-                  self._submitted
+        MODIFIES: self._submitted
                   self._jobid
 
-        RETURNS:
-                  self._postsubmit(dag,log,categories)
+        RETURNS:  self._postsubmit(dag,log,categories)
         """
         if ( self.isSubmitted() ):
             return self.isSubmitted()
@@ -728,12 +725,14 @@ class JobNode(object):
         return self._postsubmit(dag,log,categories)
     
     def num_category(self, categories, nodes):
-        """OVERVIEW: finds the number of jobs submitted or running in 
-                  self._category
-        PARAMETERS:
-                  categories, dictionary of all categories
-                  nodes, dictionary of all job nodes
-        RETURNS:  the number of jobs submitted or running in self._category 
+        """
+        OVERVIEW:  finds the number of jobs submitted or running in 
+                   self._category
+
+        PARAMETERS:categories, dictionary of all categories
+                   nodes, dictionary of all job nodes
+
+        RETURNS:   the number of jobs submitted or running in self._category 
         """
         num_in_category = 0
         
@@ -772,11 +771,13 @@ class JobNode(object):
         return num_in_category
 
 def job_exists(jobid):
-    """OVERVIEW: finds if a job is in the queue
+    """
+    OVERVIEW:   finds if a job is in the queue
+    
     PARAMETERS: jobid, the job ID to find
-    RETURNS: 
-           True, if job is found
-           False, if job is not found
+    
+    RETURNS:    True, if job is found
+                False, if job is not found
     """
     user_name = getpass.getuser()
     cmd = "qselect -s RHQ -u "+user_name+" | egrep -c "+ jobid
@@ -823,6 +824,21 @@ class DataJobNode(JobNode):
         return 
 
     def submit(self,dag,log,categories):
+        """
+        OVERVIEW: Submits job for self with dependencies
+        
+        OUTCOMES: 1) if job is submitted successfully
+                  postsubmission script is run and
+                  child nodes are submitted using self._postsubmit
+                  2) if job submission fails
+                  message is printed to log and program exits
+                
+        MODIFIES: self._submitted
+                  self._jobid
+
+        RETURNS:  self._postsubmit(dag,log,categories)
+        """
+        
         if ( self.isSubmitted() ):
             return self.isSubmitted()
         
@@ -1006,7 +1022,6 @@ class DAG(object):
         
     def writeDotFile(self,filename,graphname,log,forceoutput):
         """
-        OVERVIEW:
         Writes graph to filename using the .dot format associated with graphviz
         """
         if ( verbose ):
@@ -1028,8 +1043,8 @@ class DAG(object):
 
     def writeRescueDAG(self, log):
         """
-        OVERVIEW:
-               Rewrites rescue.dag
+        Rewrites <self.fileName()>.rescue which provides information about
+        the current stat of the DAG
         """
     ## After all jobs are submitted, check if self.Done() is true.
     ## If so, write "DONE" to the file.
@@ -1154,12 +1169,12 @@ maxJobWait = 30
                                             
 def main():
     """
-    Main work flow:
-    1) parse command line
-    2) parse DAG file(s)
-    3) create DAG(s)
-    4) initiate root node submission
-    5) wait for DAG completion
+    main() does the following:
+           1) parse command line
+           2) parse DAG file(s)
+           3) create DAG(s)
+           4) initiate root node submission
+           5) wait for DAG completion
     """
     global verbose
     global doFork
