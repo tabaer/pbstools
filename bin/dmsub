@@ -898,6 +898,11 @@ else:
 
 if ( debug ):
     sys.stderr.write("parsing command line options\n")
+ 
+if opts == [] and args == []:
+    usage()
+    sys.exit(0)
+    
 for opt in opts:
     if ( opt[0]=="-b" or opt[0]=="--batch " or opt[0]=="--rm" ):
         if ( debug ):

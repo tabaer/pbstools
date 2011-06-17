@@ -205,7 +205,11 @@ try:
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
-
+    
+if opts == [] and args == []:
+    usage()
+    sys.exit(0)
+    
 for opt in opts:
     if ( opt[0]=="-h" or opt[0]=="--help" ):
         usage()

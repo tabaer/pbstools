@@ -1257,12 +1257,11 @@ def main():
     except NameError, err:
         sys.stderr.write(str(err)+"\n")
         usage()
-        sys.exit(1)
+        sys.exit(0)
     
     if args == []:
-        print "At least one file must be included"
         usage()
-        sys.exit(1)
+        sys.exit(0)
     
     for file in args:
         # We fork off a separate process for each DAG and leave them running
