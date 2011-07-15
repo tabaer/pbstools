@@ -731,6 +731,77 @@ function metric_as_ods($result,$xaxis,$metric,$system,$start_date,$end_date)
   echo "<P>ODF file:  <A href=\"/tmp/".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";
 }
 
+function metric_as_csv($result,$xaxis,$metric,$system,$start_date,$end_date)
+{
+  $csvfile=$system."-".$metric."_vs_".$xaxis."-".$start_date."-".$end_date.".csv";
+  $cache = APACHE_CACHE_DIR;
+  if ( ! file_exists("/tmp/".$cache) )
+    {
+      mkdir("/tmp/".$cache,0750);
+    }
+  $fh = fopen("/tmp/".$cache.$csvfile,'w');
+
+  $mycolumnname=array($xaxis,"jobs");
+  foreach (columnnames($metric) as $columnname)
+    {
+      array_push($mycolumnname,$columnname);
+    }
+  $myresult=$result;
+
+  fwrite($fh,"#");
+  foreach ($mycolumnname as $header)
+    {
+      if ( !($header=='hidden') && !($header=='') )
+	{
+	  fwrite($fh,$header.",");
+	}
+    }
+  fwrite($fh,"\n");
+
+  while ($myresult->fetchInto($row))
+    {
+      $keys=array_keys($row);
+      foreach ($keys as $key)
+	{
+	  if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
+	    {
+	      fwrite($fh,$row[$key].",");
+	    }
+	}
+      fwrite($fh,"\n");
+    }
+  fclose($fh);
+  echo "<P>CSV file:  <A href=\"/tmp/".$cache.rawurlencode($csvfile)."\">".$csvfile."</A></P>\n";
+}
+
+function result_as_table($result,$mycolumnname)
+{
+  $myresult=$result;
+  echo "<TABLE border=\"1\">\n";
+  echo "<TR>";
+  foreach ($mycolumnname as $header)
+    {
+      if ( !($header=='hidden') && !($header=='') )
+        {
+          echo "<TH>".$header."</TH>";
+        }
+    }
+  echo "</TR>\n";
+  while ($myresult->fetchInto($row))
+    {
+      echo "<TR valign=\"top\">";
+      $keys=array_keys($row);
+      foreach ($keys as $key)
+        {
+          if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
+            {
+              echo "<TD align=\"right\"><PRE>".$row[$key]."</PRE></TD>";
+            }
+        }
+      echo "</TR>\n";
+    }
+  echo "</TABLE>\n";
+}
 function result_as_xls($result,$mycolumnname,$filebase)
 {
   $myresult=$result;
@@ -814,8 +885,47 @@ function result_as_ods($result,$mycolumnname,$filebase)
 	}
     }
   saveOds($workbook,"/tmp/".$cache.$odsfile);
-  echo "<P>ODF file:  <A href=\"/tmp/".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";  
+  echo "<P>ODS file:  <A href=\"/tmp/".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";
 }
+
+function result_as_csv($result,$mycolumnname,$filebase)
+{
+  $csvfile=$filebase.".csv";
+  $cache = APACHE_CACHE_DIR;
+  if ( ! file_exists("/tmp/".$cache) )
+    {
+      mkdir("/tmp/".$cache,0750);
+    }
+  $fh = fopen("/tmp/".$cache.$csvfile,'w');
+
+  $myresult=$result;
+
+  fwrite($fh,"#");
+  foreach ($mycolumnname as $header)
+    {
+      if ( !($header=='hidden') && !($header=='') )
+	{
+	  fwrite($fh,$header.",");
+	}
+    }
+  fwrite($fh,"\n");
+
+  while ($myresult->fetchInto($row))
+    {
+      $keys=array_keys($row);
+      foreach ($keys as $key)
+	{
+	  if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
+	    {
+	      fwrite($fh,$row[$key].",");
+	    }
+	}
+      fwrite($fh,"\n");
+    }
+  fclose($fh);
+  echo "<P>CSV file:  <A href=\"/tmp/".$cache.rawurlencode($csvfile)."\">".$csvfile."</A></P>\n";  
+}
+
 
 function jobstats_input_header()
 {
@@ -824,6 +934,7 @@ function jobstats_input_header()
   echo "  <TH>Metrics</TH>\n";
   #echo "  <TH>Graph</TH>";
   echo "  <TH>Table</TH>\n";
+  echo "  <TH>CSV</TH>\n";
   echo "  <TH>Excel</TH>\n";
   echo "  <TH>ODF</TH>\n";
   echo "</TR>\n";
@@ -845,6 +956,7 @@ function jobstats_input_metric($name,$fn)
     echo "  <TD>".$name."</TD>";
     #echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_graph\" value=\"1\"></TD>\n";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_table\" value=\"1\">\n";
+    echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_csv\" value=\"1\">\n";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_xls\" value=\"1\">\n";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_ods\" value=\"1\">\n";
     echo "</TR>\n";
@@ -856,8 +968,9 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
   
   if (    isset($_POST[$fn.'_graph'])
        || isset($_POST[$fn.'_table'])
+       || isset($_POST[$fn.'_csv']) 
        || isset($_POST[$fn.'_xls']) 
-       ||  isset($_POST[$fn.'_ods'])
+       || isset($_POST[$fn.'_ods'])
        )
     {
       echo "<H2>".$name."</H2>\n";
@@ -872,6 +985,12 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
 	{
 	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 	  metric_as_table($result,xaxis($fn),metric($fn));
+	}
+
+      if ( isset($_POST[$fn.'_csv']) )
+	{
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  metric_as_csv($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_xls']) )
@@ -893,8 +1012,9 @@ function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_
   
   if (    isset($_POST[$fn.'_graph'])
        || isset($_POST[$fn.'_table'])
+       || isset($_POST[$fn.'_csv'])
        || isset($_POST[$fn.'_xls']) 
-       ||  isset($_POST[$fn.'_ods'])
+       || isset($_POST[$fn.'_ods'])
        )
     {
       echo "<H2>".$name."</H2>\n";
@@ -909,6 +1029,12 @@ function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_
 	{
 	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 	  metric_as_table($result,xaxis($fn),metric($fn));
+	}
+
+      if ( isset($_POST[$fn.'_csv']) )
+	{
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  metric_as_csv($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_xls']) )
