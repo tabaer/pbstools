@@ -8,6 +8,11 @@
 require_once 'dbutils.php';
 require_once 'page-layout.php';
 require_once 'metrics.php';
+require_once 'phplib/Excel/Workbook.php';
+require_once 'phplib/Excel/Worksheet.php';
+require_once 'phplib/Excel/Format.php';
+require_once 'phplib/ods.php';
+
 
 # accept get queries too for handy command-line usage:  suck all the
 # parameters into _POST.
@@ -48,7 +53,7 @@ $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
     $db =db_connect();
-    $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, submit_ts, start_ts, end_ts, walltime_req, walltime, ".cpuhours($db,$_POST['system'])." AS cpuhours, queue, IF(script IS NULL,'interactive','batch') AS type, CASE ";
+    $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".cpuhours($db,$_POST['system'])." AS cpuhours, queue, IF(script IS NULL,'interactive','batch') AS type, CASE ";
     $pkgmatch = software_match_list();
     foreach (array_keys($pkgmatch ) as $pkg)
       {
@@ -56,49 +61,28 @@ if ( isset($_POST['system']) )
       }
     $sql .= "ELSE NULL END AS software FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("end",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
     #echo "<PRE>".$sql."</PRE>\n";
-    $result = db_query($db,$sql);
-    echo "<TABLE border=\"1\">\n";
-    $col[0]="jobid";
-    $col[1]="username";
-    $ncols=0;
     $columns = array("system", "jobid", "username", "account", "jobname", "nproc", "nodes", "mem_req", "mem_used", "submit_time", "start_time", "end_time", "walltime_req", "walltime", "cpuhours", "queue", "type", "software");
-    echo "<TR>";
-    foreach ($columns as $column)
+    $file_base = $_POST['system']."-joblist-".$_POST['start_date']."-".$_POST['end_date'];
+    $table_result = db_query($db,$sql);
+    result_as_table($table_result,$columns);
+    // if csv
+    if ( isset( $_POST['csv'] ) )
       {
-	echo "<TH align=\"center\">".$column."</TH>";
-	$col[$ncols]=$column;
-	$ncols++;
+	$csv_result = db_query($db,$sql);
+	result_as_csv($csv_result,$columns,$file_base);
       }
-    echo "</TR>\n";
-    
-    while ($result->fetchInto($row))
+    //if xls
+    if ( isset( $_POST['xls'] ) )
       {
-	$rkeys=array_keys($row);
-	
-	$nproc=0;
-	$nnodes=0;
-	$system="";
-	echo "<TR>";
-	foreach ($rkeys as $key)
-	  {
-	    $data[$key]=array_shift($row);
-	    if ( $col[$key]=="submit_time" || $col[$key]=="start_time" || $col[$key]=="end_time")
-	      {
-		echo "<TD><PRE>".date("Y-m-d H:i:s",$data[$key])."</PRE></TD>";
-	      }
-	    else if ( $col[$key]=="mem_used" )
-	      {
-		echo "<TD><PRE>".htmlspecialchars(round($data[$key]/1024))."MB</PRE></TD>";
-	      }
-	    else
-	      {
-		echo "<TD><PRE>".htmlspecialchars($data[$key])."</PRE></TD>";
-	      }
-	  }
-	echo "</TR>\n";
+	$xls_result = db_query($db,$sql);
+	result_as_xls($xls_result,$columns,$file_base);
       }
-    echo "</TABLE>\n";
-
+    // if ods
+    if ( isset( $_POST['ods'] ) )
+      {
+	$ods_result = db_query($db,$sql);
+	result_as_ods($ods_result,$columns,$file_base);
+      }
     db_disconnect($db);
     bookmarkable_url();
   }
@@ -108,6 +92,9 @@ else
 
     system_chooser();
     date_fields();
+    checkbox("Generate CSV file","csv");
+    checkbox("Generate Excel file","xls");
+    checkbox("Generate ODF files","ods");
 
     end_form();
   }
