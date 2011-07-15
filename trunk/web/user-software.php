@@ -107,6 +107,12 @@ if ( isset($_POST['system']) )
 	flush();
       }
     echo "</TABLE>\n";
+    if ( isset($_POST['csv']) )
+      {
+	$csvresult = db_query($db,$sql);
+	$columns = array("package","jobs","cpuhours","accounts");
+	result_as_csv($csvresult,$columns,$_POST['system']."-".$_POST['username']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
+      }
     if ( isset($_POST['xls']) )
       {
 	$xlsresult = db_query($db,$sql);
@@ -134,6 +140,7 @@ else
     $orders=array("jobs","cpuhours","accounts");
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
+    checkbox("Generate CSV file","csv");
     checkbox("Generate Excel file","xls");
     checkbox("Generate ODF file","ods");
 

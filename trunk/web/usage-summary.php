@@ -122,6 +122,11 @@ if ( isset($_POST['system']) )
 	echo "<H3>Usage By Institution</H3>\n";
 	$result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
 	metric_as_table($result,'institution','usage');
+	if ( isset($_POST['csv']) )
+	  {
+	    $csvresult=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	    metric_as_csv($csvresult,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	  }
 	if ( isset($_POST['xls']) )
 	  {
 	    $xlsresult=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
@@ -142,6 +147,11 @@ if ( isset($_POST['system']) )
 	echo "<H3>Usage By Account</H3>\n";
 	$result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
 	metric_as_table($result,'account','usage');
+	if ( isset($_POST['csv']) )
+	  {
+	    $csvresult=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	    metric_as_csv($csvresult,'account','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	  }
 	if ( isset($_POST['xls']) )
 	  {
 	    $xlsresult=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
@@ -207,6 +217,12 @@ if ( isset($_POST['system']) )
 	    flush();
 	  }
 	echo "</TABLE>\n";
+	if ( isset($_POST['csv']) )
+	  {
+	    $xlsresult = db_query($db,$sql);
+	    $columns = array("package","jobs","cpuhours","users","groups");
+	    result_as_csv($csvresult,$columns,$_POST['system']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
+	  }
 	if ( isset($_POST['xls']) )
 	  {
 	    $xlsresult = db_query($db,$sql);
@@ -235,6 +251,7 @@ else
     checkboxes_from_array("Supplemental reports",array("institution","account","software"));
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
+    checkbox("Generate CSV files for supplemental reports","csv");
     checkbox("Generate Excel files for supplemental reports","xls");
     checkbox("Generate ODF files for supplemental reports","ods");
 
