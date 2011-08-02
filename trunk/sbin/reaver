@@ -35,6 +35,9 @@ my $safelist="arraysvcs|oscmon|decypher";
 # Should we attempt to kill strays? (0 = no, 1 = yes)
 my $kill_mode = 0;
 
+# Clean up after a particular job (i.e. don't whitelist its owner)
+my $reap_job;
+
 # Output is either brief, normal, or verbose.  In brief mode, we output only
 # the PIDs for stray processes (one per line).  Normal mode displays "ps" 
 # listing for stray procs.  Verbose mode is same as brief mode with extras.
@@ -42,10 +45,12 @@ my $brief_mode = 0;
 my $verbose_mode = 0;
 
 # Usage/help functions
-my $USAGE = "$0 [-hkbv]";
+my $USAGE = "$0 [-hkbv] [-j <jobid>]";
 my $HELP = "Options:
  -h, --help
     Print detailed help screen
+ -j <jobid>, --job=<jobid>
+    Clean up processes associated with <jobid>
  -k, --kill
     Attempt to kill all stray processes
  -b, --brief
@@ -103,10 +108,11 @@ sub usage_error {
 }
 
 # Process command line options
-my ($opt_h, $opt_k, $opt_b, $opt_v);
+my ($opt_h, $opt_j, $opt_k, $opt_b, $opt_v);
 Getopt::Long::Configure('bundling');
 GetOptions(
          "h"  => \$opt_h, "help"    => \$opt_h,
+         "j=s"=> \$opt_j, "job=s"   => \$opt_j,
          "k"  => \$opt_k, "kill"    => \$opt_k,
          "b"  => \$opt_b, "brief"   => \$opt_b,
          "v"  => \$opt_v, "verbose" => \$opt_v
@@ -116,6 +122,11 @@ if ($opt_h) { print_help(); exit(0); }
 if ($opt_k) { $kill_mode = 1; }
 if ($opt_b) { $brief_mode = 1; }
 if ($opt_v) { $verbose_mode = 1; $brief_mode = 0; }
+if ($opt_j)
+{
+    $reap_job = $opt_j;
+    $reap_job =~ s/\..*$//;
+}
 
 # Append to $safelist the names of all users who have jobs currently running
 # on this host
@@ -123,21 +134,28 @@ if ($opt_v) { $verbose_mode = 1; $brief_mode = 0; }
 # reaver to be run by root
 my $ptn = "$spool/mom_priv/jobs/*.JB";
 if ( glob($ptn) )
-{
-    my $jobuserlist = `cat $ptn | strings | grep -A 1 euser | grep -v euser | sort | uniq | tr '\n' '|'`;
-    chop($jobuserlist);
-    if ( $jobuserlist ne "" )
+  {
+    foreach my $jobfile (glob($ptn))
     {
-	if ( $safelist eq "" )
+      
+      if ( ! defined($reap_job) || ! ($jobfile=~/\/$reap_job\..*\.JB$/) )
 	{
-	    $safelist = $jobuserlist;
-	}
-	else
-	{
-	    $safelist .= "|".$jobuserlist;
+	  my $jobuserlist = `cat $jobfile | strings | grep -A 1 euser | grep -v euser | sort | uniq | tr '\n' '|'`;
+	  chop($jobuserlist);
+	  if ( $jobuserlist ne "" )
+	    {
+	      if ( $safelist eq "" )
+		{
+		  $safelist = $jobuserlist;
+		}
+	      else
+		{
+		  $safelist .= "|".$jobuserlist;
+		}
+	    }
 	}
     }
-}
+  }
 
 # Append to $safelist the owner of /dev/console
 my $consoleowner = `stat -c %U /dev/console`;
