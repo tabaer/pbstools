@@ -34,6 +34,7 @@ function page_header($title)
   echo "    </UL>\n";
   echo "    <UL><U>Job stats by</U>\n";
   echo "      <LI><A href=\"jobstats-by-nproc.php\">CPU Count</A></LI>\n";
+  echo "      <LI><A href=\"jobstats-by-nodect.php\">Node Count</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-queue.php\">Job Class</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-walltime.php\">Job Length</A></LI>\n";
 # NOTE By-institution jobstats involves site-specific logic.  You may
