@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008, 2009 University of Tennessee
+# Copyright 2008, 2009, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -127,7 +127,85 @@ if ( isset($_POST['system']) )
 			   $_POST['system'],
 			   $_POST['start_date'],
 			   $_POST['end_date']);
+
+    // by node count
+    jobstats_output_metric('Job Count vs. Node Count',
+			   'jobs_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
     
+    jobstats_output_metric('CPU Time vs. Node Count',
+			   'cpuhours_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    
+    jobstats_output_metric('Job Length vs. Node Count',
+			   'walltime_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    
+    jobstats_output_metric('Queue Time vs. Node Count',
+			   'qtime_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    
+    jobstats_output_metric('Real Memory vs. Node Count',
+			   'mem_kb_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    
+    jobstats_output_metric('Virtual Memory vs. Node Count',
+			   'vmem_kb_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    
+    jobstats_output_metric('Walltime Accuracy vs. Node Count',
+			   'walltime_acc_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    
+    jobstats_output_metric('CPU Efficiency vs. Node Count',
+			   'cpu_eff_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Active Users vs. Node Count',
+			   'users_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
+    jobstats_output_metric('Active Groups vs. Node Count',
+			   'groups_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+    
+    jobstats_output_metric('Active Accounts vs. Node Count',
+			   'accounts_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
     // by queue
     jobstats_output_metric('Job Count vs. Job Class',
 			   'jobs_vs_queue',
@@ -157,6 +235,13 @@ if ( isset($_POST['system']) )
 			   $_POST['start_date'],
 			   $_POST['end_date']);
     
+    jobstats_output_metric('Expansion Factor vs. Job Class',
+			   'xfactor_vs_queue',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date']);
+
     jobstats_output_metric('Real Memory vs. Job Class',
 			   'mem_kb_vs_queue',
 			   $db,
@@ -1039,12 +1124,26 @@ else
     jobstats_input_metric("Active Groups vs. CPU Count","groups_vs_nproc");
     jobstats_input_metric("Active Accounts vs. CPU Count","accounts_vs_nproc");
     
-    // by queue
+    // by nodect
     jobstats_input_spacer();
+    jobstats_input_metric("Job Count vs. Node Count","jobs_vs_nodect");
+    jobstats_input_metric("CPU Time vs. Node Count","cpuhours_vs_nodect");
+    jobstats_input_metric("Job Length vs. Node Count","walltime_vs_nodect");
+    jobstats_input_metric("Queue Time vs. Node Count","qtime_vs_nodect");
+    jobstats_input_metric("Real Memory vs. Node Count","mem_kb_vs_nodect");
+    jobstats_input_metric("Virtual Memory vs. Node Count","vmem_kb_vs_nodect");
+    jobstats_input_metric("Walltime Accuracy vs. Node Count","walltime_acc_vs_nodect");
+    jobstats_input_metric("CPU Efficiency vs. Node Count","cpu_eff_vs_nodect");
+    jobstats_input_metric("Active Users vs. Node Count","users_vs_nodect");
+    jobstats_input_metric("Active Groups vs. Node Count","groups_vs_nodect");
+    jobstats_input_metric("Active Accounts vs. Node Count","accounts_vs_nodect");
+    
+    // by queue
     jobstats_input_metric("Job Count vs. Job Class","jobs_vs_queue");
     jobstats_input_metric("CPU Time vs. Job Class","cpuhours_vs_queue");
     jobstats_input_metric("Job Length vs. Job Class","walltime_vs_queue");
     jobstats_input_metric("Queue Time vs. Job Class","qtime_vs_queue");
+    jobstats_input_metric("Expansion Factor vs. Job Class","xfactor_vs_queue");
     jobstats_input_metric("Real Memory vs. Job Class","mem_kb_vs_queue");
     jobstats_input_metric("Virtual Memory vs. Job Class","vmem_kb_vs_queue");
     jobstats_input_metric("Walltime Accuracy vs. Job Class","walltime_acc_vs_queue");
