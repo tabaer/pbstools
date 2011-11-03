@@ -1,0 +1,26 @@
+# complex.dag
+JOB A stage1.pbs
+JOB B stage2.pbs
+VARS B node="1"
+JOB C stage2.pbs
+VARS C node="2"
+JOB D stage3.pbs
+VARS D node="1"
+JOB E stage3.pbs
+VARS E node="2"
+JOB F stage3.pbs
+VARS F node="3"
+JOB G stage4.pbs
+VARS G node="1"
+JOB H stage4.pbs
+VARS H node="2"
+JOB I stage4.pbs
+VARS I node="3"
+JOB J stage4.pbs
+VARS J node="4"
+JOB K stage5.pbs
+PARENT A CHILD B C
+PARENT B C CHILD D E F
+PARENT D E F CHILD G H I J
+PARENT G H I J CHILD K
+DOT complex.dot

@@ -1,0 +1,50 @@
+.TH dezombify 8 "$Date$" "$Revision$" "PBS TOOLS"
+
+.SH NAME
+dezombify \- Requeue a "running" PBS job that's not actually running
+because it had JOIN JOB failures.
+
+.SH SYNOPSIS
+
+dezombify <jobid> [jobids...]
+
+.SH DESCRIPTION
+
+.B dezombify
+automates a somewhat tedious process required to requeue a "zombie"
+job, which pbs_server claims is running but in reality is not.  Signs
+of a zombie job:
+.nf
+* "qstat -f $jobid" reports job state as R but no CPU time or memory consumed
+* "qps -a $jobid" shows *NO* processes
+* "qtracejob $jobid | grep -c JOIN" gives a number that's less than
+  (N-1), where N==# nodes assigned to the job
+.fi
+.PP
+The steps dezombify follows are these:
+.nf
+* Make sure job is "running"
+* Hold the job
+* Stop all associated pbs_mom's in parallel
+* Delete the job files on the nodes
+* Restart the pbs_mom's with the -p option.  This cannot be done in
+  parallel, as the pbs_server may not be able to keep up with the
+  flurry of "I'm back!" messages depending on the number of mom's.
+* "Rerun" the held job.  This causes it to go back into a queued state.
+* Release the hold on the job.
+.fi
+
+.SH BUGS
+
+The restarted pbs_mom's sometimes reject the rerun request for no
+apparent reason.
+
+.SH AUTHOR
+Troy Baer (troy (at) osc.edu)
+
+.SH SEE ALSO
+.BR all (1),
+.BR qdel (1B),
+.BR qhold (1B),
+.BR qrerun (1B),
+.BR qrls (1B)
