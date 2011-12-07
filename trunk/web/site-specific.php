@@ -203,6 +203,10 @@ function cpuhours($db,$system)
       	# get list of systems
 	$sql = "SELECT DISTINCT(system) FROM Jobs;";
 	$result = db_query($db,$sql);
+	if ( PEAR::isError($result) )
+	  {
+	    echo "<PRE>".$result->getMessage()."</PRE>\n";
+	  }
 	$systems = array();
 	while ($result->fetchInto($row))
 	  {
@@ -284,7 +288,7 @@ function software_list()
 	      "accorrsf",
 	      "aces2",
 	      "aces3",
-	      "adda"
+	      "adda",
 	      "adf",
 	      "agk",
               "airebo",

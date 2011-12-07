@@ -83,6 +83,10 @@ if ( isset($_POST['system']) )
 	      }
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
 	    echo "<TABLE border=1>\n";
 	    echo "<TR><TH>system</TH><TH>jobs</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH><TH>users</TH><TH>groups</TH></TR>\n";
 	    while ($result->fetchInto($row))

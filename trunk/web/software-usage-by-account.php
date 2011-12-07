@@ -78,6 +78,10 @@ if ( isset($_POST['system']) )
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
 	    echo "<TABLE border=1>\n";
 	    echo "<TR><TH>account</TH><TH>jobs</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH></TR>\n";
 	    while ($result->fetchInto($row))

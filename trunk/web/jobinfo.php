@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006 Ohio Supercomputer Center
-# Copyright 2009, 2010 University of Tennessee
+# Copyright 2009, 2010, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -48,6 +48,10 @@ if ( isset($_POST['jobid']) )
       }
     $sql = $sql." FROM Jobs WHERE jobid LIKE '".$_POST['jobid'].".%' AND system LIKE '".$_POST['system']."';";
     $result = db_query($db,$sql);
+    if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     while ($result->fetchInto($row))
       {
 	echo "<TABLE border=\"1\">\n";

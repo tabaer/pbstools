@@ -86,6 +86,10 @@ if ( isset($_POST['system']) )
 	    $sql ." ORDER BY ".$_POST['order']." DESC";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
 	    echo "<TABLE border=1>\n";
 	    echo "<TR><TH>groupname</TH><TH>jobs</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH></TR>\n";
 	    while ($result->fetchInto($row))
@@ -112,6 +116,10 @@ if ( isset($_POST['system']) )
 	      }
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
 	    $result = db_query($db,$sql);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
 	    while ($result->fetchInto($row))
 	      {
 		$rkeys=array_keys($row);

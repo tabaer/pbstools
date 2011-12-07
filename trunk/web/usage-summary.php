@@ -64,6 +64,10 @@ if ( isset($_POST['system']) )
     flush();
 
     $result = db_query($db,$sql);
+    if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     while ($result->fetchInto($row))
       {
 	$data=array();
@@ -97,6 +101,10 @@ if ( isset($_POST['system']) )
       {
 	$sql = "SELECT 'TOTAL', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, 'N/A' AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
 	$result = db_query($db,$sql);
+	if ( PEAR::isError($result) )
+	  {
+	    echo "<PRE>".$result->getMessage()."</PRE>\n";
+	  }
 	while ($result->fetchInto($row))
 	  {
 	    $rkeys=array_keys($row);
@@ -121,6 +129,10 @@ if ( isset($_POST['system']) )
       {
 	echo "<H3>Usage By Institution</H3>\n";
 	$result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	if ( PEAR::isError($result) )
+	  {
+	    echo "<PRE>".$result->getMessage()."</PRE>\n";
+	  }
 	metric_as_table($result,'institution','usage');
 	if ( isset($_POST['csv']) )
 	  {
@@ -146,6 +158,10 @@ if ( isset($_POST['system']) )
       {
 	echo "<H3>Usage By Account</H3>\n";
 	$result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	if ( PEAR::isError($result) )
+	  {
+	    echo "<PRE>".$result->getMessage()."</PRE>\n";
+	  }
 	metric_as_table($result,'account','usage');
 	if ( isset($_POST['csv']) )
 	  {
@@ -203,6 +219,10 @@ if ( isset($_POST['system']) )
 	
 #echo "<PRE>\n".$sql."</PRE>\n";
 	$result = db_query($db,$sql);
+	if ( PEAR::isError($result) )
+	  {
+	    echo "<PRE>".$result->getMessage()."</PRE>\n";
+	  }
 	while ($result->fetchInto($row))
 	  {
 	    $rkeys=array_keys($row);
