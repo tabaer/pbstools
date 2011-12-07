@@ -78,7 +78,7 @@ if ( !defined('CACHE_DIR') )
 function sys_list()
 {
 # NICS
-  return array("krakenpf","kraken","athena","verne","nautilus","kid");
+  return array("krakenpf","kraken","athena","verne","nautilus","kid","kraken-all","xt4-all");
 # OSC
 #  return array("amd",
 #	       "apple",
@@ -147,6 +147,8 @@ function sysselect($system)
   if ( $system=='piv-serial' ) return "system = 'piv' AND ( queue = 'serial' OR queue = 'mdce' OR queue = 'sas' )";
   if ( $system=='piv-parallel' ) return "system = 'piv' AND ( queue = 'parallel' OR queue = 'dedicated' OR queue = 'gige' )";
   if ( $system=='x1' ) return "system = 'x1'";
+  if ( $system=='kraken-all' ) return "system = 'kraken' OR system = 'krakenpf'";
+  if ( $system=='xt4-all' ) return "system = 'kraken' OR system = 'athena'";
   return "system LIKE '".$system."'";
 }
 
@@ -282,6 +284,7 @@ function software_list()
 	      "accorrsf",
 	      "aces2",
 	      "aces3",
+	      "adda"
 	      "adf",
 	      "agk",
               "airebo",
@@ -305,6 +308,7 @@ function software_list()
 	      "cam",
 	      "cando",
 	      "casino",
+	      "castro3d",
 	      "cbl",
 	      "ccsm",
 	      "cctm",
@@ -417,6 +421,7 @@ function software_list()
 	      "mathematica",
 	      "matlab",
 	      "mcrothers",
+	      "mcsim",
 	      "mctas",
 	      "mddriver",
 	      "mdsim",
@@ -445,10 +450,12 @@ function software_list()
 	      "mpiblast",
 	      "mrbayes",
 	      "mrobb6dipzz",
+	      "music",
 	      "mykim9dgt",
 	      "nag",
 	      "namd",
 	      "ncbi",
+	      "ncl",
 	      "nektar",
 	      "nemd",
 	      "newseriesrun",
@@ -502,8 +509,10 @@ function software_list()
 	      "s3d",
 #	      "sable",
 	      "sas",
+	      "sauron",
 	      "scalapack",
 	      "sddt",
+	      "seissol",
 	      "sfeles",
 	      "sgf",
 	      "siesta",
@@ -520,17 +529,19 @@ function software_list()
 	      "sus",
 	      "sweqx",
 	      "swh1b",
-	      "swiftwrap",
+	      "swift",
 	      "tantalus",
 	      "tbms",
 	      "tdcc2d",
 	      "tdse",
-	      "tetradpost",
+	      "terachem",
 	      "testpio",
+	      "tetradpost",
 	      "tfe",
 	      "tsc",
 	      "turbo",
 	      "turbomole",
+	      "ukh2d",
 	      "upc",
 	      "vasp",
 	      "vbc",
@@ -558,7 +569,8 @@ function software_match_list()
   # default to "script LIKE '%pkgname%'
   foreach (software_list() as $pkg)
     {
-      $pkgmatch[$pkg]="script LIKE '%".$pkg."%' OR software LIKE '%".$pkg."%'";
+      $pkgmatch[$pkg]="( script LIKE '%".$pkg."%' OR ( software IS NOT NULL AND software LIKE '%".$pkg."%' ) )";
+#      $pkgmatch[$pkg]="( script LIKE '%".$pkg."%' )";
     }
 
   # exceptions
@@ -566,50 +578,47 @@ function software_match_list()
   # in MySQL, so don't use REGEXP unless you really need it.
   $pkgmatch['3dh'] = "script LIKE '%./3dh%'";
   $pkgmatch['a_out'] = "script LIKE '%a.out%'";
-  $pkgmatch['abaqus'] = "( script LIKE '%abaqus%' OR software LIKE '%abaqus%' )";
+  $pkgmatch['abaqus'] = "( script LIKE '%abaqus%' OR ( software IS NOT NULL AND software LIKE '%abaqus%' ) )";
   $pkgmatch['abinit'] = "( script LIKE '%abinit%' OR script LIKE '%abinis%' OR script LIKE '%abinip%' )";
   $pkgmatch['aces2'] = "script LIKE '%xaces2%'";
   $pkgmatch['adf'] = "script LIKE '%adf%'";
   $pkgmatch['AliEn'] = "( script LIKE '%aliroot%' OR script LIKE '%agent.startup%' )";
-  $pkgmatch['amber'] = "( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' OR script LIKE '%SingleJob%' OR script LIKE '%MINJob%' OR script LIKE '%run_md_mpi.csh%' OR script LIKE '%./MD%' )";
   $pkgmatch['arts'] = "( script LIKE '%arts%' AND script NOT LIKE '%starts%' )";
   $pkgmatch['ash'] = "script LIKE '%ash_1%'";
   $pkgmatch['blat'] = "script LIKE '%blat %'";
   $pkgmatch['boltztran'] = "(script LIKE '%boltzpar%')";
   $pkgmatch['cbl'] = "( script LIKE '% cbl%' OR script LIKE '%pcbl%' OR script LIKE '%biolib%' )";
-  $pkgmatch['ccsm'] = "( script LIKE '%ccsm%' OR script LIKE '%cpl%csim%clm%pop%cam%' )";
   $pkgmatch['chemshell'] = "script LIKE '%chemsh%'";
   $pkgmatch['cpmd'] = "script LIKE '%cpmd%'";
   $pkgmatch['crystal'] = "script LIKE '%Pcrystal%'";
   $pkgmatch['decypher'] = "script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
-  $pkgmatch['dipole'] = "( script LIKE '%dipole.cxx.op%' OR script LIKE '%asym4sp
-.cxx.op%' OR script LIKE '%asymm4sp.cxx.op%' )";
+  $pkgmatch['dipole'] = "( script LIKE '%dipole.cxx.op%' OR script LIKE '%asym4sp.cxx.op%' OR script LIKE '%asymm4sp.cxx.op%' )";
   $pkgmatch['dissens'] = "script LIKE '%dissens.x%'";
   $pkgmatch['dns2d'] = "( script LIKE '%DNS2d.x%' OR script LIKE '%DNS2d_%.x%' OR script LIKE '%code2.x%' OR script LIKE '%spcal2d.x%' )";
   $pkgmatch['dock'] = "( script LIKE '%dock5%' OR script LIKE '%dock6%' OR script LIKE '%sphgen%' OR script LIKE '%mopac%' )";
   $pkgmatch['esp'] = "script LIKE '%/esp %'";
   $pkgmatch['ex_e'] = "script LIKE '%ex.e%'";
-  $pkgmatch['fluent'] = "( script like '%fluent%' OR software LIKE '%fluent%' )";
+  $pkgmatch['fluent'] = "( script LIKE '%fluent%' OR ( software IS NOT NULL AND software LIKE '%fluent%' ) )";
   $pkgmatch['fsweep'] = "( script LIKE '%fsweep.exe%' OR script LIKE '%fsweep2.exe%' )";
   $pkgmatch['gamess'] = "( script LIKE '%gamess%' OR script LIKE '%rungms%' OR script LIKE '%rungmx%' )";
   $pkgmatch['gaussian'] = "( script LIKE '%g98%' OR script LIKE '%g03%' OR script LIKE '%g09%' )";
   $pkgmatch['glast'] = "( script LIKE '%glast%' OR script LIKE '%gp run%' )";
   $pkgmatch['gromacs'] = "( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' )";
-  $pkgmatch['gtc'] = "( script LIKE '%gtc%' OR script LIKE '%gts%' )";
   $pkgmatch['harness'] = "script LIKE '%test_harness_driver.py%'";
   $pkgmatch['harris'] = "script LIKE '%harris.cxx.op%'";
   $pkgmatch['hd'] = "script LIKE '%/HD %'";
   $pkgmatch['hf'] = "script LIKE '%hf/hf%'";
   $pkgmatch['hmmer'] = "( script LIKE '%hmmer%' OR script LIKE '%hmmp%' )";
   $pkgmatch['hpl'] = "script LIKE '%xhpl%'";
-  $pkgmatch['idl'] = "( script LIKE '%idl %' OR software LIKE '%idl%' )";
+  $pkgmatch['idl'] = "( script LIKE '%idl %' OR ( software IS NOT NULL AND software LIKE '%idl%' ) )";
   $pkgmatch['ifs'] = "script LIKE '%ifsMASTER%'";
   $pkgmatch['imb'] = "script LIKE '%IMB-%'";
   $pkgmatch['ior'] = "script LIKE '%IOR %'";
   $pkgmatch['lammps'] = "( script LIKE '%lammps%' OR script LIKE '% lmp_%' OR script LIKE '%/lmp_%' )";
   $pkgmatch['madness'] = "( script LIKE '%m-a-d-n-e-s-s%' OR script LIKE '%slda%' )";
-  $pkgmatch['matlab'] = "( script LIKE '%matlab%' OR software LIKE '%matlab%' )";
+  $pkgmatch['matlab'] = "( script LIKE '%matlab%' OR ( software IS NOT NULL AND software LIKE '%matlab%' ) )";
   $pkgmatch['meta'] = "( script LIKE '%anti.meta%' OR script LIKE '%para.meta%' OR script LIKE '%xray.meta%' )";
+  $pkgmatch['mhd_vec'] = "( script LIKE '%mhd_vec%' OR script LIKE '%mhd_pvec%' )";
   $pkgmatch['mm5'] = "( SCRIPT LIKE '%mm5%' AND NOT SCRIPT LIKE '%womm5%' )";
   $pkgmatch['mrbayes'] = "( script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%' )";
   $pkgmatch['namd'] = "( script LIKE '%namd%' OR script LIKE '%md.sh%' )";
@@ -625,9 +634,10 @@ function software_match_list()
   $pkgmatch['rosetta'] = "( script LIKE '%rosetta.%' OR script LIKE '%/rr %' )";
   $pkgmatch['roth'] = "script LIKE '%/ROTH%'";
   $pkgmatch['sable'] = "( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )";
-  $pkgmatch['sas'] = "( script LIKE '%\nsas%' OR software LIKE '%sas%' OR queue  LIKE '%sas%' )";
+  $pkgmatch['sas'] = "( script LIKE '%\nsas%' OR ( software IS NOT NULL AND software LIKE '%sas%' ) OR queue  LIKE '%sas%' )";
   $pkgmatch['tbms'] = "( script LIKE '%tbms%dvm%' OR script LIKE '%distr%dvm%' OR script LIKE '%jac%dvm%' OR script LIKE '%mt%dvm%' )";
   $pkgmatch['turbo'] = "script LIKE '%pturbo.x%'";
+  $pkgmatch['ukh2d'] = "( script LIKE '%ukh2d%' OR script LIKE '%ukh.cxx.op%' )";
   $pkgmatch['upc'] = "script LIKE '%upcrun%'";
   $pkgmatch['vasp'] = "script LIKE '%vasp%'";
   $pkgmatch['visit'] = "( script LIKE '%visit%' AND script NOT LIKE '%revisit%' )
@@ -638,28 +648,37 @@ function software_match_list()
 
 # package matches with dependencies on other package matches
   $pkgmatch['R'] = "( ( script LIKE '%\nR %' OR script LIKE '%Rscript %' ) AND NOT ( ".$pkgmatch['gaussian']." OR ".$pkgmatch['adf']." ) )";
+  $pkgmatch['amber'] = "( ( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' OR script LIKE '%SingleJob%' OR script LIKE '%MINJob%' OR script LIKE '%run_md_mpi.csh%' OR script LIKE '%./MD%' ) AND NOT ( ".$pkgmatch['cctm']." ) )";
   $pkgmatch['arps'] = "( script LIKE '%arps%' AND NOT ( ".$pkgmatch['wrf']." ) )";
   $pkgmatch['cam'] = "( script LIKE '%cam%' AND NOT ( ".$pkgmatch['ccsm']." ) AND NOT ( ".$pkgmatch['nicam']." ) )";
+  $pkgmatch['ccsm'] = "( ( script LIKE '%ccsm%' OR script LIKE '%cpl%csim%clm%pop%cam%' ) AND NOT ( ".$pkgmatch['swift']." ) )";
   $pkgmatch['cdp'] = "( script LIKE '%cdp%' AND NOT ( ".$pkgmatch['ifs']." ) )";
   $pkgmatch['charmm'] = "( script LIKE '%charmm%' AND NOT ( ".$pkgmatch['chemshell']." ) )";
-  $pkgmatch['hmc'] = "( ( script LIKE '%hmc%' OR script LIKE '%./run_%.sh%' ) AND
- NOT ( ".$pkgmatch['namd']." ) AND NOT ( ".$pkgmatch['tantalus']." ) )";
+  $pkgmatch['enzo'] = "( script LIKE '%enzo%' AND NOT ( ".$pkgmatch['yt']." ) )";
+  $pkgmatch['gtc'] = "( ( script LIKE '%gtc%' OR script LIKE '%gts%' ) AND NOT ( ".$pkgmatch['cctm']." ) )";
+  $pkgmatch['halo'] = "( script LIKE '%halo%' AND NOT ( ".$pkgmatch['yt']." ) )";
+  $pkgmatch['hmc'] = "( ( script LIKE '%hmc%' OR script LIKE '%./run_%.sh%' ) AND NOT ( ".$pkgmatch['namd']." ) AND NOT ( ".$pkgmatch['tantalus']." ) )";
   $pkgmatch['hsi'] = "( ( script LIKE '%hsi %' OR script LIKE '%htar %' ) AND NOT ( ".$pkgmatch['nicam']." ) AND NOT ( ".$pkgmatch['ifs']." ) )";
   $pkgmatch['hy3s'] = "( ( script LIKE '%SSA%' OR script LIKE '%HyJCMSS-%' ) AND NOT ( ".$pkgmatch['ccsm']." ) AND NOT ( ".$pkgmatch['milc']." ) AND NOT ( ".$pkgmatch['wrf']." ) AND NOT ( ".$pkgmatch['nicam']." ) )";
-  $pkgmatch['milc'] = "( ( script LIKE '%milc%' OR script LIKE '%su3_%' OR script
- LIKE '%switch%.csh%' ) AND NOT ( ".$pkgmatch['nicam']." ) AND NOT ( ".$pkgmatch
-['hmc']." ) )";
+  $pkgmatch['ior'] = "( script LIKE '%ior%' AND NOT ( ".$pkgmatch['swift']." ) )";
+  $pkgmatch['milc'] = "( ( script LIKE '%milc%' OR script LIKE '%su3_%' OR script LIKE '%switch%.csh%' ) AND NOT ( ".$pkgmatch['nicam']." ) AND NOT ( ".$pkgmatch['hmc']." ) )";
+  $pkgmatch['nag'] = "( script LIKE '%nag%' AND NOT ( ".$pkgmatch['cctm']." ) )";
+  $pkgmatch['ncl'] = "( script LIKE '%ncl%' AND NOT ( ".$pkgmatch['swift']." ) )";
   $pkgmatch['omen'] = "( script LIKE '%omen%' AND NOT ( ".$pkgmatch['milc']." ) )";
   $pkgmatch['overlap']="( script LIKE '%overlap_%' AND NOT ( ".$pkgmatch['nicam']." ) )";
   $pkgmatch['pcg'] = "( script LIKE '%pcg%' AND script NOT LIKE '%request%' AND NOT ( ".$pkgmatch['gen.v4']." ) )";
-  $pkgmatch['pop'] = "( script LIKE '%pop%' AND NOT ( ".$pkgmatch['ccsm']." ) AND NOT ( ".$pkgmatch['hmc']." ) )";
+  $pkgmatch['pop'] = "( script LIKE '%pop%' AND NOT ( ".$pkgmatch['ccsm']." ) AND NOT ( ".$pkgmatch['hmc']." ) AND NOT ( ".$pkgmatch['yt']." ) )";
   $pkgmatch['propagators'] = "( script LIKE '%propagators%' AND NOT ( ".$pkgmatch['milc']." ) )";
+  $pkgmatch['python'] = "( script LIKE '%python%' AND NOT ( ".$pkgmatch['yt']." ) )";
   $pkgmatch['qb'] = "( script LIKE '%qb%' AND NOT ( ".$pkgmatch['milc']." ) AND NOT ( ".$pkgmatch['amber']." ) )";
   $pkgmatch['quest'] = "( script LIKE '%quest%' AND script NOT LIKE '%request%'
  AND NOT ( ".$pkgmatch['gen.v4']." ) )";
   $pkgmatch['radhyd'] = "( script LIKE '%radhyd%' AND NOT ( ".$pkgmatch['chimera']." ) )";
+  $pkgmatch['s3d'] = "( script LIKE '%s3d%' AND NOT ( ".$pkgmatch['cctm']." ) )";
   $pkgmatch['sses'] = "( script LIKE '%sses%' AND NOT ( ".$pkgmatch['milc']." ) )";
+  $pkgmatch['tsc'] = "( script LIKE '%tsc%' AND NOT ( ".$pkgmatch['swift']." ) )";
   $pkgmatch['turbomole'] = "( script LIKE '%turbomole%' AND NOT ( ".$pkgmatch['chemshell']." ) )";
+  $pkgmatch['yt'] = "( script LIKE '%yt%' AND NOT ( ".$pkgmatch['gen.v4']." ) AND NOT ( ".$pkgmatch['swift']." ) )";
   
   return $pkgmatch;
 }
