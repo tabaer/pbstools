@@ -124,6 +124,10 @@ function system_chooser()
   $db = db_connect();
   $sql = "SELECT DISTINCT(system) FROM Jobs;";
   $result = db_query($db,$sql);
+  if ( PEAR::isError($result) )
+    {
+      echo "<PRE>".$result->getMessage()."</PRE>\n";
+    }
   while ($result->fetchInto($row))
     {
       $rkeys = array_keys($row);

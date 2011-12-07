@@ -189,6 +189,10 @@ function ndays($db,$system,$start_date,$end_date)
 
   #echo "<PRE>".$query."</PRE><BR>\n";
   $result = db_query($db,$query);
+  if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
   $result->fetchInto($row);
 
   return $row;

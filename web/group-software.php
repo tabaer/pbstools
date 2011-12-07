@@ -92,6 +92,10 @@ if ( isset($_POST['system']) )
     
     #echo "<PRE>\n".$sql."</PRE>\n";
     $result = db_query($db,$sql);
+    if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     while ($result->fetchInto($row))
       {
 	$rkeys=array_keys($row);

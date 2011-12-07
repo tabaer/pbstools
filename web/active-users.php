@@ -51,6 +51,10 @@ if ( isset($_POST['system']) )
     $sql = "SELECT username, groupname, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
+    if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     echo "<TABLE border=\"1\">\n";
     echo "<TR><TH>user</TH><TH>group</TH><TH>job count</TH><TH>CPU-hours</TH></TR>\n";
         while ($result->fetchInto($row))

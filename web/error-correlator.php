@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006 Ohio Supercomputer Center
-# Copyright 2008, 2009, 2010 University of Tennessee
+# Copyright 2008, 2009, 2010, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -49,6 +49,10 @@ if ( isset($_POST['error_time']) )
     $sql = $sql." FROM Jobs WHERE script LIKE '%".$_POST['program']."%' AND system LIKE '".$_POST['system']."' AND FROM_UNIXTIME(start_ts) <= '".$_POST['error_time']."' AND FROM_UNIXTIME(end_ts) >= '".$_POST['error_time']."' ORDER BY end_ts-UNIX_TIMESTAMP('".$_POST['error_time']."') LIMIT 1;";
     #echo "<PRE>".$sql,"</PRE>\n";
     $result = db_query($db,$sql);
+    if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     while ($result->fetchInto($row))
       {
 	echo "<TABLE border=\"1\">\n";

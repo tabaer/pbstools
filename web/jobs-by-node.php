@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2009, 2010 University of Tennessee
+# Copyright 2009, 2010, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -59,6 +59,10 @@ if ( isset($_POST['node']) )
     $sql .= " FROM Jobs WHERE hostlist REGEXP '".$_POST['node']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
+    if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     echo "<TABLE border=\"1\">\n";
     $ncols=1;
     $col[0]="jobid";

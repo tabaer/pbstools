@@ -69,6 +69,10 @@ if ( isset($_POST['system']) )
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY month;";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
 	    echo "<TABLE border=1>\n";
 	    echo "<TR><TH>month</TH><TH>jobs</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH><TH>users</TH><TH>groups</TH></TR>\n";
 	    while ($result->fetchInto($row))

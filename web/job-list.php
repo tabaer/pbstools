@@ -64,6 +64,10 @@ if ( isset($_POST['system']) )
     $columns = array("system", "jobid", "username", "account", "jobname", "nproc", "nodes", "mem_req", "mem_used", "submit_time", "start_time", "end_time", "walltime_req", "walltime", "cpuhours", "queue", "type", "software");
     $file_base = $_POST['system']."-joblist-".$_POST['start_date']."-".$_POST['end_date'];
     $table_result = db_query($db,$sql);
+    if ( PEAR::isError($table_result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     result_as_table($table_result,$columns);
     // if csv
     if ( isset( $_POST['csv'] ) )
