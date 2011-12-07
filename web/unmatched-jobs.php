@@ -74,6 +74,10 @@ if ( isset($_POST['system']) )
     $sql .= " AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY jobs DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
+    if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     echo "<TABLE border=1>\n";
     echo "<TR><TH>system</TH><TH>jobs</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
     while ($result->fetchInto($row))
@@ -119,6 +123,10 @@ if ( isset($_POST['system']) )
     $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account, system ORDER BY cpuhours DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
+    if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     echo "<TABLE border=1>\n";
     echo "<TR><TH>account</TH><TH>system</TH><TH>users</TH><TH>jobs</TH><TH>cpuhours</TH></TR>\n";
     while ($result->fetchInto($row))
@@ -164,6 +172,10 @@ if ( isset($_POST['system']) )
     $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, account, system ORDER BY jobs DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
+    if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     echo "<TABLE border=1>\n";
     echo "<TR><TH>user</TH><TH>group</TH><TH>account</TH><TH>system</TH><TH>jobs</TH></TR>\n";
     while ($result->fetchInto($row))
@@ -217,6 +229,10 @@ if ( isset($_POST['system']) )
     $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
+    if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     echo "<TABLE border=\"1\">\n";
     $ncols=1;
     $col[0]="jobid";

@@ -56,8 +56,12 @@ if ( isset($_POST['system']) )
 
     $queues = array();
     $sql = "SELECT DISTINCT(queue) FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ".dateselect("start",$_POST['start_date'],$_POST['end_date']);
-    $result = db_query($db,$sql);
     #echo "<PRE>\n".$sql."</PRE>\n";
+    $result = db_query($db,$sql);
+    if ( PEAR::isError($result) )
+      {
+        echo "<PRE>".$result->getMessage()."</PRE>\n";
+      }
     while ($result->fetchInto($row))
       {
 	while ($result->fetchInto($row))
