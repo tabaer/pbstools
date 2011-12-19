@@ -239,7 +239,7 @@ if ( isset($_POST['system']) )
 	echo "</TABLE>\n";
 	if ( isset($_POST['csv']) )
 	  {
-	    $xlsresult = db_query($db,$sql);
+	    $csvresult = db_query($db,$sql);
 	    $columns = array("package","jobs","cpuhours","users","groups");
 	    result_as_csv($csvresult,$columns,$_POST['system']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
 	  }
