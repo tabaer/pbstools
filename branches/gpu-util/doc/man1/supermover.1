@@ -1,0 +1,122 @@
+.TH supermover 1 "$Date" "$Revision: 323 $" "PBS TOOLS"
+
+.SH NAME
+supermover \- wrapper around a number of data movement tools
+
+.SH SYNOPSIS
+
+.B supermover
+[args] src_url dest_url
+
+.B supermover
+[args] -f urlpairfile
+
+.SH DESCRIPTION
+.B supermover
+is a highly configurable wrapper around other data movement tools such
+as
+.B scp
+, 
+.B globus-url-copy
+, and 
+.B hsi
+\.  It uses the protocols of the source and destination URLs to
+determine what data movement tool or tools to use, using mappings set
+in a configuration file.
+
+.SH OPTIONS
+.TP
+.B -c cfgfile or --config=cfgfile
+Read config file 
+.I cfile
+(default is /usr/local/etc/supermover.cfg)
+.TP
+.B -d or --debug
+Enable extra logging for debugging
+.TP
+.B -f urlpairfile or --file=urlpairfile
+Read src/dest URL pairs from 
+.I urlpairfile
+rather than command line arguments
+.TP
+.B -h or --help
+Print a help message
+.TP
+.B -l logfile or --log=logfile
+Write log messages to file
+.I logfile
+(default is stdout)
+
+.SH EXAMPLES
+
+.PP
+.fi
+supermover /tmp/foo hpss:///home/user/foo
+.fi
+supermover hpss:///home/troy/bar gsiftp://gridftp.random.org/tmp/bar
+.fi
+supermover scp://login.random.org/tmp/baz file:///tmp/baz
+.fi
+supermover -f urllist
+.PP
+
+.SH CONFIG FILE FORMAT
+
+The configuration file consists of lines of the following format:
+.B src_proto:dest_proto = cmd [args]
+
+Lines beginning with a # are ignored as comments.
+
+The following macros can be used in the command line arguments:
+.TP
+.B %u
+Source URL
+.TP
+.B %U
+Destination URL
+.TP
+.B %h
+Source host
+.TP
+.B %H
+Destination host
+.TP
+.B %p
+Source port
+.TP
+.B %P
+Destination port
+.TP
+.B %f
+Source Path
+.TP
+.B %F
+Destination path
+
+.SH Config file example
+
+.PP
+# cp and scp only
+.fi
+file:file = cp %f %F
+.fi
+scp:file = scp %h:%f %F
+.fi
+file:scp = scp %f %H:%F
+.fi
+gsiscp:file = gsiscp %h:%f %F
+.fi
+file:gsiscp = gsiscp %f %H:%F
+.fi
+.PP
+
+A more complete example can be found at
+.I http://svn.nics.tennessee.edu/repos/pbstools/trunk/etc/supermover.cfg
+
+
+.SH AUTHOR
+Troy Baer (tbaer (at) utk.edu)
+
+.SH SEE ALSO
+dmsub(1)
+

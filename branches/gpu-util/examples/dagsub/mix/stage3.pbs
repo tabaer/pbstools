@@ -1,0 +1,6 @@
+#PBS -A UT-SUPPORT
+#PBS -j oe
+#PBS -l walltime=1:00:00
+
+echo stage3 $node
+sleep 30
