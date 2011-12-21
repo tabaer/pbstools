@@ -63,12 +63,16 @@ if ( isset($_POST['system']) )
     #echo "<PRE>".$sql."</PRE>\n";
     $columns = array("system", "jobid", "username", "account", "jobname", "nproc", "nodes", "mem_req", "mem_used", "submit_time", "start_time", "end_time", "walltime_req", "walltime", "cpuhours", "queue", "type", "software");
     $file_base = $_POST['system']."-joblist-".$_POST['start_date']."-".$_POST['end_date'];
-    $table_result = db_query($db,$sql);
-    if ( PEAR::isError($table_result) )
+    // if table
+    if ( isset( $_POST['table'] ) )
       {
-        echo "<PRE>".$result->getMessage()."</PRE>\n";
+	$table_result = db_query($db,$sql);
+	if ( PEAR::isError($table_result) )
+	  {
+	    echo "<PRE>".$result->getMessage()."</PRE>\n";
+	  }
+	result_as_table($table_result,$columns);
       }
-    result_as_table($table_result,$columns);
     // if csv
     if ( isset( $_POST['csv'] ) )
       {
@@ -96,6 +100,7 @@ else
 
     system_chooser();
     date_fields();
+    checkbox("Generate HTML table","table",1);
     checkbox("Generate CSV file","csv");
     checkbox("Generate Excel file","xls");
     checkbox("Generate ODF files","ods");
