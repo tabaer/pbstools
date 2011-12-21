@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008, 2009 University of Tennessee
+# Copyright 2008, 2009, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -12,12 +12,13 @@ function page_header($title)
   echo "<HTML>\n<HEAD>\n";
   echo "<TITLE>".$title."</TITLE>\n";
   echo "<LINK rel=stylesheet type=\"text/css\" href=\"default.css\">\n";
-  echo "<SCRIPT type='text/javascript' src='http://jqueryui.com/latest/jquery-1.3.2.js'></SCRIPT>\n";
+  echo "<SCRIPT type='text/javascript' src='jquery.js'></SCRIPT>\n";
   echo "<SCRIPT type='text/javascript' src='utils.js'></SCRIPT>\n";
   echo "</HEAD>\n<BODY>\n";
   echo "<TABLE height=\"100%\" width=\"100%\">\n";
   echo "<TR height=\"10%\">\n";
   echo "  <TD width=\"15%\">\n";
+#  echo "  <IMG src=\"http://www.nics.tennessee.edu/themes/foliage/images/nics_logo.gif\">\n";
   echo "  </TD>\n";
   echo "  <TD>\n";
   echo "    <H1>".$title."</H1>\n";
@@ -48,7 +49,7 @@ function page_header($title)
   echo "      <LI><A href=\"jobstats-by-week.php\">Week</A></LI>\n";
   echo "      <LI><A href=\"jobstats.php\">All</A></LI>\n";
   echo "    </UL>\n";
-  echo "    <UL><U>Software usage by</U>\n";
+  echo "    <UL><U>Software package usage by</U>\n";
   echo "      <LI><A href=\"software-usage.php\">System</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-queue.php\">Job Class</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-walltime.php\">Job Length</A></LI>\n";
@@ -62,11 +63,18 @@ function page_header($title)
   echo "      <LI><A href=\"software-usage-by-month.php\">Month</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-week.php\">Week</A></LI>\n";
   echo "    </UL>\n";
+  echo "    <UL><U>Software packages used by</U>\n";
+  echo "      <LI><A href=\"queue-software.php\">Job Class</A></LI>\n";
+  echo "      <LI><A href=\"user-software.php\">User</A></LI>\n";
+  echo "      <LI><A href=\"group-software.php\">Group</A></LI>\n";
+  echo "      <LI><A href=\"account-software.php\">Account</A></LI>\n";
+  echo "    </UL>\n";
   echo "    <UL><U>Miscellaneous reports</U>\n";
   echo "      <LI><A href=\"usage-summary.php\">Usage Summary</A></LI>\n";
 # NOTE Identifying problematic jobs involves site-specific logic.  You may
 # want to comment it out.
   echo "      <LI><A href=\"problem-jobs.php\">Problematic Jobs</A></LI>\n";
+  echo "      <LI><A href=\"job-list.php\">Job List</A></LI>\n";
   echo "      <LI><A href=\"active-users.php\">Most Active Users</A></LI>\n";
   echo "      <LI><A href=\"active-groups.php\">Most Active Groups</A></LI>\n";
   echo "      <LI><A href=\"active-accounts.php\">Most Active Accounts</A></LI>\n";
@@ -102,9 +110,14 @@ function hidden_field($field,$value)
   echo "<INPUT type=\"hidden\" name=\"".$field."\" size=\"".$value."\">\n";
 }
 
-function checkbox($label,$name)
+function checkbox($label,$name,$checked=NULL)
 {
-  echo "<INPUT type=\"checkbox\" name=\"".$name."\" value=\"1\"> ".$label."<BR>\n";
+  echo "<INPUT type=\"checkbox\" name=\"".$name."\" value=\"1\"";
+  if ( !is_null($checked) )
+    {
+      echo "checked";
+    }
+  echo "> ".$label."<BR>\n";
 }
 
 function checkboxes_from_array($label,$array)
@@ -114,7 +127,7 @@ function checkboxes_from_array($label,$array)
     {
       echo "<INPUT class='checkbox_item' type=\"checkbox\" name=\"".$value."\" value=\"1\"> ".$value."<BR>\n";
     }
-  echo "<INPUT type=\"checkbox\" id=\"select_all\">Select All\n<BR>";
+  echo "<INPUT type=\"checkbox\" id=\"select_all\" />Select All\n<br />";
 }
 
 function system_chooser()
