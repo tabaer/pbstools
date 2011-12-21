@@ -128,26 +128,41 @@ if ( isset($_POST['system']) )
     if ( isset($_POST['institution']) && isset($inst_summary) && $inst_summary==true )
       {
 	echo "<H3>Usage By Institution</H3>\n";
-	$result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
-	if ( PEAR::isError($result) )
+	if  ( isset($_POST['table']) )
 	  {
-	    echo "<PRE>".$result->getMessage()."</PRE>\n";
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
+	    metric_as_table($result,'institution','usage');
 	  }
-	metric_as_table($result,'institution','usage');
 	if ( isset($_POST['csv']) )
 	  {
-	    $csvresult=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
-	    metric_as_csv($csvresult,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
+	    metric_as_csv($result,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
 	  }
 	if ( isset($_POST['xls']) )
 	  {
-	    $xlsresult=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
-	    metric_as_xls($xlsresult,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
+	    metric_as_xls($result,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
 	  }
 	if ( isset($_POST['ods']) )
 	  {
-	    $odsresult=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
-	    metric_as_ods($odsresult,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
+	    metric_as_ods($result,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
 	  }
 	ob_flush();
 	flush();
@@ -157,26 +172,41 @@ if ( isset($_POST['system']) )
     if ( isset($_POST['account']) )
       {
 	echo "<H3>Usage By Account</H3>\n";
-	$result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
-	if ( PEAR::isError($result) )
+	if ( isset($_POST['table']) )
 	  {
-	    echo "<PRE>".$result->getMessage()."</PRE>\n";
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
+	    metric_as_table($result,'account','usage');
 	  }
-	metric_as_table($result,'account','usage');
 	if ( isset($_POST['csv']) )
 	  {
-	    $csvresult=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
-	    metric_as_csv($csvresult,'account','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
+	    metric_as_csv($result,'account','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
 	  }
 	if ( isset($_POST['xls']) )
 	  {
-	    $xlsresult=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
-	    metric_as_xls($xlsresult,'account','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
+	    metric_as_xls($result,'account','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
 	  }
 	if ( isset($_POST['ods']) )
 	  {
-	    $odsresult=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
-	    metric_as_ods($odsresult,'account','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
+	    metric_as_ods($result,'account','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
 	  }
 	ob_flush();
 	flush();
@@ -186,11 +216,6 @@ if ( isset($_POST['system']) )
     if ( isset($_POST['software']) )
       {
 	echo "<H3>Software Usage</H3>\n";
-	echo "<TABLE border=1>\n";
-	echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
-	ob_flush();
-	flush();
-	
 	$first=1;
 	$sql = "SELECT * FROM ( ";
 	foreach ( $packages as $pkg )
@@ -216,44 +241,43 @@ if ( isset($_POST['system']) )
 	    $sql .= "\n";
 	  }
 	$sql .= " ) AS usgsofttmp WHERE jobs>0 ORDER BY ".$_POST['order']." DESC";
-	
-#echo "<PRE>\n".$sql."</PRE>\n";
-	$result = db_query($db,$sql);
-	if ( PEAR::isError($result) )
+        #echo "<PRE>\n".$sql."</PRE>\n";
+	$columns = array("package","jobs","cpuhours","users","groups");
+	if (  isset($_POST['table']) )
 	  {
-	    echo "<PRE>".$result->getMessage()."</PRE>\n";
-	  }
-	while ($result->fetchInto($row))
-	  {
-	    $rkeys=array_keys($row);
-	    echo "<TR>";
-	    foreach ($rkeys as $rkey)
+	    $result = db_query($db,$sql);
+	    if ( PEAR::isError($result) )
 	      {
-		$data[$rkey]=array_shift($row);
-		echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
 	      }
-	    echo "</TR>\n";
-	    ob_flush();
-	    flush();
+	   result_as_table($result,$columns); 
 	  }
-	echo "</TABLE>\n";
 	if ( isset($_POST['csv']) )
 	  {
-	    $csvresult = db_query($db,$sql);
-	    $columns = array("package","jobs","cpuhours","users","groups");
-	    result_as_csv($csvresult,$columns,$_POST['system']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
+	    $result = db_query($db,$sql);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
+	    result_as_csv($result,$columns,$_POST['system']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
 	  }
 	if ( isset($_POST['xls']) )
 	  {
-	    $xlsresult = db_query($db,$sql);
-	    $columns = array("package","jobs","cpuhours","users","groups");
-	    result_as_xls($xlsresult,$columns,$_POST['system']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
+	    $result = db_query($db,$sql);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
+	    result_as_xls($result,$columns,$_POST['system']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
 	  }
 	if ( isset($_POST['ods']) )
 	  {
-	    $odsresult = db_query($db,$sql);
-	    $columns = array("package","jobs","cpuhours","users","groups");
-	    result_as_ods($odsresult,$columns,$_POST['system']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
+	    $result = db_query($db,$sql);
+	    if ( PEAR::isError($result) )
+	      {
+		echo "<PRE>".$result->getMessage()."</PRE>\n";
+	      }
+	    result_as_ods($result,$columns,$_POST['system']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
 	  }
       }
 
@@ -271,6 +295,7 @@ else
     checkboxes_from_array("Supplemental reports",array("institution","account","software"));
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
+    checkbox("Generate HTML tables for supplemental reports","table",1);
     checkbox("Generate CSV files for supplemental reports","csv");
     checkbox("Generate Excel files for supplemental reports","xls");
     checkbox("Generate ODF files for supplemental reports","ods");
