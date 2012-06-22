@@ -769,7 +769,14 @@ function metric_as_csv($result,$xaxis,$metric,$system,$start_date,$end_date)
 	{
 	  if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
 	    {
-	      fwrite($fh,$row[$key].",");
+              if ( $mycolumnname[$key]=='jobname' )
+                {
+                  fwrite($fh,"\"".$row[$key]."\",");
+                }
+              else
+                {
+	          fwrite($fh,$row[$key].",");
+                }
 	    }
 	}
       fwrite($fh,"\n");
@@ -806,6 +813,7 @@ function result_as_table($result,$mycolumnname)
     }
   echo "</TABLE>\n";
 }
+
 function result_as_xls($result,$mycolumnname,$filebase)
 {
   $myresult=$result;
@@ -921,7 +929,14 @@ function result_as_csv($result,$mycolumnname,$filebase)
 	{
 	  if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
 	    {
-	      fwrite($fh,$row[$key].",");
+              if ( $mycolumnname[$key]=='jobname' )
+                {
+                  fwrite($fh,"\"".$row[$key]."\",");
+                }
+              else
+                {
+                  fwrite($fh,$row[$key].",");
+                }
 	    }
 	}
       fwrite($fh,"\n");
