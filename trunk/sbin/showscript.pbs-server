@@ -103,6 +103,10 @@ if ( !defined($spool) )
 $pbsserver=`cat $spool/server_name` || 
   die "Unable to find PBS server name!\n";
 chop($pbsserver);
+# in HA configurations, server_name contains a comma-separated list of
+# servers with the primary listed first
+# strip off all others
+$pbsserver =~ s/,.*$//;
 # hack for sloppy admins who don't put the full hostname
 # in $PBS_HOME/server_name
 if ( $pbsserver =~ /:/ )
