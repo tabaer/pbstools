@@ -46,6 +46,10 @@ open(SERVERNAME,"<$pbsspooldir/server_name");
 $pbsserver=<SERVERNAME>;
 close(SERVERNAME);
 chop($pbsserver);
+# in HA configurations, server_name contains a comma-separated list of
+# servers with the primary listed first
+# strip off all others
+$pbsserver =~ s/,.*$//;
 # hack for sloppy admins who don't put the full hostname
 # in $PBS_HOME/server_name
 # ***WARNING*** you may have to comment out the following code if
