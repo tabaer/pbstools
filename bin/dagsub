@@ -1426,12 +1426,16 @@ def main():
                             if ( dotFile is not None ):
                                 dag.writeDotFile(dotFile,base,log,False)
 
-                                # Monitor the DAG and write out rescue DAGs periodically
+                            # Monitor the DAG and write out rescue DAGs periodically
                             while ( not dag.isComplete(log) ):
                                 time.sleep(timeout)
                                 dag.writeRescueDAG(log)
                             if ( dotFile is not None ):
                                 dag.writeDotFile(dotFile,base,log,False)
+                                
+                    # last-ditch effort to finish the .DOT file up before exiting, if specified
+                    if ( dotFile is not None ):
+                        dag.writeDotFile(dotFile,base,log,True)
                 else:
                     usage()
    
