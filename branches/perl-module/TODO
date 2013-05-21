@@ -1,0 +1,15 @@
+PBS tools
+Copyright 2005-2009, Ohio Supercomputer Center
+Copyright 2008-2009, University of Tennessee
+
+TODO List
+=========
+
+* Add a global config file.
+
+* Move commonly used Perl routines (eg. &resourcelist()) into a Perl module.
+
+* Add wrappers to invoke the *.pbs_server programs with sudo for
+  non-root access.
+
+* Implement the rest of the DAG syntax supported by condor_submit_dag in dagsub.

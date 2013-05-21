@@ -1,0 +1,9 @@
+# diamond.dag
+JOB Aa A.pbs DIR "/nics/a/home/ytlu/dagsub/examples/simple"
+JOB Bb B.pbs 
+JOB Cc C.pbs 
+JOB Dd D.pbs 
+PARENT Aa CHILD Bb Cc
+PARENT Bb Cc CHILD Dd
+PRIORITY Cc 1
+DOT diamond.dot

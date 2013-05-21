@@ -1,0 +1,434 @@
+#!/usr/bin/perl
+#
+# job-db-update -- Insert job records into a MySQL DB
+# Copyright 2006, 2007 Ohio Supercomputer Center
+# Copyright 2008, 2009, 2010 University of Tennessee
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+# Usage:  job-db-update [-h system] [-s dbhost] [-d dbname] [-t dbtable]
+#                       [-u dbuser] [-p dbpasswd] acctfile [...acctfiles...]
+#
+# Can be run with no acct files listed to check DB connectivity
+
+use POSIX;
+use DBI;
+
+sub resourcelist
+  {
+    local($resources) = @_;
+    
+    @resourcelist=split(/ /,$resources);
+    foreach $field ( @resourcelist )
+      {
+        ($key,$value) = ($field =~ /^([^=]*)=(.*)/);
+        $resource{$key}=$value;
+      }
+    %resource;
+  }
+
+sub max
+  {
+    local(@item) = @_;
+    local($nitems,$maxval,$i);
+    
+    $nitems=$#item;
+    $maxval=$item[0];
+    if ( $nitems > 0 )
+      {
+	for ( $i=0 ; $i <= $nitems ; $i++ )
+	  {
+	    if ( $item[$i] > $maxval )
+	      {
+		$maxval=$item[$i];
+	      }
+	  }
+      }
+    $maxval;
+  }
+
+sub keyval_exists
+  {
+    local($key,$val,$dbtable,$dbh) = @_;
+    local($sth,$n);
+    
+    $sth=$dbh->prepare("SELECT ".$key." FROM ".$dbtable." WHERE ".$key." = \'".$val."\';")
+      or die "Could not prepare query:  ".$dbh::errstr;
+    $n=$sth->execute
+      or die "Could not execute query:  ".$sth::errstr;
+    
+    $n;
+  }
+
+#
+# Main program starts here
+#
+$dbhost="localhost";
+$dbuser="pbsacct";
+$dbpasswd="pbsRroxor";
+$dbname="pbsacct";
+$dbtable="Jobs";
+$hostname=`hostname`;
+
+while ( $ARGV[0] =~ /^-.*/ )
+  {
+    if ( $ARGV[0] eq "-d" )
+      {
+	$dbname=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-h" )
+      {
+	$hostname=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-p" )
+      {
+	$dbpasswd=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-s" )
+      {
+	$dbhost=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-t" )
+      {
+	$dbtable=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-u" )
+      {
+	$dbuser=$ARGV[1];
+	shift(@ARGV);
+      }
+
+    shift(@ARGV);
+   }
+
+# connect to DB
+$dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
+$dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
+  die "$0:  unable to connect to DB!\n";
+
+# process PBS acct records
+while ( defined($ARGV[0]) )
+  {
+    open(ACCTFILE,"<$ARGV[0]");
+    
+    while ( <ACCTFILE> )
+      {
+	chop;
+	($etime,$type,$job,$resources)=split(/;/);
+	undef %resource;
+	%resource=&resourcelist($resources);
+	
+	if ( $type eq "S" || $type eq "E" )
+	  {
+	    ($jobid,$junk)=split(/\./,$job);
+	    $pstring = $resource{"Resource_List.nodes"};
+	    @node_plus_ppn = split(/\+/, $pstring);
+	    $processors = 0;
+	    foreach $node_plus_ppn (@node_plus_ppn)
+	      {
+		($nodes,$ppnstring) = split(/\:/, $node_plus_ppn);
+		$processors_per = substr($ppnstring,4);
+		if ( $nodes < 1 ) { $nodes = 1; }
+		if ( $processors_per < 1 ) { $processors_per = 1; }
+		$processors += $nodes * $processors_per;
+	      }
+	    $ncpus=&max($resource{"Resource_List.ncpus"},
+			$resource{"resources_used.mppssp"}+4*$resource{"resources_used.mppe"});
+            $ncpus=&max($ncpus,$resource{"Resource_List.size"});
+	    $nprocs=&max($processors,$ncpus);
+	    $mem=$resource{"resources_used.mem"};
+	    $mem=~s/kb$//;
+	    $vmem=$resource{"resources_used.vmem"};
+	    $vmem=~s/kb$//;
+
+	    # construct query string(s)
+	    if ( &keyval_exists("jobid",$job,$dbtable,$dbh)>0 )
+	      {
+		# This jobid already exists in the table,
+		# so do an UPDATE
+		$qhead = "UPDATE $dbtable SET jobid = \'".$job."\'";
+		$qtail = " WHERE jobid = \'".$job."\';";
+		if ( defined($resource{"user"}) )
+		  {
+		    $qhead.=",username = \'".$resource{"user"}."\'";
+		  }
+		if ( defined($resource{"group"}) )
+		  {
+		    $qhead.=",groupname = \'".$resource{"group"}."\'";
+		  }
+		if ( defined($resource{"owner"}) )
+		  {
+		    $submithost = $resource{"owner"};
+		    $submithost =~ s/^.+\@//;
+		    $qhead.=",submithost = \'".$submithost."\'";
+		  }
+		if ( defined($resource{"jobname"}) )
+		  {
+		    $qhead.=",jobname = \'".$resource{"jobname"}."\'";
+		  }
+		if ( $nprocs>0 )
+		  {
+		    $qhead.=",nproc = \'".$nprocs."\'";
+		  }
+		if ( defined($resource{"Resource_List.nodes"}) )
+		  {
+		    $qhead.=",nodes = \'".$resource{"Resource_List.nodes"}."\'";
+		  }
+                if ( defined($resource{"Resource_List.feature"}) )
+                  {
+                    $qhead.=",feature = \'".$resource{"Resource_List.feature"}."\'";
+                  }
+		if ( defined($resource{"Resource_List.gres"}) )
+                  {
+                    $qhead.=",gres = \'".$resource{"Resource_List.gres"}."\'";
+                  }
+		if ( defined($resource{"queue"}) )
+		  {
+		    $qhead.=",queue = \'".$resource{"queue"}."\'";
+		  }
+                if ( defined($resource{"Resource_List.qos"}) )
+                  {
+                    $qhead.=",qos = \'".$resource{"Resource_List.qos"}."\'";
+                  }
+		if ( defined($resource{"ctime"}) )
+		  {
+		    $qhead.=",submit_ts = \'".$resource{"ctime"}."\'";
+		    $qhead.=",submit_date = DATE(FROM_UNIXTIME(\'".$resource{"ctime"}."\'))";
+		  }
+		if ( defined($resource{"start"}) )
+		  {
+		    $qhead.=",start_ts = \'".$resource{"start"}."\'";
+		    $qhead.=",start_date = DATE(FROM_UNIXTIME(\'".$resource{"start"}."\'))";
+		  }
+		if ( defined($resource{"end"}) )
+		  {
+		    $qhead.=",end_ts = \'".$resource{"end"}."\'";
+		    $qhead.=",end_date = DATE(FROM_UNIXTIME(\'".$resource{"end"}."\'))";
+		  }
+		if ( defined($resource{"Resource_List.cput"}) )
+		  {
+		    $qhead.=",cput_req = \'".$resource{"Resource_List.cput"}."\'";
+		  }
+		if ( defined($resource{"resources_used.cput"}) )
+		  {
+		    $qhead.=",cput = \'".$resource{"resources_used.cput"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.walltime"}) )
+		  {
+		    $qhead.=",walltime_req = \'".$resource{"Resource_List.walltime"}."\'";
+		  }
+		if ( defined($resource{"resources_used.walltime"}) )
+		  {
+		    $qhead.=",walltime = \'".$resource{"resources_used.walltime"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.mem"}) )
+		  {
+		    $qhead.=",mem_req = \'".$resource{"Resource_List.mem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.mem"}) )
+		  {
+		    $qhead.=",mem_kb = \'".$resource{"resources_used.mem"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.vmem"}) )
+		  {
+		    $qhead.=",vmem_req = \'".$resource{"Resource_List.vmem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.vmem"}) )
+		  {
+		    $qhead.=",vmem_kb = \'".$resource{"resources_used.vmem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.mppe"}) )
+		  {
+		    $qhead.=",mppe = \'".$resource{"resources_used.mppe"}."\'";
+		  }		
+		if ( defined($resource{"resources_used.mppssp"}) )
+		  {
+		    $qhead.=",mppssp = \'".$resource{"resources_used.mppssp"}."\'";
+		  }		
+		if ( defined($resource{"exec_host"}) )
+		  {
+		    $qhead.=",hostlist = \'".$resource{"exec_host"}."\'";
+		  }
+		if ( defined($resource{"Exit_status"}) )
+		  {
+		    $qhead.=",exit_status = \'".$resource{"Exit_status"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.software"}) )
+		  {
+		    $qhead.=",software = \'".$resource{"Resource_List.software"}."\'";
+		  }
+		if ( defined($resource{"account"}) )
+		  {
+		    $qhead.=",account = \'".$resource{"account"}."\'";
+		  }
+	      }
+	    else
+	      {
+		# This jobid does *NOT* already exist in the table,
+		# so do an INSERT
+		$qhead = "INSERT INTO $dbtable \(jobid,system";
+		$qtail = " VALUES \(\'$job\',\'$hostname\'";
+		if ( defined($resource{"user"}) )
+		  {
+		    $qhead.=",username";
+		    $qtail.=",\'".$resource{"user"}."\'";
+		  }
+		if ( defined($resource{"group"}) )
+		  {
+		    $qhead.=",groupname";
+		    $qtail.=",\'".$resource{"group"}."\'";
+		  }
+		if ( defined($resource{"owner"}) )
+		  {
+		    $submithost = $resource{"owner"};
+		    $submithost =~ s/^.+\@//;
+		    $qhead.=",submithost";
+		    $qtail.=",\'".$submithost."\'";
+		  }
+		if ( defined($resource{"jobname"}) )
+		  {
+		    $qhead.=",jobname";
+		    $qtail.=",\'".$resource{"jobname"}."\'";
+		  }
+		if ( $nprocs>0 )
+		  {
+		    $qhead.=",nproc";
+		    $qtail.=",\'$nprocs\'";
+		  }
+		if ( defined($resource{"Resource_List.nodes"}) )
+		  {
+		    $qhead.=",nodes";
+		    $qtail.=",\'".$resource{"Resource_List.nodes"}."\'";
+		  }
+                if ( defined($resource{"Resource_List.feature"}) )
+                  {
+                    $qhead.=",feature";
+                    $qtail.=",\'".$resource{"Resource_List.feature"}."\'";
+                  }
+		if ( defined($resource{"Resource_List.gres"}) )
+                  {
+                    $qhead.=",gres";
+                    $qtail.=",\'".$resource{"Resource_List.gres"}."\'";
+                  }
+		if ( defined($resource{"queue"}) )
+		  {
+		    $qhead.=",queue";
+		    $qtail.=",\'".$resource{"queue"}."\'";
+		  }
+                if ( defined($resource{"Resource_List.qos"}) )
+                  {
+                    $qhead.=",qos";
+                    $qtail.=",\'".$resource{"Resource_List.qos"}."\'";
+                  }
+		if ( defined($resource{"ctime"}) )
+		  {
+		    $qhead.=",submit_ts";
+		    $qtail.=",\'".$resource{"ctime"}."\'";
+		    $qhead.=",submit_date";
+		    $qtail.=",DATE(FROM_UNIXTIME(\'".$resource{"ctime"}."\'))";
+		  }
+		if ( defined($resource{"start"}) )
+		  {
+		    $qhead.=",start_ts";
+		    $qtail.=",\'".$resource{"start"}."\'";
+		    $qhead.=",start_date";
+		    $qtail.=",DATE(FROM_UNIXTIME(\'".$resource{"start"}."\'))";
+		  }
+		if ( defined($resource{"end"}) )
+		  {
+		    $qhead.=",end_ts";
+		    $qtail.=",\'".$resource{"end"}."\'";
+		    $qhead.=",end_date";
+		    $qtail.=",DATE(FROM_UNIXTIME(\'".$resource{"end"}."\'))";
+		  }
+		if ( defined($resource{"Resource_List.cput"}) )
+		  {
+		    $qhead.=",cput_req";
+		    $qtail.=",\'".$resource{"Resource_List.cput"}."\'";
+		  }
+		if ( defined($resource{"resources_used.cput"}) )
+		  {
+		    $qhead.=",cput";
+		    $qtail.=",\'".$resource{"resources_used.cput"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.walltime"}) )
+		  {
+		    $qhead.=",walltime_req";
+		    $qtail.=",\'".$resource{"Resource_List.walltime"}."\'";
+		  }
+		if ( defined($resource{"resources_used.walltime"}) )
+		  {
+		    $qhead.=",walltime";
+		    $qtail.=",\'".$resource{"resources_used.walltime"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.mem"}) )
+		  {
+		    $qhead.=",mem_req";
+		    $qtail.=",\'".$resource{"Resource_List.mem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.mem"}) )
+		  {
+		    $qhead.=",mem_kb";
+		    $qtail.=",\'$mem\'";
+		  }
+		if ( defined($resource{"Resource_List.vmem"}) )
+		  {
+		    $qhead.=",vmem_req";
+		    $qtail.=",\'".$resource{"Resource_List.vmem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.vmem"}) )
+		  {
+		    $qhead.=",vmem_kb";
+		    $qtail.=",\'$vmem\'";
+		  }
+		if ( defined($resource{"resources_used.mppe"}) )
+		  {
+		    $qhead.=",mppe";
+		    $qtail.=",\'".$resource{"resources_used.mppe"}."\'";
+		  }		
+		if ( defined($resource{"resources_used.mppssp"}) )
+		  {
+		    $qhead.=",mppssp";
+		    $qtail.=",\'".$resource{"resources_used.mppssp"}."\'";
+		  }		
+		if ( defined($resource{"exec_host"}) )
+		  {
+		    $qhead.=",hostlist";
+		    $qtail.=",\'".$resource{"exec_host"}."\'";
+		  }
+		if ( defined($resource{"Exit_status"}) )
+		  {
+		    $qhead.=",exit_status";
+		    $qtail.=",\'".$resource{"Exit_status"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.software"}) )
+		  {
+		    $qhead.=",software";
+		    $qtail.=",\'".$resource{"Resource_List.software"}."\'";
+		  }
+		if ( defined($resource{"account"}) )
+		  {
+		    $qhead.=",account";
+		    $qtail.=",\'".$resource{"account"}."\'";
+		  }
+
+		$qhead.="\)";
+		$qtail.="\);";
+	      }
+	    $query=$qhead.$qtail;
+	    #print "$query\n";
+	    $dbh->do($query) || die "$0:  query failed -- ".$dbh::errstr;
+	  }
+      }
+    shift(@ARGV);
+  }
+$dbh->disconnect();
