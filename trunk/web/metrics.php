@@ -804,10 +804,14 @@ function result_as_table($result,$mycolumnname)
       $keys=array_keys($row);
       foreach ($keys as $key)
         {
-          if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
+          if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') && !($mycolumnname[$key]=='script') )
             {
-              echo "<TD align=\"right\"><PRE>".$row[$key]."</PRE></TD>";
+	      echo "<TD align=\"right\"><PRE>".$row[$key]."</PRE></TD>";
             }
+	  else if ( $mycolumnname[$key]=='script' )
+	    {
+              echo "<TD><PRE>".$row[$key]."</PRE></TD>";
+	    }
         }
       echo "</TR>\n";
     }
