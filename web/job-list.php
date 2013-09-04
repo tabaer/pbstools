@@ -53,7 +53,7 @@ $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
     $db =db_connect();
-    $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".cpuhours($db,$_POST['system'])." AS cpuhours, queue, IF(script IS NULL,'interactive','batch') AS type, CASE ";
+    $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".charges($db,$_POST['system'])." AS charges, queue, IF(script IS NULL,'interactive','batch') AS type, CASE ";
     $pkgmatch = software_match_list();
     foreach (array_keys($pkgmatch ) as $pkg)
       {
@@ -61,7 +61,7 @@ if ( isset($_POST['system']) )
       }
     $sql .= "ELSE NULL END AS software FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("end",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
     #echo "<PRE>".$sql."</PRE>\n";
-    $columns = array("system", "jobid", "username", "account", "jobname", "nproc", "nodes", "mem_req", "mem_used", "submit_time", "start_time", "end_time", "walltime_req", "walltime", "cpuhours", "queue", "type", "software");
+    $columns = array("system", "jobid", "username", "account", "jobname", "nproc", "nodes", "mem_req", "mem_used", "submit_time", "start_time", "end_time", "walltime_req", "walltime", "charges", "queue", "type", "software");
     $file_base = $_POST['system']."-joblist-".$_POST['start_date']."-".$_POST['end_date'];
     // if table
     if ( isset( $_POST['table'] ) )
