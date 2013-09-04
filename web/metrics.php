@@ -203,6 +203,8 @@ function ndays($db,$system,$start_date,$end_date)
 function columns($metric,$system,$db)
 {
   if ( $metric=='cpuhours' ) return "SUM(".cpuhours($db,$system).") AS cpuhours";
+  if ( $metric=='nodehours' ) return "SUM(".nodehours($db,$system).") AS nodehours";
+  if ( $metric=='charges' ) return "SUM(".charges($db,$system).") AS charges";
   if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(start_ts-submit_ts)) AS 'MIN(qtime)',SEC_TO_TIME(MAX(start_ts-submit_ts)) AS 'MAX(qtime)',SEC_TO_TIME(AVG(start_ts-submit_ts)) AS 'AVG(qtime)',SEC_TO_TIME(STDDEV(start_ts-submit_ts))  AS 'STDDEV(qtime)'";
   if ( $metric=='mem_kb' ) return "MIN(mem_kb),MAX(mem_kb),AVG(mem_kb),STDDEV(mem_kb)";
   if ( $metric=='vmem_kb' ) return "MIN(vmem_kb),MAX(vmem_kb),AVG(vmem_kb),STDDEV(vmem_kb)";
@@ -220,7 +222,7 @@ function columns($metric,$system,$db)
   if ( $metric=='accounts' ) return "COUNT(DISTINCT(account)) AS accounts";
   if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system,$db);
   if ( $metric=='nproc' ) return "MIN(nproc),MAX(nproc),AVG(nproc),STDDEV(nproc)";
-  if ( $metric=='usage' ) return columns('cpuhours',$system,$db).",".columns('usercount',$system,$db);
+  if ( $metric=='usage' ) return columns('cpuhours',$system,$db).",".columns('charges',$system,$db).",".columns('usercount',$system,$db);
   if ( $metric=='pscmetrics' )
     {
       $first = 0;
@@ -242,6 +244,8 @@ function columns($metric,$system,$db)
 function columnnames($metric)
 {
   if ( $metric=='cpuhours' ) return array("cpuhours");
+  if ( $metric=='nodehours' ) return array("nodehours");
+  if ( $metric=='charges' ) return array("charges");
   if ( $metric=='qtime' ) return array("MIN(qtime)","MAX(qtime)","AVG(qtime)","STDDEV(qtime)");
   if ( $metric=='mem_kb' ) return array("MIN(mem_kb)","MAX(mem_kb)","AVG(mem_kb)","STDDEV(mem_kb)");
   if ( $metric=='vmem_kb' ) return array("MIN(vmem_kb)","MAX(vmem_kb)","AVG(vmem_kb)","STDDEV(vmem_kb)");
@@ -262,6 +266,10 @@ function columnnames($metric)
   if ( $metric=='usage' )
     {
       $output = columnnames('cpuhours');
+      foreach (columnnames('charges') as $element)
+	{
+	  array_push($output,$element);
+	}
       foreach (columnnames('usercount') as $element)
 	{
 	  array_push($output,$element);
@@ -632,7 +640,21 @@ function metric_as_table($result,$xaxis,$metric)
 	{
 	  if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
 	    {
-	      echo "<TD align=\"right\"><PRE>".$row[$key]."</PRE></TD>";
+	      # if a float, format appropriately
+	      if ( preg_match("/^-?\d*\.\d+$/",$row[$key])==1 )
+		{
+		  echo "<TD align=\"right\"><PRE>".number_format(floatval($row[$key]),4)."</PRE></TD>";
+		}
+              # if an int, format appropriately
+	      else if ( preg_match("/^-?\d+$/",$row[$key])==1 )
+		{
+		  echo "<TD align=\"right\"><PRE>".number_format(floatval($row[$key]))."</PRE></TD>";
+		}
+	      # otherwise print verbatim
+	      else
+		{
+		  echo "<TD align=\"right\"><PRE>".$row[$key]."</PRE></TD>";
+		}
 	    }
 	}
       echo "</TR>\n";
@@ -806,7 +828,21 @@ function result_as_table($result,$mycolumnname)
         {
           if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') && !($mycolumnname[$key]=='script') )
             {
-	      echo "<TD align=\"right\"><PRE>".$row[$key]."</PRE></TD>";
+	      # if a float, format appropriately
+	      if ( preg_match("/^-?\d*\.\d+$/",$row[$key])==1 )
+		{
+		  echo "<TD align=\"right\"><PRE>".number_format(floatval($row[$key]),4)."</PRE></TD>";
+		}
+              # if an int, format appropriately
+	      else if ( preg_match("/^-?\d+$/",$row[$key])==1 )
+		{
+		  echo "<TD align=\"right\"><PRE>".number_format(floatval($row[$key]))."</PRE></TD>";
+		}
+	      # otherwise print verbatim
+	      else
+		{
+		  echo "<TD align=\"right\"><PRE>".$row[$key]."</PRE></TD>";
+		}
             }
 	  else if ( $mycolumnname[$key]=='script' )
 	    {

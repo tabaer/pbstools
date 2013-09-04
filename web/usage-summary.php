@@ -56,10 +56,10 @@ if ( isset($_POST['system']) )
 
     # system overview
     echo "<H3>Overview</H3>\n";
-    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, NULL AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY ".$_POST['order']." DESC";
+    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, NULL AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY ".$_POST['order']." DESC";
     #echo "<PRE>\n".$sql."</PRE>\n";
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>system</TH><TH>jobs</TH><TH>cpuhours</TH><TH>%util</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
+    echo "<TR><TH>system</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH><TH>%util</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
     ob_flush();
     flush();
 
@@ -91,7 +91,21 @@ if ( isset($_POST['system']) )
 	      {
 		$data[$rkey]=$row[$rkey];
 	      }
-	    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+	    # if a float, format appropriately
+	    if ( preg_match("/^-?\d*\.\d+$/",$data[$rkey])==1 )
+	      {
+		echo "<TD align=\"right\"><PRE>".number_format(floatval($data[$rkey]),4)."</PRE></TD>";
+	      }
+            # if an int, format appropriately
+	    else if ( preg_match("/^-?\d+$/",$data[$rkey])==1 )
+	      {
+		echo "<TD align=\"right\"><PRE>".number_format(floatval($data[$rkey]))."</PRE></TD>";
+	      }
+            # otherwise print verbatim
+	    else
+	      {
+		echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+	      }
 	  }
 	echo "</TR>\n";
 	ob_flush();
@@ -99,7 +113,7 @@ if ( isset($_POST['system']) )
       }
     if ( $_POST['system']=="%" )
       {
-	$sql = "SELECT 'TOTAL', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, 'N/A' AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
+	$sql = "SELECT 'TOTAL', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, 'N/A' AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
 	$result = db_query($db,$sql);
 	if ( PEAR::isError($result) )
 	  {
@@ -112,7 +126,21 @@ if ( isset($_POST['system']) )
 	    foreach ($rkeys as $rkey)
 	      {
 		$data[$rkey]=array_shift($row);
-		echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+                # if a float, format appropriately
+		if ( preg_match("/^-?\d*\.\d+$/",$data[$rkey])==1 )
+		  {
+		    echo "<TD align=\"right\"><PRE>".number_format($data[$rkey],4)."</PRE></TD>";
+		  }
+		# if an int, format appropriately
+		else if ( preg_match("/^-?\d+$/",$data[$rkey])==1 )
+		  {
+		    echo "<TD align=\"right\"><PRE>".number_format($data[$rkey])."</PRE></TD>";
+		  }
+                # otherwise print verbatim
+		else
+		  {
+		    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+		  }
 	      }
 	    echo "</TR>\n";
 	    ob_flush();
@@ -228,7 +256,7 @@ if ( isset($_POST['system']) )
 	      {
 		$sql .= "UNION\n";
 	      }
-	    $sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ";
+	    $sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ";
 	    if ( isset($pkgmatch[$pkg]) )
 	      {
 		$sql .= $pkgmatch[$pkg];
@@ -242,7 +270,7 @@ if ( isset($_POST['system']) )
 	  }
 	$sql .= " ) AS usgsofttmp WHERE jobs>0 ORDER BY ".$_POST['order']." DESC";
         #echo "<PRE>\n".$sql."</PRE>\n";
-	$columns = array("package","jobs","cpuhours","users","groups");
+	$columns = array("package","jobs","cpuhours","charges","users","groups", "accounts");
 	if (  isset($_POST['table']) )
 	  {
 	    $result = db_query($db,$sql);
@@ -250,7 +278,7 @@ if ( isset($_POST['system']) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
 	      }
-	   result_as_table($result,$columns); 
+	    result_as_table($result,$columns); 
 	  }
 	if ( isset($_POST['csv']) )
 	  {
@@ -291,7 +319,7 @@ else
     virtual_system_chooser();
     date_fields();
 
-    $orders=array("jobs","cpuhours","users","groups");
+    $orders=array("jobs","cpuhours","charges","users","groups");
     checkboxes_from_array("Supplemental reports",array("institution","account","software"));
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
