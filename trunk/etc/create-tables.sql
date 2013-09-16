@@ -3,8 +3,8 @@ USE pbsacct;
 CREATE TABLE Jobs (
   jobid        VARCHAR(32) PRIMARY KEY,
   system       VARCHAR(8),
-  username     VARCHAR(8),
-  groupname    VARCHAR(8),
+  username     VARCHAR(9),
+  groupname    VARCHAR(9),
   account      VARCHAR(32),
   submithost   VARCHAR(32),
   jobname      TINYTEXT,
