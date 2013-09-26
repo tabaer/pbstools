@@ -57,7 +57,7 @@ if ( isset($_POST['system']) )
 	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT ".xaxis_column("month").", COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ";
+	    $sql = "SELECT ".xaxis_column("month").", COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ";
 	    if ( isset($pkgmatch[$key]) )
 	      {
 		$sql .= $pkgmatch[$key];
@@ -74,7 +74,7 @@ if ( isset($_POST['system']) )
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
 	      }
 	    echo "<TABLE border=1>\n";
-	    echo "<TR><TH>month</TH><TH>jobs</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH><TH>users</TH><TH>groups</TH></TR>\n";
+	    echo "<TR><TH>month</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH><TH>users</TH><TH>groups</TH></TR>\n";
 	    while ($result->fetchInto($row))
 	      {
 		$rkeys=array_keys($row);

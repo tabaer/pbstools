@@ -57,7 +57,7 @@ if ( isset($_POST['system']) )
 	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT ".xaxis_column("walltime").",COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt,MIN(TIME_TO_SEC(walltime)) AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( script IS NOT NULL AND ";
+	    $sql = "SELECT ".xaxis_column("walltime").",COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, MIN(TIME_TO_SEC(walltime)) AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( script IS NOT NULL AND ";
 	    if ( isset($pkgmatch[$key]) )
 	      {
 		$sql .= $pkgmatch[$key];
@@ -66,7 +66,7 @@ if ( isset($_POST['system']) )
 	      {
 		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
 	      }
-	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY walltime UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours, 100000000 AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
+	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY walltime UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, 100000000 AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
 	    if ( isset($pkgmatch[$key]) )
 	      {
 		$sql .= $pkgmatch[$key];
@@ -83,7 +83,7 @@ if ( isset($_POST['system']) )
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
 	      }
 	    echo "<TABLE border=1>\n";
-	    echo "<TR><TH>walltime</TH><TH>jobs</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH></TR>\n";
+	    echo "<TR><TH>walltime</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH></TR>\n";
 	    while ($result->fetchInto($row))
 	      {
 		$rkeys=array_keys($row);
