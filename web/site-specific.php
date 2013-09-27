@@ -367,9 +367,9 @@ function bucket_maxs($xaxis)
 #  if ( $xaxis=='nproc' ) return array("1","4","8","16","32","64","128","256","512","1024");
   if ( $xaxis=='nproc' ) return array("512","2048","8192","16384","32768","65536");
   if ( $xaxis=='nproc_norm' ) return array("0.01","0.10","0.25","0.5","0.75");
-  if ( $xaxis=='walltime' ) return array("1:00:00","4:00:00","8:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
-  if ( $xaxis=='walltime_req' ) return array("1:00:00","4:00:00","8:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
-  if ( $xaxis=='qtime' ) return array("1:00:00","4:00:00","8:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
+  if ( $xaxis=='walltime' ) return array("1:00:00","4:00:00","8:00:00","12:00:00","16:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
+  if ( $xaxis=='walltime_req' ) return array("1:00:00","4:00:00","8:00:00","12:00:00","16:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
+  if ( $xaxis=='qtime' ) return array("1:00:00","4:00:00","8:00:00","12:00:00","16:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
 
   if ( $xaxis=='mem_kb' ) return array("262144","1048576","4194304","12582912","33554432");
   if ( $xaxis=='vmem_kb' ) return array("262144","1048576","4194304","12582912","33554432");
@@ -528,6 +528,7 @@ function software_list()
 	      "genlatmu",
 	      "geosgcm",
 	      "glast",
+              "gpaw",
 	      "GreenSolver",
               "grads",
 	      "grib",
@@ -716,6 +717,7 @@ function software_list()
 	      "R",
               "r_out",
 	      "radhyd",
+              "raxml",
 	      "readall_parallel",
 	      "reduce",
               "reflect",
@@ -745,6 +747,7 @@ function software_list()
 	      "sfeles",
 	      "sgf",
               "shadowfax",
+              "sickle",
 	      "siesta",
 	      "sigma",
               "simfactory",
@@ -786,6 +789,7 @@ function software_list()
 	      "ukh2d",
 	      "upc",
 	      "vasp",
+              "velvet",
 	      "vbc",
 	      "vhone",
 	      "visit",
