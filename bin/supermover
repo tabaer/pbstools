@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # supermover -- wrapper around a number of data movement tools
-# Copyright 2009, 2011, University of Tennessee
+# Copyright 2009, 2011, 2013 University of Tennessee
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
@@ -27,6 +27,9 @@
 #         rsync
 #         rsync+ssh
 #         rsync+gsissh
+#         tar
+#         tar+gzip
+#         tar+bzip2
 #
 # Examples:
 #         supermover /tmp/foo hpss:///home/user/foo
@@ -87,7 +90,7 @@ def do_xfer(src,dest,methods,log):
     global debug
     global successes
     global failures
-    proto_list = ["scp", "gsiscp", "bbcp", "rsync", "rsync+ssh", "rsync+gsissh"]
+    proto_list = ["scp", "gsiscp", "bbcp", "rsync", "rsync+ssh", "rsync+gsissh","tar", "tar+gzip", "tar+bzip2"]
     src_url = urlparse(src,"file")
     src_proto = src_url[0]
     if ( src_proto=="" ):
