@@ -1,0 +1,17 @@
+The following tools are still available, but deprecated:
+
+bin/qps -- ps for PBS jobs; relies on the "all" command.
+
+bin/qpeek -- Allows users to look at spooled output of running jobs.
+
+sbin/dezombify -- Requeue a "running" PBS job that's not actually
+running because it had JOIN JOB failures.  Relies on the "all"
+command; requires root privilege.
+
+sbin/qtracejob.pbs-server -- Wrapper around the tracejob command to
+give a time-sorted list of log messages from all hosts involved.  Must
+run on host where pbs_server resides; requires root privilege.
+
+sbin/showscript.pbs-server -- Show the script associated with a jobid.
+Must run on host where pbs_server resides; requires root privilege.
+
