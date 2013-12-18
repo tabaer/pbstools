@@ -1,0 +1,843 @@
+#!/usr/bin/perl
+#
+# jobstats -- Generate a web report of PBS job usage over some period of
+#             months
+# Copyright 2006 Ohio Supercomputer Center
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+# job metrics requirements:
+#
+# retrospective over N-mo period
+# must run on pbs_server host as root
+# requires gnuplot
+#
+# jobstats [-d PBS_HOME] [-h hostname] [-n N] MM/YYYY
+#
+# -d PBS_HOME -- use PBS_HOME as top-level directory for PBS server files
+#                (default is use $PBS_HOME, or /usr/spool/PBS if PBS_HOME
+#                is not set)
+#
+# -h name     -- use name as system name (default is to use hostname)
+#
+# -n N        -- generate statics over previous N months (default is 1)
+#
+# -p P        -- use processor count P for utilization purposes (default is 1)
+#
+# -O outdir   -- use outdir as directory to place output (default is .)
+#
+# -s URL      -- use URL as link to CSS style sheet (default is none)
+#
+# stats:
+# -----
+# total jobs run
+# total CPU-hrs consumed
+# jobcount vs # CPUs
+# walltime vs. # CPUs (mean,stddev,median,max)
+# queue time vs. # CPUs (mean,stddev,median,max)
+#
+# files created:
+# -------------
+# index.html
+# jobs_vs_cpus.dat
+# jobs_vs_cpus.png
+# time_vs_cpus.dat
+# avgtime_vs_cpus.png
+# maxtime_vs_cpus.png
+# qtime_vs_cpus.dat
+# avgqtime_vs_cpus.png
+# maxqtime_vs_cpus.png
+# tottime_vs_cpus.dat
+# tottime_vs_cpus.png
+# jobdist.dat
+
+use POSIX;
+
+
+sub resourcelist
+  {
+    local($resources) = @_;
+    
+    @resourcelist=split(/ /,$resources);
+    foreach $field ( @resourcelist )
+      {
+        ($key,$value) = ($field =~ /^([^=]*)=(.*)/);
+        $resource{$key}=$value;
+      }
+    %resource;
+  }
+
+
+sub max
+  {
+    local(@item) = @_;
+    local($nitems,$maxval,$i);
+    
+    $nitems=$#item;
+    $maxval=$item[0];
+    if ( $nitems > 0 )
+      {
+	for ( $i=0 ; $i <= $nitems ; $i++ )
+	  {
+	    if ( $item[$i] > $maxval )
+	      {
+		$maxval=$item[$i];
+	      }
+	  }
+      }
+    $maxval;
+  }
+
+
+sub bygrpjobtime
+  {
+    $grpjobtime{$a} <=> $grpjobtime{$b};
+  }
+
+
+sub numerically
+  {
+    $a <=> $b;
+  }
+
+#
+# stats routines start here
+#
+
+sub mean
+  {
+    local($imin,$imax,@val)=@_;
+    local($i);
+    local($avg,$nsamps);
+
+    if ( !defined($imin) )
+      {
+	$imin=0;
+      }
+    if ( !defined($imax) )
+      {
+	$imax=$#val;
+      }
+
+    if ( $imin==$imax )
+      {
+	$avg=$val[$imin];
+      }
+    else
+      {
+	$avg=0.0;
+	$nsamps=0;
+	for ( $i=$imin; $i<=$imax; $i++ )
+	  {
+	    if ( defined($val[$i]) )
+	      {
+		$avg+=$val[$i];
+		$nsamps++;
+	      }
+	  }
+	$avg=$avg/$nsamps;
+      }
+
+    $avg;
+  }
+
+
+sub median
+  {
+    local($imin,$imax,@val)=@_;
+    local($i,$k);
+    local($middle);
+    local(@myval,@sorted);
+
+    if ( !defined($imin) )
+      {
+	$imin=0;
+      }
+    if ( !defined($imax) )
+      {
+	$imax=$#val;
+      }
+
+    # degenerate case
+    if ( $imin==$imax )
+      {
+	$middle=$val[$imin];
+      }
+    else
+      {
+	$k=0;
+	for ( $i=$imin; $i<=$imax; $i++ )
+	  {
+	    if ( defined($val[$i]) )
+	      {
+		$myval[$k]=$val[$i];
+		$k++;
+	      }
+	  }
+	@sorted=sort(numerically @myval);
+	if ( $k>1 )
+	  {
+	    $middle=$sorted[int($k/2)];
+	  }
+	else
+	  {
+	    $middle=$sorted[0];
+	  }
+      }
+
+    $middle;
+  }
+
+
+sub stddev
+  {
+    local($imin,$imax,@val)=@_;
+    local($i);
+    local($avg,$nsamps,$ms,$sd);
+
+    if ( !defined($imin) )
+      {
+	$imin=0;
+      }
+    if ( !defined($imax) )
+      {
+	$imax=$#val;
+      }
+
+    $avg=&mean($imin,$imax,@val);
+    $ms=0.0;
+    $nsamps=0;
+    # degenerate case
+    if ( $imin==$imax )
+      {
+	$sd=0.0;
+      }
+    else
+      {
+	for ( $i=$imin; $i<=$imax; $i++ )
+	  {
+	    if ( defined($val[i]) )
+	      {
+		$ms+=($avg-$val[i])*($avg-$val[i]);
+		$nsamps++;
+	      }
+	  }
+	$sd=sqrt($ms/($nsamps-1));
+      }
+
+    $sd;
+  }
+
+
+sub mean_2d
+  {
+    local($imin,$imax,$jmin,$jmax,@val)=@_;
+    local($i,$j);
+    local(@myval);
+    local($avg,$nsamps);
+
+    if ( !defined($imin) )
+      {
+	$imin=0;
+      }
+    if ( !defined($imax) )
+      {
+	$imax=$imin;
+      }
+    if ( !defined($jmin) )
+      {
+	$jmin=0;
+      }
+    if ( !defined($jmax) )
+      {
+	$jmax=$jmin;
+      }
+
+    # handle degenerate (1D) cases
+    if ( $imin==$imax )
+      {
+	for ( $j=$jmin; $j<=$jmax; $j++ )
+	  {
+	    $myval[$j]=$val[$imin][$j];
+	  }
+	$avg=&mean($jmin,$jmax,@myval);
+      }
+    elsif ( $jmin==$jmax )
+      {
+	for ( $i=$jmin; $i<=$imax; $i++ )
+	  {
+	    $myval[$i]=$val[$i][$jmin];
+	  }
+	$avg=&mean($imin,$imax,@myval);
+      }
+    # Full blown 2D
+    else
+      {
+	$avg=0.0;
+	$nsamps=0;
+	for ( $i=$imin; $i<=$imax; $i++ )
+	  {
+	    for ( $j=$jmin; $j<=$jmax; $j++ )
+	      {
+		if ( defined($val[$i][$j]) )
+		  {
+		    $avg+=$val[$i][$j];
+		    $nsamps++;
+		  }
+	      }
+	  }
+	$avg=$avg/$nsamps;
+      }
+
+    $avg;
+  }
+
+
+sub median_2d
+  {
+    local($imin,$imax,$jmin,$jmax,@val)=@_;
+    local($i,$j,$k);
+    local($middle);
+    local(@myval,@sorted);
+
+    if ( !defined($imin) )
+      {
+	$imin=0;
+      }
+    if ( !defined($imax) )
+      {
+	$imax=$#val;
+      }
+    if ( !defined($jmin) )
+      {
+	$jmin=0;
+      }
+    if ( !defined($jmax) )
+      {
+	$jmax=$jmin;
+      }
+
+    # handle degenerate (1D) cases
+    if ( $imin==$imax )
+      {
+	for ( $j=$jmin; $j<=$jmax; $j++ )
+	  {
+	    $myval[$j]=$val[$imin][$j];
+	  }
+	$middle=&median($jmin,$jmax,@myval);
+      }
+    elsif ( $jmin==$jmax )
+      {
+	for ( $i=$jmin; $i<=$imax; $i++ )
+	  {
+	    $myval[$i]=$val[$i][$jmin];
+	  }
+	$middle=&median($imin,$imax,@myval);
+      }
+    # Full blown 2D stddev
+    else
+      {
+	$k=0;
+	for ( $i=$imin; $i<=$imax; $i++ )
+	  {
+	    for ( $j=$jmin; $j<=$jmax; $j++ )
+	      {
+		if ( defined($val[$i][$j]) )
+		  {
+		    $myval[$k]=$val[$i][$j];
+		    $k++;
+		  }
+	      }
+	  }
+	@sorted=sort(numerically @myval);
+	if ( $k>1 )
+	  {
+	    $middle=$sorted[int($k/2)];
+	  }
+	else
+	  {
+	    $middle=$sorted[0];
+	  }
+      }
+
+    $middle;
+  }
+
+
+sub stddev_2d
+  {
+    local($imin,$imax,$jmin,$jmax,@val)=@_;
+    local($i,$j);
+    local(@myval);
+    local($avg,$nsamps,$ms,$sd);
+
+    if ( !defined($imin) )
+      {
+	$imin=0;
+      }
+    if ( !defined($imax) )
+      {
+	$imax=$imin;
+      }
+    if ( !defined($jmin) )
+      {
+	$jmin=0;
+      }
+    if ( !defined($jmax) )
+      {
+	$jmax=$jmin;
+      }
+
+    # handle degenerate (1D) cases
+    if ( $imin==$imax )
+      {
+	for ( $j=$jmin; $j<=$jmax; $j++ )
+	  {
+	    $myval[$j]=$val[$imin][$j];
+	  }
+	$sd=&stddev($jmin,$jmax,@myval);
+      }
+    elsif ( $jmin==$jmax )
+      {
+	for ( $i=$jmin; $i<=$imax; $i++ )
+	  {
+	    $myval[$i]=$val[$i][$jmin];
+	  }
+	$sd=&stddev($imin,$imax,@myval);
+      }
+    # Full blown 2D stddev
+    else
+      {
+	$avg=&mean_2d($imin,$imax,$jmin,$jmax,@val);
+	$ms=0.0;
+	$nsamps=0;
+	for ( $i=$imin; $i<=$imax; $i++ )
+	  {
+	    for ( $j=$jmin; $j<=$jmax; $j++ )
+	      {
+		if ( defined($val[i][j]) )
+		  {
+		    $ms+=($avg-$val[i][j])*($avg-$val[i][j]);
+		    $nsamps++;
+		  }
+	      }
+	  }
+	$sd=sqrt($ms/($nsamps-1));
+      }
+    $sd;
+  }
+
+#
+# Main program starts here
+#
+
+if ( defined($ENV{"PBS_HOME"}) )
+  {
+    $PBS_HOME=$ENV{"PBS_HOME"};
+  }
+else
+  {
+    $PBS_HOME="/usr/spool/PBS";
+  }
+$nmonths=1;
+$maxprocs=1;
+$sysprocs=1;
+$hostname=`hostname`;
+$outdir=".";
+$stylesheet="";
+
+while ( $ARGV[0] =~ /^-.*/ )
+  {
+    if ( $ARGV[0] eq "-d" )
+      {
+	$PBS_HOME=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-h" )
+      {
+	$hostname=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-n" )
+      {
+	$nmonths=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-O" )
+      {
+	$outdir=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-p" )
+      {
+	$sysprocs=$ARGV[1];
+	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-s" )
+      {
+	$stylesheet=$ARGV[1];
+	shift(@ARGV);
+      }
+    shift(@ARGV);
+  }
+
+($month,$year)=split(/\//,$ARGV[0]);
+$month=sprintf("%02d",$month);
+$subtitle="$nmonths month period ending $month/01/$year";
+
+open(INDEX,">${outdir}/index.html");
+
+print INDEX <<EOH;
+<html>
+
+<head>
+  <title>$hostname -- job statistics for $subtitle</title>
+  <link rel="stylesheet" href="$stylesheet" type="text/css">
+</head>
+
+<body>
+  <h1>$hostname -- job statistics for $subtitle</h1>
+EOH
+
+
+for ( $i=1 ; $i <= $nmonths ; $i++ )
+  {
+    $thisyear=$year;
+    $thismonth=$month-$i;
+    while ( $thismonth < 1 )
+      {
+	$thisyear--;
+	$thismonth+=12;
+      }
+    $fileptn=sprintf("%s/server_priv/accounting/%4d%02d*",
+		     $PBS_HOME,$thisyear,$thismonth);
+    while ( <${fileptn}> )
+      {
+	$ndays++;
+        open(ACCTFILE,"<$_");
+	
+        while ( <ACCTFILE> )
+          {
+	    chop;
+	    ($etime,$type,$job,$resources)=split(/;/);
+	    undef %resource;
+	    %resource=&resourcelist($resources);
+
+	   if ( $type eq "E" )
+	     {
+	       ($jobid,$junk)=split(/\./,$job);
+               $pstring = $resource{"Resource_List.nodes"};
+               @node_plus_ppn = split(/\+/, $pstring);
+               $processors = 0;
+               foreach $node_plus_ppn (@node_plus_ppn)
+                 {
+                   ($nodes,$ppnstring) = split(/\:/, $node_plus_ppn);
+                   $processors_per = substr($ppnstring,4);
+                   if ( $nodes < 1 ) { $nodes = 1; }
+                   if ( $processors_per < 1 ) { $processors_per = 1; }
+                   $processors += $nodes * $processors_per;
+		 }
+	       $ncpus=&max($resource{"Resource_List.ncpus"},
+			   $resource{"resources_used.ncpus"});
+               $ncpus=&max($ncpus,$resource{"Resource_List.size"});
+	       $nprocs=&max($processors,$ncpus);
+	       if ( $nprocs > $sysprocs )
+		 {
+		   print STDERR "Warning!  job $jobid has bogus CPU count of $nprocs (max possible is $sysprocs)\n";
+		 }
+	       else
+		 {
+		   $maxprocs=&max($maxprocs,$nprocs);
+		 }
+	       ($hh,$mm,$ss) = split(/\:/, $resource{"resources_used.walltime"});
+	       $walltime=(3600.0*$hh+60.0*$mm+$ss)/3600.0;
+	       $rwalltime=($resource{"end"}-$resource{"start"})/3600.0;
+	       if ( $walltime<0.0 ||
+		    ( $walltime > 0.016 && $walltime > (1.2*$rwalltime) ) )
+		 {
+                   print STDERR "Warning!  jobid $jobid has bogus walltime of $walltime hours, using actual value of $rwalltime\n";
+                   $walltime=$rwalltime;
+		 }
+	       $qtime=($resource{"start"}-$resource{"qtime"})/3600.0;
+	       if ( $qtime<0.0 )
+		 {
+		   print STDERR "Warning!  jobid $jobid has negative qtime of $qtime hours (qtime=".$resource{"qtime"}.", start=".$resource{"start"}.", end=".$resource{"end"}."), using (end-qtime)-walltime!\n";
+		   $qtime=($resource{"end"}-$resource{"qtime"})/3600.0-walltime;
+		 }   
+	       $mem=$resource{"resources_used.mem"};
+	       $mem=~s/kb$//;
+
+	       $njobs++;
+	       $tottime+=($nprocs*$walltime);
+	       if ( !defined($jobtime[$nprocs]) )
+		 {
+		   $jobtime[$nprocs]=0.0;
+		 }
+	       $jobtime[$nprocs]+=($nprocs*$walltime);
+	       if ( !defined($userjobcount{$resource{"user"}}) )
+		 {
+		   $userjobcount{$resource{"user"}}=0;
+		 }
+	       $userjobcount{$resource{"user"}}++;
+	       if ( !defined($grpjobcount{$resource{"group"}}) )
+		 {
+		   $grpjobcount{$resource{"group"}}=0;
+		 }
+	       $grpjobcount{$resource{"group"}}++;
+	       if ( !defined($grpjobtime{$resource{"group"}}) )
+		 {
+		   $grpjobtime{$resource{"group"}}=0;
+		 }
+	       $grpjobtime{$resource{"group"}}+=($nprocs*$walltime);
+	       if ( !defined($maxtime[$nprocs]) )
+		 {
+		   $maxtime[$nprocs]=0.0;
+		 }
+	       $maxtime[$nprocs]=&max($walltime,$maxtime[$nprocs]);
+	       if ( !defined($maxqtime[$nprocs]) )
+		 {
+		   $maxqtime[$nprocs]=0.0;
+		 }
+	       $maxqtime[$nprocs]=&max($qtime,$maxqtime[$nprocs]);
+	       if ( !defined($maxmem[$nprocs]) )
+		 {
+		   $maxmem[$nprocs]=0.0;
+		 }
+	       $maxmem[$nprocs]=&max($mem,$maxmem[$nprocs]);
+	       # need mechanism to add stddev to $jobtime, $avgqtime, & $avgmem
+	       # 2d array?  $sjobtime[$nprocs][$n], etc.?
+	       if ( !defined($jobcount[$nprocs]) )
+		 {
+		   $jobcount[$nprocs]=0;
+		 }
+	       $sjobid[$nprocs][$jobcount[$nprocs]]=$jobid;
+	       $stime[$nprocs][$jobcount[$nprocs]]=$walltime;
+	       $sqtime[$nprocs][$jobcount[$nprocs]]=$qtime;
+	       $smem[$nprocs][$jobcount[$nprocs]]=$mem;
+	       $jobcount[$nprocs]++;
+	     }
+          }
+
+        close(ACCTFILE);
+      }
+  }
+  for ( $j=1 ; $j <= $maxprocs ; $j++ )
+    {
+      if ( defined($jobcount[$j]) && $jobcount[$j] > 0 )
+	{
+	  $avgtime[$j]=&mean_2d($j,$j,0,$jobcount[$j],@stime);
+	  $avgqtime[$j]=&mean_2d($j,$j,0,$jobcount[$j],@sqtime);
+	  $avgmem[$j]=&mean_2d($j,$j,0,$jobcount[$j],@smem)/1024;
+	  $maxmem[$j]=$maxmem[$j]/1024;
+	  $stddev_time[$j]=&stddev_2d($j,$j,0,$jobcount[$j],@stime);
+	  $stddev_qtime[$j]=&stddev_2d($j,$j,0,$jobcount[$j],@sqtime);
+	  $stddev_mem[$j]=&stddev_2d($j,$j,0,$jobcount[$j],@smem)/1024;
+	  $medtime[$j]=&median_2d($j,$j,0,$jobcount[$j],@stime);
+	  $medqtime[$j]=&median_2d($j,$j,0,$jobcount[$j],@sqtime);
+	  $medmem[$j]=&median_2d($j,$j,0,$jobcount[$j],@smem)/1024;
+	}
+    }
+
+$tottime=sprintf("%.2f",$tottime);
+$utilpct=sprintf("%.2f",100.0*$tottime/($sysprocs*$ndays*24.0));
+
+print INDEX <<EOS;
+<h2>Aggregate Information</h2>
+<p>
+<b><u>$njobs</u> jobs run</b><br>
+<b><u>$tottime</u> CPU-hours consumed</b> (avg. ${utilpct}% utilization over $ndays days)<br>
+</p>
+
+<h2>Job Count as a Function of CPU Count</h2>
+
+<img src="jobs_vs_cpus.png" alt="histogram">
+<p><a href="jobs_vs_cpus.dat">raw data</a></p>
+
+<h2>Total CPU Hours Consumed as a Function of CPU Count</h2>
+
+<img src="tottime_vs_cpus.png" alt="histogram">
+<p><a href="tottime_vs_cpus.dat">raw data</a></p>
+
+<h2>Average Job Length as a Function of CPU Count</h2>
+
+<img src="avgtime_vs_cpus.png" alt="histogram">
+<p><a href="time_vs_cpus.dat">raw data</a></p>
+
+<h2>Maximum Job Length as a Function of CPU Count</h2>
+
+<img src="maxtime_vs_cpus.png" alt="histogram">
+<p><a href="time_vs_cpus.dat">raw data</a></p>
+
+<h2>Average Queue Time as a Function of CPU Count</h2>
+
+<img src="avgqtime_vs_cpus.png" alt="histogram">
+<p><a href="qtime_vs_cpus.dat">raw data</a></p>
+
+<h2>Maximum Queue Time as a Function of CPU Count</h2>
+
+<img src="maxqtime_vs_cpus.png" alt="histogram">
+<p><a href="qtime_vs_cpus.dat">raw data</a></p>
+
+<h2>Average Memory Used as a Function of CPU Count</h2>
+
+<img src="avgmem_vs_cpus.png" alt="histogram">
+<p><a href="mem_vs_cpus.dat">raw data</a></p>
+
+<h2>Maximum Memory Used as a Function of CPU Count</h2>
+
+<img src="maxmem_vs_cpus.png" alt="histogram">
+<p><a href="mem_vs_cpus.dat">raw data</a></p>
+EOS
+
+@grplist=keys(%grpjobcount);
+$ngrps=$#grplist;
+@userlist=keys(%userjobcount);
+$nusers=$#userlist;
+
+print INDEX <<BOT;
+<h2>Project/Group Summary</h2>
+
+<p>
+<b><u>$nusers</u> active users in a total of <u>$ngrps</u> active groups/projects</b>
+</p>
+
+<table border=1>
+<tr>
+  <th>Group ID</th>
+  <th>Jobs Run</th>
+  <th>Total CPU-hrs</th>
+</tr>
+BOT
+
+foreach $grpid ( reverse(sort bygrpjobtime (keys(%grpjobtime))) )
+    {
+      
+      printf(INDEX  
+	     "<tr><td>%s</td><td align=\"right\">%s</td><td align=\"right\">%.2f</td></tr>\n",
+	     $grpid,$grpjobcount{$grpid},$grpjobtime{$grpid});
+    }
+
+print INDEX <<EOT;
+</table>
+EOT
+
+
+print INDEX <<EOF;
+</body>
+
+</html>
+EOF
+
+close(INDEX);
+
+open(DATA1,">$outdir/jobs_vs_cpus.dat");
+print DATA1 "#procs         total\n";
+for ( $j=1 ; $j <= $maxprocs ; $j++ )
+  {
+    if ( defined($jobcount[$j]) )
+      {
+	printf(DATA1 "%4d\t%12d\n",$j,$jobcount[$j]);
+      }
+  }
+close(DATA1);
+
+open(DATA2,">$outdir/time_vs_cpus.dat");
+print DATA2 "#procs          mean          stddev          median             max\n";
+for ( $j=1 ; $j <= $maxprocs ; $j++ )
+  {
+    if ( defined($avgtime[$j]) )
+      {
+#	print DATA2 "$j\t$avgtime[$j]\t$stddev_time[$j]\t$medtime[$j]\t$maxtime[$j]\n";
+	printf(DATA2 "%4d\t%12.4f\t%12.4f\t%12.4f\t%12.4f\n",
+	       $j,$avgtime[$j],$stddev_time[$j],$medtime[$j],$maxtime[$j]);
+      }
+  }
+close(DATA2);
+
+open(DATA3,">$outdir/tottime_vs_cpus.dat");
+print DATA3 "#procs         total\n";
+for ( $j=1 ; $j <= $maxprocs ; $j++ )
+  {
+    if ( defined($jobtime[$j]) )
+      {
+	printf(DATA3 "%4d\t%12.4f\n",$j,$jobtime[$j]);
+      }
+  }
+close(DATA3);
+
+open(DATA4,">$outdir/qtime_vs_cpus.dat");
+print DATA4 "#procs          mean          stddev          median             max\n";
+for ( $j=1 ; $j <= $maxprocs ; $j++ )
+  {
+    if ( defined($avgqtime[$j]) )
+      {
+	printf(DATA4 "%4d\t%12.4f\t%12.4f\t%12.4f\t%12.4f\n",
+	       $j,$avgqtime[$j],$stddev_qtime[$j],$medqtime[$j],$maxqtime[$j]);
+      }
+  }
+close(DATA4);
+
+open(DATA5,">$outdir/mem_vs_cpus.dat");
+print DATA5 "#procs          mean          stddev          median             max\n";
+for ( $j=1 ; $j <= $maxprocs ; $j++ )
+  {
+    if ( defined($avgmem[$j]) )
+      {
+	printf(DATA5 "%4d\t%12.4f\t%12.4f\t%12.4f\t%12.4f\n",
+	       $j,$avgmem[$j],$stddev_mem[$j],$medmem[$j],$maxmem[$j]);
+      }
+  }
+close(DATA5);
+
+open(DATA6,">$outdir/jobdist.dat");
+print DATA6 "#jobid procs\tqueuewait (hrs)\truntime (hrs)\tmem used (MB)\n";
+for ( $j=1 ; $j <= $maxprocs ; $j++ )
+  {
+    if ( defined($jobcount[$j]) && $jobcount[$j]>0 )
+      {
+	for ( $i=0; $i<$jobcount[$j]; $i++ )
+	  {
+	    printf(DATA6 "%s\t%4d\t%12.4f\t%12.4f\t%12.4f\n",
+		   $sjobid[$j][$i],$j,$sqtime[$j][$i],$stime[$j][$i],$smem[$j][$i]/1024.);
+	  }
+	print DATA6 "\n";
+      }
+  }
+close(DATA6);
+
+open(GNUPLOT,"|gnuplot");
+print GNUPLOT <<EOP;
+# job count vs. cpu count
+set title "$hostname -- $subtitle"
+set xrange [0:$maxprocs]
+set term png small color
+set logscale y
+set xlabel "CPU Count"
+set ylabel "Number of jobs"
+set output "$outdir/jobs_vs_cpus.png"
+plot "$outdir/jobs_vs_cpus.dat" with impulses
+set nologscale y
+set ylabel "Job length (h)"
+set output "$outdir/avgtime_vs_cpus.png"
+plot "$outdir/time_vs_cpus.dat" using 1:2 with impulses
+set output "$outdir/maxtime_vs_cpus.png"
+plot "$outdir/time_vs_cpus.dat" using 1:5 with impulses
+set ylabel "CPU time (h)"
+set output "$outdir/tottime_vs_cpus.png"
+plot "$outdir/tottime_vs_cpus.dat" with impulses
+set ylabel "Queue Wait Time (h)"
+set output "$outdir/avgqtime_vs_cpus.png"
+plot "$outdir/qtime_vs_cpus.dat" using 1:2 with impulses
+set output "$outdir/maxqtime_vs_cpus.png"
+plot "$outdir/qtime_vs_cpus.dat" using 1:5 with impulses
+set ylabel "Real Memory (MB)"
+set output "$outdir/avgmem_vs_cpus.png"
+plot "$outdir/mem_vs_cpus.dat" using 1:2 with impulses
+set output "$outdir/maxmem_vs_cpus.png"
+plot "$outdir/mem_vs_cpus.dat" using 1:5 with impulses
+EOP
+close(GNUPLOT);

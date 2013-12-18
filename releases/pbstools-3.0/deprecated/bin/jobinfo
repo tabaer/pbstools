@@ -1,0 +1,116 @@
+#!/usr/bin/perl
+#
+# jobinfo -- Example of getting job info from pbsacct DB
+#
+# Copyright 2009 University of Tennessee
+# Portions copyright 2006 Ohio Supercomputer Center
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+use strict;
+use POSIX;
+use DBI;
+
+#
+# Main program begins here
+#
+
+# my system name in DB
+my $system=`hostname`;
+chomp($system);
+
+my $dbhost="localhost";
+my $dbuser="cmdline";
+my $dbpasswd="";
+my $dbname="pbsacct";
+my $dbtable="Jobs";
+my $columns="username,nproc,walltime";
+
+while ( $ARGV[0] =~ /^-.*/ )
+  {
+    if ( $ARGV[0] eq "-c" )
+      {
+        $columns=$ARGV[1];
+        shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-d" )
+      {
+        $dbname=$ARGV[1];
+        shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-h" )
+      {
+        $system=$ARGV[1];
+        shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-p" )
+      {
+        $dbpasswd=$ARGV[1];
+        shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-s" )
+      {
+        $dbhost=$ARGV[1];
+        shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-t" )
+      {
+        $dbtable=$ARGV[1];
+        shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-u" )
+      {
+        $dbuser=$ARGV[1];
+        shift(@ARGV);
+      }
+
+    shift(@ARGV);
+  }
+
+# input verification
+# bale out if $columns contains something that couldn't possibly be
+# in an SQL column name (e.g. semicolons)
+if ( $columns =~ /[^A-Za-z0-9\*\(\)\+\-\,\.\_\/ ]/ )
+{
+    die "$0:  bogus character(s) in column list\n";
+}
+
+# connect to DB
+my $dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
+my $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
+  die "$0:  unable to connect to DB!\n";
+
+foreach my $jobid ( @ARGV )
+  {
+    my $query = "SELECT ".$columns." FROM Jobs WHERE system=\'".$system."\' AND jobid LIKE \'".$jobid.".\%\';";
+    #print STDERR $query."\n";
+    my $sth = $dbh->prepare($query) or die "Could not prepare query:  ".$dbh::errstr;
+    $sth->execute() or die "Could not execute query:  ".$dbh::errstr;
+    my @colname = split(/ *, */,$columns);
+    if ( $sth->rows > 0 )
+    {
+	print "system = ".$system."\n";
+	print "jobid = ".$jobid."\n";
+	while ( my @data = $sth->fetchrow_array() )
+	{
+	    #print STDERR ($#data+1)." fields\n";
+	    for ( my $i=0 ; $i<($#data+1) ; $i++ )
+	    {
+		print $colname[$i]." = ".$data[$i]."\n";
+	    } 
+	}
+    }
+    else
+    {
+	print "No information found for ".$system." jobid ".$jobid."\n";
+    }
+    $sth->finish;
+    print "\n";
+  }
+
+# disconnect from DB
+$dbh->disconnect();
