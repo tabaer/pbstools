@@ -1,5 +1,6 @@
 PREFIX    = /usr/local
 WEBPREFIX = /var/www/html/pbsacct
+CFGPREFIX = $(PREFIX)/etc
 DBSERVER  = localhost
 DBADMIN   = root
 MPICC = mpicc
@@ -29,29 +30,33 @@ pbsdcp:
 qexec:
 	install -d $(PREFIX)/bin
 	install -m 0755 bin/qexec $(PREFIX)/bin
-	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qlogin
-	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qmpiexec
-	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qmpirun
-	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qrsh
-	ln -s $(PREFIX)/bin/qexec $(PREFIX)/bin/qsh
+	cd $(PREFIX)/bin && ln -sf qexec qlogin
+	cd $(PREFIX)/bin && ln -sf qexec qmpiexec
+	cd $(PREFIX)/bin && ln -sf qexec qmpirun
+	cd $(PREFIX)/bin && ln -sf qexec qrsh
+	cd $(PREFIX)/bin && ln -sf qexec qsh
 	install -m 0644 doc/man1/qexec.1 $(PREFIX)/share/man/man1
-	ln -s $(PREFIX)/share/man/man1/qexec.1 $(PREFIX)/share/man/man1/qlogin.1
-	ln -s $(PREFIX)/share/man/man1/qexec.1 $(PREFIX)/share/man/man1/qmpiexec.1
-	ln -s $(PREFIX)/share/man/man1/qexec.1 $(PREFIX)/share/man/man1/qmpirun.1
-	ln -s $(PREFIX)/share/man/man1/qexec.1 $(PREFIX)/share/man/man1/qrsh.1
-	ln -s $(PREFIX)/share/man/man1/qexec.1 $(PREFIX)/share/man/man1/qsh.1
+	cd $(PREFIX)/share/man/man1 && ln -sf qexec.1 qlogin.1
+	cd $(PREFIX)/share/man/man1 && ln -sf qexec.1 qmpiexec.1
+	cd $(PREFIX)/share/man/man1 && ln -sf qexec.1 qmpirun.1
+	cd $(PREFIX)/share/man/man1 && ln -sf qexec.1 qrsh.1
+	cd $(PREFIX)/share/man/man1 && ln -sf qexec.1 qsh.1
 
 supermover:
 	install -d $(PREFIX)/bin
 	install -m 0755 bin/supermover $(PREFIX)/bin
 	install -d $(PREFIX)/share/man/man1
 	install -m 0644 doc/man1/supermover.1 $(PREFIX)/share/man/man1
+	install -d $(CFGPREFIX)
+	install -m 0644 etc/supermover.cfg $(CFGPREFIX)
 
 dmsub:
 	install -d $(PREFIX)/bin
 	install -m 0755 bin/dmsub $(PREFIX)/bin
 	install -d $(PREFIX)/share/man/man1	
 	install -m 0644 doc/man1/dmsub.1 $(PREFIX)/share/man/man1
+	install -d $(CFGPREFIX)
+	install -m 0644 etc/dmsub.cfg $(CFGPREFIX)
 
 dagsub:
 	install -d $(PREFIX)/bin
@@ -90,19 +95,16 @@ find-outlyers:
 	install -d $(PREFIX)/sbin
 	install -m 0750 sbin/find-outlyers $(PREFIX)/sbin
 
-dbtools: js job-db-update jobscript-to-db pbsacct-php
+dbtools: pbsacct-collector pbsacct-php pbsacct-db jobscript-watcher
 
 js:
 	install -d $(PREFIX)/bin
-	install -m 0755 bin/js $(PREFIX)/bin
+	install -m 0750 bin/js $(PREFIX)/bin
 
-job-db-update:
+pbsacct-collector:
 	install -d $(PREFIX)/sbin
 	install -m 0750 sbin/job-db-update $(PREFIX)/sbin
 	install -m 0750 sbin/fixup-nodect $(PREFIX)/sbin
-
-jobscript-to-db:
-	install -d $(PREFIX)/sbin
 	install -m 0750 sbin/jobscript-to-db $(PREFIX)/sbin
 	install -m 0750 sbin/spool-jobscripts $(PREFIX)/sbin
 
@@ -113,14 +115,19 @@ pbsacct-php:
 	sed -i 's/localhost/$(DBSERVER)/' $(WEBPREFIX)/db.cfg
 	install -m 0640 web/*.php $(WEBPREFIX)
 
+pbsacct-db:
+	install -d $(CFGPREFIX)/pbsacct
+	install -m 0640 etc/create-tables.sql $(CFGPREFIX)/pbsacct
+
 dnotify-pbs:
 	ln -s /usr/bin/dnotify $(PREFIX)/bin/dnotify-pbs
-	install -m 0755 etc/rc.d/dnotify-pbs /etc/rc.d/init.d
+	install -m 0755 etc/rc.d/dnotify-pbs $(CFGPREFIX)/init.d
 
 jobscript-watcher:
 	install -d $(PREFIX)/sbin
 	install -m 0750 sbin/jobscript-watcher $(PREFIX)/sbin
-	install -m 0755 etc/rc.d/jobscript-watcher /etc/rc.d/init.d
+	install -d $(CFGPREFIX)/init.d
+	install -m 0755 etc/rc.d/jobscript-watcher $(CFGPREFIX)/init.d
 
 # stuff that's no longer installed by default
 deprecatedtools:
