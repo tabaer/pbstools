@@ -213,6 +213,8 @@ def usage():
 
 
 cfgfile = "/usr/local/etc/supermover.cfg"
+if ( os.path.exists("/etc/supermover.cfg") ):
+    cfgfile = "/etc/supermover.cfg"
 if ( "SUPERMOVER_CFG" in os.environ ):
     cfgfile = os.environ["SUPERMOVER_CFG"]
 log = sys.stdout
