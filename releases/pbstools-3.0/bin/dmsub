@@ -748,6 +748,8 @@ informat = "urlpair"
 mover = "globus-url-copy"
 rm = "pbs"
 cfgfile = "/usr/local/etc/dmsub.cfg"
+if ( os.path.exists("/etc/dmsub.cfg") ):
+    cfgfile = "/etc/dmsub.cfg"
 if ( "DMSUB_CFG" in os.environ ):
     cfgfile = os.environ["DMSUB_CFG"]
 dosubmit = True
