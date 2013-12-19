@@ -197,7 +197,7 @@ def do_xfer(src,dest,methods,log):
         raise RuntimeException("No method defined for protocol pair "+src_proto+":"+dest_proto)
 
 
-def usage():
+def usage(methods):
     sys.stderr.write("Usage:  supermover [args] srcURL destURL\n")
     sys.stderr.write("   or:  supermover [args] -f urlPairList\n\n")
     sys.stderr.write("Arguments:\n")
@@ -208,6 +208,9 @@ def usage():
     sys.stderr.write(" -l logfile, --log=logfile\n\tWrite log messages to file \"logfile\" (default is stdout)\n")
     sys.stderr.write("\nSupported protocols:\n\t")
     sys.stderr.write("\n\t".join(proto_list))
+    sys.stderr.write("\n")
+    sys.stderr.write("\nSupported transfers (src_proto:dest_prot):\n\t")
+    sys.stderr.write("\n\t".join(methods.keys()))
     sys.stderr.write("\n\n")
     sys.exit(0)
 
@@ -219,43 +222,46 @@ if ( "SUPERMOVER_CFG" in os.environ ):
     cfgfile = os.environ["SUPERMOVER_CFG"]
 log = sys.stdout
 urllist = None
-
-# Need to try to load default config file in case we need it for usage
-methods = get_methods(cfgfile)
+show_usage = False
 
 try:
     opts, args = getopt.getopt(sys.argv[1:],
                                "c:df:hl:",
                                ["config=s","debug","file=s","help","log=s"])
 except getopt.GetoptError, err:
-    sys.stderr.write(str(err)+"\n")
-    usage()
+    sys.stderr.write(str(err)+"\n\n")
+    methods = get_methods(cfgfile)
+    usage(methods)
+    sys.exit(-1)
     
 if opts == [] and args == []:
-    usage()
-    sys.exit(0)
+    show_usage = True
     
-for opt in opts:
-    if ( opt[0]=="-h" or opt[0]=="--help" ):
-        usage()
-    if ( opt[0]=="-d" or opt[0]=="--debug" ):
-        debug = True
-    if ( opt[0]=="-c" or opt[0]=="--config" ):
-        cfgfile = opt[1]
-    if ( opt[0]=="-f" or opt[0]=="--file" ):
-        urllist = opt[1]
-    if ( opt[0]=="-l" or opt[0]=="--log" ):
-        logfile = opt[1]
-        try:
-            log = open(logfile,'w')
-        except IOError, (errno, strerror):
-            sys.stderr.write("Can't open "+logfile+" for writing:  "+strerror+" (errno="+str(errno)+")\n")
-            pass          
+if ( not show_usage ):
+    for opt in opts:
+        if ( opt[0]=="-h" or opt[0]=="--help" ):
+            show_usage = True
+        if ( opt[0]=="-d" or opt[0]=="--debug" ):
+            debug = True
+        if ( opt[0]=="-c" or opt[0]=="--config" ):
+            cfgfile = opt[1]
+        if ( opt[0]=="-f" or opt[0]=="--file" ):
+            urllist = opt[1]
+        if ( opt[0]=="-l" or opt[0]=="--log" ):
+            logfile = opt[1]
+            try:
+                log = open(logfile,'w')
+            except IOError, (errno, strerror):
+                sys.stderr.write("Can't open "+logfile+" for writing:  "+strerror+" (errno="+str(errno)+")\n")
+                pass          
 
 methods = get_methods(cfgfile)
 if ( debug is True ):
     for method in methods.keys():
         log.write("method["+method+"] = "+methods[method]+"\n")
+if ( show_usage ):
+    usage(methods)
+    sys.exit(0)
 log.flush()
 
 if ( urllist is not None ):
