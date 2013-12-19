@@ -1,0 +1,91 @@
+#!/usr/bin/python
+#
+# job-vm-launch:  Launch a VM image inside a PBS job
+# Copyright 2013, University of Tennessee
+
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+# Usage: job-vm-launch [args] <vm-image-file>
+#
+# Arguments:
+#
+# Examples:
+#
+#
+import getopt
+import os
+import sys
+
+
+def usage(exitcode=0):
+    sys.stderr.write("Usage:  job-vm-launch [args] <vm-image-file>\n")
+    sys.exit(exitcode)
+
+# main program begins here
+cpuset = "/"
+if ( os.path.exists("/proc/self/cpuset") ):
+    cpuset = open("/proc/self/cpuset").read()[:-1]
+
+jobid = None
+if ( "PBS_JOBID" in os.environ ):
+    jobid = os.environ["PBS_JOBID"]
+else:
+    sys.stderr.write("Not in a PBS job, exiting!\n")
+    sys.exit(-1)
+log = sys.stdout
+newdom = jobid+"-vm0"
+show_usage = False
+exitcode=0
+
+# command line argument handling
+try:
+    opts, args = getopt.getopt(sys.argv[1:],
+                               "c:dhl:n:",
+                               ["cpuset=s","debug","help","log=%s","name=%s"])
+except getopt.GetoptError, err:
+    sys.stderr.write(str(err)+"\n\n")
+    usage(-1)
+if opts == [] and args == []:
+    show_usage = True
+if ( not show_usage ):
+    for opt in opts:
+        if ( opt[0]=="-c" or opt[0]=="--cpuset" ):
+            cpuset = opt[1]
+        if ( opt[0]=="-d" or opt[0]=="--debug" ):
+            debug = True
+        if ( opt[0]=="-h" or opt[0]=="--help" ):
+            show_usage = True
+        if ( opt[0]=="-l" or opt[0]=="--log" ):
+            logfile = opt[1]
+            try:
+                log = open(logfile,'w')
+            except IOError, (errno, strerror):
+                sys.stderr.write("Can't open "+logfile+" for writing:  "+strerror+" (errno="+str(errno)+")\n")
+                pass
+        if ( opt[0]=="-n" or opt[0]=="--name" ):
+            newdom = opt[1]
+if ( show_usage ):
+    usage(exitcode)
+log.flush()
+
+# at this point, there had better only be one element in args, and
+# it had better be a VM image...
+if ( len(args)>1 ):
+    sys.stderr.write("Too many arguments in \""+" ".join(sys.argv)+"\"\n")
+    usage(-2)
+if ( not os.path.exists(args[0]) ):
+    sys.stderr.write("VM image not found:  "+args[0]+"\n")
+    sys.exit(-4)
+
+# workflow:
+# * clone VM image into new domain
+# * launch resulting VM
+# * bind to cpuset (if available)
+
+# launch the VM
+os.system("virsh start "+args[0])
+
