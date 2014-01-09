@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # job-vm-launch:  Launch a VM image inside a PBS job
-# Copyright 2013, University of Tennessee
+# Copyright 2013, 2014, University of Tennessee
 
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
@@ -18,34 +18,150 @@
 #
 import getopt
 import os
+import re
+import signal
+import socket
 import sys
+import time
+import uuid
 
+global hypervisor
+global vmname
+global exitcode
 
-def usage(exitcode=0):
+def usage(exitcode):
     sys.stderr.write("Usage:  job-vm-launch [args] <vm-image-file>\n")
     sys.exit(exitcode)
 
+
+def cleanup(signal,frame):
+    if ( vmname ):
+        getvmstate = "virsh --connect="+hypervisor+" list --all | grep "+vmname+" | awk '{print $3}'"
+        fd = os.popen(getvmstate)
+        vmstate = fd.read()
+        fd.close()
+        if ( "running" in vmstate ):
+            os.system("virsh --connect="+hypervisor+" destroy "+vmname)
+        os.system("virsh --connect="+hypervisor+" undefine "+vmname)
+    exit(exitcode)
+
 # main program begins here
-cpuset = "/"
+
+# find cpuset/cgroup root, if any
+cpusetroot = None
+if ( os.path.exists("/dev/cpuset") ):
+    cpusetroot = "/dev/cpuset"
+elif ( os.path.exists("/sys/fs/cgroup/cpuset") ):
+    cpusetroot = "/sys/fs/cgroup/cpuset"
+
+# find cpuset, if any
+cpuset = None
 if ( os.path.exists("/proc/self/cpuset") ):
     cpuset = open("/proc/self/cpuset").read()[:-1]
 
+hostname = socket.gethostname()
 jobid = None
 if ( "PBS_JOBID" in os.environ ):
     jobid = os.environ["PBS_JOBID"]
 else:
     sys.stderr.write("Not in a PBS job, exiting!\n")
     sys.exit(-1)
+
+# figure out a default guest name
+vmnum = 0
+hypervisor = "qemu:///session"
+vmlist = "virsh --connect="+hypervisor+" list --all | grep "+jobid+"-"+hostname+" | awk '{print $2}'"
+fd = os.popen(vmlist)
+for line in fd.readlines():
+    if ( jobid+"-vm" in line ):
+        m = re.match("^"+jobid+"-"+hostname+"-vm(\d+)",line)
+        thisvmnum = int(m.group(1))
+        if ( thisvmnum>=vmnum ):
+            vmnum=thisvmnum+1
+fd.close()
+vmname = jobid+"-"+hostname+"-vm"+str(vmnum)
+
+# misc defaul settings
 log = sys.stdout
-newdom = jobid+"-vm0"
 show_usage = False
 exitcode=0
+diskbus = "virtio"
+diskformat = "raw"
+ostype = "linux"
+cloneimg = False
+block = True
+
+# figure out number of virtual cores
+# default to 1, just in case nothing else is set
+vcores = 1
+# look at cpuset/cgroup, if available
+if ( cpusetroot is not None and cpuset is not None and
+     ( os.path.exists(cpusetroot+"/"+cpuset+"/cpus") or
+       os.path.exists(cpusetroot+"/"+cpuset+"/cpuset.cpus") ) ):
+    fd = None
+    if ( os.path.exists(cpusetroot+"/"+cpuset+"/cpus") ):
+        fd = open(cpusetroot+"/"+cpuset+"/cpus")
+    elif ( os.path.exists(cpusetroot+"/"+cpuset+"/cpuset.cpus") ):
+        fd = open(cpusetroot+"/"+cpuset+"/cpuset.cpus")
+    if ( fd is not None ):
+        cpus = fd.read().rstrip()
+        elts = cpus.split(",")
+        for elt in elts:
+            if ( "-" in elt ):
+                [start,end] = elt.split("-")
+                vcores += int(end)-int(start)
+            else:
+                vcores += 1
+        fd.close()
+# if not, check PBS environment
+elif ( "PBS_NUM_PPN" in os.environ.keys() ):
+    vcores = int(os.environ["PBS_NUM_PPN"])
+
+# figure out my memory limit (in MB)
+# default to 1GB, just in case nothing else is set
+memlimitmb = 1024
+# look for cpuset/cgroup mem limit
+if ( cpusetroot is not None and cpuset is not None and
+     os.path.exists(cpusetroot+"/"+cpuset+"/memory.limit_in_bytes") ):
+    fd = open(cpusetroot+"/"+cpuset+"/memory.limit_in_bytes")
+    cgmemlimit = int(str(fd.read()).rstrip())
+    fd.close()
+    # cgroup mem is in bytes
+    memlimitmb = cgmemlimit/(1024*1024)
+else:
+# if the cpuset/cgroup is no help, see if the job has a mem limit set
+    qmlimit = None
+    qstatf = "qstat -f "+os.environ['PBS_JOBID']
+    fd = os.popen(qstatf)
+    for line in fd.readlines():
+        if ( "Resource_List.mem" in line ):
+            elt = (line.rstrip()).split()
+            if ( len(elt)>=2 ):
+                qmlimit = elt[2]
+    fd.close()
+    if ( qmlimit is not None ):
+        # convert PBS' ####[kMGT][BW] syntax to MB
+        m = re.match("^(\d+)([KkMmGgTt]{0,1})([BbWw])$",qmlimit)
+        base = int(m.group(1))
+        mult = 1.0/(1024*1024)
+        if ( m.group(2) and ( m.group(2)=="K" or m.group(2)=="k" ) ):
+            mult = 1.0/1024
+        elif ( m.group(2) and ( m.group(2)=="M" or m.group(2)=="m" ) ):
+            mult = 1
+        elif ( m.group(2) and ( m.group(2)=="G" or m.group(2)=="g" ) ):
+            mult = 1024
+        elif ( m.group(2) and ( m.group(2)=="T" or m.group(2)=="t" ) ):
+            mult = 1024*1024
+        unit = 1
+        if ( m.group(3)=="W" or m.group(3)=="w" ):
+            unit = 8
+        memlimitmb = int(base*mult*unit)
 
 # command line argument handling
 try:
     opts, args = getopt.getopt(sys.argv[1:],
-                               "c:dhl:n:",
-                               ["cpuset=s","debug","help","log=%s","name=%s"])
+                               "b:cdf:H:hl:Nn:o:",
+                               ["cloneimage","debug","diskbus=s","diskformat=","help","hypervisor","log=","name=","noblock","os-type=","ram=","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -53,12 +169,18 @@ if opts == [] and args == []:
     show_usage = True
 if ( not show_usage ):
     for opt in opts:
-        if ( opt[0]=="-c" or opt[0]=="--cpuset" ):
-            cpuset = opt[1]
+        if ( opt[0]=="-b" or opt[0]=="--diskbus" ):
+            diskbus = opt[1]
+        if ( opt[0]=="-c" or opt[0]=="--cloneimage" ):
+            cloneimg = True
         if ( opt[0]=="-d" or opt[0]=="--debug" ):
             debug = True
+        if ( opt[0]=="-f" or opt[0]=="--diskformat" ):
+            diskformat = opt[1]
         if ( opt[0]=="-h" or opt[0]=="--help" ):
             show_usage = True
+        if ( opt[0]=="-H" or opt[0]=="--hypervisor" ):
+            hypervisor = opt[1]
         if ( opt[0]=="-l" or opt[0]=="--log" ):
             logfile = opt[1]
             try:
@@ -66,8 +188,16 @@ if ( not show_usage ):
             except IOError, (errno, strerror):
                 sys.stderr.write("Can't open "+logfile+" for writing:  "+strerror+" (errno="+str(errno)+")\n")
                 pass
+        if ( opt[0]=="-N" or opt[0]=="--noblock" ):
+            block = False
         if ( opt[0]=="-n" or opt[0]=="--name" ):
-            newdom = opt[1]
+            vmname = opt[1]
+        if ( opt[0]=="-o" or opt[0]=="--os-type" ):
+            ostype = opt[1]
+        if ( opt[0]=="--ram" ):
+            memlimitmb=int(opt[1])
+        if ( opt[0]=="--vcpus" ):
+            vcores = int(opt[1])
 if ( show_usage ):
     usage(exitcode)
 log.flush()
@@ -80,12 +210,54 @@ if ( len(args)>1 ):
 if ( not os.path.exists(args[0]) ):
     sys.stderr.write("VM image not found:  "+args[0]+"\n")
     sys.exit(-4)
+vmimage = args[0]
 
-# workflow:
-# * clone VM image into new domain
-# * launch resulting VM
-# * bind to cpuset (if available)
+# clone the VM image, if needed
+if ( cloneimg ):
+    newimg = "/tmp/"+str(uuid.uuid3(uuid.NAMESPACE_DNS,os.environ['PBS_JOBID']))+".img"
+    log.write("Cloning "+vmimage+" into "+newimg+"\n")
+    os.system("cp "+vmimage+" "+newimg)
+    vmimage = newimg
+    
+# fork and start VM in child
+childpid  = os.fork()
+if ( childpid==0 ):
+    cmd = "virt-install"
+    args = [cmd,"--connect="+hypervisor,"--name="+vmname,"--accelerate",
+            "--cpu=host","--vcpus="+str(vcores),"--ram="+str(memlimitmb),
+            "--os-type="+ostype,"--import",
+            "--disk","path="+vmimage+",device=disk,bus="+diskbus+",format="+diskformat]
+    # create VM domain (which will start it)
+    log.write("Starting VM image \""+vmimage+"\" as guest domain "+vmname+" in hypervisor "+hypervisor+"\n")
+    log.write(" ".join(args)+"\n")
+    os.execvp(cmd,args)
 
-# launch the VM
-os.system("virsh start "+args[0])
+# put resulting process in cpuset, if possible
+if ( os.path.exists(cpusetroot+"/"+cpuset+"/tasks") and
+     os.access(cpusetroot+"/"+cpuset+"/tasks",os.W_OK) ):
+    fd = open(cpusetroot+"/"+cpuset+"/tasks",'w')
+    fd.write(str(childpid))
+    fd.close()
+
+# set signal handler in case the job ends before the VM shuts down
+signal.signal(signal.SIGINT,cleanup)
+signal.signal(signal.SIGTERM,cleanup)
+
+# clean up cloned images
+if ( cloneimg ):
+    os.unlink(vmimage)
+
+# wait on child
+if ( block ):
+    status = os.waitpid(childpid,0)
+    cleanup(None,None)
+    exit(status[0])
+else:
+    # fork a copy of myself that sleeps indefinitely as a cleaner
+    cleanerpid = os.fork()
+    if ( cleanerpid==0 ):
+        while True:
+            time.sleep(10)
+    exit(exitcode)
+
 
