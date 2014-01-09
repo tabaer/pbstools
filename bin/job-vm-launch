@@ -175,7 +175,7 @@ else:
 try:
     opts, args = getopt.getopt(sys.argv[1:],
                                "b:cdf:H:hl:Nn:o:r:",
-                               ["clone-image","debug","diskbus=s","diskformat=","help","hypervisor","keep-clone","log=","name=","no-block","os-type=","ram=","vcpus="])
+                               ["clone-image","debug","disk-bus=s","disk-format=","help","hypervisor","keep-clone","log=","name=","no-block","os-type=","ram=","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -183,13 +183,13 @@ if opts == [] and args == []:
     show_usage = True
 if ( not show_usage ):
     for opt in opts:
-        if ( opt[0]=="-b" or opt[0]=="--diskbus" ):
+        if ( opt[0]=="-b" or opt[0]=="--disk-bus" ):
             diskbus = opt[1]
         if ( opt[0]=="-c" or opt[0]=="--clone-image" ):
             cloneimg = True
         if ( opt[0]=="-d" or opt[0]=="--debug" ):
             debug = True
-        if ( opt[0]=="-f" or opt[0]=="--diskformat" ):
+        if ( opt[0]=="-f" or opt[0]=="--disk-format" ):
             diskformat = opt[1]
         if ( opt[0]=="-h" or opt[0]=="--help" ):
             show_usage = True
