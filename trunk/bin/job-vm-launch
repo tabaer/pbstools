@@ -174,7 +174,7 @@ else:
 # command line argument handling
 try:
     opts, args = getopt.getopt(sys.argv[1:],
-                               "b:cdf:H:hl:Nn:o:",
+                               "b:cdf:H:hl:Nn:o:r:",
                                ["clone-image","debug","diskbus=s","diskformat=","help","hypervisor","keep-clone","log=","name=","no-block","os-type=","ram=","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
@@ -208,10 +208,10 @@ if ( not show_usage ):
             vmname = opt[1]
         if ( opt[0]=="-o" or opt[0]=="--os-type" ):
             ostype = opt[1]
+        if ( opt[0]=="-r" or opt[0]=="--ram" ):
+            memlimitmb = int(opt[1])
         if ( opt[0]=="--keep-clone" ):
             keepclone = True
-        if ( opt[0]=="--ram" ):
-            memlimitmb=int(opt[1])
         if ( opt[0]=="--vcpus" ):
             vcores = int(opt[1])
 if ( show_usage ):
