@@ -25,9 +25,15 @@ import sys
 import time
 import uuid
 
-global hypervisor
-global vmname
+
+global cloneimg
 global exitcode
+global hypervisor
+global keepclone
+global log
+global vmimage
+global vmname
+
 
 def usage(exitcode):
     sys.stderr.write("Usage:  job-vm-launch [args] <vm-image-file>\n")
@@ -43,9 +49,25 @@ def cleanup(signal,frame):
         if ( "running" in vmstate ):
             os.system("virsh --connect="+hypervisor+" destroy "+vmname)
         os.system("virsh --connect="+hypervisor+" undefine "+vmname)
+    if ( cloneimg and not keepclone and os.path.exists(vmimage) ):
+        os.unlink(vmimage)
+    elif ( cloneimg and keepclone and os.path.exists(vmimage) ):
+        log.write("Keeping clone image "+vmimage+"\n")
     exit(exitcode)
 
+
 # main program begins here
+
+# misc default settings
+log = sys.stdout
+show_usage = False
+exitcode=0
+diskbus = "virtio"
+diskformat = "raw"
+ostype = "linux"
+cloneimg = False
+keepclone = False
+block = True
 
 # find cpuset/cgroup root, if any
 cpusetroot = None
@@ -72,28 +94,18 @@ vmnum = 0
 hypervisor = "qemu:///session"
 vmlist = "virsh --connect="+hypervisor+" list --all | grep "+jobid+"-"+hostname+" | awk '{print $2}'"
 fd = os.popen(vmlist)
-for line in fd.readlines():
-    if ( jobid+"-vm" in line ):
-        m = re.match("^"+jobid+"-"+hostname+"-vm(\d+)",line)
+for vmid in fd.readlines():
+    if ( jobid+"-"+hostname+"-vm" in vmid ):
+        m = re.match("^"+jobid+"-"+hostname+"-vm(\d+)",vmid)
         thisvmnum = int(m.group(1))
         if ( thisvmnum>=vmnum ):
             vmnum=thisvmnum+1
 fd.close()
 vmname = jobid+"-"+hostname+"-vm"+str(vmnum)
 
-# misc defaul settings
-log = sys.stdout
-show_usage = False
-exitcode=0
-diskbus = "virtio"
-diskformat = "raw"
-ostype = "linux"
-cloneimg = False
-block = True
-
 # figure out number of virtual cores
 # default to 1, just in case nothing else is set
-vcores = 1
+vcores = 0
 # look at cpuset/cgroup, if available
 if ( cpusetroot is not None and cpuset is not None and
      ( os.path.exists(cpusetroot+"/"+cpuset+"/cpus") or
@@ -113,6 +125,8 @@ if ( cpusetroot is not None and cpuset is not None and
             else:
                 vcores += 1
         fd.close()
+    if ( vcores==0 ):
+        vcores = 1
 # if not, check PBS environment
 elif ( "PBS_NUM_PPN" in os.environ.keys() ):
     vcores = int(os.environ["PBS_NUM_PPN"])
@@ -161,7 +175,7 @@ else:
 try:
     opts, args = getopt.getopt(sys.argv[1:],
                                "b:cdf:H:hl:Nn:o:",
-                               ["cloneimage","debug","diskbus=s","diskformat=","help","hypervisor","log=","name=","noblock","os-type=","ram=","vcpus="])
+                               ["clone-image","debug","diskbus=s","diskformat=","help","hypervisor","keep-clone","log=","name=","no-block","os-type=","ram=","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -171,7 +185,7 @@ if ( not show_usage ):
     for opt in opts:
         if ( opt[0]=="-b" or opt[0]=="--diskbus" ):
             diskbus = opt[1]
-        if ( opt[0]=="-c" or opt[0]=="--cloneimage" ):
+        if ( opt[0]=="-c" or opt[0]=="--clone-image" ):
             cloneimg = True
         if ( opt[0]=="-d" or opt[0]=="--debug" ):
             debug = True
@@ -188,12 +202,14 @@ if ( not show_usage ):
             except IOError, (errno, strerror):
                 sys.stderr.write("Can't open "+logfile+" for writing:  "+strerror+" (errno="+str(errno)+")\n")
                 pass
-        if ( opt[0]=="-N" or opt[0]=="--noblock" ):
+        if ( opt[0]=="-N" or opt[0]=="--no-block" ):
             block = False
         if ( opt[0]=="-n" or opt[0]=="--name" ):
             vmname = opt[1]
         if ( opt[0]=="-o" or opt[0]=="--os-type" ):
             ostype = opt[1]
+        if ( opt[0]=="--keep-clone" ):
+            keepclone = True
         if ( opt[0]=="--ram" ):
             memlimitmb=int(opt[1])
         if ( opt[0]=="--vcpus" ):
@@ -214,7 +230,7 @@ vmimage = args[0]
 
 # clone the VM image, if needed
 if ( cloneimg ):
-    newimg = "/tmp/"+str(uuid.uuid3(uuid.NAMESPACE_DNS,os.environ['PBS_JOBID']))+".img"
+    newimg = "/tmp/"+str(uuid.uuid3(uuid.NAMESPACE_DNS,vmname))+".img"
     log.write("Cloning "+vmimage+" into "+newimg+"\n")
     os.system("cp "+vmimage+" "+newimg)
     vmimage = newimg
@@ -228,7 +244,7 @@ if ( childpid==0 ):
             "--os-type="+ostype,"--import",
             "--disk","path="+vmimage+",device=disk,bus="+diskbus+",format="+diskformat]
     # create VM domain (which will start it)
-    log.write("Starting VM image \""+vmimage+"\" as guest domain "+vmname+" in hypervisor "+hypervisor+"\n")
+    log.write("Starting VM image "+vmimage+" as guest domain \""+vmname+"\" in hypervisor "+hypervisor+"\n")
     log.write(" ".join(args)+"\n")
     os.execvp(cmd,args)
 
@@ -243,17 +259,14 @@ if ( os.path.exists(cpusetroot+"/"+cpuset+"/tasks") and
 signal.signal(signal.SIGINT,cleanup)
 signal.signal(signal.SIGTERM,cleanup)
 
-# clean up cloned images
-if ( cloneimg ):
-    os.unlink(vmimage)
-
-# wait on child
 if ( block ):
+    # wait on child
     status = os.waitpid(childpid,0)
     cleanup(None,None)
     exit(status[0])
 else:
-    # fork a copy of myself that sleeps indefinitely as a cleaner
+    # fork a copy of myself that sleeps indefinitely as a cleaner,
+    # then exit main program
     cleanerpid = os.fork()
     if ( cleanerpid==0 ):
         while True:
