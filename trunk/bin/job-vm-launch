@@ -121,7 +121,7 @@ if ( cpusetroot is not None and cpuset is not None and
         for elt in elts:
             if ( "-" in elt ):
                 [start,end] = elt.split("-")
-                vcores += int(end)-int(start)
+                vcores += int(end)-int(start)+1
             else:
                 vcores += 1
         fd.close()
