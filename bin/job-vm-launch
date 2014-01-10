@@ -65,10 +65,11 @@ exitcode=0
 diskbus = "virtio"
 diskformat = "raw"
 ostype = "linux"
+osvariant = None
 cloneimg = False
 keepclone = False
 block = True
-diskappend = None
+otherdisks = []
 bootopts = None
 networkopts = None
 cputype = "host"
@@ -183,7 +184,7 @@ else:
 try:
     opts, args = getopt.getopt(sys.argv[1:],
                                "B:Cc:dF:f:hL:l:Nn:o:r:w:",
-                               ["boot=","cdrom=","clone-image","connect=","cpu=","debug","disk-append=","disk-bus=s","disk-format=","file=","floppy=","help","keep-clone","location=","log=","name=","network=","no-block","os-type=","ram=","vcpus="])
+                               ["boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","help","image=","keep-clone","location=","log=","name=","network=","no-block","os-type=","os-variant=","ram=","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -201,7 +202,7 @@ if ( not show_usage ):
             debug = True
         if ( opt[0]=="-F" or opt[0]=="--disk-format" ):
             diskformat = opt[1]
-        if ( opt[0]=="-f" or opt[0]=="--file" ):
+        if ( opt[0]=="-f" or opt[0]=="--file" or opt[0]=="--image" ):
             vmimage = opt[1]
         if ( opt[0]=="-h" or opt[0]=="--help" ):
             show_usage = True
@@ -230,12 +231,14 @@ if ( not show_usage ):
             hypervisor = opt[1]
         if ( opt[0]=="--cpu" ):
             cputype = opt[1]
-        if ( opt[0]=="--disk-append" ):
-            diskappend = opt[1]
+        if ( opt[0]=="--disk" ):
+            otherdisks.append(opt[1])
         if ( opt[0]=="--floppy" ):
             floppy = opt[1]
         if ( opt[0]=="--keep-clone" ):
             keepclone = True
+        if ( opt[0]=="--os-variant" ):
+            osvariant = opt[1]
         if ( opt[0]=="--vcpus" ):
             vcores = int(opt[1])
 if ( show_usage ):
@@ -260,11 +263,6 @@ if ( cloneimg ):
     os.system("dd if="+vmimage+" of="+newimg+" bs=1M")
     vmimage = newimg
 
-# assemble disk options
-diskopts = "path="+vmimage+",device=disk,bus="+diskbus+",format="+diskformat
-if ( diskappend is not None ):
-    diskopts += diskappend
-
 # fork and start VM in child
 childpid  = os.fork()
 if ( childpid==0 ):
@@ -274,6 +272,8 @@ if ( childpid==0 ):
     args = [cmd,"--connect="+hypervisor,"--name="+vmname,"--accelerate",
             "--cpu="+cputype,"--vcpus="+str(vcores),"--ram="+str(memlimitmb),
             "--os-type="+ostype]
+    if ( osvariant is not None ):
+        args.append("--os-variant="+osvariant)
     if ( cdrom is not None ):
         args.append("--cdrom="+cdrom)
     elif ( location is not None ):
@@ -284,7 +284,9 @@ if ( childpid==0 ):
         args.extend(["--boot",bootopts])
     if ( floppy is not None ):
         args.extend(["--disk","path="+floppy+",device=floppy"])
-    args.extend(["--disk",diskopts])
+    args.extend(["--disk","path="+vmimage+",device=disk,bus="+diskbus+",format="+diskformat])
+    for disk in otherdisks:
+        args.extend(["--disk",disk])
     if ( networkopts is not None ):
         args.extend(["--network",networkopts])
     # create VM domain (which will start it)
@@ -300,6 +302,7 @@ if ( os.path.exists(cpusetroot+"/"+cpuset+"/tasks") and
     fd.close()
 
 # set signal handler in case the job ends before the VM shuts down
+# or user hits ^C
 signal.signal(signal.SIGINT,cleanup)
 signal.signal(signal.SIGTERM,cleanup)
 
