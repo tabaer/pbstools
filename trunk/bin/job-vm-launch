@@ -2,7 +2,7 @@
 #
 # job-vm-launch:  Launch a VM image inside a PBS job
 # Copyright 2013, 2014, University of Tennessee
-
+#
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
 # $HeadURL$
@@ -68,11 +68,13 @@ ostype = "linux"
 cloneimg = False
 keepclone = False
 block = True
-diskprepend = None
 diskappend = None
 bootopts = None
 networkopts = None
 cputype = "host"
+cdrom = None
+location = None
+vmimage = None
 
 # find cpuset/cgroup root, if any
 cpusetroot = None
@@ -179,8 +181,8 @@ else:
 # command line argument handling
 try:
     opts, args = getopt.getopt(sys.argv[1:],
-                               "B:CdF:hl:Nn:o:r:w:",
-                               ["boot=","clone-image","connect=","cpu=","debug","disk-append=","disk-bus=s","disk-format=","disk-prepend=","help","keep-clone","log=","name=","network=","no-block","os-type=","ram=","vcpus="])
+                               "B:Cc:dF:f:hL:l:Nn:o:r:w:",
+                               ["boot=","cdrom=","clone-image","connect=","cpu=","debug","disk-append=","disk-bus=s","disk-format=","file=","help","keep-clone","location=","log=","name=","network=","no-block","os-type=","ram=","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -192,19 +194,25 @@ if ( not show_usage ):
             diskbus = opt[1]
         if ( opt[0]=="-C" or opt[0]=="--clone-image" ):
             cloneimg = True
+        if ( opt[0]=="-c" or opt[0]=="--cdrom" ):
+            cdrom = opt[1]
         if ( opt[0]=="-d" or opt[0]=="--debug" ):
             debug = True
         if ( opt[0]=="-F" or opt[0]=="--disk-format" ):
             diskformat = opt[1]
+        if ( opt[0]=="-f" or opt[0]=="--file" ):
+            vmimage = opt[1]
         if ( opt[0]=="-h" or opt[0]=="--help" ):
             show_usage = True
-        if ( opt[0]=="-l" or opt[0]=="--log" ):
+        if ( opt[0]=="-L" or opt[0]=="--log" ):
             logfile = opt[1]
             try:
                 log = open(logfile,'w')
             except IOError, (errno, strerror):
                 sys.stderr.write("Can't open "+logfile+" for writing:  "+strerror+" (errno="+str(errno)+")\n")
                 pass
+        if ( opt[0]=="-l" or opt[0]=="--location" ):
+            location = opt[1]
         if ( opt[0]=="-N" or opt[0]=="--no-block" ):
             block = False
         if ( opt[0]=="-n" or opt[0]=="--name" ):
@@ -220,11 +228,9 @@ if ( not show_usage ):
         if ( opt[0]=="--connect" ):
             hypervisor = opt[1]
         if ( opt[0]=="--cpu" ):
-             cputype = opt[1]
+            cputype = opt[1]
         if ( opt[0]=="--disk-append" ):
             diskappend = opt[1]
-        if ( opt[0]=="--disk-prepend" ):
-            diskprepend = opt[1]
         if ( opt[0]=="--keep-clone" ):
             keepclone = True
         if ( opt[0]=="--vcpus" ):
@@ -233,15 +239,16 @@ if ( show_usage ):
     usage(exitcode)
 log.flush()
 
-# at this point, there had better only be one element in args, and
+# at this point, there had better only be at most one element in args, and
 # it had better be a VM image...
 if ( len(args)>1 ):
     sys.stderr.write("Too many arguments in \""+" ".join(sys.argv)+"\"\n")
     usage(-2)
-if ( not os.path.exists(args[0]) ):
-    sys.stderr.write("VM image not found:  "+args[0]+"\n")
+if ( vmimage is None ):
+    vmimage = args[0]
+if ( not os.path.exists(vmimage) ):
+    sys.stderr.write("VM image not found:  "+vmimage+"\n")
     sys.exit(-4)
-vmimage = args[0]
 
 # clone the VM image, if needed
 if ( cloneimg ):
@@ -252,8 +259,6 @@ if ( cloneimg ):
 
 # assemble disk options
 diskopts = "path="+vmimage+",device=disk,bus="+diskbus+",format="+diskformat
-if ( diskprepend is not None ):
-    diskopts = diskprepend+diskopts
 if ( diskappend is not None ):
     diskopts += diskappend
 
@@ -265,14 +270,20 @@ if ( childpid==0 ):
     cmd = "virt-install"
     args = [cmd,"--connect="+hypervisor,"--name="+vmname,"--accelerate",
             "--cpu="+cputype,"--vcpus="+str(vcores),"--ram="+str(memlimitmb),
-            "--os-type="+ostype,"--import"]
+            "--os-type="+ostype]
+    if ( cdrom is not None ):
+        args.append("--cdrom="+cdrom)
+    elif ( location is not None ):
+        args.append("--location="+location)
+    else:
+        args.append("--import")
     if ( bootopts is not None ):
         args.extend(["--boot",bootopts])
     args.extend(["--disk",diskopts])
     if ( networkopts is not None ):
         args.extend(["--network",networkopts])
     # create VM domain (which will start it)
-    log.write("Starting VM image "+vmimage+" as guest domain \""+vmname+"\" in hypervisor "+hypervisor+"\n")
+    log.write("Starting VM image "+vmimage+" as guest domain "+vmname+" in hypervisor "+hypervisor+"\n")
     log.write(" ".join(args)+"\n")
     os.execvp(cmd,args)
 
