@@ -75,6 +75,7 @@ cputype = "host"
 cdrom = None
 location = None
 vmimage = None
+floppy = None
 
 # find cpuset/cgroup root, if any
 cpusetroot = None
@@ -182,7 +183,7 @@ else:
 try:
     opts, args = getopt.getopt(sys.argv[1:],
                                "B:Cc:dF:f:hL:l:Nn:o:r:w:",
-                               ["boot=","cdrom=","clone-image","connect=","cpu=","debug","disk-append=","disk-bus=s","disk-format=","file=","help","keep-clone","location=","log=","name=","network=","no-block","os-type=","ram=","vcpus="])
+                               ["boot=","cdrom=","clone-image","connect=","cpu=","debug","disk-append=","disk-bus=s","disk-format=","file=","floppy=","help","keep-clone","location=","log=","name=","network=","no-block","os-type=","ram=","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -231,6 +232,8 @@ if ( not show_usage ):
             cputype = opt[1]
         if ( opt[0]=="--disk-append" ):
             diskappend = opt[1]
+        if ( opt[0]=="--floppy" ):
+            floppy = opt[1]
         if ( opt[0]=="--keep-clone" ):
             keepclone = True
         if ( opt[0]=="--vcpus" ):
@@ -254,7 +257,7 @@ if ( not os.path.exists(vmimage) ):
 if ( cloneimg ):
     newimg = "/tmp/"+str(uuid.uuid3(uuid.NAMESPACE_DNS,vmname))+".img"
     log.write("Cloning "+vmimage+" into "+newimg+"\n")
-    os.system("cp "+vmimage+" "+newimg)
+    os.system("dd if="+vmimage+" of="+newimg+" bs=1M")
     vmimage = newimg
 
 # assemble disk options
@@ -279,6 +282,8 @@ if ( childpid==0 ):
         args.append("--import")
     if ( bootopts is not None ):
         args.extend(["--boot",bootopts])
+    if ( floppy is not None ):
+        args.extend(["--disk","path="+floppy+",device=floppy"])
     args.extend(["--disk",diskopts])
     if ( networkopts is not None ):
         args.extend(["--network",networkopts])
