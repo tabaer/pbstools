@@ -68,6 +68,11 @@ ostype = "linux"
 cloneimg = False
 keepclone = False
 block = True
+diskprepend = None
+diskappend = None
+bootopts = None
+networkopts = None
+cputype = "host"
 
 # find cpuset/cgroup root, if any
 cpusetroot = None
@@ -174,8 +179,8 @@ else:
 # command line argument handling
 try:
     opts, args = getopt.getopt(sys.argv[1:],
-                               "b:cdf:H:hl:Nn:o:r:",
-                               ["clone-image","debug","disk-bus=s","disk-format=","help","hypervisor","keep-clone","log=","name=","no-block","os-type=","ram=","vcpus="])
+                               "B:CdF:hl:Nn:o:r:w:",
+                               ["boot=","clone-image","connect=","cpu=","debug","disk-append=","disk-bus=s","disk-format=","disk-prepend=","help","keep-clone","log=","name=","network=","no-block","os-type=","ram=","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -183,18 +188,16 @@ if opts == [] and args == []:
     show_usage = True
 if ( not show_usage ):
     for opt in opts:
-        if ( opt[0]=="-b" or opt[0]=="--disk-bus" ):
+        if ( opt[0]=="-B" or opt[0]=="--disk-bus" ):
             diskbus = opt[1]
-        if ( opt[0]=="-c" or opt[0]=="--clone-image" ):
+        if ( opt[0]=="-C" or opt[0]=="--clone-image" ):
             cloneimg = True
         if ( opt[0]=="-d" or opt[0]=="--debug" ):
             debug = True
-        if ( opt[0]=="-f" or opt[0]=="--disk-format" ):
+        if ( opt[0]=="-F" or opt[0]=="--disk-format" ):
             diskformat = opt[1]
         if ( opt[0]=="-h" or opt[0]=="--help" ):
             show_usage = True
-        if ( opt[0]=="-H" or opt[0]=="--hypervisor" ):
-            hypervisor = opt[1]
         if ( opt[0]=="-l" or opt[0]=="--log" ):
             logfile = opt[1]
             try:
@@ -210,6 +213,18 @@ if ( not show_usage ):
             ostype = opt[1]
         if ( opt[0]=="-r" or opt[0]=="--ram" ):
             memlimitmb = int(opt[1])
+        if ( opt[0]=="-w" or opt[0]=="--network" ):
+            networkopts = opt[1]
+        if ( opt[0]=="--boot" ):
+            bootopts = opt[1]
+        if ( opt[0]=="--connect" ):
+            hypervisor = opt[1]
+        if ( opt[0]=="--cpu" ):
+             cputype = opt[1]
+        if ( opt[0]=="--disk-append" ):
+            diskappend = opt[1]
+        if ( opt[0]=="--disk-prepend" ):
+            diskprepend = opt[1]
         if ( opt[0]=="--keep-clone" ):
             keepclone = True
         if ( opt[0]=="--vcpus" ):
@@ -234,15 +249,28 @@ if ( cloneimg ):
     log.write("Cloning "+vmimage+" into "+newimg+"\n")
     os.system("cp "+vmimage+" "+newimg)
     vmimage = newimg
-    
+
+# assemble disk options
+diskopts = "path="+vmimage+",device=disk,bus="+diskbus+",format="+diskformat
+if ( diskprepend is not None ):
+    diskopts = diskprepend+diskopts
+if ( diskappend is not None ):
+    diskopts += diskappend
+
 # fork and start VM in child
 childpid  = os.fork()
 if ( childpid==0 ):
+    # virt-install is probably not the right way to do this, but AFAICT it's
+    # the easiest way to create a guest and boot it all in one go
     cmd = "virt-install"
     args = [cmd,"--connect="+hypervisor,"--name="+vmname,"--accelerate",
-            "--cpu=host","--vcpus="+str(vcores),"--ram="+str(memlimitmb),
-            "--os-type="+ostype,"--import",
-            "--disk","path="+vmimage+",device=disk,bus="+diskbus+",format="+diskformat]
+            "--cpu="+cputype,"--vcpus="+str(vcores),"--ram="+str(memlimitmb),
+            "--os-type="+ostype,"--import"]
+    if ( bootopts is not None ):
+        args.extend(["--boot",bootopts])
+    args.extend(["--disk",diskopts])
+    if ( networkopts is not None ):
+        args.extend(["--network",networkopts])
     # create VM domain (which will start it)
     log.write("Starting VM image "+vmimage+" as guest domain \""+vmname+"\" in hypervisor "+hypervisor+"\n")
     log.write(" ".join(args)+"\n")
