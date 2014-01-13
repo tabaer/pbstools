@@ -77,6 +77,7 @@ cdrom = None
 location = None
 vmimage = None
 floppy = None
+graphics = None
 
 # find cpuset/cgroup root, if any
 cpusetroot = None
@@ -204,7 +205,7 @@ else:
 try:
     opts, args = getopt.getopt(sys.argv[1:],
                                "B:Cc:dF:f:hL:l:Nn:o:r:w:",
-                               ["boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","help","image=","keep-clone","location=","log=","name=","network=","no-block","os-type=","os-variant=","ram=","vcpus="])
+                               ["boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","graphics=","help","image=","keep-clone","location=","log=","name=","network=","no-block","os-type=","os-variant=","ram=","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -255,6 +256,8 @@ if ( not show_usage ):
             otherdisks.append(opt[1])
         if ( opt[0]=="--floppy" ):
             floppy = opt[1]
+        if ( opt[0]=="--graphics" ):
+            graphics = opt[1]
         if ( opt[0]=="--keep-clone" ):
             keepclone = True
         if ( opt[0]=="--os-variant" ):
@@ -294,6 +297,8 @@ if ( childpid==0 ):
             "--os-type="+ostype]
     if ( osvariant is not None ):
         args.append("--os-variant="+osvariant)
+    if ( graphics is not None ):
+        args.append("--graphics="+graphics)
     if ( cdrom is not None ):
         args.append("--cdrom="+cdrom)
     elif ( location is not None ):
