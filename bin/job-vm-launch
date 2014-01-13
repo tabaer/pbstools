@@ -153,6 +153,7 @@ if ( cpusetroot is not None and cpuset is not None and
     memlimitmb = cgmemlimit/(1024*1024)
 else:
 # if the cpuset/cgroup is no help, see if the job has a mem limit set
+# also look for a core count if there's not one already set
     qmlimit = None
     qstatf = "qstat -f "+os.environ['PBS_JOBID']
     fd = os.popen(qstatf)
@@ -161,6 +162,25 @@ else:
             elt = (line.rstrip()).split()
             if ( len(elt)>=2 ):
                 qmlimit = elt[2]
+        elif ( "Resource_List.nodes" in line and vcores==0 ):
+            elt = (line.rstrip()).split()
+            if ( len(elt)>=2 ):
+                # handle PBS nodes={#,host)[:ppn=#][:gpus=#][:feature][+...]
+                # syntax
+                nodes = elt[2].split("+")
+                myvcores = vcores
+                for node in nodes:
+                    nelts = node.split(":")
+                    for nelt in nelts[1:]:
+                        if ( "ppn=" in nelt ):
+                            if ( nelts[0] in hostname ):
+                                myvcores = int((nelt.split("="))[1])
+                                break
+                                break
+                            else:
+                                myvcores = max(myvcores,int((nelt.split("="))[1]))
+                if ( myvcores>vcores ):
+                    vcores = myvcores
     fd.close()
     if ( qmlimit is not None ):
         # convert PBS' ####[kMGT][BW] syntax to MB
