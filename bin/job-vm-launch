@@ -17,6 +17,8 @@
 #
 #
 import getopt
+import libvirt
+import libxml2
 import os
 import re
 import signal
@@ -29,34 +31,49 @@ import uuid
 global cloneimg
 global exitcode
 global hypervisor
+global conn
 global keepclone
 global log
 global vmimage
 global vmname
 
 
-def usage(exitcode):
-    sys.stderr.write("Usage:  job-vm-launch [args] <vm-image-file>\n")
-    sys.exit(exitcode)
+def connect(hypervisor):
+    conn = libvirt.open(hypervisor)
+    if ( conn is None ):
+        log.write("Failed to connect to hypervisor "+hypervisor+"\n")
+        sys.exit(-1)
+    return conn
 
 
 def cleanup(signal,frame):
+    global conn
     if ( vmname ):
-        getvmstate = "virsh --connect="+hypervisor+" list --all | grep "+vmname+" | awk '{print $3}'"
-        fd = os.popen(getvmstate)
-        vmstate = fd.read()
-        fd.close()
-        if ( "running" in vmstate ):
-            os.system("virsh --connect="+hypervisor+" destroy "+vmname)
-        os.system("virsh --connect="+hypervisor+" undefine "+vmname)
+        if ( conn is None ):
+            conn = connect(hypervisor)
+        try:
+            guest = conn.lookupByName(vmname)
+        except:
+            log.write("cleanup:  Could not find VM "+vmname+"\n")
+            sys.exit(-1)
+        if ( guest.isActive() ): 
+            log.write("Shutting down guest "+vmname+"\n")
+            guest.shutdown()
+            guest.destroy()
+        log.write("Removing guest "+vmname+"\n")
+        guest.undefine()
     if ( cloneimg and not keepclone and os.path.exists(vmimage) ):
+        log.write("Deleting clone image "+vmimage+"\n")
         os.unlink(vmimage)
     elif ( cloneimg and keepclone and os.path.exists(vmimage) ):
         log.write("Keeping clone image "+vmimage+"\n")
     exit(exitcode)
 
 
-# main program begins here
+def usage(exitcode):
+    sys.stderr.write("Usage:  job-vm-launch [args] <vm-image-file>\n")
+    sys.exit(exitcode)
+
 
 # misc default settings
 log = sys.stdout
@@ -78,6 +95,10 @@ location = None
 vmimage = None
 floppy = None
 graphics = None
+conn = None
+
+
+# main program begins here
 
 # find cpuset/cgroup root, if any
 cpusetroot = None
@@ -102,16 +123,17 @@ else:
 # figure out a default guest name
 vmnum = 0
 hypervisor = "qemu:///session"
-vmlist = "virsh --connect="+hypervisor+" list --all | grep "+jobid+"-"+hostname+" | awk '{print $2}'"
-fd = os.popen(vmlist)
-for vmid in fd.readlines():
-    if ( jobid+"-"+hostname+"-vm" in vmid ):
-        m = re.match("^"+jobid+"-"+hostname+"-vm(\d+)",vmid)
+conn = connect(hypervisor)
+for vmid in conn.listDomainsID():
+    thisvm = conn.lookupByID(vmid).name()
+    if ( jobid+"-"+hostname+"-vm" in thisvm ):
+        m = re.match("^"+jobid+"-"+hostname+"-vm(\d+)",thisvm)
         thisvmnum = int(m.group(1))
         if ( thisvmnum>=vmnum ):
             vmnum=thisvmnum+1
-fd.close()
 vmname = jobid+"-"+hostname+"-vm"+str(vmnum)
+conn.close()
+conn = None
 
 # figure out number of virtual cores
 # default to 1, just in case nothing else is set
@@ -285,6 +307,10 @@ if ( cloneimg ):
     log.write("Cloning "+vmimage+" into "+newimg+"\n")
     os.system("dd if="+vmimage+" of="+newimg+" bs=1M")
     vmimage = newimg
+
+# connect to the hypervisor
+if ( conn is None ):
+    conn = connect(hypervisor)
 
 # fork and start VM in child
 childpid  = os.fork()
