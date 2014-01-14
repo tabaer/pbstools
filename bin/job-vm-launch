@@ -18,7 +18,6 @@
 #
 import getopt
 import libvirt
-import libxml2
 import os
 import re
 import signal
@@ -26,6 +25,7 @@ import socket
 import sys
 import time
 import uuid
+from xml.dom import minidom,ext
 
 
 global cloneimg
@@ -60,8 +60,11 @@ def cleanup(signal,frame):
             log.write("Shutting down guest "+vmname+"\n")
             guest.shutdown()
             guest.destroy()
-        log.write("Removing guest "+vmname+"\n")
-        guest.undefine()
+        if ( keepguest ):
+            log.write("Keeping guest "+vmname+"\n")
+        else:
+            log.write("Removing guest "+vmname+"\n")
+            guest.undefine()
     if ( cloneimg and not keepclone and os.path.exists(vmimage) ):
         log.write("Deleting clone image "+vmimage+"\n")
         os.unlink(vmimage)
@@ -85,9 +88,10 @@ ostype = "linux"
 osvariant = None
 cloneimg = False
 keepclone = False
+keepguest = False
 block = True
 otherdisks = []
-bootopts = None
+bootopts = "hd"
 networkopts = None
 cputype = "host"
 cdrom = None
@@ -227,7 +231,7 @@ else:
 try:
     opts, args = getopt.getopt(sys.argv[1:],
                                "B:Cc:dF:f:hL:l:Nn:o:r:w:",
-                               ["boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","graphics=","help","image=","keep-clone","location=","log=","name=","network=","no-block","os-type=","os-variant=","ram=","vcpus="])
+                               ["boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","graphics=","help","image=","keep-clone","keep-guest","location=","log=","name=","network=","no-block","os-type=","os-variant=","ram=","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -282,6 +286,8 @@ if ( not show_usage ):
             graphics = opt[1]
         if ( opt[0]=="--keep-clone" ):
             keepclone = True
+        if ( opt[0]=="--keep-guest" ):
+            keepguest = True
         if ( opt[0]=="--os-variant" ):
             osvariant = opt[1]
         if ( opt[0]=="--vcpus" ):
@@ -315,6 +321,107 @@ if ( conn is None ):
 # fork and start VM in child
 childpid  = os.fork()
 if ( childpid==0 ):
+    # generate XML description of VM
+    xml = minidom.Document()
+    domnode = xml.createElement("domain")
+    domnode.setAttribute("type","kvm")
+    namenode = xml.createElement("name")
+    namenode.appendChild(xml.createTextNode(vmname))
+    domnode.appendChild(namenode)
+    memnode = xml.createElement("memory")
+    memnode.appendChild(xml.createTextNode(str(1024*memlimitmb)))
+    domnode.appendChild(memnode)
+    vcpunode = xml.createElement("vcpu")
+    vcpunode.appendChild(xml.createTextNode(str(vcores)))
+    domnode.appendChild(vcpunode)
+    osnode = xml.createElement("os")
+    ostypenode =  xml.createElement("type")
+    ostypenode.setAttribute("arch","x86_64")
+    ostypenode.appendChild(xml.createTextNode("hvm"))
+    osnode.appendChild(ostypenode)
+    osbootnode = xml.createElement("boot")
+    if ( bootopts is None ):
+        osbootnode.setAttribute("dev","hd")
+    else:
+        osbootnode.setAttribute("dev",bootopts.split(",")[0])
+    osnode.appendChild(osbootnode)
+    domnode.appendChild(osnode)
+    featurenode = xml.createElement("features")
+    featurenode.appendChild(xml.createElement("acpi"))
+    featurenode.appendChild(xml.createElement("apic"))
+    featurenode.appendChild(xml.createElement("pae"))
+    domnode.appendChild(featurenode)
+    # how to handle cpu features?
+    clocknode = xml.createElement("clock")
+    clocknode.setAttribute("offset","utc")
+    domnode.appendChild(clocknode)
+    offnode = xml.createElement("on_poweroff")
+    offnode.appendChild(xml.createTextNode("destroy"))
+    domnode.appendChild(offnode)
+    rebootnode = xml.createElement("on_reboot")
+    rebootnode.appendChild(xml.createTextNode("restart"))
+    domnode.appendChild(rebootnode)
+    crashnode = xml.createElement("on_crash")
+    crashnode.appendChild(xml.createTextNode("restart"))
+    domnode.appendChild(crashnode)
+    devnode = xml.createElement("devices")
+    emunode = xml.createElement("emulator")
+    emunode.appendChild(xml.createTextNode("/bin/qemu-kvm"))
+    devnode.appendChild(emunode)
+    if ( floppy is not None ):
+        floppynode = xml.createElement("disk")
+        floppynode.setAttribute("type","file")
+        floppynode.setAttribute("device","floppy")
+        fdrvnode = xml.createElement("driver")
+        fdrvnode.setAttribute("name","qemu")
+        floppynode.appendChild(fdrvnode)
+        fsrcnode = xml.createElement("source")
+        fsrcnode.setAttribute("file",floppy)
+        floppynode.appendChild(fsrcnode)
+        ftgtnode = xml.createElement("target")
+        ftgtnode.setAttribute("dev","fda")
+        ftgtnode.setAttribute("bus","fdc")
+        floppynode.appendChild(ftgtnode)
+        devnode.appendChild(floppynode)
+    disknode = xml.createElement("disk")
+    disknode.setAttribute("type","file")
+    disknode.setAttribute("device","disk")
+    ddrvnode = xml.createElement("driver")
+    ddrvnode.setAttribute("name","qemu")
+    ddrvnode.setAttribute("type",diskformat)
+    disknode.appendChild(ddrvnode)
+    dsrcnode = xml.createElement("source")
+    dsrcnode.setAttribute("file",vmimage)
+    disknode.appendChild(dsrcnode)
+    dtgtnode = xml.createElement("target")
+    dtgtnode.setAttribute("dev","vda")
+    dtgtnode.setAttribute("bus",diskbus)
+    disknode.appendChild(dtgtnode)
+    devnode.appendChild(disknode)
+    # how to handle other disk devices?
+    # how to handle MAC addresses?
+    inputnode = xml.createElement("input")
+    inputnode.setAttribute("type","mouse")
+    inputnode.setAttribute("bus","ps2")
+    devnode.appendChild(inputnode)
+    graphicsnode = xml.createElement("graphics")
+    if ( graphics is not None ):
+        graphicsnode.setAttribute("type",graphics)
+    else:
+        graphicsnode.setAttribute("type","vnc")
+    graphicsnode.setAttribute("port","-1")
+    devnode.appendChild(graphicsnode)
+    consolenode = xml.createElement("console")
+    consolenode.setAttribute("type","pty")
+    devnode.appendChild(consolenode)
+    videonode = xml.createElement("video")
+    modelnode = xml.createElement("model")
+    modelnode.setAttribute("type","cirrus")
+    videonode.appendChild(modelnode)
+    devnode.appendChild(videonode)
+    domnode.appendChild(devnode)
+    xml.appendChild(domnode)
+    #ext.PrettyPrint(xml)
     # virt-install is probably not the right way to do this, but AFAICT it's
     # the easiest way to create a guest and boot it all in one go
     cmd = "virt-install"
@@ -343,6 +450,7 @@ if ( childpid==0 ):
     # create VM domain (which will start it)
     log.write("Starting VM image "+vmimage+" as guest domain "+vmname+" in hypervisor "+hypervisor+"\n")
     log.write(" ".join(args)+"\n")
+    #sys.exit(0)
     os.execvp(cmd,args)
 
 # put resulting process in cpuset, if possible
