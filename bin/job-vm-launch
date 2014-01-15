@@ -19,6 +19,8 @@
 import getopt
 import libvirt
 import os
+import platform
+import random
 import re
 import signal
 import socket
@@ -73,6 +75,14 @@ def cleanup(signal,frame):
     exit(exitcode)
 
 
+# from http://www.centos.org/docs/5/html/5.2/Virtualization/sect-Virtualization-Tips_and_tricks-Generating_a_new_unique_MAC_address.html
+def randomMAC():
+	mac = [ 0x00, 0x16, 0x3e,
+		random.randint(0x00, 0x7f),
+		random.randint(0x00, 0xff),
+		random.randint(0x00, 0xff) ]
+	return ':'.join(map(lambda x: "%02x" % x, mac))
+
 def usage(exitcode):
     sys.stderr.write("Usage:  job-vm-launch [args] <vm-image-file>\n")
     sys.exit(exitcode)
@@ -92,7 +102,7 @@ keepguest = False
 block = True
 otherdisks = []
 bootopts = "hd"
-networkopts = None
+networks = []
 cputype = "host"
 cdrom = None
 location = None
@@ -100,7 +110,8 @@ vmimage = None
 floppy = None
 graphics = None
 conn = None
-
+macaddress = None
+arch = platform.machine()
 
 # main program begins here
 
@@ -230,8 +241,8 @@ else:
 # command line argument handling
 try:
     opts, args = getopt.getopt(sys.argv[1:],
-                               "B:Cc:dF:f:hL:l:Nn:o:r:w:",
-                               ["boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","graphics=","help","image=","keep-clone","keep-guest","location=","log=","name=","network=","no-block","os-type=","os-variant=","ram=","vcpus="])
+                               "B:Cc:dF:f:hL:l:m:Nn:o:r:w:",
+                               ["arch=","boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","graphics=","help","image=","keep-clone","keep-guest","location=","log=","mac=","name=","network=","no-block","os-type=","os-variant=","ram=","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -262,6 +273,8 @@ if ( not show_usage ):
                 pass
         if ( opt[0]=="-l" or opt[0]=="--location" ):
             location = opt[1]
+        if ( opt[0]=="-m" or opt[0]=="--mac" ):
+            macaddress = opt[1]
         if ( opt[0]=="-N" or opt[0]=="--no-block" ):
             block = False
         if ( opt[0]=="-n" or opt[0]=="--name" ):
@@ -272,6 +285,8 @@ if ( not show_usage ):
             memlimitmb = int(opt[1])
         if ( opt[0]=="-w" or opt[0]=="--network" ):
             networkopts = opt[1]
+        if ( opt[0]=="--arch" ):
+            arch = opt[1]
         if ( opt[0]=="--boot" ):
             bootopts = opt[1]
         if ( opt[0]=="--connect" ):
@@ -288,6 +303,8 @@ if ( not show_usage ):
             keepclone = True
         if ( opt[0]=="--keep-guest" ):
             keepguest = True
+        if ( opt[0]=="--network" ):
+            networks.append(opt[1])
         if ( opt[0]=="--os-variant" ):
             osvariant = opt[1]
         if ( opt[0]=="--vcpus" ):
@@ -321,6 +338,9 @@ if ( conn is None ):
 # fork and start VM in child
 childpid  = os.fork()
 if ( childpid==0 ):
+    # generate a default MAC addr if we don't already have one
+    if ( macaddress is None ):
+        macaddress = randomMac()
     # generate XML description of VM
     xml = minidom.Document()
     domnode = xml.createElement("domain")
@@ -336,7 +356,7 @@ if ( childpid==0 ):
     domnode.appendChild(vcpunode)
     osnode = xml.createElement("os")
     ostypenode =  xml.createElement("type")
-    ostypenode.setAttribute("arch","x86_64")
+    ostypenode.setAttribute("arch",arch)
     ostypenode.appendChild(xml.createTextNode("hvm"))
     osnode.appendChild(ostypenode)
     osbootnode = xml.createElement("boot")
@@ -345,13 +365,60 @@ if ( childpid==0 ):
     else:
         osbootnode.setAttribute("dev",bootopts.split(",")[0])
     osnode.appendChild(osbootnode)
+    if ( bootopts is not None and "," in bootopts ):
+        for bootopt in bootopts.split(",")[1:]:
+            thisbootnode = xml.createElement("boot")
+            thisbootnode.setAttribute("dev",bootopt)
+            osnode.appendChild(thisbootnode)
     domnode.appendChild(osnode)
     featurenode = xml.createElement("features")
     featurenode.appendChild(xml.createElement("acpi"))
     featurenode.appendChild(xml.createElement("apic"))
     featurenode.appendChild(xml.createElement("pae"))
     domnode.appendChild(featurenode)
-    # how to handle cpu features?
+    cpunode = xml.createElement("cpu")
+    if ( cputype=="host" ):
+        cpunode.setAttribute("match","host-model")
+    elif ( cputype is not None ):
+        elt = cputype.split(",")
+        cpumodel = elt[0]
+        if ( len(elt)>1 ):
+            cpufeatures = elt[1:]
+        cpunode.setAttribute("match","exact")
+        cpumodelnode = xml.createElement("model")
+        cpumodelnode.appendChild(xml.createTextNode(cpumodel))
+        cpunode.appendChild(cpumodelnode)
+        for cpufeature in cpufeatures:
+            if ( "vendor=" in cpufeature ):
+                vendor = cpufeature.split("=")[1]
+                if ( vendor is not None ):
+                    vendornode = xml.createElement("vendor")
+                    vendornode.appendChild(xml.createTextNode(vendor))
+                    cpunode.appendChild(vendornode)
+            elif ( "match=" in cpufeature ):
+                match = cpufeature.split("=")[1]
+                if ( match is not None ):
+                    cpunode.setAttribute("match",match)
+            elif ( "+" in cpufeature or "-" in cpufeature ):
+                if ( "+" in cpufeature ):
+                    policy = "force"
+                    feature = cpufeature.split("+")[1]
+                elif ( "-" in cpufeature ):
+                    policy = "disable"
+                    feature = cpufeature.split("-")[1]
+                if ( feature is not None ):
+                    featurenode = xml.createElement("feature")
+                    featurenode.setAttribute("policy",policy)
+                    featurenode.setAttribute("name",feature)
+                    cpunode.appendChild(featurenode)
+            else:
+                [policy,feature] =  cpufeature.split("=")
+                if ( policy is not None and feature is not None ):
+                    featurenode = xml.createElement("feature")
+                    featurenode.setAttribute("policy",policy)
+                    featurenode.setAttribute("name",feature)
+                    cpunode.appendChild(featurenode)
+    domnode.appendChild(cpunode)
     clocknode = xml.createElement("clock")
     clocknode.setAttribute("offset","utc")
     domnode.appendChild(clocknode)
@@ -394,12 +461,42 @@ if ( childpid==0 ):
     dsrcnode.setAttribute("file",vmimage)
     disknode.appendChild(dsrcnode)
     dtgtnode = xml.createElement("target")
-    dtgtnode.setAttribute("dev","vda")
     dtgtnode.setAttribute("bus",diskbus)
+    if ( diskbus=="virtio" ):
+        dtgtnode.setAttribute("dev","vda")
+    elif ( diskbus in ["scsi","usb"] ):
+        dtgtnode.setAttribute("dev","sda")
+    elif ( diskbus in ["ide","sata"] ):
+        dtgtnode.setAttribute("dev","hda") 
     disknode.appendChild(dtgtnode)
     devnode.appendChild(disknode)
+    if ( cdrom is not None ):
+        cdromnode = xml.createElement("disk")
+        cdromnode.setAttribute("type","file")
+        cdromnode.setAttribute("device","cdrom")
+        cdrvnode = xml.createElement("driver")
+        cdrvnode.setAttribute("name","qemu")
+        cdromnode.appendChild(cdrvnode)
+        csrcnode = xml.createElement("source")
+        csrcnode.setAttribute("file",cdrom)
+        cdromnode.appendChild(csrcnode)
+        ctgtnode = xml.createElement("target")
+        ctgtnode.setAttribute("dev","hdc")
+        ctgtnode.setAttribute("bus","ide")
+        cdromnode.appendChild(ctgtnode)
+        crdonlynode = xml.createElement("readonly")
+        cdromnode.appendChild(crdonlynode)
+        devnode.appendChild(cdromnode)
     # how to handle other disk devices?
-    # how to handle MAC addresses?
+    # how to handle MAC addresses and other network settings?
+    if ( len(networks)==0 ):
+        ifnode = xml.createElement("interface")
+        ifnode.setAttribute("type","user")
+        macnode = xml.createElement("mac")
+        log.write("macaddress="+macaddress+"\n")
+        macnode.setAttribute("address",macaddress)
+        ifnode.appendChild(macnode)
+        devnode.appendChild(ifnode)
     inputnode = xml.createElement("input")
     inputnode.setAttribute("type","mouse")
     inputnode.setAttribute("bus","ps2")
@@ -426,8 +523,8 @@ if ( childpid==0 ):
     # the easiest way to create a guest and boot it all in one go
     cmd = "virt-install"
     args = [cmd,"--connect="+hypervisor,"--name="+vmname,"--accelerate",
-            "--cpu="+cputype,"--vcpus="+str(vcores),"--ram="+str(memlimitmb),
-            "--os-type="+ostype]
+            "--arch="+arch,"--cpu="+cputype,"--vcpus="+str(vcores),
+            "--ram="+str(memlimitmb),"--os-type="+ostype]
     if ( osvariant is not None ):
         args.append("--os-variant="+osvariant)
     if ( graphics is not None ):
@@ -445,8 +542,11 @@ if ( childpid==0 ):
     args.extend(["--disk","path="+vmimage+",device=disk,bus="+diskbus+",format="+diskformat])
     for disk in otherdisks:
         args.extend(["--disk",disk])
-    if ( networkopts is not None ):
-        args.extend(["--network",networkopts])
+    if ( len(networks)>0 ):
+        for network in networks:
+            args.extend(["--network",network])
+    elif ( macaddress is not None ):
+        args.append("--mac="+macaddress)
     # create VM domain (which will start it)
     log.write("Starting VM image "+vmimage+" as guest domain "+vmname+" in hypervisor "+hypervisor+"\n")
     log.write(" ".join(args)+"\n")
