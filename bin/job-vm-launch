@@ -109,10 +109,17 @@ def usage(exitcode):
     sys.exit(exitcode)
 
 
+# main program begins here
+
 # misc default settings
 log = sys.stdout
 show_usage = False
 exitcode=0
+hypervisor = "qemu:///session"
+conn = None
+vmimage = None
+vmname = None
+arch = platform.machine()
 diskbus = "virtio"
 diskformat = "raw"
 ostype = "linux"
@@ -124,17 +131,13 @@ block = True
 otherdisks = []
 bootopts = "hd"
 networks = []
+macaddress = None
 cputype = "host"
 cdrom = None
 location = None
-vmimage = None
 floppy = None
 graphics = None
-conn = None
-macaddress = None
-arch = platform.machine()
-
-# main program begins here
+validatexml = False
 
 # find cpuset/cgroup root, if any
 cpusetroot = None
@@ -155,21 +158,6 @@ if ( "PBS_JOBID" in os.environ ):
 else:
     sys.stderr.write("Not in a PBS job, exiting!\n")
     sys.exit(-1)
-
-# figure out a default guest name
-vmnum = 0
-hypervisor = "qemu:///session"
-conn = connect(hypervisor)
-for vmid in conn.listDomainsID():
-    thisvm = conn.lookupByID(vmid).name()
-    if ( jobid+"-"+hostname+"-vm" in thisvm ):
-        m = re.match("^"+jobid+"-"+hostname+"-vm(\d+)",thisvm)
-        thisvmnum = int(m.group(1))
-        if ( thisvmnum>=vmnum ):
-            vmnum=thisvmnum+1
-vmname = jobid+"-"+hostname+"-vm"+str(vmnum)
-conn.close()
-conn = None
 
 # figure out number of virtual cores
 # default to 1, just in case nothing else is set
@@ -210,7 +198,7 @@ if ( cpusetroot is not None and cpuset is not None and
     fd.close()
     # cgroup mem is in bytes
     memlimitmb = cgmemlimit/(1024*1024)
-else:
+elif ( which("qstat") is not None ):
 # if the cpuset/cgroup is no help, see if the job has a mem limit set
 # also look for a core count if there's not one already set
     qmlimit = None
@@ -263,7 +251,7 @@ else:
 try:
     opts, args = getopt.getopt(sys.argv[1:],
                                "B:Cc:dF:f:hL:l:m:Nn:o:r:w:",
-                               ["arch=","boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","graphics=","help","image=","keep-clone","keep-guest","location=","log=","mac=","name=","network=","no-block","os-type=","os-variant=","ram=","vcpus="])
+                               ["arch=","boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","graphics=","help","image=","keep-clone","keep-guest","location=","log=","mac=","name=","network=","no-block","os-type=","os-variant=","ram=","validate-xml","vcpus="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -328,6 +316,8 @@ if ( not show_usage ):
             networks.append(opt[1])
         if ( opt[0]=="--os-variant" ):
             osvariant = opt[1]
+        if ( opt[0]=="--validate-xml" ):
+            validatexml = True
         if ( opt[0]=="--vcpus" ):
             vcores = int(opt[1])
 if ( show_usage ):
@@ -355,13 +345,43 @@ if ( cloneimg ):
 # connect to the hypervisor
 if ( conn is None ):
     conn = connect(hypervisor)
+    if ( conn is None and hypervisor=="qemu:///session" ):
+        # work around a bug in some older libvirtd versions WRT qemu:///session
+        # by starting libvirtd as user manually and then retrying connection
+        libvirtdpid = os.fork()
+        if ( libvirtdpid==0 ):
+            os.environ['PATH'] = "/sbin:/usr/sbin:"+os.environ['PATH']
+            if ( which("libvirtd") is not None ):
+                cmd = "libvirtd"
+                args = [cmd]
+                os.execvp(cmd,args)
+            else:
+                log.write("Could not find libvirtd in PATH="+os.environ['PATH']+"\n")
+                sys.exit(-8)
+        time.sleep(5)
+        conn = connect(hypervisor)
+    if ( conn is None ):
+        log.write("Unable to connect to hypervisor "+hypervisor+"\n")
+        sys.exit(-8)
+
+# figure out a guest name, if one isn't already set
+if ( vmname is None ):
+    vmnum = 0
+    for vmid in conn.listDomainsID():
+        thisvm = conn.lookupByID(vmid).name()
+        if ( jobid+"-"+hostname+"-vm" in thisvm ):
+            m = re.match("^"+jobid+"-"+hostname+"-vm(\d+)",thisvm)
+            thisvmnum = int(m.group(1))
+            if ( thisvmnum>=vmnum ):
+                vmnum=thisvmnum+1
+    vmname = jobid+"-"+hostname+"-vm"+str(vmnum)
 
 # fork and start VM in child
 childpid  = os.fork()
 if ( childpid==0 ):
     # generate a default MAC addr if we don't already have one
     if ( macaddress is None ):
-        macaddress = randomMac()
+        macaddress = randomMAC()
         
     # generate XML description of VM
     xml = minidom.Document()
@@ -542,21 +562,32 @@ if ( childpid==0 ):
     devnode.appendChild(videonode)
     domnode.appendChild(devnode)
     xml.appendChild(domnode)
-    # 'twould be nice to validate the XML here...
 
     # save XML, if possible
     try:
-        xml.writexml(open("/tmp/"+vmname+".xml","w"),"","  ","\n")
+        #xml.writexml(open("/tmp/"+vmname+".xml","w"),"","  ","\n")
+        xml.writexml(open("/tmp/"+vmname+".xml","w"))
         log.write("Saved guest description as /tmp/"+vmname+".xml\n")
     except:
         log.write("Failed to save guest description as /tmp/"+vmname+".xml\n")
+
+    # 'twould be nice to validate the XML here...
+    if ( validatexml and
+         os.path.exists("/tmp/"+vmname+".xml") and
+         which("virt-xml-validate") is not None ):
+        try:
+            exitcode = os.system("virt-xml-validate /tmp/"+vmname+".xml")
+        except:
+            raise RuntimeError("virt-xml-validate /tmp/"+vmname+".xml failed")
+        if ( exitcode!=0 ):
+            sys.exit(exitcode)
 
     # start VM
     try:
         guestvm = conn.createXML(xml.toxml(),0)
         log.write("Started guest "+vmname+"\n")
     except:
-        log.write("Fsiled to start guest "+vmname+"\n")
+        log.write("Failed to start guest "+vmname+"\n")
         sys.exit(-1)
 
     # set signal handler in case the job ends before the VM shuts down
@@ -567,7 +598,7 @@ if ( childpid==0 ):
     # wait for VM to end
     if ( block ):
         while ( guestvm.isActive() ):
-            time.sleep(60)
+            time.sleep(1)
     sys.exit(0)
 
 # put resulting process in cpuset, if possible
