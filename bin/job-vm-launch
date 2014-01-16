@@ -77,11 +77,32 @@ def cleanup(signal,frame):
 
 # from http://www.centos.org/docs/5/html/5.2/Virtualization/sect-Virtualization-Tips_and_tricks-Generating_a_new_unique_MAC_address.html
 def randomMAC():
-	mac = [ 0x00, 0x16, 0x3e,
-		random.randint(0x00, 0x7f),
+	mac = [ 0xde, 0xad, 0xbe, 0xef,
 		random.randint(0x00, 0xff),
 		random.randint(0x00, 0xff) ]
 	return ':'.join(map(lambda x: "%02x" % x, mac))
+
+
+# From http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
+def which(program):
+    def is_exe(fpath):
+        return os.path.exists(fpath) and os.access(fpath, os.X_OK)
+    def ext_candidates(fpath):
+        yield fpath
+        for ext in os.environ.get("PATHEXT", "").split(os.pathsep):
+            yield fpath + ext
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            for candidate in ext_candidates(exe_file):
+                if is_exe(candidate):
+                    return candidate
+    return None
+
 
 def usage(exitcode):
     sys.stderr.write("Usage:  job-vm-launch [args] <vm-image-file>\n")
@@ -433,9 +454,12 @@ if ( childpid==0 ):
     crashnode.appendChild(xml.createTextNode("restart"))
     domnode.appendChild(crashnode)
     devnode = xml.createElement("devices")
-    emunode = xml.createElement("emulator")
-    emunode.appendChild(xml.createTextNode("/bin/qemu-kvm"))
-    devnode.appendChild(emunode)
+    if ( which("qemu-kvm") is not None ):
+        emunode = xml.createElement("emulator")
+        emunode.appendChild(xml.createTextNode(which("qemu-kvm")))
+        devnode.appendChild(emunode)
+    else:
+        raise RuntimeError("Cannot find qemu-kvm")
     if ( floppy is not None ):
         floppynode = xml.createElement("disk")
         floppynode.setAttribute("type","file")
