@@ -58,15 +58,20 @@ def cleanup(signal,frame):
         except:
             log.write("cleanup:  Could not find VM "+vmname+"\n")
             sys.exit(-1)
-        if ( guest.isActive() ): 
-            log.write("Shutting down guest "+vmname+"\n")
-            guest.shutdown()
-            guest.destroy()
-        if ( keepguest ):
-            log.write("Keeping guest "+vmname+"\n")
-        else:
-            log.write("Removing guest "+vmname+"\n")
-            guest.undefine()
+        try:
+            if ( guest.isActive() ): 
+                log.write("Shutting down guest "+vmname+"\n")
+                guest.shutdown()
+                guest.destroy()
+            if ( keepguest ):
+                log.write("Keeping guest "+vmname+"\n")
+            else:
+                log.write("Removing guest "+vmname+"\n")
+                guest.undefine()
+        except:
+            # if we got here, libvirtd probably already cleaned up the guest
+            # before we could; do nothing
+            pass
     if ( cloneimg and not keepclone and os.path.exists(vmimage) ):
         log.write("Deleting clone image "+vmimage+"\n")
         os.unlink(vmimage)
@@ -597,8 +602,13 @@ if ( childpid==0 ):
 
     # wait for VM to end
     if ( block ):
-        while ( guestvm.isActive() ):
-            time.sleep(1)
+        try:
+            while ( guestvm.isActive() ):
+                time.sleep(1)
+        except:
+            # the guest probably went away while we were sleeping;
+            # do nothing
+            pass
     sys.exit(0)
 
 # put resulting process in cpuset, if possible
