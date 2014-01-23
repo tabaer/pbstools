@@ -85,7 +85,9 @@ def randomMAC():
 	mac = [ 0xde, 0xad, 0xbe, 0xef,
 		random.randint(0x00, 0xff),
 		random.randint(0x00, 0xff) ]
-	return ':'.join(map(lambda x: "%02x" % x, mac))
+        macaddr = ':'.join(map(lambda x: "%02x" % x, mac))
+        log.write("Using randomly generated MAC address "+macaddr+"\n")
+	return macaddr
 
 
 # From http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
@@ -384,7 +386,49 @@ if ( vmname is None ):
 # fork and start VM in child
 childpid  = os.fork()
 if ( childpid==0 ):
-    # generate a default MAC addr if we don't already have one
+    # if there's no MAC address set yet, see if there's one set in VM image
+    if ( macaddress is None ):
+        try:
+            # from http://libguestfs.org/guestfs-python.3.html
+            import guestfs
+            g = guestfs.GuestFS(python_return_dict=True)
+            g.add_drive_opts(vmimage,format=diskformat,readonly=1)
+            g.launch()
+            roots = g.inspect_os()
+            if ( len(roots)>0 ):
+                for root in roots:
+                    # figure out distro
+                    distro = g.inspect_get_distro(root)
+                    # "mount" file systems
+                    mps = g.inspect_get_mountpoints(root)
+                    def compare(a, b): return len(a) - len(b)
+                    for device in sorted (mps.keys(),compare):
+                        try:
+                            g.mount_ro(mps[device],device)
+                        except RuntimeError as msg:
+                            pass
+                    iffile = None
+                    if ( distro in ["ubuntu"] ):
+                        iffile = "/etc/network/interfaces"
+                    elif ( distro in ["redhat","centos","fedora"] ):
+                        if ( g.exists("/etc/sysconfig/network-scripts/ifcfg-em1") ):
+                            iffile = "/etc/sysconfig/network-scripts/ifcfg-em1"
+                        else:
+                            iffile = "/etc/sysconfig/network-scripts/ifcfg-eth0"
+                    elif ( distro in ["suse","sles"] ):
+                        iffile = "/etc/sysconfig/network/ifcfg-eth0"
+                    if ( distro in ["ubuntu"] ):
+                        # not sure how to do this for ubuntu
+                        pass
+                    else:
+                        for line in g.egrep("^HWADDR=",iffile):
+                            macaddress = line.split("=")[1]
+                    # unmount everything
+                    g.umount_all()
+                    g.close()
+        except:
+            pass
+    # generate a default MAC addr if we don't have one at this point
     if ( macaddress is None ):
         macaddress = randomMAC()
         
@@ -590,15 +634,36 @@ if ( childpid==0 ):
     # start VM
     try:
         guestvm = conn.createXML(xml.toxml(),0)
-        log.write("Started guest "+vmname+"\n")
+        log.write("Started guest "+vmname+" in hypervisor "+hypervisor+"\n")
+        log.write("To connect to VM text console, run \"virsh --connect="+hypervisor+" console "+vmname+"\"\n")
+        log.write("To connect to VM graphical console, run \"virt-viewer --connect="+hypervisor+" --wait "+vmname+"\"\n")
     except:
-        log.write("Failed to start guest "+vmname+"\n")
+        log.write("Failed to start guest "+vmname+" in hypervisor "+hypervisor+"\n")
         sys.exit(-1)
 
     # set signal handler in case the job ends before the VM shuts down
     # or user hits ^C
     signal.signal(signal.SIGINT,cleanup)
     signal.signal(signal.SIGTERM,cleanup)
+
+    # give the VM some time for its network interface to come up
+    time.sleep(15)
+
+    # give job owner some hints about how to connect to VM
+    if ( macaddress is not None ):
+        ipaddr = None
+        arp = "arp | grep -i "+macaddress+" | awk '{print $1}' | head -1"
+        fd = os.popen(arp)
+        for line in fd.readlines():
+            ipaddr = line[:-1]
+        fd.close()
+        if ( ipaddr is not None ):
+            log.write("VM MAC address "+macaddress+" has IP address "+ipaddr+"\n")
+        else:
+            log.write("VM MAC address "+macaddress+" does not appear in host ARP table (normal for hypervisor=qemu:///session)\n")
+    else:
+        log.write("No MAC address set\n")
+    log.flush()
 
     # wait for VM to end
     if ( block ):
