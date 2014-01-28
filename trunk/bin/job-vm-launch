@@ -27,7 +27,7 @@ import socket
 import sys
 import time
 import uuid
-from xml.dom import minidom,ext
+from xml.dom import minidom
 
 
 global cloneimg
@@ -423,6 +423,8 @@ if ( childpid==0 ):
                     else:
                         for line in g.egrep("^HWADDR=",iffile):
                             macaddress = line.split("=")[1]
+                            # strip out quotes, if there are any
+                            macaddress = macaddress.replace('"','').lower()
                     # unmount everything
                     g.umount_all()
                     g.close()
