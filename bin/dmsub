@@ -11,10 +11,13 @@
 
 import getopt
 import datetime
-import os.path
+import os
+import shutil
 import subprocess
 import sys
+import uuid
 
+credcache = False
 debug = False
 hold = False
 blksize = 1048576
@@ -160,7 +163,7 @@ class TransferList(object):
             return ()
 
 class ScheduledDataTransfer(object):
-    def __init__(self,filename=None,desctype="urlpair",movertype="supermover",batchtype="pbs",server=None,port=None):
+    def __init__(self,filename=None,desctype="urlpair",movertype="supermover",batchtype="pbs",server=None,port=None,credcache=False):
         self.setName("dmsub")
         self.setWalltime("1:00:00")
         self.setQueue(None)
@@ -170,6 +173,7 @@ class ScheduledDataTransfer(object):
         self.setBatchType(batchtype)
         self.setServer(server)
         self.setPort(port)
+        self.setCredCache(credcache)
         self._cachedlist = None
         self._needupdate = True
         self._errlog = None
@@ -216,7 +220,7 @@ class ScheduledDataTransfer(object):
         return self._outlog
 
     def setJoinLogs(self,joinlogs):
-        self._joinlog = joinlogs
+        self._joinlogs = joinlogs
 
     def getJoinLogs(self):
         return self._joinlogs
@@ -289,6 +293,12 @@ class ScheduledDataTransfer(object):
 
     def getPort(self):
         return self._Port
+
+    def setCredCache(self,credcache):
+        self._credcache = credcache
+
+    def getCredCache(self):
+        return self._credcache
 
     def transferList(self):
         if ( not self._needupdate and self._cachedlist is not None ):
@@ -487,6 +497,7 @@ class ScheduledDataTransfer(object):
 
     def _submitPBS(self,dosubmit):
         jobid = None
+        epilogue = ""
         if ( self.getMoverType()=="stork" or self.getMoverType()=="rft" ):
             raise RuntimeError, "mover type \""+self.getMoverType()+"\" is incompatible with PBS"
         if ( debug ):
@@ -518,7 +529,7 @@ class ScheduledDataTransfer(object):
         if ( self.getQueue() is not None ):
             pin.write("#PBS -q "+self.getQueue()+"\n")
         if ( self.getDependency() is not None ):
-            pin.write("#PBS -W depend=afterok:"+self.getDependency()+"\n")
+            pin.write("#PBS -W depend=afterok:"+(",afterok:".join(self.getDependency().split(":")))+"\n")
         if ( hold ):
             pin.write("#PBS -h\n")
         if ( self.getVars() is not None ):
@@ -540,7 +551,19 @@ class ScheduledDataTransfer(object):
         elif ( "X509_USER_PROXY" in os.environ and os.path.exists(os.environ["X509_USER_PROXY"]) ):
             if ( debug ):
                 sys.stderr.write("using alternate x509 proxy "+os.environ["X509_USER_PROXY"]+"\n")
-            pin.write("export X509_USER_PROXY="+os.environ["X509_USER_PROXY"]+"\n")
+            if ( self.getCredCache() ):
+                # the following assumes that $HOME is shared with the
+                # data mover nodes on which the job will run
+                cachedir = os.environ["HOME"]+"/.credcache"
+                if ( not os.path.exists(cachedir) ):
+                    os.mkdir(cachedir,0700)
+                newcred = cachedir+"/"+str(uuid.uuid1())
+                shutil.copyfile(os.environ["X509_USER_PROXY"],newcred)
+                os.chmod(newcred,0600)
+                pin.write("export X509_USER_PROXY="+newcred+"\n")
+                epilogue = epilogue+"rm -f "+newcred+"\n"
+            else:
+                pin.write("export X509_USER_PROXY="+os.environ["X509_USER_PROXY"]+"\n")
         if ( self.getMoverType()=="guc" or self.getMoverType()=="globus-url-copy" ):
             pin.write("export GUC_OPTIONS=\"-q -cd -r -stripe -fast -tcp-bs "+str(list.getOption("tcp_buffer"))+" -bs "+str(list.getOption("block_size")))
             if ( not list.getOption("binary") ):
@@ -571,6 +594,10 @@ class ScheduledDataTransfer(object):
             pin.flush()
         if ( debug ):
                 sys.stderr.write("done writing url list\n")
+        if ( epilogue!="" ):
+            if ( debug ):
+                sys.stderr.write("appending epilogue to script\n")
+            pin.write(epilogue)
         pin.close()
         try:
             if ( debug ):
@@ -797,6 +824,7 @@ def usage():
     sys.stderr.write(" -q dest, --queue=dest\n\tSubmit data transfer job to batch queue \"dest\" (default is "+str(queue)+")\n")
     sys.stderr.write(" -s n, --streams=n\n\tUse up to n striped data streams whenever possible (default is "+str(streams)+")\n")
     sys.stderr.write(" -S svr, --server=svr\n\tConnect to data transfer service on server \"svr\"\n")
+    sys.stderr.write(" -X, --cache-credential\n\tCache GSI credential, if found\n")
     sys.stderr.write("\nSupported batch environments:  pbs, torque, condor, stork, rft\n")
     sys.stderr.write("Supported transfer descriptions:  urlpair, dmover, rft, stork\n")
     sys.stderr.write("Supported data movers:  globus-url-copy, supermover, stork, rft\n")
@@ -816,6 +844,7 @@ def read_cfg(file):
     global blksize
     global vars
     global pbs_prologue
+    global credcache
     if ( not os.path.exists(file) ):
         raise IOError,file+" does not exist"
     elif ( not os.path.isfile(file) ):
@@ -864,9 +893,10 @@ try:
     if ( debug ):
         sys.stderr.write("invoking getopt\n")
     opts, args = getopt.getopt(sys.argv[1:],
-                               "b:C:c:D:de:F:f:Hhj:l:M:no:N:P:q:S:s:v:w:",
+                               "b:C:c:D:de:F:f:Hhj:l:M:no:N:P:q:S:s:v:w:X",
                                ["batch=",
                                 "credential=",
+                                "cache-credential",
                                 "config=s",
                                 "debug",
                                 "dependency=",
@@ -980,11 +1010,13 @@ for opt in opts:
         vars = opt[1]
     if ( opt[0]=="-w" ):
         walltime = opt[1]+":00"
+    if ( opt[0]=="-X" or opt[0]=="--cache-credential" ):
+        credcache = True
         
 for file in args:
     if ( debug ):
         sys.stderr.write("creating job from file "+file+"\n")
-    job = ScheduledDataTransfer(file,informat,mover,rm,server,port)
+    job = ScheduledDataTransfer(file,informat,mover,rm,server,port,credcache)
     if ( jobname is not None ):
         job.setName(jobname)
     if ( queue is not None ):
