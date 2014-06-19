@@ -17,7 +17,7 @@ import subprocess
 import sys
 import uuid
 
-credcache = False
+credcache = True
 debug = False
 hold = False
 blksize = 1048576
@@ -481,6 +481,22 @@ class ScheduledDataTransfer(object):
             raise RuntimeError,"invalid description type \""+type+"\""
         fd.close()
 
+    def _doCredCache(self,proxy):
+        if ( self.getCredCache() ):
+            # the following assumes that $HOME is shared with the
+            # data mover nodes on which the job will run
+            cachedir = os.environ["HOME"]+"/.credcache"
+            if ( not os.path.exists(cachedir) ):
+                os.mkdir(cachedir,0700)
+            newcred = cachedir+"/"+str(uuid.uuid1())
+            shutil.copyfile(os.environ["X509_USER_PROXY"],newcred)
+            os.chmod(newcred,0600)
+            if ( debug ):
+                sys.stderr.write("caching credential "+proxy+" as "+newcred+"\n")
+            return newcred
+        else:
+            return proxy
+        
     def submit(self,dosubmit):
         jobid = None
         if ( self.getBatchType()=="pbs" or self.getBatchType()=="torque" ):
@@ -546,24 +562,20 @@ class ScheduledDataTransfer(object):
         list = self.transferList()
         if ( list.getOption("x509proxy")!="default" ):
             if ( debug ):
-                sys.stderr.write("using alternate x509 proxy "+list.getOption("x509proxy")+"\n")
-            pin.write("export X509_USER_PROXY="+list.getOption("x509proxy")+"\n")
-        elif ( "X509_USER_PROXY" in os.environ and os.path.exists(os.environ["X509_USER_PROXY"]) ):
-            if ( debug ):
-                sys.stderr.write("using alternate x509 proxy "+os.environ["X509_USER_PROXY"]+"\n")
+                sys.stderr.write("using x509 proxy "+list.getOption("x509proxy")+"\n")
             if ( self.getCredCache() ):
-                # the following assumes that $HOME is shared with the
-                # data mover nodes on which the job will run
-                cachedir = os.environ["HOME"]+"/.credcache"
-                if ( not os.path.exists(cachedir) ):
-                    os.mkdir(cachedir,0700)
-                newcred = cachedir+"/"+str(uuid.uuid1())
-                shutil.copyfile(os.environ["X509_USER_PROXY"],newcred)
-                os.chmod(newcred,0600)
+                newcred = self._doCredCache(list.getOption("x509proxy"))
                 pin.write("export X509_USER_PROXY="+newcred+"\n")
                 epilogue = epilogue+"rm -f "+newcred+"\n"
             else:
-                pin.write("export X509_USER_PROXY="+os.environ["X509_USER_PROXY"]+"\n")
+                pin.write("export X509_USER_PROXY="+list.getOption("x509proxy")+"\n")
+        elif ( "X509_USER_PROXY" in os.environ and os.path.exists(os.environ["X509_USER_PROXY"]) ):
+            if ( debug ):
+                sys.stderr.write("using x509 proxy "+os.environ["X509_USER_PROXY"]+"\n")
+            if ( self.getCredCache() ):
+                newcred = self._doCredCache(os.environ["X509_USER_PROXY"])
+                pin.write("export X509_USER_PROXY="+newcred+"\n")
+                epilogue = epilogue+"rm -f "+newcred+"\n"
         if ( self.getMoverType()=="guc" or self.getMoverType()=="globus-url-copy" ):
             pin.write("export GUC_OPTIONS=\"-q -cd -r -stripe -fast -tcp-bs "+str(list.getOption("tcp_buffer"))+" -bs "+str(list.getOption("block_size")))
             if ( not list.getOption("binary") ):
@@ -639,12 +651,18 @@ class ScheduledDataTransfer(object):
         list = self.transferList()
         proxy = list.getOption("x509proxy")
         if ( proxy is not None and proxy!="default" and os.path.exists(proxy) ):
-            os.environ["X509_PROXY"] = proxy
+            if ( self.getCredCache() ):
+                newcred = self._doCredCache(proxy)
+                os.environ["X509_PROXY"] = newcred
+            else:
+                os.environ["X509_PROXY"] = proxy
+            if ( debug ):
+                sys.stderr.write("using x5090 proxy "+os.environ["X509_PROXY"]+"\n")
         tmpfile = self._tmpDir()+"/u"+str(os.getuid())+"_p"+str(os.getpid())+".dmover"
         self.writeDescription(tmpfile,"dmover")
         cmd = "dsub"
-        if ( proxy is not None and proxy!="default" and os.path.exists(proxy) ):
-            cmd += " -c "+proxy
+        if ( os.environ["X509_PROXY"] is not None and os.environ["X509_PROXY"]!="default" and os.path.exists(os.environ["X509_PROXY"]) ):
+            cmd += " -c "+os.environ["X509_PROXY"]
         if ( self.getQueue() is not None ):
             cmd += " -q "+self.getQueue()
         if ( self.getDependency() is not None ):
@@ -699,7 +717,11 @@ class ScheduledDataTransfer(object):
         jobid = None
         proxy = self.transferList().getOption("x509proxy")
         if ( proxy is not None and proxy!="default" and os.path.exists(proxy) ):
-            os.environ["X509_PROXY"] = proxy
+            if ( self.getCredCache() ):
+                newcred = self._doCredCache(proxy)
+                os.environ["X509_PROXY"] = newcred
+            else:
+                os.environ["X509_PROXY"] = proxy
         tmpfile = self._tmpDir()+"/u"+str(os.getuid())+"_p"+str(os.getpid())+".rft"
         self.writeDescription(tmpfile,"rft")
         cmd = "rft -h "+self.getServer()
@@ -736,6 +758,16 @@ class ScheduledDataTransfer(object):
     def _submitStork(self,dosubmit):
         if ( self.getMoverType()!="stork" ):
             raise RuntimeError("mover type \""+self.getMoverType()+"\" is incompatible with Stork")
+        proxy = self.transferList().getOption("x509proxy")
+        if ( proxy is not None and proxy!="default" and os.path.exists(proxy) ):
+            if ( self.getCredCache() ):
+                newcred = self._doCredCache(proxy)
+                os.environ["X509_PROXY"] = newcred
+            else:
+                os.environ["X509_PROXY"] = proxy
+        elif ( ("X509_PROXY" in os.environ.keys()) and  self.getCredCache() ):
+            newcred = self._doCredCache(os.environ["X509_PROXY"])
+            os.environ["X509_PROXY"] = newcred
         jobid = None
         tmpfile = self._tmpDir()+"/u"+str(os.getuid())+"_p"+str(os.getpid())+".stork"
         self.writeDescription(tmpfile,"stork")
@@ -824,7 +856,8 @@ def usage():
     sys.stderr.write(" -q dest, --queue=dest\n\tSubmit data transfer job to batch queue \"dest\" (default is "+str(queue)+")\n")
     sys.stderr.write(" -s n, --streams=n\n\tUse up to n striped data streams whenever possible (default is "+str(streams)+")\n")
     sys.stderr.write(" -S svr, --server=svr\n\tConnect to data transfer service on server \"svr\"\n")
-    sys.stderr.write(" -X, --cache-credential\n\tCache GSI credential, if found\n")
+    sys.stderr.write(" -X, --cache-credential\n\tCache GSI credential if found\n (default)")
+    sys.stderr.write(" -x, --no-cache-credential\n\tDo not cache GSI credential if found\n")
     sys.stderr.write("\nSupported batch environments:  pbs, torque, condor, stork, rft\n")
     sys.stderr.write("Supported transfer descriptions:  urlpair, dmover, rft, stork\n")
     sys.stderr.write("Supported data movers:  globus-url-copy, supermover, stork, rft\n")
@@ -893,7 +926,7 @@ try:
     if ( debug ):
         sys.stderr.write("invoking getopt\n")
     opts, args = getopt.getopt(sys.argv[1:],
-                               "b:C:c:D:de:F:f:Hhj:l:M:no:N:P:q:S:s:v:w:X",
+                               "b:C:c:D:de:F:f:Hhj:l:M:no:N:P:q:S:s:v:w:Xx",
                                ["batch=",
                                 "credential=",
                                 "cache-credential",
@@ -908,6 +941,7 @@ try:
                                 "limit=",
                                 "mover=",
                                 "name=",
+                                "no-cache-credential",
                                 "nosubmit",
                                 "outlog=",
                                 "port=",
@@ -1012,6 +1046,15 @@ for opt in opts:
         walltime = opt[1]+":00"
     if ( opt[0]=="-X" or opt[0]=="--cache-credential" ):
         credcache = True
+    if ( opt[0]=="-x" or opt[0]=="--no-cache-credential" ):
+        credcache = False
+
+# What to do if credcache is set but no cred is specified?
+# Look for default and use that...
+if ( credcache and not ( "X509_USER_PROXY" in os.environ.keys() ) ):
+    defproxy = "/tmp/x509up_u"+str(os.getuid())
+    if ( os.path.exists(defproxy) and os.access(defproxy,os.R_OK) ):
+        os.environ["X509_USER_PROXY"] = defproxy
         
 for file in args:
     if ( debug ):
