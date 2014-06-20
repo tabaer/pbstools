@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # dmsub:  Submit a data movement job using a variety of methods.
-# Copyright 2009, University of Tennessee
+# Copyright 2009,2014 University of Tennessee
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
