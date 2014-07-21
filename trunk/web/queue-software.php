@@ -1,6 +1,6 @@
 <?php
 # Copyright 2007, 2008 Ohio Supercomputer Center
-# Copyright 2009, 2010, 2011 University of Tennessee
+# Copyright 2009, 2010, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/queue-software.php $
 # $Revision: 315 $
@@ -148,6 +148,7 @@ if ( isset($_POST['system']) )
       }
 
     db_disconnect($db);
+    page_timer();
     bookmarkable_url();
   }
 else

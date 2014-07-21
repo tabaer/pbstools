@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006 Ohio Supercomputer Center
-# Copyright 2009, 2010, 2011 University of Tennessee
+# Copyright 2009, 2010, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -75,6 +75,7 @@ if ( isset($_POST['jobid']) )
 	echo "</TABLE>\n";
       }
     db_disconnect($db);
+    page_timer();
     bookmarkable_url();
   }
 else

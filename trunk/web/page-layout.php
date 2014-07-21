@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008, 2009, 2011 University of Tennessee
+# Copyright 2008, 2009, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -9,6 +9,7 @@ require_once 'dbutils.php';
 
 function page_header($title)
 {
+  $GLOBALS['pagestart'] = microtime(true);
   echo "<HTML>\n<HEAD>\n";
   echo "<TITLE>".$title."</TITLE>\n";
   echo "<LINK rel=stylesheet type=\"text/css\" href=\"default.css\">\n";
@@ -64,7 +65,7 @@ function page_header($title)
   echo "      <LI><A href=\"software-usage-by-week.php\">Week</A></LI>\n";
   echo "    </UL>\n";
   echo "    <UL><U>Software packages used by</U>\n";
-  echo "      <LI><A href=\"queue-software.php\">Job Class</A></LI>\n";
+#  echo "      <LI><A href=\"queue-software.php\">Job Class</A></LI>\n";
   echo "      <LI><A href=\"user-software.php\">User</A></LI>\n";
   echo "      <LI><A href=\"group-software.php\">Group</A></LI>\n";
   echo "      <LI><A href=\"account-software.php\">Account</A></LI>\n";
@@ -73,7 +74,7 @@ function page_header($title)
   echo "      <LI><A href=\"usage-summary.php\">Usage Summary</A></LI>\n";
 # NOTE Identifying problematic jobs involves site-specific logic.  You may
 # want to comment it out.
-  echo "      <LI><A href=\"problem-jobs.php\">Problematic Jobs</A></LI>\n";
+#  echo "      <LI><A href=\"problem-jobs.php\">Problematic Jobs</A></LI>\n";
   echo "      <LI><A href=\"job-list.php\">Job List</A></LI>\n";
   echo "      <LI><A href=\"active-users.php\">Most Active Users</A></LI>\n";
   echo "      <LI><A href=\"active-groups.php\">Most Active Groups</A></LI>\n";
@@ -232,6 +233,13 @@ function bookmarkable_url()
 	}
     }
   echo "<P>Bookmarkable URL for this report:  <A href=\"".$pageURL."\"><PRE>".htmlspecialchars($pageURL)."</PRE></A></P>\n";
+}
+
+function page_timer()
+{
+  $GLOBALS['pageend'] = microtime(true);
+  $tottime = $GLOBALS['pageend']-$GLOBALS['pagestart'];
+  echo "<P>Page generated in $tottime seconds</P>\n";
 }
 
 ?>
