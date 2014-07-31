@@ -17,12 +17,6 @@ if (isset($_GET['system']))
     $_POST = $_GET;
   }
 
-# list of software packages
-$packages=software_list();
-
-# regular expressions for different software packages
-$pkgmatch=software_match_list();
-
 $title = "Software usage by group ";
 if ( isset($_POST['groupname']) )
   {
@@ -56,7 +50,14 @@ page_header($title);
 
 if ( isset($_POST['system']) )
   {
+    # connect to DB
     $db = db_connect();
+
+    # list of software packages
+    $packages=software_list($db);
+
+    # regular expressions for different software packages
+    #$pkgmatch=software_match_list();
 
     # software usage
     echo "<TABLE border=1>\n";
@@ -64,31 +65,32 @@ if ( isset($_POST['system']) )
     ob_flush();
     flush();
     
-    $first=1;
-    $sql = "SELECT * FROM ( ";
-    foreach ( $packages as $pkg )
-      {
-	if ( $first==1 )
-	  {
-	    $first=0;
-	  }
-	else
-	  {
-	    $sql .= "UNION\n";
-	  }
-	$sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND groupname LIKE '".$_POST['groupname']."' AND ( ";
-	if ( isset($pkgmatch[$pkg]) )
-	  {
-	    $sql .= $pkgmatch[$pkg];
-	  }
-	else
-	  {
-	    $sql .= "script LIKE '%".$pkg."%' OR software LIKE '%".$package."%'";
-	  }
-	$sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
-	$sql .= "\n";
-      }
-    $sql .= " ) AS grpsofttmp WHERE jobs > 0 ORDER BY ".$_POST['order']." DESC";
+//     $first=1;
+//     $sql = "SELECT * FROM ( ";
+//     foreach ( $packages as $pkg )
+//       {
+// 	if ( $first==1 )
+// 	  {
+// 	    $first=0;
+// 	  }
+// 	else
+// 	  {
+// 	    $sql .= "UNION\n";
+// 	  }
+// 	$sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND groupname LIKE '".$_POST['groupname']."' AND ( ";
+// 	if ( isset($pkgmatch[$pkg]) )
+// 	  {
+// 	    $sql .= $pkgmatch[$pkg];
+// 	  }
+// 	else
+// 	  {
+// 	    $sql .= "script LIKE '%".$pkg."%' OR software LIKE '%".$package."%'";
+// 	  }
+// 	$sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
+// 	$sql .= "\n";
+//       }
+//     $sql .= " ) AS grpsofttmp WHERE jobs > 0 ORDER BY ".$_POST['order']." DESC";
+    $sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE sw_app IS NOT NULL AND system LIKE '".$_POST['system']."' AND groupname LIKE '".$_POST['groupname']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
     
     #echo "<PRE>\n".$sql."</PRE>\n";
     $result = db_query($db,$sql);

@@ -17,11 +17,14 @@ if (isset($_GET['system']))
     $_POST = $_GET;
   }
 
+# connect to DB
+$db = db_connect();
+
 # list of software packages
-$packages=software_list();
+#$packages=software_list($db);
 
 # regular expressions for different software packages
-$pkgmatch=software_match_list();
+#$pkgmatch=software_match_list($db);
 
 $title = "Usage summary";
 if ( isset($_POST['system']) )
@@ -52,8 +55,6 @@ page_header($title);
 
 if ( isset($_POST['system']) )
   {
-    $db = db_connect();
-
     # system overview
     echo "<H3>Overview</H3>\n";
     $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, NULL AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY ".$_POST['order']." DESC";
@@ -244,32 +245,33 @@ if ( isset($_POST['system']) )
     if ( isset($_POST['software']) )
       {
 	echo "<H3>Software Usage</H3>\n";
-	$first=1;
-	$sql = "SELECT * FROM ( ";
-	foreach ( $packages as $pkg )
-	  {
-	    if ( $first==1 )
-	      {
-		$first=0;
-	      }
-	    else
-	      {
-		$sql .= "UNION\n";
-	      }
-	    $sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ";
-	    if ( isset($pkgmatch[$pkg]) )
-	      {
-		$sql .= $pkgmatch[$pkg];
-	      }
-	    else
-	      {
-		$sql .= "script LIKE '%".$pkg."%' OR software LIKE '%".$package."%'";
-	      }
-	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
-	    $sql .= "\n";
-	  }
-	$sql .= " ) AS usgsofttmp WHERE jobs>0 ORDER BY ".$_POST['order']." DESC";
-        #echo "<PRE>\n".$sql."</PRE>\n";
+// 	$first=1;
+// 	$sql = "SELECT * FROM ( ";
+// 	foreach ( $packages as $pkg )
+// 	  {
+// 	    if ( $first==1 )
+// 	      {
+// 		$first=0;
+// 	      }
+// 	    else
+// 	      {
+// 		$sql .= "UNION\n";
+// 	      }
+// 	    $sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ";
+// 	    if ( isset($pkgmatch[$pkg]) )
+// 	      {
+// 		$sql .= $pkgmatch[$pkg];
+// 	      }
+// 	    else
+// 	      {
+// 		$sql .= "script LIKE '%".$pkg."%' OR software LIKE '%".$package."%'";
+// 	      }
+// 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
+// 	    $sql .= "\n";
+// 	  }
+// 	$sql .= " ) AS usgsofttmp WHERE jobs>0 ORDER BY ".$_POST['order']." DESC";
+	$sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE sw_app IS NOT NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
+        echo "<PRE>\n".$sql."</PRE>\n";
 	$columns = array("package","jobs","cpuhours","charges","users","groups", "accounts");
 	if (  isset($_POST['table']) )
 	  {
