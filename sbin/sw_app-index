@@ -729,7 +729,7 @@ my $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) || die "$0:  unable to connect to
 
 # iterate over sw pkg patterns
 my %pkgmatch = software_match_list();
-for my $pkg ( keys(%pkgmatch) )
+for my $pkg ( software_list() )
   {
     my $sql;
     if ( $syntaxcheck==0 )
