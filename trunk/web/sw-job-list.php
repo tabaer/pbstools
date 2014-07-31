@@ -49,12 +49,15 @@ else
   }
 page_header($title);
 
+# connect to DB
+$db =db_connect();
+
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
-    $db =db_connect();
     $pkgmatch = software_match_list();
-    $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".cpuhours($db,$_POST['system'])." AS cpuhours, queue, script FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("end",$_POST['start_date'],$_POST['end_date'])." ) AND ".$pkgmatch[$_POST['pkg']]." ORDER BY start_ts;";
+    #$sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".cpuhours($db,$_POST['system'])." AS cpuhours, queue, script FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("end",$_POST['start_date'],$_POST['end_date'])." ) AND ".$pkgmatch[$_POST['pkg']]." ORDER BY start_ts;";
+    $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".cpuhours($db,$_POST['system'])." AS cpuhours, queue, script FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("end",$_POST['start_date'],$_POST['end_date'])." ) AND sw_app='".$_POST['pkg']."' ORDER BY start_ts;";
     #echo "<PRE>".$sql."</PRE>\n";
     $columns = array("system", "jobid", "username", "account", "jobname", "nproc", "nodes", "mem_req", "mem_used", "submit_time", "start_time", "end_time", "walltime_req", "walltime", "cpuhours", "queue", "script");
     $file_base = $_POST['system']."-joblist-".$_POST['start_date']."-".$_POST['end_date'];
@@ -86,7 +89,6 @@ if ( isset($_POST['system']) )
 	$ods_result = db_query($db,$sql);
 	result_as_ods($ods_result,$columns,$file_base);
       }
-    db_disconnect($db);
     page_timer();
     bookmarkable_url();
   }
@@ -95,7 +97,7 @@ else
     begin_form("sw-job-list.php");
 
     virtual_system_chooser();
-    pulldown("pkg","Software package",software_list(),"a_out");
+    pulldown("pkg","Software package",software_list($db),"a_out");
     date_fields();
     checkbox("Generate HTML table","table",1);
     checkbox("Generate CSV file","csv");
@@ -105,5 +107,6 @@ else
     end_form();
   }
 
+db_disconnect($db);
 page_footer();
 ?>

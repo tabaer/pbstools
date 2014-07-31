@@ -42,39 +42,43 @@ if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_d
    }
 page_header($title);
 
+# connect to DB
+$db = db_connect();
+
 # list of software packages
-$packages=software_list();
+$packages=software_list($db);
 
 # regular expressions for different software packages
-$pkgmatch=software_match_list();
+#$pkgmatch=software_match_list($db);
 
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
-    $db = db_connect();
     foreach ($keys as $key)
       {
 	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
 	    $sql = "SELECT ".xaxis_column("walltime").",COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, MIN(TIME_TO_SEC(walltime)) AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( script IS NOT NULL AND ";
-	    if ( isset($pkgmatch[$key]) )
-	      {
-		$sql .= $pkgmatch[$key];
-	      }
-	    else
-	      {
-		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
-	      }
+// 	    if ( isset($pkgmatch[$key]) )
+// 	      {
+// 		$sql .= $pkgmatch[$key];
+// 	      }
+// 	    else
+// 	      {
+// 		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
+// 	      }
+	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY walltime_bucketed UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, 100000000 AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
-	    if ( isset($pkgmatch[$key]) )
-	      {
-		$sql .= $pkgmatch[$key];
-	      }
-	    else
-	      {
-		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
-	      }
+// 	    if ( isset($pkgmatch[$key]) )
+// 	      {
+// 		$sql .= $pkgmatch[$key];
+// 	      }
+// 	    else
+// 	      {
+// 		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
+// 	      }
+	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY hidden;";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
@@ -101,7 +105,6 @@ if ( isset($_POST['system']) )
 	    echo "</TABLE>\n";
 	  }
       }
-    db_disconnect($db);
     page_timer();
     bookmarkable_url();
   }
@@ -117,5 +120,6 @@ else
     end_form();
   }
 
+db_disconnect($db);
 page_footer();
 ?>

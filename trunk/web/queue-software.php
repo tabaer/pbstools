@@ -17,12 +17,6 @@ if (isset($_GET['system']))
     $_POST = $_GET;
   }
 
-# list of software packages
-$packages=software_list();
-
-# regular expressions for different software packages
-$pkgmatch=software_match_list();
-
 $title = "Software usage by queue ";
 if ( isset($_POST['system']) )
   {
@@ -54,6 +48,12 @@ if ( isset($_POST['system']) )
   {
     $db = db_connect();
 
+    # list of software packages
+    #$packages=software_list($db);
+
+    # regular expressions for different software packages
+    #$pkgmatch=software_match_list();
+
     $queues = array();
     $sql = "SELECT DISTINCT(queue) FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ".dateselect("start",$_POST['start_date'],$_POST['end_date']);
     #echo "<PRE>\n".$sql."</PRE>\n";
@@ -84,31 +84,32 @@ if ( isset($_POST['system']) )
 	ob_flush();
 	flush();
 	
-	$first=1;
-	$sql = "SELECT * FROM ( \n";
-	foreach ( $packages as $pkg )
-	  {
-	    if ( $first==1 )
-	      {
-		$first=0;
-	      }
-	    else
-	      {
-		$sql .= "UNION\n";
-	      }
-	    $sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND queue LIKE '".$queue."' AND ( ";
-	    if ( isset($pkgmatch[$pkg]) )
-	      {
-		$sql .= $pkgmatch[$pkg];
-	      }
-	    else
-	      {
-		$sql .= "script LIKE '%".$pkg."%' OR software LIKE '%".$package."%'";
-	      }
-	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
-	    $sql .= "\n";
-	  }
-	$sql .= " ) AS qsofttmp WHERE jobs > 0 ORDER BY ".$_POST['order']." DESC";
+// 	$first=1;
+// 	$sql = "SELECT * FROM ( \n";
+// 	foreach ( $packages as $pkg )
+// 	  {
+// 	    if ( $first==1 )
+// 	      {
+// 		$first=0;
+// 	      }
+// 	    else
+// 	      {
+// 		$sql .= "UNION\n";
+// 	      }
+// 	    $sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND queue LIKE '".$queue."' AND ( ";
+// 	    if ( isset($pkgmatch[$pkg]) )
+// 	      {
+// 		$sql .= $pkgmatch[$pkg];
+// 	      }
+// 	    else
+// 	      {
+// 		$sql .= "script LIKE '%".$pkg."%' OR software LIKE '%".$package."%'";
+// 	      }
+// 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
+// 	    $sql .= "\n";
+// 	  }
+// 	$sql .= " ) AS qsofttmp WHERE jobs > 0 ORDER BY ".$_POST['order']." DESC";
+	$sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE sw_app IS NOT NULL AND system LIKE '".$_POST['system']."' AND queue LIKE '".$queue."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
 	
 	
         #echo "<PRE>\n".$sql."</PRE>\n";
