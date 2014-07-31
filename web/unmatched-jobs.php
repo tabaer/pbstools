@@ -17,11 +17,14 @@ if (isset($_GET['system']))
     $_POST = $_GET;
   }
 
+# connect to DB
+$db = db_connect();
+
 # list of software packages
-$packages=software_list();
+#$packages=software_list($db);
 
 # regular expressions for different software packages
-$pkgmatch=software_match_list();
+#$pkgmatch=software_match_list($db);
 
 if ( isset($_POST['system']) )
   { 
@@ -54,24 +57,23 @@ page_header($title);
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
-    $db = db_connect();
-
     # system summary table
     echo "<H3>System Summary</H3>\n";
-    $sql = "SELECT system, COUNT(jobid) AS jobs, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE script IS NOT NULL";
-    foreach ( $packages as $pkg )
-      {
-	$sql .= " AND ";
-	if ( isset($pkgmatch[$pkg]) )
-	  {
-	    $sql .= "(NOT (".$pkgmatch[$pkg]."))";
-	  }
-	else
-	  {
-	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
-	  }
-      }
-    $sql .= " AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY jobs DESC";
+//     $sql = "SELECT system, COUNT(jobid) AS jobs, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE script IS NOT NULL";
+//     foreach ( $packages as $pkg )
+//       {
+// 	$sql .= " AND ";
+// 	if ( isset($pkgmatch[$pkg]) )
+// 	  {
+// 	    $sql .= "(NOT (".$pkgmatch[$pkg]."))";
+// 	  }
+// 	else
+// 	  {
+// 	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
+// 	  }
+//       }
+//     $sql .= " AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY jobs DESC";
+    $sql = "SELECT system, COUNT(jobid) AS jobs, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE script IS NOT NULL AND sw_app is NULL AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY jobs DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -99,28 +101,29 @@ if ( isset($_POST['system']) )
 
     # account summary table
     echo "<H3>Account Summary</H3>\n";
-    $sql = "SELECT account, system, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours FROM Jobs WHERE ( ";
-    $isfirst = 1;
-    foreach ( $packages as $pkg )
-      {
-	if ( $isfirst==1 )
-	  {
-	    $isfirst = 0;
-	  }
-	else
-	  {
-	    $sql .= " AND ";
-	  }
-	if ( isset($pkgmatch[$pkg]) )
-	  {
-	    $sql .= "NOT (".$pkgmatch[$pkg].")";
-	  }
-	else
-	  {
-	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
-	  }
-      }
-    $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account, system ORDER BY cpuhours DESC";
+//     $sql = "SELECT account, system, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours FROM Jobs WHERE ( ";
+//     $isfirst = 1;
+//     foreach ( $packages as $pkg )
+//       {
+// 	if ( $isfirst==1 )
+// 	  {
+// 	    $isfirst = 0;
+// 	  }
+// 	else
+// 	  {
+// 	    $sql .= " AND ";
+// 	  }
+// 	if ( isset($pkgmatch[$pkg]) )
+// 	  {
+// 	    $sql .= "NOT (".$pkgmatch[$pkg].")";
+// 	  }
+// 	else
+// 	  {
+// 	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
+// 	  }
+//       }
+//     $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account, system ORDER BY cpuhours DESC";
+    $sql = "SELECT account, system, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours FROM Jobs WHERE script IS NOT NULL AND sw_app IS NULL AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account, system ORDER BY cpuhours DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -148,28 +151,29 @@ if ( isset($_POST['system']) )
 
     # user summary table
     echo "<H3>User Summary</H3>\n";
-    $sql = "SELECT DISTINCT(username) AS username, groupname, account, system, COUNT(jobid) AS jobs FROM Jobs WHERE ( ";
-    $isfirst = 1;
-    foreach ( $packages as $pkg )
-      {
-	if ( $isfirst==1 )
-	  {
-	    $isfirst = 0;
-	  }
-	else
-	  {
-	    $sql .= " AND ";
-	  }
-	if ( isset($pkgmatch[$pkg]) )
-	  {
-	    $sql .= "NOT (".$pkgmatch[$pkg].")";
-	  }
-	else
-	  {
-	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
-	  }
-      }
-    $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, account, system ORDER BY jobs DESC";
+//     $sql = "SELECT DISTINCT(username) AS username, groupname, account, system, COUNT(jobid) AS jobs FROM Jobs WHERE ( ";
+//     $isfirst = 1;
+//     foreach ( $packages as $pkg )
+//       {
+// 	if ( $isfirst==1 )
+// 	  {
+// 	    $isfirst = 0;
+// 	  }
+// 	else
+// 	  {
+// 	    $sql .= " AND ";
+// 	  }
+// 	if ( isset($pkgmatch[$pkg]) )
+// 	  {
+// 	    $sql .= "NOT (".$pkgmatch[$pkg].")";
+// 	  }
+// 	else
+// 	  {
+// 	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
+// 	  }
+//       }
+//     $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, account, system ORDER BY jobs DESC";
+    $sql = "SELECT DISTINCT(username) AS username, groupname, account, system, COUNT(jobid) AS jobs FROM Jobs WHERE script IS NOT NULL AND sw_app IS NULL AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, account, system ORDER BY jobs DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -206,26 +210,27 @@ if ( isset($_POST['system']) )
 	  }
       }
     $sql .= " FROM Jobs WHERE ( ";
-    $isfirst = 1;
-    foreach ( $packages as $pkg )
-      {
-	if ( $isfirst==1 )
-	  {
-	    $isfirst = 0;
-	  }
-	else
-	  {
-	    $sql .= " AND ";
-	  }
-	if ( isset($pkgmatch[$pkg]) )
-	  {
-	    $sql .= "NOT (".$pkgmatch[$pkg].")";
-	  }
-	else
-	  {
-	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
-	  }
-      }
+//     $isfirst = 1;
+//     foreach ( $packages as $pkg )
+//       {
+// 	if ( $isfirst==1 )
+// 	  {
+// 	    $isfirst = 0;
+// 	  }
+// 	else
+// 	  {
+// 	    $sql .= " AND ";
+// 	  }
+// 	if ( isset($pkgmatch[$pkg]) )
+// 	  {
+// 	    $sql .= "NOT (".$pkgmatch[$pkg].")";
+// 	  }
+// 	else
+// 	  {
+// 	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
+// 	  }
+//       }
+    $sql .= "script IS NOT NULL AND sw_app IS NULL";
     $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
@@ -276,7 +281,6 @@ if ( isset($_POST['system']) )
       }
     echo "</TABLE>\n";
   
-    db_disconnect($db);
     page_timer();
     bookmarkable_url();
   }
@@ -296,5 +300,6 @@ else
     end_form();
   }
 
+db_disconnect($db);
 page_footer();
 ?>

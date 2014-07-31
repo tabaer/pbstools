@@ -42,16 +42,18 @@ if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_d
    }
 page_header($title);
 
+# connect to DB
+$db = db_connect();
+
 # list of software packages
-$packages=software_list();
+$packages=software_list($db);
 
 # regular expressions for different software packages
-$pkgmatch=software_match_list();
+#$pkgmatch=software_match_list($db);
 
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
-    $db = db_connect();
     foreach ($keys as $key)
       {
 	if ( $key!='system' && $key!='start_date' && $key!='end_date' && $key!='order' )
@@ -62,14 +64,15 @@ if ( isset($_POST['system']) )
 	    #$sql .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' AND username NOT LIKE 'osc%' AND username NOT LIKE 'wrk%' )";
 	    # OSC-specific logic ends here
 	    $sql .= " AND ( ";
-	    if ( isset($pkgmatch[$key]) )
-	      {
-		$sql .= $pkgmatch[$key];
-	      }
-	    else
-	      {
-		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
-	      }
+// 	    if ( isset($pkgmatch[$key]) )
+// 	      {
+// 		$sql .= $pkgmatch[$key];
+// 	      }
+// 	    else
+// 	      {
+// 		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
+// 	      }
+	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY institution";
             # OSC-specific logic starts here
 	    #$sql .= " UNION SELECT 'osc' AS institution, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%') ) AND ( ";
@@ -106,14 +109,15 @@ if ( isset($_POST['system']) )
 		flush();
 	      }
 	    $sql = "SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."'  AND username IS NOT NULL AND ( ";
-	    if ( isset($pkgmatch[$key]) )
-	      {
-		$sql .= $pkgmatch[$key];
-	      }
-	    else
-	      {
-		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
-	      }
+// 	    if ( isset($pkgmatch[$key]) )
+// 	      {
+// 		$sql .= $pkgmatch[$key];
+// 	      }
+// 	    else
+// 	      {
+// 		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
+// 	      }
+	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
 	    $result = db_query($db,$sql);
 	    if ( PEAR::isError($result) )
@@ -130,11 +134,12 @@ if ( isset($_POST['system']) )
 		    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
 		  }
 		echo "</TR>\n";
+		ob_flush();
+		flush();
 	      }
 	    echo "</TABLE>\n";
 	  }
       }
-    db_disconnect($db);
     page_timer();
     bookmarkable_url();
   }
@@ -154,5 +159,6 @@ else
     end_form();
   }
 
+db_disconnect($db);
 page_footer();
 ?>

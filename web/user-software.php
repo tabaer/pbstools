@@ -53,42 +53,43 @@ if ( isset($_POST['system']) )
   }
 page_header($title);
 
+# connect to DB
+$db = db_connect();
 
 if ( isset($_POST['system']) )
   {
-    $db = db_connect();
-
     # software usage
     echo "<TABLE border=1>\n";
     echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>accounts</TH></TR>\n";
     ob_flush();
     flush();
     
-    $first=1;
-    $sql = "SELECT * FROM ( \n";
-    foreach ( $packages as $pkg )
-      {
-	if ( $first==1 )
-	  {
-	    $first=0;
-	  }
-	else
-	  {
-	    $sql .= "UNION\n";
-	  }
-	$sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username LIKE '".$_POST['username']."' AND ( ";
-	if ( isset($pkgmatch[$pkg]) )
-	  {
-	    $sql .= $pkgmatch[$pkg];
-	  }
-	else
-	  {
-	    $sql .= "script LIKE '%".$pkg."%' OR software LIKE '%".$package."%'";
-	  }
-	$sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
-	$sql .= "\n";
-      }
-    $sql .= " ) AS usrsofttmp WHERE jobs > 0 ORDER BY ".$_POST['order']." DESC";
+//     $first=1;
+//     $sql = "SELECT * FROM ( \n";
+//     foreach ( $packages as $pkg )
+//       {
+// 	if ( $first==1 )
+// 	  {
+// 	    $first=0;
+// 	  }
+// 	else
+// 	  {
+// 	    $sql .= "UNION\n";
+// 	  }
+// 	$sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username LIKE '".$_POST['username']."' AND ( ";
+// 	if ( isset($pkgmatch[$pkg]) )
+// 	  {
+// 	    $sql .= $pkgmatch[$pkg];
+// 	  }
+// 	else
+// 	  {
+// 	    $sql .= "script LIKE '%".$pkg."%' OR software LIKE '%".$package."%'";
+// 	  }
+// 	$sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
+// 	$sql .= "\n";
+//       }
+//     $sql .= " ) AS usrsofttmp WHERE jobs > 0 ORDER BY ".$_POST['order']." DESC";
+    $sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE sw_app IS NOT NULL AND system LIKE '".$_POST['system']."' AND username LIKE '".$_POST['username']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
     
     
     #echo "<PRE>\n".$sql."</PRE>\n";
@@ -130,7 +131,6 @@ if ( isset($_POST['system']) )
 	result_as_ods($odsresult,$columns,$_POST['system']."-".$_POST['username']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
       }
 
-    db_disconnect($db);
     page_timer();
     bookmarkable_url();
   }
@@ -152,5 +152,6 @@ else
     end_form();
   }
 
+db_disconnect($db);
 page_footer();
 ?>
