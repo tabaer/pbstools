@@ -673,11 +673,16 @@ sub software_match_list()
 my $dbhost="mysql.nics.utk.edu";
 my $dbuser="pbsacct";
 my $dbpasswd="pbsRroxor";
-my $dbname="pbsacct_dev";
+my $dbname="pbsacct";
 my $dbtable="Jobs";
-my $hostname="kraken";
+my $hostname='hostname';
 my $fullreindex = 0;
 my $syntaxcheck = 0;
+my $domultimatch = 0;
+my $start_date;
+my $end_date;
+my $minjobs = 1000;
+my $mincpuhours = 100000;
 
 while ( $ARGV[0] =~ /^-.*/ )
   {
@@ -711,9 +716,33 @@ while ( $ARGV[0] =~ /^-.*/ )
 	$dbuser=$ARGV[1];
 	shift(@ARGV);
       }
+     elsif (  $ARGV[0] eq "-C" )
+      {
+	$mincpuhours = $ARGV[1];
+	shift(@ARGV);
+      }
+    elsif (  $ARGV[0] eq "-E" )
+      {
+	$end_date = $ARGV[1];
+	shift(@ARGV);
+      }
     elsif (  $ARGV[0] eq "-F" )
       {
 	$fullreindex = 1;
+      }
+    elsif (  $ARGV[0] eq "-J" )
+      {
+	$minjobs = $ARGV[1];
+	shift(@ARGV);
+      }
+    elsif (  $ARGV[0] eq "-M" )
+      {
+	$domultimatch = 1;
+      }
+    elsif (  $ARGV[0] eq "-S" )
+      {
+	$start_date = $ARGV[1];
+	shift(@ARGV);
       }
     elsif (  $ARGV[0] eq "-T" )
       {
@@ -729,25 +758,63 @@ my $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) || die "$0:  unable to connect to
 
 # iterate over sw pkg patterns
 my %pkgmatch = software_match_list();
-for my $pkg ( software_list() )
+if ( $domultimatch==0 )
   {
-    my $sql;
-    if ( $syntaxcheck==0 )
+    for my $pkg ( software_list() )
       {
-	$sql = "UPDATE Jobs SET sw_app='".$pkg."'";
+	my $sql;
+	if ( $syntaxcheck==0 )
+	  {
+	    $sql = "UPDATE Jobs SET sw_app='".$pkg."'";
+	  }
+	else
+	  {
+	    $sql = "SELECT COUNT(jobid) FROM Jobs";
+	  }
+	$sql .= " WHERE system='".$hostname."' AND script IS NOT NULL AND ( ".$pkgmatch{$pkg}." )";
+	if ( $fullreindex==0 )
+	  {
+	    $sql .= " AND sw_app IS NULL";
+	  }
+	$sql .= ";";
+	#print "$sql\n";
+	$dbh->do($sql) || die "$sql\n$0:  query for pkg $pkg failed -- ".$dbh::errstr;
       }
-    else
+  }
+else
+  {
+    # do multi-match analysis
+    my %done;
+    for my $pkg1 ( software_list() )
       {
-	$sql = "SELECT COUNT(jobid) FROM Jobs";
+	for my $pkg2 ( software_list() )
+	  {
+	    if ( $pkg1 ne $pkg2 && !defined($done{$pkg1}{$pkg2}) )
+	      {
+		#print "$pkg1:$pkg2\n";
+		my $sql = "SELECT '".$pkg1."' AS pkg1, '".$pkg2."' AS pkg2, COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours FROM Jobs WHERE system='".$hostname."' AND sw_app='".$pkg1."' AND ( ".$pkgmatch{$pkg2}." )";
+		if ( defined($start_date) )
+		  {
+		    $sql .= " AND submit_date>='".$start_date."'";
+		  }
+		if ( defined($end_date) )
+		  {
+		    $sql .= " AND submit_date<='".$end_date."'";
+		  }
+		$sql .= ";";
+		#print "$sql\n";
+		my $sth = $dbh->prepare($sql);
+		$sth->execute() || die "Can't execute SQL statement: ", $sth->errstr(), "\n";
+		my @row = $sth->fetchrow_array();
+		if ( $row[2]>=$minjobs || $row[3]>=$mincpuhours )
+		  {
+		    print "@row\n";
+		  }
+		$done{$pkg1}{$pkg2} = 1;
+		$done{$pkg2}{$pkg1} = 1;
+	      }
+	  }
       }
-    $sql .= " WHERE system='".$hostname."' AND script IS NOT NULL AND ( ".$pkgmatch{$pkg}." )";
-    if ( $fullreindex==0 )
-      {
-	$sql .= " AND sw_app IS NULL";
-      }
-    $sql .= ";";
-    #print "$sql\n";
-    $dbh->do($sql) || die "$sql\n$0:  query for pkg $pkg failed -- ".$dbh::errstr;
   }
 
 # disconnect from DB
