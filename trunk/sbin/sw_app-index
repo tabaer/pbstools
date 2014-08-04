@@ -776,6 +776,14 @@ if ( $domultimatch==0 )
 	  {
 	    $sql .= " AND sw_app IS NULL";
 	  }
+	if ( defined($start_date) )
+	  {
+	    $sql .= " AND submit_date>='".$start_date."'";
+	  }
+	if ( defined($end_date) )
+	  {
+	    $sql .= " AND submit_date<='".$end_date."'";
+	  }
 	$sql .= ";";
 	#print "$sql\n";
 	$dbh->do($sql) || die "$sql\n$0:  query for pkg $pkg failed -- ".$dbh::errstr;
