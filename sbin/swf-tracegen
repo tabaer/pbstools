@@ -1,0 +1,357 @@
+#!/usr/bin/perl
+# Copyright 2004-2008 Ohio Supercomputer Center
+# Copyright 2010, 2014 University of Tennessee
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+# This program generates workload traces from an accounting database.
+#
+# Trace format:  http://www.cs.huji.ac.il/labs/parallel/workload/swf.html
+# DB schema:     http://svn.nics.utk.edu/repos/pbstools/trunk/etc/create-tables.sql
+#
+# Usage:  swf-tracegen system startdate enddate
+# dates should be in SQL format (YYYY-MM-DD)
+# Examples:
+#  swf-tracegen piv 2006-01-01 2006-12-31
+#  swf-tracegen % 2004-01-01 2006-12-31
+use strict;
+use POSIX;
+use DBI;
+
+#
+# Main program starts here
+#
+my $system;
+if ( defined($ARGV[0]) )
+  {
+    $system = $ARGV[0];
+  }
+else
+  {
+    $system = "%";
+  }
+
+my $start;
+if ( defined($ARGV[1]) )
+  {
+    $start = $ARGV[1];
+  }
+else
+  {
+    $start = `date +%Y-%m-%d`;
+    chop($start);
+  }
+
+my $end;
+if ( defined($ARGV[2]) )
+  {
+    $end = $ARGV[2];
+  }
+else
+  {
+    $end = `date +%Y-%m-%d`;
+    chop($end);
+  }
+
+my $startunixtime = `date -d "$start 00:00:00" +%s`;
+chop($startunixtime);
+my $starttime = `date -d "$start 00:00:00"`;
+chop($starttime);
+
+my $endtime = `date -d "$end 23:59:59"`;
+chop($endtime);
+
+my $clause = "system LIKE '$system' AND submit_ts>0 AND ( submit_date>='$start' AND submit_date<='$end' ) ORDER BY submit_ts";
+
+my $year = `date +%Y`;
+chomp($year);
+
+my $site = "NICS";
+my $installation = "National Institute for Computational Sciences";
+my $hostname = `hostname --fqdn`;
+chomp($hostname);
+my @pwent = getpwuid($<);
+my $username = $pwent[0];
+my $fullname = $pwent[6];
+my $contact = "$fullname <$username\@$hostname>";
+my $infourl = "http://www.nics.tennessee.edu/computing-resources/";
+
+# connect to DB
+my $dbhost="mysql.nics.utk.edu";
+my $dbuser="pbsacct";
+my $dbpasswd="pbsRroxor";
+my $dbname="pbsacct";
+my $dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
+my $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
+  die "$0:  unable to connect to DB!\n";
+my $query;
+
+# generate header
+print ";Version:  2\n";
+print ";Copyright:  $year $ installation\n";
+print ";Note:  Redistribution of this file is prohibited without express consent from $site.\n";
+print ";Installation: $installation\n";
+print ";Acknowledge:  $contact\n";
+print ";Conversion:  $contact\n";
+print ";Information:  $infourl\n";
+print ";UnixStartTime:  $startunixtime\n";
+print ";StartTime:  $starttime\n";
+print ";EndTime:  $endtime\n";
+
+# application list
+my @app;
+my @data;
+my $appcase = "CASE WHEN sw_app IS NULL THEN 'unknown' ELSE sw_app END";
+my $applist = "DISTINCT($appcase) AS app";
+$query = $dbh->prepare("SELECT $applist FROM Jobs WHERE $clause;")
+  || die "$0:  query failed -- ".$dbh::errstr;
+$query->execute() || die "$0:  query failed -- ".$dbh::errstr;
+while ( @data=$query->fetchrow_array() )
+  {
+    push(@app,$data[0]);
+  }
+# build reverse app map while doing output
+my %appmap;
+print ";MaxApplications:  ".($#app+1)."\n";
+for ( my $i=0 ; $i<=$#app ; $i++ )
+  {
+    print ";Application:  ".($i+1)." (".$app[$i].")\n";
+    $appmap{$app[$i]} = $i+1;
+  }
+
+print ";Computer:  $site-$system\n";
+$query = $dbh->prepare("SELECT MAX(nodect) AS maxnodes, MAX(nproc) AS maxproc, MAX(TIME_TO_SEC(walltime_req)), MAX(mem_kb) FROM Jobs WHERE $clause;");
+$query->execute() || die "$0:  query failed -- ".$dbh::errstr;
+while ( @data=$query->fetchrow_array() )
+  {
+    print ";MaxNodes:  $data[0]\n";
+    print ";MaxProcs:  $data[1]\n";
+    print ";MaxRuntime:  $data[2]\n";
+    print ";MaxMemory:  $data[3]\n";
+  }
+my @partition = ("all");
+my %hostlist;
+if ( $system eq "krakenpf" )
+  {
+    @partition=("xt5");
+    $hostlist{"xt5"} = ".*";
+  }
+elsif ( $system eq "athena" )
+  {
+    @partition=("xt4");
+    $hostlist{"xt4"} = ".*";
+  }
+elsif ( $system eq "verne" )
+  {
+    @partition=("verne");
+    $hostlist{"verne"} = ".*";
+  }
+elsif ( $system eq "nautilus" )
+  {
+    @partition=("nautilus","harpoon");
+    $hostlist{"nautilus"} = "nautilus-.*";
+    $hostlist{"harpoon"} = "harpoon.*";
+  }
+else
+  {
+    @partition=("all");
+    $hostlist{"all"} = ".*";
+  }
+print ";AllowOveruse:  No\n";
+print ";Preemption:  No\n";
+print ";MaxPartitions:  ".($#partition+1)."\n";
+my $i;
+my %partmap;
+for ( $i=0 ; $i<=$#partition ; $i++ )
+  {
+    print ";Partition:  ".($i+1)." (".$partition[$i].")\n";
+    $partmap{$partition[$i]} = $i+1;
+  }
+
+my @data;
+my @queue;
+my $queuelist = "DISTINCT(queue)";
+$query = $dbh->prepare("SELECT $queuelist FROM Jobs WHERE $clause;")
+  || die "$0:  query failed -- ".$dbh::errstr;
+$query->execute() || die "$0:  query failed -- ".$dbh::errstr;
+while ( @data=$query->fetchrow_array() )
+  {
+    push(@queue,$data[0]);
+  }
+print ";MaxQueues:  ".($#queue+1)."\n";
+my %queuemap;
+for ( $i=0 ; $i<=$#queue ; $i++ )
+  {
+    print ";Queue:  ".($i+1)." (".$queue[$i].")\n";
+    $queuemap{$queue[$i]} = $i+1;
+  }
+
+my $userlist = "DISTINCT(username)";
+$query = $dbh->prepare("SELECT $userlist FROM Jobs WHERE $clause;")
+  || die "$0:  query failed -- ".$dbh::errstr;
+$query->execute() || die "$0:  query failed -- ".$dbh::errstr;
+my @user;
+my $i = 0;
+my %usermap;
+while ( @data=$query->fetchrow_array() )
+  {
+    push(@user,$data[0]);
+    $usermap{$data[0]} = $i;
+    $i++;
+  }
+print ";MaxUsers:  ".($#user+1)."\n";
+
+my $grouplist = "DISTINCT(groupname)";
+my @group;
+$query = $dbh->prepare("SELECT $grouplist FROM Jobs WHERE $clause;")
+  || die "$0:  query failed -- ".$dbh::errstr;
+$query->execute() || die "$0:  query failed -- ".$dbh::errstr;
+$i = 0;
+my %groupmap;
+while ( @data=$query->fetchrow_array() )
+  {
+    push(@group,$data[0]);
+    $groupmap{$data[0]} = $i+1;
+    $i++;
+  }
+print ";MaxGroups:  ".($#group+1)."\n";
+
+my $joblist = "submit_ts-$startunixtime AS submit_time, start_ts-submit_ts AS wait_time, end_ts-start_ts AS run_time, nproc AS procs_alloc, TIME_TO_SEC(cput)/nproc AS avg_cpu_time, vmem_kb/nproc as mem_used, nodes AS procs_req,  TIME_TO_SEC(walltime_req) as time_req, vmem_req AS mem_req, exit_status, username, groupname, ".$appcase.", queue, hostlist";
+
+$query = $dbh->prepare("SELECT $joblist FROM Jobs WHERE $clause;")
+  || die "$0:  query failed -- ".$dbh::errstr;
+$query->execute() || die "$0:  query failed -- ".$dbh::errstr;
+print ";MaxJobs:  ".$query->rows()."\n";
+print ";MaxRecords:  ".$query->rows()."\n";
+print STDERR "Total jobs:  ".$query->rows()."\n";
+$i=1;
+my $ncompleted = 0;
+my $nfailed = 0;
+my $ncancelled = 0;
+my $j;
+while ( @data=$query->fetchrow_array() )
+  {
+    my $submittime = $data[0];
+    my $waittime = $data[1];
+    my $runtime = $data[2];
+    my $procs_alloc = $data[3];
+    if ( $procs_alloc<1 )
+      {
+	$procs_alloc=1;
+      }
+    my $cput = int($data[4]);
+    my $mem = int($data[5]);
+    # In our mutant version of the "standard" format,
+    # this is actually the number of nodes requested.
+    my $nodes = $data[6];
+    my $nodect = 0;
+    my @node = split(/\+/,$nodes);
+    for ( $j=0 ; $j<=$#node ; $j++ )
+      {
+	my ($thisnodect,$props) = split(/:/,$node[$j],2);
+	if ( $thisnodect =~ /[0-9]+/ )
+	  {
+	    $nodect += $thisnodect;
+	  }
+	else
+	  {
+	    $nodect++;
+	  }
+      }
+    if ( $nodect<1 )
+      {
+	$nodect=$procs_alloc;
+      }
+    my $time_req = $data[7];
+
+    # squick to handle memory requests
+    my $tmp = $data[8]; # format is "NNN[KMG][BW]"
+    $tmp =~ s/[KkMmGg][BbWw]$//;
+    my $mem_req = $tmp;
+    if ( $data[8] =~ /[Mm][BbWw]$/ )
+      {
+	$mem_req = $mem_req*1024;
+      }
+    elsif ( $data[8] =~ /[Gg][BbWw]$/ )
+      {
+	$mem_req = $mem_req*1024*1024;
+      }
+    if ( $data[8] =~ /[KkMmGg][Ww]$/ )
+      {
+	$mem_req = $mem_req*8;
+      }
+    if ( !defined($mem_req) || $mem_req<0 )
+      {
+	$mem_req = -1;
+      }
+    else
+      {
+	$mem_req = $mem_req/$procs_alloc;
+      }
+    $mem_req = int($mem_req);
+
+    # there's no good way to handle exit status as this format thinks of it,
+    # as the DB has no way of differentiating between a failed job and a
+    # cancelled job
+    my $status = 0;
+    if ( !defined($data[2]) || !defined($data[9]) )
+      {
+	$runtime = 0;
+	$status = 5;
+      }
+    elsif ( $waittime<0 )
+      {
+	# negative waittime => start_ts==0 => cancelled job
+	$waittime += $runtime;
+	$runtime = 0;
+	$status = 5
+      }
+    elsif ( $data[9]>=0 )
+      {
+	$status = 1;
+      }
+
+    my $userid = $usermap{$data[10]};
+    my $groupid = $groupmap{$data[11]};
+    my $appid = $appmap{$data[12]};
+    my $queueid = $queuemap{$data[13]};
+
+    my $partid = 0;
+    for ( $j=0 ; $j<=$#partition ; $j++ )
+      {
+	if ( $data[14] =~ /$hostlist{$partition[$j]}/i )
+	  {
+	    $partid = $j+1;
+	    last;
+	  }
+      }
+    if ( $partid==0 )
+      {
+	print STDERR $i." ".$data[14]."\n";
+      }
+
+    my $precjob = 0;
+    my $thinktime = 0;
+
+    print "$i $submittime $waittime $runtime $procs_alloc $cput $mem $nodect $time_req $mem_req $status $userid $groupid $appid $queueid $partid $precjob $thinktime\n";
+    if ( $status==1 )
+      {
+	$ncompleted++;
+      }
+    elsif ( $status==0 )
+      {
+	$nfailed++;
+      }
+    elsif ( $status==5 )
+      {
+	$ncancelled++;
+      }
+    $i++;
+  }
+#print STDERR "Completed:  ".$ncompleted."\n";
+#print STDERR "Failed:  ".$nfailed."\n";
+#print STDERR "Cancelled:  ".$ncancelled."\n";
