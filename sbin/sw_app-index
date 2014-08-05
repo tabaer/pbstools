@@ -670,7 +670,7 @@ sub software_match_list()
 #
 # Main program starts here
 #
-my $dbhost="mysql.nics.utk.edu";
+my $dbhost="localhost";
 my $dbuser="pbsacct";
 my $dbpasswd="pbsRroxor";
 my $dbname="pbsacct";
