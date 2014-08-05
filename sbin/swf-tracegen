@@ -81,7 +81,7 @@ my $contact = "$fullname <$username\@$hostname>";
 my $infourl = "http://www.nics.tennessee.edu/computing-resources/";
 
 # connect to DB
-my $dbhost="mysql.nics.utk.edu";
+my $dbhost="localhost";
 my $dbuser="pbsacct";
 my $dbpasswd="pbsRroxor";
 my $dbname="pbsacct";
