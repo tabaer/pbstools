@@ -1,0 +1,159 @@
+#!/usr/bin/python
+#
+# pbs-spark-submit:  Run an Apache Spark "job" (including optionally
+#                    starting the Spark services) inside a PBS job.
+# Copyright 2014 University of Tennessee
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+import os
+import platform
+import sys
+import time
+
+
+class Launcher:
+    def launch(self,cmdline,env):
+        raise NotImplementedError
+    def sleep(self):
+        sleeptime = 5
+        if ( "PBS_NUM_NODES" in os.environ.keys() ):
+            sleeptime += 2*int(os.environ["PBS_NUM_NODES"])
+        time.sleep(sleeptime)    
+
+
+class ExecLauncher(Launcher):
+    def launch(self,cmdline,env):
+        time.sleep(1)
+        
+        # lots of squick to try to limit the number of cores used on big
+        # SMP/NUMA systems that are likely shared with other users
+        cpuset = None
+        cpusetroot = None
+        cpus = 0
+        if ( os.path.exists("/proc/self/cpuset") ):
+            cpusetfile = open("/proc/self/cpuset")
+            cpuset = cpusetfile.read().rstrip("\n")
+            cpusetfile.close()
+        if ( os.path.exists("/dev/cpuset") ):
+            cpusetroot = "/dev/cpuset"
+        elif ( os.path.exists("/sys/fs/cgroup/cpuset") ):
+            cpusetroot = "/sys/fs/cgroup/cpuset"
+        if ( cpuset is not None and cpuset is not None ):
+            cpusfile = None
+            if ( os.path.exists(cpusetroot+cpuset+"/cpus") ):
+                cpusfile = open(cpusetroot+cpuset+"/cpus")
+            elif ( os.path.exists(cpusetroot+cpuset+"/cpuset.cpus") ):
+                cpusfile = open(cpusetroot+cpuset+"/cpuset.cpus")
+            if ( cpusfile is not None ):
+                allcpus = cpusfile.read()
+                cpusfile.close()
+                for cgroup in allcpus.split(","):
+                    cpurange = cgroup.split("-")
+                    if ( len(cpurange)==1 ):
+                        cpus += 1
+                    elif ( len(cpurange)==2 ):
+                        cpus += int(cpurange[1])-int(cpurange[0])+1
+        if ( cpus==0 and "PBS_NP" in os.environ.keys() ):
+            try:
+                cpus = int(os.environ["PBS_NP"])
+            except e,Exception:
+                pass
+        if ( cpus>0 ):
+            os.environ["SPARK_WORKER_CORES"] = str(cpus)
+            env["SPARK_WORKER_CORES"] = str(cpus)
+        # need to do the equivalent shenanigans for memory at some point...
+
+        # base functionality
+        argv = cmdline.split()
+        child_pid = os.fork()
+        if ( child_pid==0 ):
+            os.execvpe(argv[0],argv,env)
+        self.sleep()
+
+
+class PBSDSHLauncher(Launcher):
+    def launch(self,cmdline,env):
+        time.sleep(1)
+        os.system("pbsdsh "+cmdline+" &")
+        self.sleep()
+
+
+class SSHLauncher(Launcher):
+    def launch(self,cmdline,env):
+        time.sleep(1)
+        if ( "PBS_NODEFILE" in os.environ.keys() ):
+            nodefile = open(os.environ["PBS_NODEFILE"])
+            for line in nodefile.readlines():
+                argv = cmdline.split()
+                node = line.rstrip("\n")
+                argv.insert(0,"ssh")
+                argv.insert(1,node)
+                sys.stderr.write(" ".join(argv)+"\n")
+                child_pid = os.fork()
+                if ( child_pid==0 ):
+                    os.execvpe(argv[0],argv,env)   
+            nodefile.close()
+            self.sleep()
+        else:
+            raise EnvironmentError("PBS_NODEFILE undefined")
+
+
+#
+# main program begins here
+#
+
+# sanity checks
+if ( not ( "PBS_JOBID" in os.environ.keys() ) ):
+    raise EnvironmentError("Not in a PBS job")
+elif ( not ( "SPARK_HOME" in os.environ.keys() ) ):
+    raise EnvironmentError("SPARK_HOME not defined")
+
+init_svcs = True
+child_args = []
+launcher = Launcher()
+if ( "SPARK_LAUNCHER" in os.environ.keys() ):
+    if ( os.environ["SPARK_LAUNCHER"] in ("exec","EXEC") ):
+        launcher = ExecLauncher()
+    if ( os.environ["SPARK_LAUNCHER"] in ("pbsdsh","PBSDSH") ):
+        launcher = PBSDSHLauncher()
+    if ( os.environ["SPARK_LAUNCHER"] in ("ssh","SSH") ):
+        launcher = SSHLauncher()
+
+# command line argument handling
+for arg in sys.argv[1:]:
+    if ( arg=="--no-init" ):
+        init_svcs = False
+    elif ( arg=="--exec" ):
+        launcher = ExecLauncher()
+    elif ( arg=="--pbsdsh" ):
+        launcher = PBSDSHLauncher()
+    elif ( arg=="--ssh" ):
+        launcher = SSHLauncher()
+    else:
+        child_args.append(arg)
+        
+# **ASSUMPTION**:  master runs on mother superior node
+os.environ["SPARK_MASTER_IP"] = platform.node()
+if ( not ( "SPARK_MASTER_PORT" in os.environ.keys() ) ):
+    os.environ["SPARK_MASTER_PORT"] = "7077"
+os.environ["SPARK_URL"] = "spark://"+os.environ["SPARK_MASTER_IP"]+":"+str(os.environ["SPARK_MASTER_PORT"])
+#sys.stderr.write("Spark master = "+os.environ["SPARK_URL"]+"\n")
+
+if ( init_svcs ):
+    # launch master mother superior
+    os.system(os.environ["SPARK_HOME"]+"/sbin/start-master.sh &")
+
+    # launch workers
+    # this should be replaced by something more resource-aware like mpiexec
+    # at some point
+    launcher.launch(os.environ["SPARK_HOME"]+"/bin/spark-class org.apache.spark.deploy.worker.Worker "+os.environ["SPARK_URL"],os.environ)
+
+    sys.stdout.write("SPARK_URL="+os.environ["SPARK_URL"]+"\n")
+
+# run the user's Spark "job"
+if ( len(child_args)>0 ):
+    os.system(os.environ["SPARK_HOME"]+"/bin/spark-submit --master "+os.environ["SPARK_URL"]+" "+" ".join(child_args))
