@@ -9,12 +9,15 @@
 # $HeadURL$
 # $Revision$
 # $Date$
+import getopt
 import os
 import platform
 import sys
 import time
 
-
+#
+# ways to launch workers
+#
 class Launcher:
     def launch(self,cmdline,env):
         raise NotImplementedError
@@ -42,7 +45,7 @@ class ExecLauncher(Launcher):
             cpusetroot = "/dev/cpuset"
         elif ( os.path.exists("/sys/fs/cgroup/cpuset") ):
             cpusetroot = "/sys/fs/cgroup/cpuset"
-        if ( cpuset is not None and cpuset is not None ):
+        if ( cpusetroot is not None and cpuset is not None ):
             cpusfile = None
             if ( os.path.exists(cpusetroot+cpuset+"/cpus") ):
                 cpusfile = open(cpusetroot+cpuset+"/cpus")
@@ -103,17 +106,41 @@ class SSHLauncher(Launcher):
 
 
 #
+# functions to help with handling Java properties
+#
+def propsToCmdLine(proplist):
+    result = []
+    for prop in proplist.keys():
+        result.append("-D"+prop+"="+proplist[prop])
+    return " ".join(result)
+
+def propsFromFile(filename):
+    if ( not os.path.exists(filename) ):
+        raise IOError(filename+" not found")
+    proplist = {}
+    fd = open(filename)
+    for line in fd.readlines():
+        if ( not line.startswith("#") ):
+            keyval = (line.rstrip("\n")).split("=",1)
+            if ( len(keyval)==2 ):
+                proplist[keyval[0]] = keyval[1]
+    return proplist
+
+#
 # main program begins here
 #
 
 # sanity checks
 if ( not ( "PBS_JOBID" in os.environ.keys() ) ):
     raise EnvironmentError("Not in a PBS job")
-elif ( not ( "SPARK_HOME" in os.environ.keys() ) ):
+if ( not ( "SPARK_HOME" in os.environ.keys() ) ):
     raise EnvironmentError("SPARK_HOME not defined")
 
+# set up default environment
 init_svcs = True
+memlimit = None
 child_args = []
+properties = {}
 launcher = Launcher()
 if ( "SPARK_LAUNCHER" in os.environ.keys() ):
     if ( os.environ["SPARK_LAUNCHER"] in ("exec","EXEC") ):
@@ -122,38 +149,114 @@ if ( "SPARK_LAUNCHER" in os.environ.keys() ):
         launcher = PBSDSHLauncher()
     if ( os.environ["SPARK_LAUNCHER"] in ("ssh","SSH") ):
         launcher = SSHLauncher()
+if ( not ( "SPARK_CONF_DIR" in os.environ.keys() ) ):
+    os.environ["SPARK_CONF_DIR"] = os.getcwd()+"/conf"
+if ( not ( "SPARK_LOG_DIR" in os.environ.keys() ) ):
+    os.environ["SPARK_LOG_DIR"] = os.getcwd()
+logcfg = os.environ["SPARK_CONF_DIR"]+"/log4j.properties"
+# manage scratch directories
+# **ASSUMPTION**:  work directory is on a shared file system
+workdir = os.getcwd()
+if ( "SCRATCHDIR" in os.environ.keys() ):
+    workdir = os.environ["SCRATCHDIR"]+"/spark-"+os.environ["PBS_JOBID"]
+# SPARK_LOCAL_DIRS should be node-local
+if ( ( "TMPDIR" in os.environ.keys() ) and
+     not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
+    os.environ["SPARK_LOCAL_DIRS"] = os.environ["TMPDIR"]
+elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
+    os.environ["SPARK_LOCAL_DIRS"] = "/tmp"
 
 # command line argument handling
-for arg in sys.argv[1:]:
-    if ( arg=="--no-init" ):
+try:
+    opts, child_args = getopt.getopt(sys.argv[1:],"D:d:L:l:m:",["no-init","exec","pbsdsh","ssh","log4j-properties","log-dir=","work-dir=","memory="])
+except getopt.GetoptError, err:
+    sys.stderr.write(str(err)+"\n")
+    usage()
+for opt in opts:
+    if ( opt[0]=="--no-init" ):
         init_svcs = False
-    elif ( arg=="--exec" ):
+    elif ( opt[0]=="--exec" ):
         launcher = ExecLauncher()
-    elif ( arg=="--pbsdsh" ):
+    elif ( opt[0]=="--pbsdsh" ):
         launcher = PBSDSHLauncher()
-    elif ( arg=="--ssh" ):
+    elif ( opt[0]=="--ssh" ):
         launcher = SSHLauncher()
-    else:
-        child_args.append(arg)
-        
+    elif ( opt[0]=="--log-dir" or opt[0]=="-L" ):
+        os.environ["SPARK_LOG_DIR"] = opt[1]
+    elif ( opt[0]=="--log4j-properties" or opt[0]=="-l" ):
+        logcfg = opt[1]
+    elif ( opt[0]=="--work-dir" or opt[0]=="-d" ):
+        workdir = opt[1]
+    elif ( opt[0]=="--memory" or opt[0]=="-m" ):
+        memlimit = opt[1]
+    elif ( opt[0]=="-D" ):
+        keyval = opt[1].split("=",1)
+        if ( len(keyval)==2 ):
+            properties[keyval[0]] = keyval[1]
+        else:
+            raise getopt.GetoptError("malformed property \""+opt[1]+"\"")
+
+#
+if ( workdir is not None and not os.path.exists(workdir) ):
+    os.mkdir(workdir)
+
+# snarf in logging config from file
+if ( os.path.exists(logcfg) ):
+    logprops = propsFromFile(logcfg)
+    for key in logprops.keys():
+        if ( not ( key in properties.keys() ) ):
+            properties[key] = logprops[key]
+# if certain props aren't set, set some sane defaults,
+# inspired by http://mbonaci.github.io/mbo-spark/
+# This is mostly to prevent Spark defaulting to stupid things
+# like trying to write logs in $SPARK_HOME/logs without
+# checking if it's writeable...
+if ( not ( "log4j.rootLogger" in properties.keys() ) ):
+    properties["log4j.rootLogger"] = "INFO,FILE"
+if ( not ( "log4j.rootCategory" in properties.keys() ) ):
+    properties["log4j.rootCategory"] = "INFO,FILE"
+if ( not ( "log4j.appender.FILE" in properties.keys() ) ):
+    properties["log4j.appender.FILE"] = "org.apache.log4j.FileAppender"
+if ( not ( "log4j.appender.FILE.File" in properties.keys() ) ):
+    properties["log4j.appender.FILE.File"] = os.environ["SPARK_LOG_DIR"]+"/spark-"+os.environ["PBS_JOBID"]+".log"
+
 # **ASSUMPTION**:  master runs on mother superior node
 os.environ["SPARK_MASTER_IP"] = platform.node()
 if ( not ( "SPARK_MASTER_PORT" in os.environ.keys() ) ):
     os.environ["SPARK_MASTER_PORT"] = "7077"
-os.environ["SPARK_URL"] = "spark://"+os.environ["SPARK_MASTER_IP"]+":"+str(os.environ["SPARK_MASTER_PORT"])
-#sys.stderr.write("Spark master = "+os.environ["SPARK_URL"]+"\n")
+os.environ["SPARK_MASTER"] = "spark://"+os.environ["SPARK_MASTER_IP"]+":"+str(os.environ["SPARK_MASTER_PORT"])
+#sys.stderr.write("Spark master = "+os.environ["SPARK_MASTER"]+"\n")
 
 if ( init_svcs ):
-    # launch master mother superior
-    os.system(os.environ["SPARK_HOME"]+"/sbin/start-master.sh &")
+    # stick any properties in the appropriate environment variable
+    if ( len(properties)>0 ):
+        if ( "SPARK_DAEMON_JAVA_OPTS" in os.environ.keys() ):
+            os.environ["SPARK_DAEMON_JAVA_OPTS"] += " "+propsToCmdLine(properties)
+        else:
+            os.environ["SPARK_DAEMON_JAVA_OPTS"] = propsToCmdLine(properties)
+
+    # launch master on mother superior
+    cmdline = os.environ["SPARK_HOME"]+"/sbin/start-master.sh"
+    if ( workdir is not None ):
+        cmdline += " --work-dir "+workdir
+    os.system(cmdline+" &")
+    sys.stderr.write(cmdline+"\n")
+    time.sleep(1)
 
     # launch workers
     # this should be replaced by something more resource-aware like mpiexec
     # at some point
-    launcher.launch(os.environ["SPARK_HOME"]+"/bin/spark-class org.apache.spark.deploy.worker.Worker "+os.environ["SPARK_URL"],os.environ)
+    cmdline = os.environ["SPARK_HOME"]+"/bin/spark-class org.apache.spark.deploy.worker.Worker"
+    if ( memlimit is not None ):
+        cmdline += " --memory "+memlimit
+    if ( workdir is not None ):
+        cmdline += " --work-dir "+workdir
+    cmdline += " "+os.environ["SPARK_MASTER"]
+    sys.stderr.write(cmdline+"\n")
+    launcher.launch(cmdline,os.environ)
 
-    sys.stdout.write("SPARK_URL="+os.environ["SPARK_URL"]+"\n")
+    sys.stdout.write("SPARK_MASTER="+os.environ["SPARK_MASTER"]+"\n")
 
-# run the user's Spark "job"
+# run the user's Spark "job", if one is given
 if ( len(child_args)>0 ):
-    os.system(os.environ["SPARK_HOME"]+"/bin/spark-submit --master "+os.environ["SPARK_URL"]+" "+" ".join(child_args))
+    os.system(os.environ["SPARK_HOME"]+"/bin/spark-submit --master "+os.environ["SPARK_MASTER"]+" "+" ".join(child_args))
