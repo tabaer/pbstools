@@ -10,6 +10,7 @@
 # $Revision$
 # $Date$
 import getopt
+import glob
 import os
 import platform
 import sys
@@ -153,7 +154,7 @@ if ( not ( "SPARK_CONF_DIR" in os.environ.keys() ) ):
     os.environ["SPARK_CONF_DIR"] = os.getcwd()+"/conf"
 if ( not ( "SPARK_LOG_DIR" in os.environ.keys() ) ):
     os.environ["SPARK_LOG_DIR"] = os.getcwd()
-logcfg = os.environ["SPARK_CONF_DIR"]+"/log4j.properties"
+
 # manage scratch directories
 # **ASSUMPTION**:  work directory is on a shared file system
 workdir = os.getcwd()
@@ -168,7 +169,7 @@ elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
 
 # command line argument handling
 try:
-    opts, child_args = getopt.getopt(sys.argv[1:],"D:d:L:l:m:",["no-init","exec","pbsdsh","ssh","log4j-properties","log-dir=","work-dir=","memory="])
+    opts, child_args = getopt.getopt(sys.argv[1:],"D:d:L:m:P:",["no-init","exec","pbsdsh","ssh","properties-file","log-dir=","work-dir=","memory="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -183,8 +184,11 @@ for opt in opts:
         launcher = SSHLauncher()
     elif ( opt[0]=="--log-dir" or opt[0]=="-L" ):
         os.environ["SPARK_LOG_DIR"] = opt[1]
-    elif ( opt[0]=="--log4j-properties" or opt[0]=="-l" ):
-        logcfg = opt[1]
+    elif ( opt[0]=="--properties-file" or opt[0]=="-P" ):
+        if ( os.path.exists(opt[1]) ):
+            props = propsFromFile(opt[1])
+            for key in props.keys():
+                properties[key] = props[key]
     elif ( opt[0]=="--work-dir" or opt[0]=="-d" ):
         workdir = opt[1]
     elif ( opt[0]=="--memory" or opt[0]=="-m" ):
@@ -196,29 +200,17 @@ for opt in opts:
         else:
             raise getopt.GetoptError("malformed property \""+opt[1]+"\"")
 
-#
+# read any properties files in the conf directory
+for propfile in glob.glob(os.environ["SPARK_CONF_DIR"]+"/*.properties"):
+    if ( os.path.exists(propfile) ):
+        props = propsFromFile(propfile)
+        for key in props.keys():
+            if ( not ( key in properties.keys() ) ):
+                properties[key] = props[key]
+
+# make sure the work dir actually exists
 if ( workdir is not None and not os.path.exists(workdir) ):
     os.mkdir(workdir)
-
-# snarf in logging config from file
-if ( os.path.exists(logcfg) ):
-    logprops = propsFromFile(logcfg)
-    for key in logprops.keys():
-        if ( not ( key in properties.keys() ) ):
-            properties[key] = logprops[key]
-# if certain props aren't set, set some sane defaults,
-# inspired by http://mbonaci.github.io/mbo-spark/
-# This is mostly to prevent Spark defaulting to stupid things
-# like trying to write logs in $SPARK_HOME/logs without
-# checking if it's writeable...
-if ( not ( "log4j.rootLogger" in properties.keys() ) ):
-    properties["log4j.rootLogger"] = "INFO,FILE"
-if ( not ( "log4j.rootCategory" in properties.keys() ) ):
-    properties["log4j.rootCategory"] = "INFO,FILE"
-if ( not ( "log4j.appender.FILE" in properties.keys() ) ):
-    properties["log4j.appender.FILE"] = "org.apache.log4j.FileAppender"
-if ( not ( "log4j.appender.FILE.File" in properties.keys() ) ):
-    properties["log4j.appender.FILE.File"] = os.environ["SPARK_LOG_DIR"]+"/spark-"+os.environ["PBS_JOBID"]+".log"
 
 # **ASSUMPTION**:  master runs on mother superior node
 os.environ["SPARK_MASTER_IP"] = platform.node()
@@ -234,6 +226,7 @@ if ( init_svcs ):
             os.environ["SPARK_DAEMON_JAVA_OPTS"] += " "+propsToCmdLine(properties)
         else:
             os.environ["SPARK_DAEMON_JAVA_OPTS"] = propsToCmdLine(properties)
+        sys.stderr.write("SPARK_DAEMON_JAVA_OPTS=\""+ os.environ["SPARK_DAEMON_JAVA_OPTS"]+"\n")
 
     # launch master on mother superior
     cmdline = os.environ["SPARK_HOME"]+"/sbin/start-master.sh"
