@@ -123,6 +123,7 @@ log = sys.stdout
 show_usage = False
 exitcode=0
 hypervisor = "qemu:///session"
+vmtype = "hvm"
 conn = None
 vmimage = None
 vmname = None
@@ -257,8 +258,8 @@ elif ( which("qstat") is not None ):
 # command line argument handling
 try:
     opts, args = getopt.getopt(sys.argv[1:],
-                               "B:Cc:dF:f:hL:l:m:Nn:o:r:w:",
-                               ["arch=","boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","graphics=","help","image=","keep-clone","keep-guest","location=","log=","mac=","name=","network=","no-block","os-type=","os-variant=","ram=","validate-xml","vcpus="])
+                               "B:Cc:dF:f:hL:l:m:Nn:o:r:t:w:",
+                               ["arch=","boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","graphics=","help","image=","keep-clone","keep-guest","location=","log=","mac=","name=","network=","no-block","os-type=","os-variant=","ram=","validate-xml","vcpus=","vm-type="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n\n")
     usage(-1)
@@ -299,6 +300,8 @@ if ( not show_usage ):
             ostype = opt[1]
         if ( opt[0]=="-r" or opt[0]=="--ram" ):
             memlimitmb = int(opt[1])
+        if ( opt[0]=="-t" or opt[0]=="--vm-type" ):
+            vmtype = opt[1]
         if ( opt[0]=="-w" or opt[0]=="--network" ):
             networkopts = opt[1]
         if ( opt[0]=="--arch" ):
@@ -450,7 +453,7 @@ if ( childpid==0 ):
     osnode = xml.createElement("os")
     ostypenode =  xml.createElement("type")
     ostypenode.setAttribute("arch",arch)
-    ostypenode.appendChild(xml.createTextNode("hvm"))
+    ostypenode.appendChild(xml.createTextNode(vmtype))
     osnode.appendChild(ostypenode)
     osbootnode = xml.createElement("boot")
     if ( bootopts is None ):
