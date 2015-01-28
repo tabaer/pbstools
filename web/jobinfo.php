@@ -26,9 +26,10 @@ if ( isset($_POST['jobid']) )
 page_header($title);
 
 $props=array("username","groupname","account","jobname","nproc","mppe","mppssp",
-	     "nodes","feature","gres","queue","qos","submit_ts","start_ts","end_ts","cput_req",
-	     "cput","walltime_req","walltime","mem_req","mem_kb",
-	     "vmem_req","vmem_kb","software","submithost","hostlist","exit_status","script");
+	     "nodes","feature","gres","queue","qos","submit_ts","start_ts","end_ts",
+	     "cput_req","cput","walltime_req","walltime","mem_req","mem_kb",
+	     "vmem_req","vmem_kb","energy","software","submithost","hostlist",
+             "exit_status","script","sw_app");
 
 // special key "all=1" turns on all the $props.
 if (!empty($_POST['all'])) {

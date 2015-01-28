@@ -294,7 +294,8 @@ else
     $props=array("username","groupname","account","jobname","nproc","mppe","mppssp",
 		 "nodes","feature","gres","queue","qos","submit_ts","start_ts","end_ts","cput_req",
 		 "cput","walltime_req","walltime","mem_req","mem_kb",
-		 "vmem_req","vmem_kb","submithost","hostlist","exit_status","script");
+		 "vmem_req","vmem_kb","energy","software","submithost","hostlist",
+		 "exit_status","script","sw_app");
     checkboxes_from_array("Properties",$props);
 
     end_form();
