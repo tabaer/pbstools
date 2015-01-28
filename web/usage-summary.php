@@ -271,7 +271,7 @@ if ( isset($_POST['system']) )
 // 	  }
 // 	$sql .= " ) AS usgsofttmp WHERE jobs>0 ORDER BY ".$_POST['order']." DESC";
 	$sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE sw_app IS NOT NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
-        echo "<PRE>\n".$sql."</PRE>\n";
+        #echo "<PRE>\n".$sql."</PRE>\n";
 	$columns = array("package","jobs","cpuhours","charges","users","groups", "accounts");
 	if (  isset($_POST['table']) )
 	  {
