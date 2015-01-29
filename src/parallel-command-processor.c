@@ -1,5 +1,5 @@
 /* Copyright 2008 Ohio Supercomputer Center */
-/* Copyright 2015 Ohio University of Tennessee */
+/* Copyright 2015 University of Tennessee */
 
 /* Distribution of this program is governed by the GNU GPL.  See
    ../COPYING for details. */
