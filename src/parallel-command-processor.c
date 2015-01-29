@@ -1,4 +1,5 @@
 /* Copyright 2008 Ohio Supercomputer Center */
+/* Copyright 2015 Ohio University of Tennessee */
 
 /* Distribution of this program is governed by the GNU GPL.  See
    ../COPYING for details. */
@@ -61,9 +62,7 @@ void minion(int rank)
 	  printf("Rank %d:  executing \"%s\"\n",rank,cmd);
 #endif /* DEBUG */
 	  retcode = system(cmd);
-#ifdef DEBUG
 	  ncmds++;
-#endif /* DEBUG */
 	}
       MPI_Send(&retcode,1,MPI_INT,0,REQUEST_TAG,MPI_COMM_WORLD);
       MPI_Recv(&cont,1,MPI_INT,0,STATUS_TAG,MPI_COMM_WORLD,&mystat);
@@ -71,9 +70,7 @@ void minion(int rank)
 
   /* cleanup */
   MPI_Barrier(MPI_COMM_WORLD);
-#ifdef DEBUG
   MPI_Reduce(&ncmds,NULL,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
-#endif /* DEBUG */
 }
 
 void mastermind(int nminions, FILE *input)
@@ -83,8 +80,10 @@ void mastermind(int nminions, FILE *input)
   int stop = 0;
   int ncmds = 0;
   char cmd[LINE_MAX+1];
+  double tstart,tend;
 
   /* setup */
+  tstart = MPI_Wtime();
 
   /* initial distribution */
   MPI_Barrier(MPI_COMM_WORLD);
@@ -115,7 +114,7 @@ void mastermind(int nminions, FILE *input)
       MPI_Recv(&retcode,1,MPI_INT,MPI_ANY_SOURCE,REQUEST_TAG,MPI_COMM_WORLD,
 	       &mystat);
       next = mystat.MPI_SOURCE;
- #ifdef DEBUG
+#ifdef DEBUG
       printf("Rank 0:  rank %d returned code %d\n",next,retcode);
 #endif /* DEBUG */
       MPI_Send(&cont,1,MPI_INT,next,STATUS_TAG,MPI_COMM_WORLD);
@@ -136,22 +135,25 @@ void mastermind(int nminions, FILE *input)
 
   /* cleanup */
   MPI_Request *req;
+  MPI_Status *reqstat;
   req = (MPI_Request *)calloc((size_t)(2*nminions),sizeof(MPI_Request));
+  reqstat = (MPI_Status *)calloc((size_t)(2*nminions),sizeof(MPI_Status));
   for ( i = 1 ; i <= nminions ; i++ )
     {
       char exitcmd[] = "exit";
       MPI_Isend(exitcmd,strlen(exitcmd),MPI_CHAR,i,DATA_TAG,MPI_COMM_WORLD,
-		req+(size_t)(2*i)*sizeof(MPI_Request));
+		&req[2*(i-1)]);
       MPI_Isend(&stop,1,MPI_INT,i,STATUS_TAG,MPI_COMM_WORLD,
-		req+(size_t)(2*i+1)*sizeof(MPI_Request));
+		&req[2*(i-1)+1]);
     }
+  MPI_Waitall(2*nminions,req,reqstat);
   MPI_Barrier(MPI_COMM_WORLD);
-#ifdef DEBUG
   ncmds=0;
   MPI_Reduce(&stop,&ncmds,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
-  printf("Executed %ld commands\n",ncmds);
-#endif /* DEBUG */
+  tend = MPI_Wtime();
+  printf("Executed %ld commands in %f seconds on %d minions\n",ncmds,(tend-tstart),nminions);
   free(req);
+  free(reqstat);
 }
 
 int main(int argc, char *argv[])
