@@ -214,20 +214,6 @@ for propfile in glob.glob(os.environ["SPARK_CONF_DIR"]+"/*.properties"):
 if ( workdir is not None and not os.path.exists(workdir) ):
     os.mkdir(workdir)
 
-# if certain props aren't set, set some sane defaults,
-# inspired by http://mbonaci.github.io/mbo-spark/
-# This is mostly to prevent Spark defaulting to stupid things
-# like trying to write logs in $SPARK_HOME/logs without
-# checking if it's writeable...
-if ( not ( "log4j.rootLogger" in properties.keys() ) ):
-    properties["log4j.rootLogger"] = "INFO,FILE"
-if ( not ( "log4j.rootCategory" in properties.keys() ) ):
-    properties["log4j.rootCategory"] = "INFO,FILE"
-if ( not ( "log4j.appender.FILE" in properties.keys() ) ):
-    properties["log4j.appender.FILE"] = "org.apache.log4j.FileAppender"
-if ( not ( "log4j.appender.FILE.File" in properties.keys() ) ):
-    properties["log4j.appender.FILE.File"] = os.environ["SPARK_LOG_DIR"]+"/spark-"+os.environ["PBS_JOBID"]+".log"
-
 # **ASSUMPTION**:  master runs on mother superior node
 os.environ["SPARK_MASTER_IP"] = platform.node()
 if ( not ( "SPARK_MASTER_PORT" in os.environ.keys() ) ):
