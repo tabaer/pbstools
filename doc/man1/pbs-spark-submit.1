@@ -1,0 +1,170 @@
+.TH pbs-spark-submit 1 "$Date$" "$Revision$" "PBS TOOLS"
+
+.SH NAME
+pbs-spark-submit \- Launch an Apache Spark based program inside a PBS job.
+
+.SH SYNOPSIS
+.B pbs-spark-submit
+[arguments] <app jar | python file> [app options]
+
+.SH DESCRIPTION
+.B pbs-spark-submit
+launches an Apache Spark program within a TORQUE job, including
+starting the Spark master and worker processes in standalone mode by
+default.  The Spark program and its associated services will be
+constrained by the resource limits of the job and will be killed off
+when the job ends.  This effectively allows TORQUE to act as a Spark
+cluster manager.
+
+.P
+
+.B pbs-spark-submit
+works by leveraging the fact that Spark is cluster manager agnostic
+and does not have a preference for how its services are started.
+.B pbs-spark-submit
+supports multiple underlying process startup mechanisms, including
+.I pbsdsh
+(the default) and
+.I ssh
+for clusters and
+.I exec
+for shared memory systems.  (
+.I pbsdsh
+and
+.I exec
+are preferred due to keeping the Spark processes as children of
+.B pbs_mom
+, allowing for proper resource accounting and signal delivery.)
+
+.SH OPTIONS
+.TP
+.B --no-init
+Do not initialize the Spark master and worker processes.  This is
+intended for use in the second and subsequent invocations of Spark
+programs within the same job.
+.TP
+.B --exec
+Use the 
+.I exec
+process launcher.  Intended for use on standalone shared-memory and
+NUMA systems.
+.TP
+.B --pbsdsh
+Use the 
+.I pbsdsh
+process launcher.  Intended for use on clusters; this is the default.
+.TP
+.B --ssh
+Use the 
+.I ssh
+process launcher.  Intended for use on clusters; should not be used
+unless the pbsdsh launcher does not work for whatever reason.
+.TP
+.B --conf-dir <confdir> or -L <confdir>
+Search for configuration properties in <confdir>.  This is equivalent
+to setting the environment variable 
+.I SPARK_CONF_DIR.
+.TP
+.B --log-dir <logdir> or -L <logdir>
+Place logs in <logdir>.  This is equivalent to setting the environment
+variable
+.I SPARK_LOG_DIR.
+.TP
+.B --work-dir <workdir> or -d <workdir>
+Use <workdir> as the Spark program's working directory; defaults to
+the current working directory, unless the environment variable
+.B SCRATCHDIR
+is set, in which case that will be used.  The working directory 
+.B MUST be shared across all nodes in the job.
+.TP
+.B --memory <memlimit> or -m <memlimit>
+Set the per-worker memory limit to <memlimit>; defaults to the
+physical memory on the node minus 1 GB.
+.TP
+.B -D <key>=<value>
+Set the Java property <key> to <value>.
+.TP
+.B --properties-file <propfile> or -P <propfile>
+Read Java properties from <propfile>.
+
+.SH ENVIRONMENT VARIABLES
+
+.B pbs-spark-submit
+will use the following environment variables if set:
+
+.TP
+.B SPARK HOME
+The location of the Apache Spark installation.
+.B THIS MUST BE SET!
+.TP
+.B SPARK_LAUNCHER
+The process launcher to use if one is not specified.  By default, this
+is "pbsdsh".
+.TP
+.B SPARK_CONF_DIR
+The directory to search for configuration settings, if it exists.  By
+default, this is the "conf" subdirectory of the current working
+directory.
+.TP
+.B SPARK_DAEMON_JAVA_OPTS
+Command line options to pass to the Spark master and worker processes.
+.TP
+.B SPARK_LOCAL_DIRS
+Node-local scratch directory.  By default, this is 
+.B TMPDIR
+if set and /tmp otherwise.
+.TP
+.B SPARK_LOG_DIR
+The directory in which to place logs.  By default, this is the current
+working directory.
+.TP
+.B SPARK_MASTER_PORT
+The port on which the Spark master listens.  By default, this is 7077.
+.TP
+.B SCRATCHDIR
+A shared scratch directory to use be used as the Spark program's
+working directory.  By default, this is the current working directory.
+
+.SH SPECIFYING SPARK JAVA PROPERTIES
+
+In addition to any properties files or individual properties set on
+the command line,
+.B pbs-spark-submit
+will read any file ending in .properties in the
+.B SPARK_CONF_DIR
+directory.
+
+.SH EXAMPLES
+
+The following job script will execute the Spark Python Pi example in
+the current working directory on two nodes:
+
+.NF
+#PBS -N spark-pi
+.BR
+#PBS -j oe
+.BR
+#PBS -l nodes=2:ppn=1
+.BR
+#PBS -l walltime=1:00:00
+.BR
+cd $PBS_O_WORKDIR
+.BR
+module load spark
+.BR
+pbs-spark-submit $SPARK_HOME/examples/src/main/python/pi.py 800
+.FI
+
+.SH ASSUMPTIONS AND LIMITATIONS
+
+.B pbs-spark-submit
+makes two assumptions about its environment.  First, the Spark master
+process will be run on the PBS job's mother superior node.  Second,
+the working directory for the Spark programs is on a file system
+shared across on nodes allocated to the job.
+
+.SH AUTHORS
+Troy Baer (tbaer (at) utk.edu)
+
+.SH SEE ALSO
+spark-submit(1), qsub(1B)

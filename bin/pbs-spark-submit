@@ -142,7 +142,7 @@ init_svcs = True
 memlimit = None
 child_args = []
 properties = {}
-launcher = Launcher()
+launcher = PBSDSHLauncher()
 if ( "SPARK_LAUNCHER" in os.environ.keys() ):
     if ( os.environ["SPARK_LAUNCHER"] in ("exec","EXEC") ):
         launcher = ExecLauncher()
@@ -169,7 +169,7 @@ elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
 
 # command line argument handling
 try:
-    opts, child_args = getopt.getopt(sys.argv[1:],"D:d:L:m:P:",["no-init","exec","pbsdsh","ssh","properties-file","log-dir=","work-dir=","memory="])
+    opts, child_args = getopt.getopt(sys.argv[1:],"C:D:d:L:m:P:",["no-init","exec","pbsdsh","ssh","conf-dir","log-dir=","work-dir=","memory=","properties-file"])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -182,13 +182,10 @@ for opt in opts:
         launcher = PBSDSHLauncher()
     elif ( opt[0]=="--ssh" ):
         launcher = SSHLauncher()
+    elif ( opt[0]=="--conf-dir" or opt[0]=="-C" ):
+        os.environ["SPARK_CONF_DIR"] = opt[1]
     elif ( opt[0]=="--log-dir" or opt[0]=="-L" ):
         os.environ["SPARK_LOG_DIR"] = opt[1]
-    elif ( opt[0]=="--properties-file" or opt[0]=="-P" ):
-        if ( os.path.exists(opt[1]) ):
-            props = propsFromFile(opt[1])
-            for key in props.keys():
-                properties[key] = props[key]
     elif ( opt[0]=="--work-dir" or opt[0]=="-d" ):
         workdir = opt[1]
     elif ( opt[0]=="--memory" or opt[0]=="-m" ):
@@ -199,6 +196,11 @@ for opt in opts:
             properties[keyval[0]] = keyval[1]
         else:
             raise getopt.GetoptError("malformed property \""+opt[1]+"\"")
+    elif ( opt[0]=="--properties-file" or opt[0]=="-P" ):
+        if ( os.path.exists(opt[1]) ):
+            props = propsFromFile(opt[1])
+            for key in props.keys():
+                properties[key] = props[key]
 
 # read any properties files in the conf directory
 for propfile in glob.glob(os.environ["SPARK_CONF_DIR"]+"/*.properties"):
