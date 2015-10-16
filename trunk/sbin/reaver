@@ -137,21 +137,32 @@ if ( glob($ptn) )
   {
     foreach my $jobfile (glob($ptn))
     {
-      
       if ( ! defined($reap_job) || 
-           ! ($jobfile=~/\/$reap_job\..*\.JB$/) || 
-           ! ($jobfile=~/\/$reap_job\.JB$/))
+           ! $jobfile=~/\/$reap_job\..*\.JB$/ || 
+           ! $jobfile=~/\/$reap_job\.JB$/ )
 	{
-	  my $jobuserlist = `cat $jobfile | strings | grep -A 1 euser | grep -v euser | sort | uniq | tr '\n' '|'`;
-	  chop($jobuserlist);
+	  my $jobuserlist;
+	  # TORQUE 4(?) and after have XML .JB files; earlier versions
+	  # are binary
+	  my $isxml = `head -1 $jobfile | grep -ic xml`;
+          chop($isxml);
+	  if ( $isxml==1 )
+	    {
+	      $jobuserlist = `grep euser $jobfile | sed 's/ *<euser [A-Za-z0-9=\"]*>//g' | sed 's:</euser>::'`;
+	    }
+	  else
+	    {
+	      $jobuserlist = `cat $jobfile | strings | grep -A 1 euser | grep -v euser | sort | uniq | tr '\n' '|'`;
+	    }
+    	  chop($jobuserlist);
 	  if ( $jobuserlist ne "" )
 	    {
 	      if ( $safelist eq "" )
-		{
+	        {
 		  $safelist = $jobuserlist;
 		}
 	      else
-		{
+	        {
 		  $safelist .= "|".$jobuserlist;
 		}
 	    }
