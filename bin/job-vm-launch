@@ -167,6 +167,14 @@ else:
     sys.stderr.write("Not in a PBS job, exiting!\n")
     sys.exit(-1)
 
+# find the qemu-kvm executable...
+qemukvm = which("qemu-kvm")
+if ( which("qemu-kvm") is None and os.path.exists("/usr/libexec/qemu-kvm") ):
+    # ...which may not be in $PATH, especially on RHEL/CentOS
+    qemukvm = "/usr/libexec/qemu-kvm"
+else:
+    raise RuntimeError("Cannot find qemu-kvm")
+
 # figure out number of virtual cores
 # default to 1, just in case nothing else is set
 vcores = 0
@@ -528,12 +536,9 @@ if ( childpid==0 ):
     crashnode.appendChild(xml.createTextNode("restart"))
     domnode.appendChild(crashnode)
     devnode = xml.createElement("devices")
-    if ( which("qemu-kvm") is not None ):
-        emunode = xml.createElement("emulator")
-        emunode.appendChild(xml.createTextNode(which("qemu-kvm")))
-        devnode.appendChild(emunode)
-    else:
-        raise RuntimeError("Cannot find qemu-kvm")
+    emunode = xml.createElement("emulator")
+    emunode.appendChild(xml.createTextNode(qemukvm))
+    devnode.appendChild(emunode)
     if ( floppy is not None ):
         floppynode = xml.createElement("disk")
         floppynode.setAttribute("type","file")
@@ -557,7 +562,12 @@ if ( childpid==0 ):
     ddrvnode.setAttribute("type",diskformat)
     disknode.appendChild(ddrvnode)
     dsrcnode = xml.createElement("source")
-    dsrcnode.setAttribute("file",vmimage)
+    # libvirtd needs an absolute path to the image file
+    if ( vmimage.startswith("/") ):
+        dsrcnode.setAttribute("file",vmimage)
+    else:
+        cwd = os.getcwd()
+        dsrcnode.setAttribute("file",cwd+"/"+vmimage)
     disknode.appendChild(dsrcnode)
     dtgtnode = xml.createElement("target")
     dtgtnode.setAttribute("bus",diskbus)
@@ -639,12 +649,18 @@ if ( childpid==0 ):
     # start VM
     try:
         guestvm = conn.createXML(xml.toxml(),0)
-        log.write("Started guest "+vmname+" in hypervisor "+hypervisor+"\n")
-        log.write("To connect to VM text console, run \"virsh --connect="+hypervisor+" console "+vmname+"\"\n")
+        log.write("Domain "+vmname+" created from /tmp/"+vmname+".xml\n")
+    except libvirt.libvirtError as e:
+        log.write("Failed to start guest "+vmname+" in hypervisor "+hypervisor+", trying alternate method.\n")
+        try:
+            os.system("virsh -c "+hypervisor+" create /tmp/"+vmname+".xml")
+        except:
+            log.write("Alternate guest startup method failed, exiting.\n")
+            sys.exit(-1)
+    log.write("To connect to VM text console, run \"virsh --connect="+hypervisor+" console "+vmname+"\"\n")
+    if ( "DISPLAY" in os.environ.keys() ):
         log.write("To connect to VM graphical console, run \"virt-viewer --connect="+hypervisor+" --wait "+vmname+"\"\n")
-    except:
-        log.write("Failed to start guest "+vmname+" in hypervisor "+hypervisor+"\n")
-        sys.exit(-1)
+    log.write("To terminate VM, run \"virsh --connect="+hypervisor+" destroy "+vmname+"\"\n")
 
     # set signal handler in case the job ends before the VM shuts down
     # or user hits ^C
@@ -693,6 +709,8 @@ if ( block ):
     status = os.waitpid(childpid,0)
     exit(status[0])
 else:
+    # wait on guest network to come up before exiting
+    time.sleep(17)
     exit(exitcode)
 
 
