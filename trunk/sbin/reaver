@@ -30,7 +30,7 @@ my $sysuid_threshold=100;
 
 # regexp of usernames with uids above $sysuid_threshold that are allowed
 # to have processes running on a node without a PBS job
-my $safelist="arraysvcs|oscmon|decypher";
+my $safelist="arraysvcs|oscmon|decypher|rtkit";
 
 # Should we attempt to kill strays? (0 = no, 1 = yes)
 my $kill_mode = 0;
@@ -138,7 +138,9 @@ if ( glob($ptn) )
     foreach my $jobfile (glob($ptn))
     {
       
-      if ( ! defined($reap_job) || ! ($jobfile=~/\/$reap_job\..*\.JB$/) )
+      if ( ! defined($reap_job) || 
+           ! ($jobfile=~/\/$reap_job\..*\.JB$/) || 
+           ! ($jobfile=~/\/$reap_job\.JB$/))
 	{
 	  my $jobuserlist = `cat $jobfile | strings | grep -A 1 euser | grep -v euser | sort | uniq | tr '\n' '|'`;
 	  chop($jobuserlist);
