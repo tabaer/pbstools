@@ -2,7 +2,7 @@
 #
 # reaver:  Kill any processes that are not owned by users with jobs assigned
 #          to this node.
-# Copyright 2006, 2007 Ohio Supercomputer Center
+# Copyright 2006, 2007, 2011, 2012, 2015 Ohio Supercomputer Center
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
@@ -20,6 +20,7 @@
 use strict;
 use POSIX();
 use Getopt::Long;
+use diagnostics;
 
 # Turn off output buffering so that "sleep" calls don't cause a delay
 # on standard output
@@ -30,7 +31,7 @@ my $sysuid_threshold=100;
 
 # regexp of usernames with uids above $sysuid_threshold that are allowed
 # to have processes running on a node without a PBS job
-my $safelist="arraysvcs|oscmon|decypher|rtkit";
+my $safelist="arraysvcs|oscmon|decypher|rtkit|nagios";
 
 # Should we attempt to kill strays? (0 = no, 1 = yes)
 my $kill_mode = 0;
@@ -43,18 +44,23 @@ my $reap_job;
 # listing for stray procs.  Verbose mode is same as brief mode with extras.
 my $brief_mode = 0;
 my $verbose_mode = 0;
+my $long_ps_mode = 1;
 
 # Usage/help functions
-my $USAGE = "$0 [-hkbv] [-j <jobid>]";
+my $USAGE = "$0 [-bchklv] [-j <jobid>]";
 my $HELP = "Options:
+ -b, --brief
+    Display only the stray process IDs
+ -c, --classic
+    Display \"classic\" summary of process information
  -h, --help
     Print detailed help screen
  -j <jobid>, --job=<jobid>
     Clean up processes associated with <jobid>
  -k, --kill
     Attempt to kill all stray processes
- -b, --brief
-    Display only the stray process IDs
+ -l, --long
+    Display long summary of process information (default)
  -v, --verbose
     Display extra info
 ";
@@ -66,7 +72,7 @@ if ( defined($ENV{"PBS_HOME"}) )
       $spool=$ENV{"PBS_HOME"};
   }
 else
-{
+  {
     my @defaults=("/usr/spool/PBS",
 		  "/var/spool/pbs",
 		  "/var/spool/torque",
@@ -84,11 +90,11 @@ else
             last;
 	}
     }
-}
+  }
 if ( !defined($spool) )
-{
+  {
     die "Unable to find PBS spool directory!\n";
-}
+  }
 
 
 sub print_usage {
@@ -108,25 +114,29 @@ sub usage_error {
 }
 
 # Process command line options
-my ($opt_h, $opt_j, $opt_k, $opt_b, $opt_v);
+my ($opt_b, $opt_c, $opt_h, $opt_j, $opt_k, $opt_l, $opt_v);
 Getopt::Long::Configure('bundling');
 GetOptions(
+         "b"  => \$opt_b, "brief"   => \$opt_b,
+         "c"  => \$opt_c, "classic" => \$opt_c,
          "h"  => \$opt_h, "help"    => \$opt_h,
          "j=s"=> \$opt_j, "job=s"   => \$opt_j,
          "k"  => \$opt_k, "kill"    => \$opt_k,
-         "b"  => \$opt_b, "brief"   => \$opt_b,
+         "l"  => \$opt_l, "long"    => \$opt_l,
          "v"  => \$opt_v, "verbose" => \$opt_v
 ) || usage_error();
 
 if ($opt_h) { print_help(); exit(0); }
-if ($opt_k) { $kill_mode = 1; }
 if ($opt_b) { $brief_mode = 1; }
-if ($opt_v) { $verbose_mode = 1; $brief_mode = 0; }
+if ($opt_c) { $long_ps_mode = 0; }
 if ($opt_j)
 {
     $reap_job = $opt_j;
     $reap_job =~ s/\..*$//;
 }
+if ($opt_k) { $kill_mode = 1; }
+if ($opt_l) { $long_ps_mode = 1; }
+if ($opt_v) { $verbose_mode = 1; $brief_mode = 0; }
 
 # Append to $safelist the names of all users who have jobs currently running
 # on this host
@@ -193,14 +203,29 @@ if ( $safelist ne "" )
 
 # find all the target pids
 my @pids=();
-open(PS,"ps -A -o pid,state,uid,user,command |");
+if ( $long_ps_mode )
+  {
+    open(PS,"ps -w -A -o pid,%cpu,%mem,state,uid,user,lstart,command |");
+  }
+else
+  {
+    open(PS,"ps -A -o pid,state,uid,user,command |");
+  }
 # snarf the 1st line
 <PS>;
 print "Stray processes:\n" if $verbose_mode;
 while (<PS>)
   {
+    my ($pid,$p_cpu,$p_mem,$state,$uid,$user,$lstart,$command);
     chomp;
-    my ($pid,$state,$uid,$user,$command)=split(' ', $_, 5);
+    if ($long_ps_mode )
+      {
+        ($pid,$p_cpu,$p_mem,$state,$uid,$user,$lstart,$command) = split(' ', $_, 8);
+      }
+    else
+      {
+        ($pid,$state,$uid,$user,$command) = split(' ', $_, 5);
+      }
     if ( ($uid > $sysuid_threshold) && !($user =~ /^($safelist)$/) && ($uid!=$>) )
       {
 	push(@pids,$pid);
@@ -210,7 +235,14 @@ while (<PS>)
 	  }
 	else
 	  {
-	    printf "%8d  %-3s %-9.9s %-10.50s\n", $pid, $state, $user, $command;
+	    if ($long_ps_mode )
+	      {
+		print $pid," ",$p_cpu," ",$p_mem," ",$state," ",$user," ",$lstart," ",$command,"\n";
+              }
+	    else
+	      {
+                printf "%8d  %-3s %-9.9s %-10.50s\n", $pid, $state, $user, $command;
+	      } 
 	  }
       }
   }
