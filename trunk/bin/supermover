@@ -71,13 +71,12 @@ proto_list = ["file"]
 def get_methods(file):
     global debug
     global proto_list
-    methods = None
+    methods = {}
     if ( not os.path.exists(file) ):
-        raise IOError("Config file "+file+" does not exist")
-    elif ( not os.path.isfile(file) ):
-        raise IOError("Config \"file\" "+file+" is not actually a file")
+        sys.stderr.write("Config file "+file+" does not exist.\n")
+    elif ( not os.access(file,os.R_OK) ):
+        sys.stderr.write("Config file "+file+" is not readable.\n")
     else:
-        methods = dict()
         fd = open(file,"r")
         lines = fd.readlines()
         for line in lines:
