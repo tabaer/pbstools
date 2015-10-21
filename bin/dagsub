@@ -2,8 +2,8 @@
 # dagsub:  Submit one or more directed acyclic graphs of jobs to TORQUE
 #          using a language compatible with Condor DAGman.
 #
-# Copyright 2009, 2011, University of Tennessee
-# Authors:  Troy Baer <tbaer@utk.edu>
+# Copyright 2009, 2011, 2012, 2013 University of Tennessee
+# Authors:  Troy Baer <troy@osc.edu>
 #           Patrick Lu <ylu14@utk.edu>
 #           Nicholas Lineback <nlinebac@utk.edu>
 #
