@@ -1,5 +1,3 @@
-#PBS -A UT-SUPPORT
-#PBS -q analysis
 #PBS -l walltime=1:00:00
 #PBS -j oe
 
