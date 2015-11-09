@@ -403,8 +403,8 @@ function user_accounts($user = NULL)
     {
       return array();
     }
-  # OSC ASSUMPTION:  accounts are groups fitting a particular pattern
   $accts = array();
+  # OSC ASSUMPTION:  accounts are groups fitting a particular pattern
   $groups = user_groups($user);
   foreach ( $groups as $group )
     {
@@ -413,7 +413,24 @@ function user_accounts($user = NULL)
 	  array_push($accts,$group);
 	}
     }
-  # NICS ASSUMPTION:  user->account mappings can be groveled out of /nics/e/admin/userprojects
+  # NICS ASSUMPTION:  user->account mappings can be groveled out of
+  # /nics/e/admin/userprojects
+  #$fp = fopen("/nics/e/admin/userprojects","r") or die("Unable to open /nics/e/admin/userprojects");
+  #while ( !feof($fp) )
+  #  {
+  #    $elt = preg_split("/\s+/",chop(fgets($fp),"\n"));
+  #    if ( strcmp($elt[0],$user)==0 )
+  #      {
+  #        $theseaccts = explode(",",$elt[4]);
+  #        foreach ($theseaccts as $thisacct)
+  #          {
+  #            if ( ! in_array($thisacct,$accts) )
+  #              {
+  #                array_push($accts,$thisacct);
+  #              }
+  #          }
+  #      }
+  #  }
   return $accts;
 }
 
