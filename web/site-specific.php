@@ -435,6 +435,27 @@ function user_accounts($user = NULL)
   return $accts;
 }
 
+function limit_user_access($user = NULL)
+{
+  if ( is_null($user) )
+    {
+      return "username IS NULL";
+    }
+  else
+    {
+      $acl = "username='".$user."'";
+      foreach (user_groups($user) as $group)
+	{
+	  $acl .= " OR groupname='".$group."'";
+	}
+      foreach (user_accounts($user) as $acct)
+	{
+	  $acl .= " OR account='".$acct."'";
+	}
+      return "( ".$acl." )";
+    }
+}
+
 # list of software packages to look for in job scripts
 function software_list($db = NULL)
 {
