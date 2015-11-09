@@ -7,7 +7,7 @@
 # $Date$
 
 # The site-specific logic of the reporting system goes here!
-# Below are settings for NICS.
+# Below are settings for OSC.
 
 # PHP4 workaround for use of PHP5 file_put_contents in ods.php
 # from http://www.phpbuilder.com/board/showthread.php?t=10292234
@@ -78,7 +78,7 @@ if ( !defined('CACHE_DIR') )
 function sys_list()
 {
 # NICS
-  return array("krakenpf","kraken","athena","verne","nautilus","kid","kids","kfs","mars","bcndev","beacon","beacon2","darter","kraken-all","xt4-all","keeneland","beacon-all");
+#  return array("krakenpf","kraken","athena","verne","nautilus","kid","kids","kfs","mars","bcndev","beacon","beacon2","darter","kraken-all","xt4-all","keeneland","beacon-all");
 # OSC
 #  return array("amd",
 #	       "apple",
@@ -111,6 +111,12 @@ function sys_list()
 #	       "piv-serial",
 #	       "piv-parallel",
 #	       "x1");
+# New OSC
+  return array("opt",
+	       "oak",
+	       "ruby",
+	       "bucki",
+	       "owens");
 }
 
 # system selector
@@ -360,9 +366,9 @@ function sort_criteria($fn)
 function institution_match()
 {
 # OSC
-#  return "SUBSTRING(username,1,3) AS institution";
+  return "SUBSTRING(username,1,3) AS institution";
 # NICS
-  return "SUBSTRING(account,1,2) AS institution";
+#  return "SUBSTRING(account,1,2) AS institution";
 }
 
 # bucket sizes
@@ -378,6 +384,37 @@ function bucket_maxs($xaxis)
   if ( $xaxis=='mem_kb' ) return array("262144","1048576","4194304","12582912","33554432");
   if ( $xaxis=='vmem_kb' ) return array("262144","1048576","4194304","12582912","33554432");
   return array();
+}
+
+function user_groups($user = NULL)
+{
+  if ( is_null($user) )
+    {
+      return array();
+    }
+  # OSC/NICS ASSUMPTION:  user accounts exist on web server host
+  $groupstr = chop(`id -Gn $user`,"\n");
+  return explode(" ",$groupstr);
+}
+
+function user_accounts($user = NULL)
+{
+  if ( is_null($user) )
+    {
+      return array();
+    }
+  # OSC ASSUMPTION:  accounts are groups fitting a particular pattern
+  $accts = array();
+  $groups = user_groups($user);
+  foreach ( $groups as $group )
+    {
+      if ( preg_match('/^P[A-Z]{2,3}\d{4}$/',$group)==1 )
+	{
+	  array_push($accts,$group);
+	}
+    }
+  # NICS ASSUMPTION:  user->account mappings can be groveled out of /nics/e/admin/userprojects
+  return $accts;
 }
 
 # list of software packages to look for in job scripts
