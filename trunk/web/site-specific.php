@@ -431,6 +431,7 @@ function user_accounts($user = NULL)
   #          }
   #      }
   #  }
+  #fclose($fp);
   return $accts;
 }
 
