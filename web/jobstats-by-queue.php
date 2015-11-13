@@ -51,6 +51,7 @@ echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)
 jobstats_input_header();
 jobstats_input_metric("Job Count vs. Job Class","jobs_vs_queue");
 jobstats_input_metric("CPU Time vs. Job Class","cpuhours_vs_queue");
+jobstats_input_metric("Charges vs. Job Class","charges_vs_queue");
 jobstats_input_metric("Job Length vs. Job Class","walltime_vs_queue");
 jobstats_input_metric("Queue Time vs. Job Class","qtime_vs_queue");
 jobstats_input_metric("Real Memory vs. Job Class","mem_kb_vs_queue");

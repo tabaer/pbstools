@@ -45,6 +45,7 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count by Quarter","jobs_vs_quarter");
 jobstats_input_metric("CPU Time by Quarter","cpuhours_vs_quarter");
+jobstats_input_metric("Charges by Quarter","charges_vs_quarter");
 jobstats_input_metric("Job Length by Quarter","walltime_vs_quarter");
 jobstats_input_metric("Queue Time by Quarter","qtime_vs_quarter");
 jobstats_input_metric("Backlog by Quarter","backlog_vs_quarter");

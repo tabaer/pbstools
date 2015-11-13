@@ -45,6 +45,7 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count by Week","jobs_vs_week");
 jobstats_input_metric("CPU Time by Week","cpuhours_vs_week");
+jobstats_input_metric("Charges by Week","charges_vs_week");
 jobstats_input_metric("Job Length by Week","walltime_vs_week");
 jobstats_input_metric("Queue Time by Week","qtime_vs_week");
 jobstats_input_metric("Backlog by Week","backlog_vs_week");
