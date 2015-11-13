@@ -360,7 +360,7 @@ function charges($db,$system)
       $retval .= " WHEN 'parallel' THEN 0.1*12*nodect*TIME_TO_SEC(walltime)/3600.0";
       $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(walltime)/3600.0";
       $retval .= " ELSE 0.1*".cpuhours($db,$system);
-      $retval .= " END"
+      $retval .= " END";
     }
   else if ( $system=="ruby" )
     {
