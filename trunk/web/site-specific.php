@@ -369,7 +369,7 @@ function charges($db,$system)
       $retval .= " ELSE 0.1*20*nodect*TIME_TO_SEC(walltime)/3600.0";
       $retval .= " END";
     }
-  else if ( $system=="bucki" | $system=="owens" )
+  else if ( $system=="bucki" | $system=="owens" | $system=="quick" )
     {
       $retval = "0.0";
     }
@@ -390,7 +390,15 @@ function sort_criteria($fn)
 function institution_match()
 {
 # OSC
-  return "SUBSTRING(username,1,3) AS institution";
+  $case  = "CASE";
+  $case .= " WHEN system='bucki' THEN 'osu'";
+  $case .= " WHEN system='owens' THEN 'osu'";
+  $case .= " WHEN username REGEXP '^[a-z]{4}[0-9]{3,4}$' THEN SUBSTRING(username,1,4)";
+  $case .= " WHEN username REGEXP '^[a-z]{3}[0-9]{3,4}$' THEN SUBSTRING(username,1,3)";
+  $case .= " WHEN username REGEXP '^an[0-9]{3,4}$' THEN 'awe'";
+  $case .= " ELSE 'osc'";
+  $case .= " END";
+  return $case." AS institution";
 # NICS
 #  return "SUBSTRING(account,1,2) AS institution";
 }
