@@ -57,7 +57,7 @@ if ( isset($_POST['groupname']) )
 	    $sql .= ",".$key;
 	  }
       }
-    $sql = $sql." FROM Jobs WHERE groupname = '".$_POST['groupname']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY submit_ts;";
+    $sql = $sql." FROM Jobs WHERE groupname = '".$_POST['groupname']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) AND ( ".limit_user_access($_SERVER['PHP_AUTH_USER'])." ) ORDER BY submit_ts;";
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -109,15 +109,17 @@ else
   {
     begin_form("jobs-by-group.php");
 
-    pulldown("groupname","Group",user_groups($group),"None");
+    pulldown("groupname","Group",user_groups($_SERVER['PHP_AUTH_USER']),"None");
     system_chooser();
     date_fields();
-
-    $props=array("account","jobname","nproc","mppe","mppssp",
-		 "nodes","feature","gres","queue","qos","submit_ts","start_ts","end_ts",
+    
+    # This is not the exhaustive list...
+    $props=array("account","jobname","nproc",
+		 "nodes","feature","gres","queue","qos",
+		 "submit_ts","start_ts","end_ts",
 		 "cput_req","cput","walltime_req","walltime","mem_req","mem_kb",
-		 "vmem_req","vmem_kb","energy","software","submithost","hostlist",
-		 "exit_status","script","sw_app");
+		 "vmem_req","vmem_kb","software","submithost","hostlist",
+		 "exit_status","script");
     checkboxes_from_array("Properties",$props);
 
     end_form();
