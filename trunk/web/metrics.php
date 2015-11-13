@@ -292,7 +292,7 @@ function columnnames($metric)
 }
 
 
-function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
+function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_access=false)
 {
   $query = "SELECT ";
    if ( $xaxis!="" )
@@ -306,6 +306,10 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
      }
    $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
      dateselect("start",$start_date,$end_date).")";
+   if ( $limit_access )
+     {
+       $query .= " AND ( ".limit_user_access($_SERVER['PHP_AUTH_USER'])." )";
+     }
    if ( $xaxis!="" )
      {
        if ( $xaxis=="institution" )
@@ -348,7 +352,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 
 
 
-function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
+function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_access=false)
 {
   $query = "SELECT ".xaxis_column($xaxis,$system).",COUNT(jobid) AS jobs";
   if ( columns($metric,$system,$db)!="" )
@@ -372,6 +376,10 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
   if ( clause($xaxis,$metric)!="" )
     {
       $query .= " AND ".clause($xaxis,$metric);
+    }
+  if ( $limit_access )
+    {
+      $query .= " AND ( ".limit_user_access($_SERVER['PHP_AUTH_USER'])." )";
     }
   if ( $xaxis=="nproc_bucketed" )
     {
@@ -1022,7 +1030,7 @@ function jobstats_input_metric($name,$fn)
 }
 
 
-function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
+function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$limit_access=false)
 {
   
   if (    isset($_POST[$fn.'_graph'])
@@ -1036,37 +1044,37 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
       
       if ( isset($_POST[$fn.'_graph']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_graph($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
       
       if ( isset($_POST[$fn.'_table']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_table($result,xaxis($fn),metric($fn));
 	}
 
       if ( isset($_POST[$fn.'_csv']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_csv($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_xls']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
      if ( isset($_POST[$fn.'_ods']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
 }
 
-function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_date)
+function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_date,$limit_access=false)
 {
   
   if (    isset($_POST[$fn.'_graph'])
@@ -1080,31 +1088,31 @@ function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_
       
       if ( isset($_POST[$fn.'_graph']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_graph($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
       
       if ( isset($_POST[$fn.'_table']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_table($result,xaxis($fn),metric($fn));
 	}
 
       if ( isset($_POST[$fn.'_csv']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_csv($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_xls']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_ods']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
