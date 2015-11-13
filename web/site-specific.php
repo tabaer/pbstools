@@ -349,6 +349,30 @@ function charges($db,$system)
     {
       $retval = "2*".cpuhours($db,$system);
     }
+  else if ( $system=="opt" )
+    {
+      $retval = "0.1*".cpuhours($db,$system);
+    }
+  else if ( $system=="oak" )
+    {
+      $retval  = "CASE queue";
+      $retval .= " WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(walltime)/3600.0";
+      $retval .= " WHEN 'parallel' THEN 0.1*12*nodect*TIME_TO_SEC(walltime)/3600.0";
+      $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(walltime)/3600.0";
+      $retval .= " ELSE 0.1*".cpuhours($db,$system);
+      $retval .= " END"
+    }
+  else if ( $system=="ruby" )
+    {
+      $retval  = "CASE queue";
+      $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(walltime)/3600.0";
+      $retval .= " ELSE 0.1*20*nodect*TIME_TO_SEC(walltime)/3600.0";
+      $retval .= " END";
+    }
+  else if ( $system=="bucki" | $system=="owens" )
+    {
+      $retval = "0.0";
+    }
   return $retval;
 }
 
