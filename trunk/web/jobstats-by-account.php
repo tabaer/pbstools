@@ -45,6 +45,7 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count vs. Account","jobs_vs_account");
 jobstats_input_metric("CPU Time vs. Account","cpuhours_vs_account");
+jobstats_input_metric("Charges vs. Account","charges_vs_account");
 jobstats_input_metric("Job Length vs. Account","walltime_vs_account");
 jobstats_input_metric("Queue Time vs. Account","qtime_vs_account");
 jobstats_input_metric("Real Memory vs. Account","mem_kb_vs_account");
