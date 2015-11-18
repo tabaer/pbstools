@@ -20,17 +20,29 @@ import time
 # ways to launch workers
 #
 class Launcher:
-    def launch(self,cmdline,env):
+    def launch(self,cmdline,env,propagate_env=False,
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"]):
         raise NotImplementedError
     def sleep(self):
         sleeptime = 5
         if ( "PBS_NUM_NODES" in os.environ.keys() ):
             sleeptime += 2*int(os.environ["PBS_NUM_NODES"])
-        time.sleep(sleeptime)    
+        time.sleep(sleeptime)
+    def env_list(env,prop_env_list):
+        # since we can't rely on ssh_config and sshd_config having
+        # the appropriate SendEnv/AcceptEnv settings
+        argv = []
+        for var in prop_env_list:
+            if ( var in env.keys() ):
+                argv.append(var+"="+env[var])
+        return argv
+    def env_string(env,prop_env_list):
+        return " ".join(self.env_list(env,prop_env_list))
 
 
 class ExecLauncher(Launcher):
-    def launch(self,cmdline,env):
+    def launch(self,cmdline,env,propagate_env=False,
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"]):
         time.sleep(1)
         
         # lots of squick to try to limit the number of cores used on big
@@ -73,6 +85,9 @@ class ExecLauncher(Launcher):
 
         # base functionality
         argv = cmdline.split()
+        if ( propagate_env ):
+            for arg in self.env_list(env,prop_arg_list):
+                argv.append(arg)
         child_pid = os.fork()
         if ( child_pid==0 ):
             os.execvpe(argv[0],argv,env)
@@ -80,22 +95,33 @@ class ExecLauncher(Launcher):
 
 
 class PBSDSHLauncher(Launcher):
-    def launch(self,cmdline,env):
+    def launch(self,cmdline,env,propagate_env=False,
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"]):
         time.sleep(1)
+        cmd = cmdline
+        if ( propagate_env ):
+            cmd = self.env_string(env,prop_env_list)+" "+cmdline
         os.system("pbsdsh "+cmdline+" &")
         self.sleep()
 
 
 class SSHLauncher(Launcher):
-    def launch(self,cmdline,env):
+    def launch(self,cmdline,env,propagate_env=False,
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"]):
         time.sleep(1)
         if ( "PBS_NODEFILE" in os.environ.keys() ):
             nodefile = open(os.environ["PBS_NODEFILE"])
             for line in nodefile.readlines():
                 argv = cmdline.split()
                 node = line.rstrip("\n")
-                argv.insert(0,"ssh")
+                ssh = "ssh"
+                if ( "SPARK_SSH" in env.keys() ):
+                    ssh=env["SPARK_SSH"]
+                argv.insert(0,ssh)
                 argv.insert(1,node)
+                if ( propagate_env ):
+                    for arg in self.env_list(env,prop_env_list):
+                        argv.insert(2,arg)
                 sys.stderr.write(" ".join(argv)+"\n")
                 child_pid = os.fork()
                 if ( child_pid==0 ):
@@ -142,6 +168,7 @@ init_svcs = True
 memlimit = None
 child_args = []
 properties = {}
+pausetime = 5
 launcher = PBSDSHLauncher()
 if ( "SPARK_LAUNCHER" in os.environ.keys() ):
     if ( os.environ["SPARK_LAUNCHER"] in ("exec","EXEC") ):
@@ -169,7 +196,7 @@ elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
 
 # command line argument handling
 try:
-    opts, child_args = getopt.getopt(sys.argv[1:],"C:D:d:L:m:P:",["no-init","exec","pbsdsh","ssh","conf-dir","log-dir=","work-dir=","memory=","properties-file"])
+    opts, child_args = getopt.getopt(sys.argv[1:],"C:D:d:L:m:P:p:",["no-init","exec","pbsdsh","ssh","conf-dir","log-dir=","work-dir=","memory=","properties-file","pause-time"])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -201,6 +228,8 @@ for opt in opts:
             props = propsFromFile(opt[1])
             for key in props.keys():
                 properties[key] = props[key]
+    elif ( opt[0]=="--pause-time" or opt[0]=="-p" ):
+        pausetime = opt[1]
 
 # read any properties files in the conf directory
 for propfile in glob.glob(os.environ["SPARK_CONF_DIR"]+"/*.properties"):
@@ -245,19 +274,15 @@ if ( init_svcs ):
             os.environ["SPARK_DAEMON_JAVA_OPTS"] += " "+propsToCmdLine(properties)
         else:
             os.environ["SPARK_DAEMON_JAVA_OPTS"] = propsToCmdLine(properties)
-        #sys.stderr.write("SPARK_DAEMON_JAVA_OPTS=\""+ os.environ["SPARK_DAEMON_JAVA_OPTS"]+"\n")
 
     # launch master on mother superior
     cmdline = os.environ["SPARK_HOME"]+"/sbin/start-master.sh"
-    if ( workdir is not None ):
-        cmdline += " --work-dir "+workdir
     os.system(cmdline+" &")
     sys.stderr.write(cmdline+"\n")
-    time.sleep(1)
+    sys.stdout.write("SPARK_MASTER="+os.environ["SPARK_MASTER"]+"\n")
+    time.sleep(pausetime)
 
     # launch workers
-    # this should be replaced by something more resource-aware like mpiexec
-    # at some point
     cmdline = os.environ["SPARK_HOME"]+"/bin/spark-class org.apache.spark.deploy.worker.Worker"
     if ( memlimit is not None ):
         cmdline += " --memory "+memlimit
@@ -266,8 +291,7 @@ if ( init_svcs ):
     cmdline += " "+os.environ["SPARK_MASTER"]
     sys.stderr.write(cmdline+"\n")
     launcher.launch(cmdline,os.environ)
-
-    sys.stdout.write("SPARK_MASTER="+os.environ["SPARK_MASTER"]+"\n")
+    time.sleep(pausetime)
 
 # run the user's Spark "job", if one is given
 if ( len(child_args)>0 ):
