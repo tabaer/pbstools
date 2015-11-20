@@ -67,6 +67,7 @@ sub software_list()
 	    "blat",
 	    "bolztran",
 	    "boots",
+            "bowtie",
 	    "brams-opt",
 	    "bugget",
 	    "cactus",
@@ -83,6 +84,7 @@ sub software_list()
 	    "cdo",
 	    "cdp",
 	    "cfd++",
+            "cfd_postprocess",
 	    "cfl3d",
 	    "changa",
 	    "charmm",
@@ -120,13 +122,16 @@ sub software_list()
 	    "dam",
 	    "darshan",
 	    "dasquad",
+            "decomp",
 	    #"decypher",
 	    "delphi",
 	    "delta5d",
 	    "desmond",
 	    "dfdx",
 	    "dghbc",
+            "dgtd",
 	    "dhybrid",
+            "dirac-pilot",
 	    "dissens",
 	    "distuf",
 	    "dlmonte",
@@ -157,11 +162,13 @@ sub software_list()
 	    "examl",
 	    "f-plane",
 	    "falkon",
+            "fastqc",
 	    "fd3d",
 	    "fdl3di",
 	    "featureComputation",
 	    "fedvr",
 	    "fidap",
+            "fit_exe",
 	    "flash2",
 	    "flash4",
 	    "flotran",
@@ -186,6 +193,7 @@ sub software_list()
 	    "genlatmu",
 	    "geosgcm",
 	    "glast",
+            "gop2pc",
 	    "gpaw",
 	    "GreenSolver",
 	    "grads",
@@ -226,6 +234,7 @@ sub software_list()
 	    "hybrid-gsi",
 	    "hydro",
 	    "hy3s",
+            "ice",
 	    "idl",
 	    "ifs",
 	    "imb",
@@ -272,6 +281,7 @@ sub software_list()
 	    "measurements",
 	    "meep",
 	    "meta",
+            "metgrid",
 	    "mfc",
 	    "mhd_1",
 	    "mhd3d",
@@ -356,7 +366,9 @@ sub software_list()
 	    "phasta",
 	    "phits",
 	    "phonon",
+            "phraider",
 	    "pic-star",
+            "picard",
 	    "pimd",
 	    "pkdgrav",
 	    "pluto",
@@ -388,6 +400,7 @@ sub software_list()
 	    "radhyd",
 	    "raxml",
 	    "readall_parallel",
+            "real_exe",
 	    "reduce",
 	    "reflect",
 	    "res",
@@ -410,6 +423,7 @@ sub software_list()
 	    "s3d",
 	    #"sable",
 	    "sam_adv_um5",
+            "samtools",
 	    "sas",
 	    "sauron",
 	    "scalapack",
@@ -429,6 +443,7 @@ sub software_list()
 	    "SOAPdenovo",
 	    "sord",
 	    "sovereign",
+            "spark",
 	    "spdcp",
 	    "srad",
 	    "sses",
@@ -472,6 +487,7 @@ sub software_list()
 	    "vecadd",
 	    "vhone",
 	    "vida",
+            "ViennaRNA",
 	    "visit",
 	    "vli",
 	    "vorpal",
@@ -479,6 +495,7 @@ sub software_list()
 	    "vpic",
 	    "walksat",
 	    "wave_packet",
+            "webmo",
 	    "wmc",
 	    "wrf",
 	    "xgc",
@@ -532,6 +549,7 @@ sub software_match_list()
   $pkgmatch{'crystal'} = "script LIKE '%Pcrystal%'";
   $pkgmatch{'cube'} = "( script LIKE '%/cube %' OR script LIKE '%/intelcube %' )";
   $pkgmatch{'dam'} = "script LIKE '%/dam %'";
+  $pkgmatch{'decomp'} = "script LIKE '%/decomp %'";
   $pkgmatch{'decypher'} = "script REGEXP '(decypher|dc_(target|make|blast|phrap)|TimeLogic)'";
   $pkgmatch{'desmond'} = "( script LIKE '%desmond%' AND NOT ( username LIKE '%desmond%' ) )";
   $pkgmatch{'dipole'} = "script LIKE '%.cxx.op%'";
@@ -540,6 +558,7 @@ sub software_match_list()
   $pkgmatch{'dock'} = "( script LIKE '%dock5%' OR script LIKE '%dock6%' OR script LIKE '%sphgen%' OR script LIKE '%mopac%' )";
   $pkgmatch{'esp'} = "script LIKE '%/esp %'";
   $pkgmatch{'ex_e'} = "script LIKE '%ex.e%'";
+  $pkgmatch{'fit_exe'} = "script LIKE '%fit.exe%'";
   $pkgmatch{'fluent'} = "( script LIKE '%fluent%' OR ( software IS NOT NULL AND software LIKE '%fluent%' ) )";
   $pkgmatch{'fsweep'} = "( script LIKE '%fsweep.exe%' OR script LIKE '%fsweep2.exe%' )";
   $pkgmatch{'gamess'} = "( script LIKE '%gamess%' OR script LIKE '%rungms%' OR script LIKE '%rungmx%' )";
@@ -556,6 +575,7 @@ sub software_match_list()
   $pkgmatch{'hydro'} = "script LIKE '%./hydro %'";
   $pkgmatch{'idl'}="( script LIKE '%module load idl%' OR script LIKE '%module add idl%' OR script LIKE '%\nidl%' OR ( software IS NOT NULL AND software LIKE '%idl%' ) )";
   $pkgmatch{'hsi'} = "( script LIKE '%hsi%' OR script LIKE '%htar%' OR queue='hpss' )";
+  $pkgmatch{'ice'} = "script LIKE '%IceModule%'";
   $pkgmatch{'imb'} = "script LIKE '%IMB-%'";
   $pkgmatch{'lammps'} = "( script LIKE '%lammps%' OR script LIKE '% lmp_%' OR script LIKE '%/lmp_%' )";
   $pkgmatch{'liso'} = "script LIKE '%/liso %'";
@@ -575,8 +595,10 @@ sub software_match_list()
   $pkgmatch{'opt_exe'} = "( script LIKE '%opt_exe%' OR script LIKE '%scriptLaunchAll%' )";
   $pkgmatch{'paraview'} = "script LIKE '%pvserver%'";
   $pkgmatch{'pse'} = "( script LIKE '%/PSE\n' OR script LIKE '%/PSE2\n' )";
+  $pkgmatch{'pwscf'} = "( script LIKE '%pwscf%' OR script LIKE '%/pw.x %' OR script LIKE '%/ph.x %' )";
   $pkgmatch{'r_out'} = "( script LIKE '%/r.out %' OR script LIKE '%/r.out\n%' )";
   $pkgmatch{'radhyd'} = "( script LIKE '%radhyd%' OR script LIKE '%rhd_hyb%' OR script LIKE '%orion2%' )";
+  $pkgmatch{'real_exe'} = "script LIKE '%real.exe%'";
   $pkgmatch{'reduce'} = "( script LIKE '%reduce_1%' OR script LIKE '%reduce_eta%' )";
   $pkgmatch{'reflect'} = "script LIKE '%/reflect\n%'";
   $pkgmatch{'root'} = "script LIKE '%\nroot -q%'";
@@ -587,6 +609,7 @@ sub software_match_list()
  '%run_u%' OR script LIKE '%run_v%' OR script LIKE '%run_w%' OR script LIKE '%run_dBZ%' )";
   $pkgmatch{'sable'} = "( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )";
   $pkgmatch{'sas'} = "( script LIKE '%\nsas%' OR ( software IS NOT NULL AND software LIKE '%sas%' ) OR queue  LIKE '%sas%' )";
+  $pkgmatch{'spark'} = "script LIKE '%spark-submit%'";
   $pkgmatch{'tbms'} = "( script LIKE '%tbms%dvm%' OR script LIKE '%distr%dvm%' OR script LIKE '%jac%dvm%' OR script LIKE '%mt%dvm%' )";
   $pkgmatch{'track'} = "script LIKE '%TRACKdir%'";
   $pkgmatch{'turbo'} = "script LIKE '%pturbo.x%'";
@@ -627,7 +650,7 @@ sub software_match_list()
   $pkgmatch{'hy3s'} = "( ( script LIKE '%SSA%' OR script LIKE '%HyJCMSS-%' ) AND NOT ( ".$pkgmatch{'arps'}." ) AND NOT ( ".$pkgmatch{'amber'}." ) AND NOT ( ".$pkgmatch{'bugget'}." ) AND NOT ( ".$pkgmatch{'cactus'}." ) AND NOT ( ".$pkgmatch{'cam'}." ) AND NOT ( ".$pkgmatch{'ccsm'}." ) AND NOT ( ".$pkgmatch{'cdo'}." ) AND NOT ( ".$pkgmatch{'charmm'}." ) AND NOT ( ".$pkgmatch{'energyplus'}." ) AND NOT ( ".$pkgmatch{'enzo'}." ) AND NOT ( ".$pkgmatch{'grmhd'}." ) AND NOT ( ".$pkgmatch{'halo'}." ) AND NOT ( ".$pkgmatch{'hchbm'}." ) AND NOT ( ".$pkgmatch{'hsi'}." ) AND NOT ( ".$pkgmatch{'milc'}." ) AND NOT ( ".$pkgmatch{'ncl'}." ) AND NOT ( ".$pkgmatch{'nwchem'}." ) AND NOT ( ".$pkgmatch{'simpleio'}." ) AND NOT ( ".$pkgmatch{'sses'}." )  AND NOT ( ".$pkgmatch{'tfe'}." ) )";
   $pkgmatch{'ifs'} = "( script LIKE '%ifsMASTER%' AND NOT ( ".$pkgmatch{'cdp'}." ) AND NOT ( ".$pkgmatch{'hsi'}." ) )";
   $pkgmatch{'inca'} = "( script LIKE '%inca%' AND NOT ( ".$pkgmatch{'vasp'}." ) )";
-  $pkgmatch{'ior'} = "( script LIKE '%ior%' AND NOT ( username LIKE '%ior%' ) AND NOT ( script LIKE '%prior%' ) AND NOT ( ".$pkgmatch{'a_out'}." ) AND NOT ( ".$pkgmatch{'cam'}." ) AND NOT ( ".$pkgmatch{'lammps'}." ) AND NOT ( ".$pkgmatch{'namd'}." ) AND NOT ( ".$pkgmatch{'swift'}." ) )";
+  $pkgmatch{'ior'} = "( script LIKE '%ior%' AND NOT ( username LIKE '%ior%' ) AND NOT ( script LIKE '%prior%' ) AND NOT ( ".$pkgmatch{'a_out'}." ) AND NOT ( ".$pkgmatch{'cam'}." ) AND NOT ( ".$pkgmatch{'lammps'}." ) AND NOT ( ".$pkgmatch{'swift'}." ) )";
   $pkgmatch{'meep'} = "( script LIKE '%meep%' AND NOT ( ".$pkgmatch{'sigma'}." ) )";
   $pkgmatch{'milc'} = "( ( script LIKE '%milc%' OR script LIKE '%su3_%' OR script LIKE '%switch%.csh%' ) AND NOT ( ".$pkgmatch{'nicam'}." ) AND NOT ( ".$pkgmatch{'hmc'}." ) )";
   $pkgmatch{'measurements'} = " ( script LIKE '%measurements%' ) AND NOT ( ".$pkgmatch{'milc'}." )";
@@ -683,6 +706,7 @@ my $start_date;
 my $end_date;
 my $minjobs = 1000;
 my $mincpuhours = 100000;
+my $singlepkg;
 
 while ( $ARGV[0] =~ /^-.*/ )
   {
@@ -739,6 +763,11 @@ while ( $ARGV[0] =~ /^-.*/ )
       {
 	$domultimatch = 1;
       }
+    elsif (  $ARGV[0] eq "-P" )
+      {
+        $singlepkg = $ARGV[1];
+        shift(@ARGV);
+      }
     elsif (  $ARGV[0] eq "-S" )
       {
 	$start_date = $ARGV[1];
@@ -760,7 +789,16 @@ my $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) || die "$0:  unable to connect to
 my %pkgmatch = software_match_list();
 if ( $domultimatch==0 )
   {
-    for my $pkg ( software_list() )
+    my @pkglist;
+    if ( defined($singlepkg) )
+      {
+        @pkglist = ( $singlepkg );
+      }
+    else
+      {
+        @pkglist = software_list();
+      }
+    for my $pkg ( @pkglist )
       {
 	my $sql;
 	if ( $syntaxcheck==0 )
