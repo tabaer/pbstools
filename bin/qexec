@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # qexec -- A workalike for SGE qlogin/qsh/qrsh
-# Copyright 2007 Ohio Supercomputer Center
+# Copyright 2007, 2015 Ohio Supercomputer Center
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
