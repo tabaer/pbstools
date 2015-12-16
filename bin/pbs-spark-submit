@@ -154,6 +154,31 @@ def propsFromFile(filename):
     return proplist
 
 #
+# documentation
+#
+def usage():
+    sys.stderr.write("pbs-spark-submit:  Run an Apache Spark \"job\" (including optionally\n\tstarting the Spark master and work services) inside a PBS job.\n")
+    sys.stderr.write("\n")
+    sys.stderr.write("Usage:  pbs-spark-submit [arguments] <app.jar|python_file> [app options]\n")
+    sys.stderr.write("\n")
+    sys.stderr.write("Options:\n")
+    sys.stderr.write("\t--no-init\n\t\tDo not initialize Spark master/worker services.\n")
+    sys.stderr.write("\t--exec\n\t\tUse the exec process launcher.\n")
+    sys.stderr.write("\t--pbsdsh\n\t\tUse the pbsdsh process launcher (default).\n")
+    sys.stderr.write("\t--ssh\n\t\tUse the ssh process launcher.\n")
+    sys.stderr.write("\t--conf-dir <confdir> or -C <confdir>\n\t\tLook in <confdir> for Java properties files.\n")
+    sys.stderr.write("\t--log-dir <logdir> or -L <logdir>\n\t\tPlace logs in <logdir>.\n")
+    sys.stderr.write("\t--work-dir <workdir> or -d <workdir>\n\t\tUse <workdir> as Spark program's working directory.\n")
+    sys.stderr.write("\t--memory <memlimit> or -m <memlimit>\n\t\tSet per-worker memory limit.\n")
+    sys.stderr.write("\t-D <key>=<value>\n\t\tSet the Java property <key> to <value>.\n")
+    sys.stderr.write("\t--properties-file <propfile> or -P <propfile>\n\t\tRead Java properties from <propfile>.\n")
+    sys.stderr.write("\n")
+    sys.stderr.write("Run \"man pbs-spark-submit\" for more details.\n")
+    sys.stderr.write("\n")
+    sys.exit(0)
+    
+
+#
 # main program begins here
 #
 
