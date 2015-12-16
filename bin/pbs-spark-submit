@@ -162,6 +162,8 @@ def usage():
     sys.stderr.write("Usage:  pbs-spark-submit [arguments] <app.jar|python_file> [app options]\n")
     sys.stderr.write("\n")
     sys.stderr.write("Options:\n")
+    sys.stderr.write("\t--help or -h\n\t\tPrint this help message\n")
+    sys.stderr.write("\t--init\n\t\tInitialize Spark master/worker services (default).\n")
     sys.stderr.write("\t--no-init\n\t\tDo not initialize Spark master/worker services.\n")
     sys.stderr.write("\t--exec\n\t\tUse the exec process launcher.\n")
     sys.stderr.write("\t--pbsdsh\n\t\tUse the pbsdsh process launcher (default).\n")
@@ -221,13 +223,17 @@ elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
 
 # command line argument handling
 try:
-    opts, child_args = getopt.getopt(sys.argv[1:],"C:D:d:L:m:P:p:",["no-init","exec","pbsdsh","ssh","conf-dir","log-dir=","work-dir=","memory=","properties-file","pause-time"])
+    opts, child_args = getopt.getopt(sys.argv[1:],"C:D:d:hL:m:P:p:",["help","init","no-init","exec","pbsdsh","ssh","conf-dir","log-dir=","work-dir=","memory=","properties-file","pause-time"])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
 for opt in opts:
     if ( opt[0]=="--no-init" ):
         init_svcs = False
+    elif ( opt[0]=="--init" ):
+        init_svcs = True
+    elif ( opt[0]=="--help" or opt[0]=="-h" ):
+        usage()
     elif ( opt[0]=="--exec" ):
         launcher = ExecLauncher()
     elif ( opt[0]=="--pbsdsh" ):
