@@ -40,8 +40,10 @@ are preferred due to keeping the Spark processes as children of
 .TP
 .B --help or -h
 Print a help message and exit.
+.TP
 .B --init
 Initialize the Spark master and worker processes.  This is the default.
+.TP
 .B --no-init
 Do not initialize the Spark master and worker processes.  This is
 intended for use in the second and subsequent invocations of Spark
@@ -74,6 +76,11 @@ Place logs in <logdir>.  This is equivalent to setting the environment
 variable
 .I SPARK_LOG_DIR.
 .TP
+.B --log4j-properties <propsfile> or -l <propsfile>
+Read log4j properties from <propsfile>.  Note that this will override any
+log4j properties set in
+.I $SPARK_CONF_DIR.
+.TP
 .B --work-dir <workdir> or -d <workdir>
 Use <workdir> as the Spark program's working directory; defaults to
 the current working directory, unless the environment variable
@@ -84,6 +91,9 @@ is set, in which case that will be used.  The working directory
 .B --memory <memlimit> or -m <memlimit>
 Set the per-worker memory limit to <memlimit>; defaults to the
 physical memory on the node minus 1 GB.
+.TP
+.B --pausetime <N> or -p <N>
+Pause <N> seconds between startup stages (default 5)
 .TP
 .B -D <key>=<value>
 Set the Java property <key> to <value>.
