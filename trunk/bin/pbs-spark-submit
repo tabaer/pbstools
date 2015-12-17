@@ -170,8 +170,10 @@ def usage():
     sys.stderr.write("\t--ssh\n\t\tUse the ssh process launcher.\n")
     sys.stderr.write("\t--conf-dir <confdir> or -C <confdir>\n\t\tLook in <confdir> for Java properties files.\n")
     sys.stderr.write("\t--log-dir <logdir> or -L <logdir>\n\t\tPlace logs in <logdir>.\n")
+    sys.stderr.write("\t--log4j-properties <propsfile> or -l <propsfile>\n\t\tRead log4j properties from <propsfile>.\n")
     sys.stderr.write("\t--work-dir <workdir> or -d <workdir>\n\t\tUse <workdir> as Spark program's working directory.\n")
     sys.stderr.write("\t--memory <memlimit> or -m <memlimit>\n\t\tSet per-worker memory limit.\n")
+    sys.stderr.write("\t--pausetime <N> or -p <N>\n\t\tPause <N> seconds between startup stages (default 5).\n")
     sys.stderr.write("\t-D <key>=<value>\n\t\tSet the Java property <key> to <value>.\n")
     sys.stderr.write("\t--properties-file <propfile> or -P <propfile>\n\t\tRead Java properties from <propfile>.\n")
     sys.stderr.write("\n")
@@ -197,6 +199,7 @@ child_args = []
 properties = {}
 pausetime = 5
 launcher = PBSDSHLauncher()
+log4j_props = None
 if ( "SPARK_LAUNCHER" in os.environ.keys() ):
     if ( os.environ["SPARK_LAUNCHER"] in ("exec","EXEC") ):
         launcher = ExecLauncher()
@@ -223,7 +226,7 @@ elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
 
 # command line argument handling
 try:
-    opts, child_args = getopt.getopt(sys.argv[1:],"C:D:d:hL:m:P:p:",["help","init","no-init","exec","pbsdsh","ssh","conf-dir","log-dir=","work-dir=","memory=","properties-file","pause-time"])
+    opts, child_args = getopt.getopt(sys.argv[1:],"C:D:d:hL:l:m:P:p:",["help","init","no-init","exec","pbsdsh","ssh","conf-dir","log-dir=","log4j-properties=","work-dir=","memory=","properties-file","pause-time"])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -244,6 +247,8 @@ for opt in opts:
         os.environ["SPARK_CONF_DIR"] = opt[1]
     elif ( opt[0]=="--log-dir" or opt[0]=="-L" ):
         os.environ["SPARK_LOG_DIR"] = opt[1]
+    elif ( opt[0]=="--log4j-properties" or opt[0]=="-l" ):
+        log4j_props = opt[1]
     elif ( opt[0]=="--work-dir" or opt[0]=="-d" ):
         workdir = opt[1]
     elif ( opt[0]=="--memory" or opt[0]=="-m" ):
@@ -326,4 +331,8 @@ if ( init_svcs ):
 
 # run the user's Spark "job", if one is given
 if ( len(child_args)>0 ):
-    os.system(os.environ["SPARK_HOME"]+"/bin/spark-submit --master "+os.environ["SPARK_MASTER"]+" "+" ".join(child_args))
+    cmdline = os.environ["SPARK_HOME"]+"/bin/spark-submit --master "+os.environ["SPARK_MASTER"]
+    if ( log4j_props is not None ):
+        cmdline += " --driver-java-options -Dlog4j.configuration=file:"+log4j_props
+    cmdline += " "+" ".join(child_args)
+    os.system(cmdline)
