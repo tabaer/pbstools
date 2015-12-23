@@ -1,6 +1,6 @@
 Summary: Tools for the PBS family of batch systems (OpenPBS, PBS Pro, TORQUE)
 Name: pbstools
-Version: 3.0
+Version: 3.1
 Release: 1%{?dist}
 License: GPLv2
 Group: System Environment/Base
