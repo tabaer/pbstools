@@ -186,11 +186,11 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %{_bindir}/dagsub
 %doc %{_mandir}/man1/dagsub.1.gz
 
-%files job-vm-launch
+%files -n job-vm-launch
 %{_bindir}/job-vm-launch
 %doc %{_mandir}/man1/job-vm-launch.1.gz
 
-%files pbs-spark-submit
+%files -n pbs-spark-submit
 %{_bindir}/pbs-spark-submit
 %doc %{_mandir}/man1/pbs-spark-submit.1.gz
 
