@@ -13,7 +13,7 @@ install: usertools admintools
 
 install-all: usertools admintools mpitools statstools dbtools
 
-usertools: ja pbsdcp qexec supermover dmsub dagsub
+usertools: ja pbsdcp qexec supermover dmsub dagsub job-vm-launch pbs-spark-submit
 
 ja:
 	install -d $(PREFIX)/bin
@@ -63,6 +63,18 @@ dagsub:
 	install -m 0755 bin/dagsub $(PREFIX)/bin
 	install -d $(PREFIX)/share/man/man1	
 	install -m 0644 doc/man1/dagsub.1 $(PREFIX)/share/man/man1
+
+job-vm-launch:
+	install -d $(PREFIX)/bin
+	install -m 0755 bin/job-vm-launch $(PREFIX)/bin
+	install -d $(PREFIX)/share/man/man1	
+	install -m 0644 doc/man1/job-vm-launch.1 $(PREFIX)/share/man/man1
+
+pbs-spark-submit:
+	install -d $(PREFIX)/bin
+	install -m 0755 bin/pbs-spark-submit $(PREFIX)/bin
+	install -d $(PREFIX)/share/man/man1	
+	install -m 0644 doc/man1/pbs-spark-submit.1 $(PREFIX)/share/man/man1
 
 admintools: reaver
 
