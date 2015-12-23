@@ -5,6 +5,5 @@ dagsub:
   able to determine whether or not a job completed successfully unless
   it happens to check while the completed job is in the 'E' state
   (which is typically only a few seconds).
-* Generation of DOT files is currently broken.
 
 
