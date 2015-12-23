@@ -4,14 +4,14 @@ Version: 3.1
 Release: 1%{?dist}
 License: GPLv2
 Group: System Environment/Base
-Vendor:  National Institute for Computational Sciences, University of Tennessee
-URL: http://www.nics.tennessee.edu/~troy/pbstools/
+Vendor:  Ohio Supercomputer Center
+URL: http://www.osc.edu/~troy/pbstools
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Prefix: /usr
 %description
-Several utilities that have been developed at NICS, OSC, and elsewhere
+Several utilities that have been developed at OSC, NICS, and elsewhere
 to aid in the administration and management of PBS variants (including
 OpenPBS, PBS Pro, and TORQUE).
 
