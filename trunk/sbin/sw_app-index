@@ -541,6 +541,7 @@ sub software_match_list()
   $pkgmatch{'athena'} = "script LIKE '%/athena %'";
   $pkgmatch{'blat'} = "script LIKE '%blat %'";
   $pkgmatch{'boltztran'} = "(script LIKE '%boltzpar%')";
+  $pkgmatch{'boots'} = "( script LIKE '%boots%' AND NOT ( script LIKE '%bootstrap%' ) )";
   $pkgmatch{'cbl'} = "( script LIKE '% cbl%' OR script LIKE '%pcbl%' OR script LIKE '%biolib%' )";
   $pkgmatch{'charles'} = "script like '%charles.exe%'";
   $pkgmatch{'chemshell'} = "script LIKE '%chemsh%'";
@@ -579,6 +580,7 @@ sub software_match_list()
   $pkgmatch{'imb'} = "script LIKE '%IMB-%'";
   $pkgmatch{'lammps'} = "( script LIKE '%lammps%' OR script LIKE '% lmp_%' OR script LIKE '%/lmp_%' )";
   $pkgmatch{'liso'} = "script LIKE '%/liso %'";
+  $pkgmatch{'lsdyna'} = "( script LIKE '%lsdyna%' OR script LIKE '%ls-dyna%' OR script LIKE '%mpp-dyna%' OR script LIKE '%mpp971%' OR ( software IS NOT NULL AND software LIKE '%lsdyna%' ) )";
   $pkgmatch{'madness'} = "( script LIKE '%m-a-d-n-e-s-s%' OR script LIKE '%slda%' )";
   $pkgmatch{'md_xx'} = "script LIKE '%md.xx%'";
   $pkgmatch{'meta'} = "( script LIKE '%anti.meta%' OR script LIKE '%para.meta%' OR script LIKE '%xray.meta%' )";
@@ -593,7 +595,7 @@ sub software_match_list()
   $pkgmatch{'omega'} = "script LIKE '%omega.exe%'";
   $pkgmatch{'openeye'} = "( script LIKE '%babel3%' OR script LIKE '%checkcff%' OR script LIKE '%chunker%' OR script LIKE '%fred2%' OR script LIKE '%fredPA%' OR script LIKE '%ligand_info%' OR script LIKE '%makefraglib%' OR script LIKE '%makerocsdb%' OR script LIKE '%nam2mol%' OR script LIKE '%omega2%' OR script LIKE '%szybki%' )";
   $pkgmatch{'opt_exe'} = "( script LIKE '%opt_exe%' OR script LIKE '%scriptLaunchAll%' )";
-  $pkgmatch{'paraview'} = "script LIKE '%pvserver%'";
+  $pkgmatch{'paraview'} = "( script LIKE '%paraview%' OR script LIKE '%pvserver%' )";
   $pkgmatch{'pse'} = "( script LIKE '%/PSE\n' OR script LIKE '%/PSE2\n' )";
   $pkgmatch{'pwscf'} = "( script LIKE '%pwscf%' OR script LIKE '%/pw.x %' OR script LIKE '%/ph.x %' )";
   $pkgmatch{'r_out'} = "( script LIKE '%/r.out %' OR script LIKE '%/r.out\n%' )";
@@ -605,8 +607,6 @@ sub software_match_list()
   $pkgmatch{'rosetta'} = "( script LIKE '%rosetta.%' OR script LIKE '%/rr %' )";
   $pkgmatch{'roth'} = "script LIKE '%/ROTH%'";
   $pkgmatch{'rtp'} = "( script LIKE '%rtp%' AND NOT ( script like '%RestartP%' ) AND NOT ( script LIKE '%addpertpath%' ) )";
-  $pkgmatch{'run_xyzvort'} = "( script LIKE '%run_xvort%' OR script LIKE '%run_yvort%' OR script LIKE '%run_zvort%' OR script LIKE '%run_thpert%' OR script LIKE
- '%run_u%' OR script LIKE '%run_v%' OR script LIKE '%run_w%' OR script LIKE '%run_dBZ%' )";
   $pkgmatch{'sable'} = "( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )";
   $pkgmatch{'sas'} = "( script LIKE '%\nsas%' OR ( software IS NOT NULL AND software LIKE '%sas%' ) OR queue  LIKE '%sas%' )";
   $pkgmatch{'spark'} = "script LIKE '%spark-submit%'";
@@ -637,6 +637,7 @@ sub software_match_list()
   $pkgmatch{'eden'} = "( script LIKE '%eden%' AND NOT ( ".$pkgmatch{'matlab'}." ) )";
   $pkgmatch{'enzo'} = "( script LIKE '%enzo%' AND NOT ( ".$pkgmatch{'rtp'}." ) )";
   $pkgmatch{'f-plane'} = "( script LIKE '%f-plane%' AND NOT ( ".$pkgmatch{'hsi'}." ) )";
+  $pkgmatch{'foam'} = "( script LIKE '%foam%' AND NOT ( ".$pkgmatch{'lsdyna'}." ) )";
   $pkgmatch{'gadget'} = "( script LIKE '%gadget%' AND NOT ( ".$pkgmatch{'hsi'}." ) )";
   $pkgmatch{'gdl'} = "( script LIKE '%gdl%' AND NOT ( ".$pkgmatch{'rotbouss'}." ) )";
   $pkgmatch{'grib'} = "( script LIKE '%grib%' AND NOT ( ".$pkgmatch{'cdo'}." ) AND NOT ( ".$pkgmatch{'mm5'}." ) AND NOT ( ".$pkgmatch{'sgf'}." ) AND NOT ( ".$pkgmatch{'sigma'}." ) )";
@@ -673,6 +674,7 @@ sub software_match_list()
   $pkgmatch{'radhyd'} = "( script LIKE '%radhyd%' AND NOT ( ".$pkgmatch{'chimera'}." ) )";
   $pkgmatch{'res'} = "( script LIKE '%/res_%' AND NOT ( ".$pkgmatch{'enzo'}." ) AND NOT ( ".$pkgmatch{'grib'}." ) AND NOT ( ".$pkgmatch{'lammps'}." ) )";
   $pkgmatch{'run_im'} = "( script LIKE '%run_im%' AND NOT ( ".$pkgmatch{'aims'}." ) AND NOT ( ".$pkgmatch{'flash4'}." ) AND NOT ( ".$pkgmatch{'ncl'}." ) AND NOT ( ".$pkgmatch{'wrf'}." ) )";
+  $pkgmatch{'run_xyzvort'} = "( ( script LIKE '%run_xvort%' OR script LIKE '%run_yvort%' OR script LIKE '%run_zvort%' OR script LIKE '%run_thpert%' OR script LIKE '%run_u%' OR script LIKE '%run_v%' OR script LIKE '%run_w%' OR script LIKE '%run_dBZ%' ) AND NOT ( ".$pkgmatch{'paraview'}." ) )";
   $pkgmatch{'s3d'} = "( script LIKE '%s3d%' AND NOT ( ".$pkgmatch{'adf'}." ) AND NOT ( ".$pkgmatch{'arps'}." ) AND NOT ( ".$pkgmatch{'cam'}." ) AND NOT ( ".$pkgmatch{'cctm'}." ) )";
   $pkgmatch{'sgf'} = "( script LIKE '%sgf%' AND NOT ( ".$pkgmatch{'lsdyna'}." ) AND NOT ( ".$pkgmatch{'sigma'}." ) )";
   $pkgmatch{'sord'} = "( script LIKE '%sord%' AND NOT ( ".$pkgmatch{'namd'}." ) )";
