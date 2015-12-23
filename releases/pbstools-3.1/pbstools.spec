@@ -70,21 +70,21 @@ submission of large, complex sets of dependent jobs using a relatively
 simple syntax. It relies on dmsub for data movement.
 
 
-%package -n job-vm-launch
+%package job-vm-launch
 Summary:  PBStools VM Launcher
 Group:  System Environment/Base
 Requires:  python,libvirt-python
-%description -n job-vm-launch
+%description job-vm-launch
 job-vm-launch launches a virtual machine instance within a TORQUE job
 using KVM.  It should be installed on compute nodes running pbs_mom
 and libvirtd/qemu-kvm.
 
 
-%package -n pbs-spark-submit
+%package pbs-spark-submit
 Summary:  PBStools Spark Launcher
 Group:  System Environment/Base
 Requires:  python
-%description -n pbs-spark-submit
+%description pbs-spark-submit
 pbs-spark-submit launches an Apache Spark program within a TORQUE job,
 including starting the Spark master and worker processes in standalone
 mode by default.
@@ -186,11 +186,11 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %{_bindir}/dagsub
 %doc %{_mandir}/man1/dagsub.1.gz
 
-%files -n job-vm-launch
+%files job-vm-launch
 %{_bindir}/job-vm-launch
 %doc %{_mandir}/man1/job-vm-launch.1.gz
 
-%files -n pbs-spark-submit
+%files pbs-spark-submit
 %{_bindir}/pbs-spark-submit
 %doc %{_mandir}/man1/pbs-spark-submit.1.gz
 
