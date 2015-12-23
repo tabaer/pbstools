@@ -1,0 +1,6 @@
+#PBS -l walltime=1:00:00
+#PBS -j oe
+
+cd $PBS_O_WORKDIR
+echo $day-$hr
+sleep 30

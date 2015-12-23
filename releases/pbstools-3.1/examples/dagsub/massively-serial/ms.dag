@@ -1,0 +1,36 @@
+# ms.dag
+DOT ms.dot
+
+JOB A worker.pbs
+VARS A INPUT=A
+
+JOB B worker.pbs
+VARS B INPUT=B
+
+JOB C worker.pbs
+VARS C INPUT=C
+
+JOB D worker.pbs
+VARS D INPUT=D
+
+JOB E worker.pbs
+VARS E INPUT=E
+
+JOB F worker.pbs
+VARS F INPUT=F
+
+JOB G worker.pbs
+VARS G INPUT=G
+
+JOB H worker.pbs
+VARS H INPUT=H
+
+JOB I worker.pbs
+VARS I INPUT=I
+
+JOB J worker.pbs
+VARS J INPUT=J
+
+JOB final worker.pbs
+VARS final INPUT=final
+PARENT A B C D E F G H I J CHILD final

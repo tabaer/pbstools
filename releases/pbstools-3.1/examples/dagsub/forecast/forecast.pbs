@@ -1,0 +1,17 @@
+#PBS -l walltime=1:00:00
+#PBS -j oe
+
+cd $PBS_O_WORKDIR
+echo $day
+sleep 30
+touch ${day}-0100.nc
+sleep 30
+touch ${day}-0200.nc
+sleep 30
+touch ${day}-0300.nc
+sleep 30
+touch ${day}-0400.nc
+sleep 30
+touch ${day}-0500.nc
+sleep 30
+touch ${day}-0600.nc

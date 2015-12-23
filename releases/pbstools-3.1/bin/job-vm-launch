@@ -1,0 +1,716 @@
+#!/usr/bin/python
+#
+# job-vm-launch:  Launch a VM image inside a PBS job
+# Copyright 2013, 2014, University of Tennessee
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+# Usage: job-vm-launch [args] <vm-image-file>
+#
+# Arguments:
+#
+# Examples:
+#
+#
+import getopt
+import libvirt
+import os
+import platform
+import random
+import re
+import signal
+import socket
+import sys
+import time
+import uuid
+from xml.dom import minidom
+
+
+global cloneimg
+global exitcode
+global hypervisor
+global conn
+global keepclone
+global log
+global vmimage
+global vmname
+
+
+def connect(hypervisor):
+    conn = libvirt.open(hypervisor)
+    if ( conn is None ):
+        log.write("Failed to connect to hypervisor "+hypervisor+"\n")
+        sys.exit(-1)
+    return conn
+
+
+def cleanup(signal,frame):
+    global conn
+    if ( vmname ):
+        if ( conn is None ):
+            conn = connect(hypervisor)
+        try:
+            guest = conn.lookupByName(vmname)
+        except:
+            log.write("cleanup:  Could not find VM "+vmname+"\n")
+            sys.exit(-1)
+        try:
+            if ( guest.isActive() ): 
+                log.write("Shutting down guest "+vmname+"\n")
+                guest.shutdown()
+                guest.destroy()
+            if ( keepguest ):
+                log.write("Keeping guest "+vmname+"\n")
+            else:
+                log.write("Removing guest "+vmname+"\n")
+                guest.undefine()
+        except:
+            # if we got here, libvirtd probably already cleaned up the guest
+            # before we could; do nothing
+            pass
+    if ( cloneimg and not keepclone and os.path.exists(vmimage) ):
+        log.write("Deleting clone image "+vmimage+"\n")
+        os.unlink(vmimage)
+    elif ( cloneimg and keepclone and os.path.exists(vmimage) ):
+        log.write("Keeping clone image "+vmimage+"\n")
+    exit(exitcode)
+
+
+# from http://www.centos.org/docs/5/html/5.2/Virtualization/sect-Virtualization-Tips_and_tricks-Generating_a_new_unique_MAC_address.html
+def randomMAC():
+	mac = [ 0xde, 0xad, 0xbe, 0xef,
+		random.randint(0x00, 0xff),
+		random.randint(0x00, 0xff) ]
+        macaddr = ':'.join(map(lambda x: "%02x" % x, mac))
+        log.write("Using randomly generated MAC address "+macaddr+"\n")
+	return macaddr
+
+
+# From http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
+def which(program):
+    def is_exe(fpath):
+        return os.path.exists(fpath) and os.access(fpath, os.X_OK)
+    def ext_candidates(fpath):
+        yield fpath
+        for ext in os.environ.get("PATHEXT", "").split(os.pathsep):
+            yield fpath + ext
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            for candidate in ext_candidates(exe_file):
+                if is_exe(candidate):
+                    return candidate
+    return None
+
+
+def usage(exitcode):
+    sys.stderr.write("Usage:  job-vm-launch [args] <vm-image-file>\n")
+    sys.exit(exitcode)
+
+
+# main program begins here
+
+# misc default settings
+log = sys.stdout
+show_usage = False
+exitcode=0
+hypervisor = "qemu:///session"
+vmtype = "hvm"
+conn = None
+vmimage = None
+vmname = None
+arch = platform.machine()
+diskbus = "virtio"
+diskformat = "raw"
+ostype = "linux"
+osvariant = None
+cloneimg = False
+keepclone = False
+keepguest = False
+block = True
+otherdisks = []
+bootopts = "hd"
+networks = []
+macaddress = None
+cputype = "host"
+cdrom = None
+location = None
+floppy = None
+graphics = None
+validatexml = False
+
+# find cpuset/cgroup root, if any
+cpusetroot = None
+if ( os.path.exists("/dev/cpuset") ):
+    cpusetroot = "/dev/cpuset"
+elif ( os.path.exists("/sys/fs/cgroup/cpuset") ):
+    cpusetroot = "/sys/fs/cgroup/cpuset"
+
+# find cpuset, if any
+cpuset = None
+if ( os.path.exists("/proc/self/cpuset") ):
+    cpuset = open("/proc/self/cpuset").read()[:-1]
+
+hostname = socket.gethostname()
+jobid = None
+if ( "PBS_JOBID" in os.environ ):
+    jobid = os.environ["PBS_JOBID"]
+else:
+    sys.stderr.write("Not in a PBS job, exiting!\n")
+    sys.exit(-1)
+
+# find the qemu-kvm executable...
+qemukvm = which("qemu-kvm")
+if ( which("qemu-kvm") is None and os.path.exists("/usr/libexec/qemu-kvm") ):
+    # ...which may not be in $PATH, especially on RHEL/CentOS
+    qemukvm = "/usr/libexec/qemu-kvm"
+else:
+    raise RuntimeError("Cannot find qemu-kvm")
+
+# figure out number of virtual cores
+# default to 1, just in case nothing else is set
+vcores = 0
+# look at cpuset/cgroup, if available
+if ( cpusetroot is not None and cpuset is not None and
+     ( os.path.exists(cpusetroot+"/"+cpuset+"/cpus") or
+       os.path.exists(cpusetroot+"/"+cpuset+"/cpuset.cpus") ) ):
+    fd = None
+    if ( os.path.exists(cpusetroot+"/"+cpuset+"/cpus") ):
+        fd = open(cpusetroot+"/"+cpuset+"/cpus")
+    elif ( os.path.exists(cpusetroot+"/"+cpuset+"/cpuset.cpus") ):
+        fd = open(cpusetroot+"/"+cpuset+"/cpuset.cpus")
+    if ( fd is not None ):
+        cpus = fd.read().rstrip()
+        elts = cpus.split(",")
+        for elt in elts:
+            if ( "-" in elt ):
+                [start,end] = elt.split("-")
+                vcores += int(end)-int(start)+1
+            else:
+                vcores += 1
+        fd.close()
+    if ( vcores==0 ):
+        vcores = 1
+# if not, check PBS environment
+elif ( "PBS_NUM_PPN" in os.environ.keys() ):
+    vcores = int(os.environ["PBS_NUM_PPN"])
+
+# figure out my memory limit (in MB)
+# default to 1GB, just in case nothing else is set
+memlimitmb = 1024
+# look for cpuset/cgroup mem limit
+if ( cpusetroot is not None and cpuset is not None and
+     os.path.exists(cpusetroot+"/"+cpuset+"/memory.limit_in_bytes") ):
+    fd = open(cpusetroot+"/"+cpuset+"/memory.limit_in_bytes")
+    cgmemlimit = int(str(fd.read()).rstrip())
+    fd.close()
+    # cgroup mem is in bytes
+    memlimitmb = cgmemlimit/(1024*1024)
+elif ( which("qstat") is not None ):
+# if the cpuset/cgroup is no help, see if the job has a mem limit set
+# also look for a core count if there's not one already set
+    qmlimit = None
+    qstatf = "qstat -f "+os.environ['PBS_JOBID']
+    fd = os.popen(qstatf)
+    for line in fd.readlines():
+        if ( "Resource_List.mem" in line ):
+            elt = (line.rstrip()).split()
+            if ( len(elt)>=2 ):
+                qmlimit = elt[2]
+        elif ( "Resource_List.nodes" in line and vcores==0 ):
+            elt = (line.rstrip()).split()
+            if ( len(elt)>=2 ):
+                # handle PBS nodes={#,host)[:ppn=#][:gpus=#][:feature][+...]
+                # syntax
+                nodes = elt[2].split("+")
+                myvcores = vcores
+                for node in nodes:
+                    nelts = node.split(":")
+                    for nelt in nelts[1:]:
+                        if ( "ppn=" in nelt ):
+                            if ( nelts[0] in hostname ):
+                                myvcores = int((nelt.split("="))[1])
+                                break
+                                break
+                            else:
+                                myvcores = max(myvcores,int((nelt.split("="))[1]))
+                if ( myvcores>vcores ):
+                    vcores = myvcores
+    fd.close()
+    if ( qmlimit is not None ):
+        # convert PBS' ####[kMGT][BW] syntax to MB
+        m = re.match("^(\d+)([KkMmGgTt]{0,1})([BbWw])$",qmlimit)
+        base = int(m.group(1))
+        mult = 1.0/(1024*1024)
+        if ( m.group(2) and ( m.group(2)=="K" or m.group(2)=="k" ) ):
+            mult = 1.0/1024
+        elif ( m.group(2) and ( m.group(2)=="M" or m.group(2)=="m" ) ):
+            mult = 1
+        elif ( m.group(2) and ( m.group(2)=="G" or m.group(2)=="g" ) ):
+            mult = 1024
+        elif ( m.group(2) and ( m.group(2)=="T" or m.group(2)=="t" ) ):
+            mult = 1024*1024
+        unit = 1
+        if ( m.group(3)=="W" or m.group(3)=="w" ):
+            unit = 8
+        memlimitmb = int(base*mult*unit)
+
+# command line argument handling
+try:
+    opts, args = getopt.getopt(sys.argv[1:],
+                               "B:Cc:dF:f:hL:l:m:Nn:o:r:t:w:",
+                               ["arch=","boot=","cdrom=","clone-image","connect=","cpu=","debug","disk=","disk-bus=s","disk-format=","file=","floppy=","graphics=","help","image=","keep-clone","keep-guest","location=","log=","mac=","name=","network=","no-block","os-type=","os-variant=","ram=","validate-xml","vcpus=","vm-type="])
+except getopt.GetoptError, err:
+    sys.stderr.write(str(err)+"\n\n")
+    usage(-1)
+if opts == [] and args == []:
+    show_usage = True
+if ( not show_usage ):
+    for opt in opts:
+        if ( opt[0]=="-B" or opt[0]=="--disk-bus" ):
+            diskbus = opt[1]
+        if ( opt[0]=="-C" or opt[0]=="--clone-image" ):
+            cloneimg = True
+        if ( opt[0]=="-c" or opt[0]=="--cdrom" ):
+            cdrom = opt[1]
+        if ( opt[0]=="-d" or opt[0]=="--debug" ):
+            debug = True
+        if ( opt[0]=="-F" or opt[0]=="--disk-format" ):
+            diskformat = opt[1]
+        if ( opt[0]=="-f" or opt[0]=="--file" or opt[0]=="--image" ):
+            vmimage = opt[1]
+        if ( opt[0]=="-h" or opt[0]=="--help" ):
+            show_usage = True
+        if ( opt[0]=="-L" or opt[0]=="--log" ):
+            logfile = opt[1]
+            try:
+                log = open(logfile,'w')
+            except IOError, (errno, strerror):
+                sys.stderr.write("Can't open "+logfile+" for writing:  "+strerror+" (errno="+str(errno)+")\n")
+                pass
+        if ( opt[0]=="-l" or opt[0]=="--location" ):
+            location = opt[1]
+        if ( opt[0]=="-m" or opt[0]=="--mac" ):
+            macaddress = opt[1]
+        if ( opt[0]=="-N" or opt[0]=="--no-block" ):
+            block = False
+        if ( opt[0]=="-n" or opt[0]=="--name" ):
+            vmname = opt[1]
+        if ( opt[0]=="-o" or opt[0]=="--os-type" ):
+            ostype = opt[1]
+        if ( opt[0]=="-r" or opt[0]=="--ram" ):
+            memlimitmb = int(opt[1])
+        if ( opt[0]=="-t" or opt[0]=="--vm-type" ):
+            vmtype = opt[1]
+        if ( opt[0]=="-w" or opt[0]=="--network" ):
+            networkopts = opt[1]
+        if ( opt[0]=="--arch" ):
+            arch = opt[1]
+        if ( opt[0]=="--boot" ):
+            bootopts = opt[1]
+        if ( opt[0]=="--connect" ):
+            hypervisor = opt[1]
+        if ( opt[0]=="--cpu" ):
+            cputype = opt[1]
+        if ( opt[0]=="--disk" ):
+            otherdisks.append(opt[1])
+        if ( opt[0]=="--floppy" ):
+            floppy = opt[1]
+        if ( opt[0]=="--graphics" ):
+            graphics = opt[1]
+        if ( opt[0]=="--keep-clone" ):
+            keepclone = True
+        if ( opt[0]=="--keep-guest" ):
+            keepguest = True
+        if ( opt[0]=="--network" ):
+            networks.append(opt[1])
+        if ( opt[0]=="--os-variant" ):
+            osvariant = opt[1]
+        if ( opt[0]=="--validate-xml" ):
+            validatexml = True
+        if ( opt[0]=="--vcpus" ):
+            vcores = int(opt[1])
+if ( show_usage ):
+    usage(exitcode)
+log.flush()
+
+# at this point, there had better only be at most one element in args, and
+# it had better be a VM image...
+if ( len(args)>1 ):
+    sys.stderr.write("Too many arguments in \""+" ".join(sys.argv)+"\"\n")
+    usage(-2)
+if ( vmimage is None ):
+    vmimage = args[0]
+if ( not os.path.exists(vmimage) ):
+    sys.stderr.write("VM image not found:  "+vmimage+"\n")
+    sys.exit(-4)
+
+# clone the VM image, if needed
+if ( cloneimg ):
+    newimg = "/tmp/"+str(uuid.uuid3(uuid.NAMESPACE_DNS,vmname))+".img"
+    log.write("Cloning "+vmimage+" into "+newimg+"\n")
+    os.system("dd if="+vmimage+" of="+newimg+" bs=1M")
+    vmimage = newimg
+
+# connect to the hypervisor
+if ( conn is None ):
+    conn = connect(hypervisor)
+    if ( conn is None and hypervisor=="qemu:///session" ):
+        # work around a bug in some older libvirtd versions WRT qemu:///session
+        # by starting libvirtd as user manually and then retrying connection
+        libvirtdpid = os.fork()
+        if ( libvirtdpid==0 ):
+            os.environ['PATH'] = "/sbin:/usr/sbin:"+os.environ['PATH']
+            if ( which("libvirtd") is not None ):
+                cmd = "libvirtd"
+                args = [cmd]
+                os.execvp(cmd,args)
+            else:
+                log.write("Could not find libvirtd in PATH="+os.environ['PATH']+"\n")
+                sys.exit(-8)
+        time.sleep(5)
+        conn = connect(hypervisor)
+    if ( conn is None ):
+        log.write("Unable to connect to hypervisor "+hypervisor+"\n")
+        sys.exit(-8)
+
+# figure out a guest name, if one isn't already set
+if ( vmname is None ):
+    vmnum = 0
+    for vmid in conn.listDomainsID():
+        thisvm = conn.lookupByID(vmid).name()
+        if ( jobid+"-"+hostname+"-vm" in thisvm ):
+            m = re.match("^"+jobid+"-"+hostname+"-vm(\d+)",thisvm)
+            thisvmnum = int(m.group(1))
+            if ( thisvmnum>=vmnum ):
+                vmnum=thisvmnum+1
+    vmname = jobid+"-"+hostname+"-vm"+str(vmnum)
+
+# fork and start VM in child
+childpid  = os.fork()
+if ( childpid==0 ):
+    # if there's no MAC address set yet, see if there's one set in VM image
+    if ( macaddress is None ):
+        try:
+            # from http://libguestfs.org/guestfs-python.3.html
+            import guestfs
+            g = guestfs.GuestFS(python_return_dict=True)
+            g.add_drive_opts(vmimage,format=diskformat,readonly=1)
+            g.launch()
+            roots = g.inspect_os()
+            if ( len(roots)>0 ):
+                for root in roots:
+                    # figure out distro
+                    distro = g.inspect_get_distro(root)
+                    # "mount" file systems
+                    mps = g.inspect_get_mountpoints(root)
+                    def compare(a, b): return len(a) - len(b)
+                    for device in sorted (mps.keys(),compare):
+                        try:
+                            g.mount_ro(mps[device],device)
+                        except RuntimeError as msg:
+                            pass
+                    iffile = None
+                    if ( distro in ["ubuntu"] ):
+                        iffile = "/etc/network/interfaces"
+                    elif ( distro in ["redhat","centos","fedora"] ):
+                        if ( g.exists("/etc/sysconfig/network-scripts/ifcfg-em1") ):
+                            iffile = "/etc/sysconfig/network-scripts/ifcfg-em1"
+                        else:
+                            iffile = "/etc/sysconfig/network-scripts/ifcfg-eth0"
+                    elif ( distro in ["suse","sles"] ):
+                        iffile = "/etc/sysconfig/network/ifcfg-eth0"
+                    if ( distro in ["ubuntu"] ):
+                        # not sure how to do this for ubuntu
+                        pass
+                    else:
+                        for line in g.egrep("^HWADDR=",iffile):
+                            macaddress = line.split("=")[1]
+                            # strip out quotes, if there are any
+                            macaddress = macaddress.replace('"','').lower()
+                    # unmount everything
+                    g.umount_all()
+                    g.close()
+        except:
+            pass
+    # generate a default MAC addr if we don't have one at this point
+    if ( macaddress is None ):
+        macaddress = randomMAC()
+        
+    # generate XML description of VM
+    xml = minidom.Document()
+    domnode = xml.createElement("domain")
+    domnode.setAttribute("type","kvm")
+    namenode = xml.createElement("name")
+    namenode.appendChild(xml.createTextNode(vmname))
+    domnode.appendChild(namenode)
+    memnode = xml.createElement("memory")
+    memnode.appendChild(xml.createTextNode(str(1024*memlimitmb)))
+    domnode.appendChild(memnode)
+    vcpunode = xml.createElement("vcpu")
+    vcpunode.appendChild(xml.createTextNode(str(vcores)))
+    domnode.appendChild(vcpunode)
+    osnode = xml.createElement("os")
+    ostypenode =  xml.createElement("type")
+    ostypenode.setAttribute("arch",arch)
+    ostypenode.appendChild(xml.createTextNode(vmtype))
+    osnode.appendChild(ostypenode)
+    osbootnode = xml.createElement("boot")
+    if ( bootopts is None ):
+        osbootnode.setAttribute("dev","hd")
+    else:
+        osbootnode.setAttribute("dev",bootopts.split(",")[0])
+    osnode.appendChild(osbootnode)
+    if ( bootopts is not None and "," in bootopts ):
+        for bootopt in bootopts.split(",")[1:]:
+            thisbootnode = xml.createElement("boot")
+            thisbootnode.setAttribute("dev",bootopt)
+            osnode.appendChild(thisbootnode)
+    domnode.appendChild(osnode)
+    featurenode = xml.createElement("features")
+    featurenode.appendChild(xml.createElement("acpi"))
+    featurenode.appendChild(xml.createElement("apic"))
+    featurenode.appendChild(xml.createElement("pae"))
+    domnode.appendChild(featurenode)
+    cpunode = xml.createElement("cpu")
+    if ( cputype=="host" ):
+        cpunode.setAttribute("mode","host-model")
+    elif ( cputype is not None ):
+        elt = cputype.split(",")
+        cpumodel = elt[0]
+        if ( len(elt)>1 ):
+            cpufeatures = elt[1:]
+        cpunode.setAttribute("match","exact")
+        cpumodelnode = xml.createElement("model")
+        cpumodelnode.appendChild(xml.createTextNode(cpumodel))
+        cpunode.appendChild(cpumodelnode)
+        for cpufeature in cpufeatures:
+            if ( "vendor=" in cpufeature ):
+                vendor = cpufeature.split("=")[1]
+                if ( vendor is not None ):
+                    vendornode = xml.createElement("vendor")
+                    vendornode.appendChild(xml.createTextNode(vendor))
+                    cpunode.appendChild(vendornode)
+            elif ( "match=" in cpufeature ):
+                match = cpufeature.split("=")[1]
+                if ( match is not None ):
+                    cpunode.setAttribute("match",match)
+            elif ( "+" in cpufeature or "-" in cpufeature ):
+                if ( "+" in cpufeature ):
+                    policy = "force"
+                    feature = cpufeature.split("+")[1]
+                elif ( "-" in cpufeature ):
+                    policy = "disable"
+                    feature = cpufeature.split("-")[1]
+                if ( feature is not None ):
+                    featurenode = xml.createElement("feature")
+                    featurenode.setAttribute("policy",policy)
+                    featurenode.setAttribute("name",feature)
+                    cpunode.appendChild(featurenode)
+            else:
+                [policy,feature] =  cpufeature.split("=")
+                if ( policy is not None and feature is not None ):
+                    featurenode = xml.createElement("feature")
+                    featurenode.setAttribute("policy",policy)
+                    featurenode.setAttribute("name",feature)
+                    cpunode.appendChild(featurenode)
+    domnode.appendChild(cpunode)
+    clocknode = xml.createElement("clock")
+    clocknode.setAttribute("offset","utc")
+    domnode.appendChild(clocknode)
+    offnode = xml.createElement("on_poweroff")
+    offnode.appendChild(xml.createTextNode("destroy"))
+    domnode.appendChild(offnode)
+    rebootnode = xml.createElement("on_reboot")
+    rebootnode.appendChild(xml.createTextNode("restart"))
+    domnode.appendChild(rebootnode)
+    crashnode = xml.createElement("on_crash")
+    crashnode.appendChild(xml.createTextNode("restart"))
+    domnode.appendChild(crashnode)
+    devnode = xml.createElement("devices")
+    emunode = xml.createElement("emulator")
+    emunode.appendChild(xml.createTextNode(qemukvm))
+    devnode.appendChild(emunode)
+    if ( floppy is not None ):
+        floppynode = xml.createElement("disk")
+        floppynode.setAttribute("type","file")
+        floppynode.setAttribute("device","floppy")
+        fdrvnode = xml.createElement("driver")
+        fdrvnode.setAttribute("name","qemu")
+        floppynode.appendChild(fdrvnode)
+        fsrcnode = xml.createElement("source")
+        fsrcnode.setAttribute("file",floppy)
+        floppynode.appendChild(fsrcnode)
+        ftgtnode = xml.createElement("target")
+        ftgtnode.setAttribute("dev","fda")
+        ftgtnode.setAttribute("bus","fdc")
+        floppynode.appendChild(ftgtnode)
+        devnode.appendChild(floppynode)
+    disknode = xml.createElement("disk")
+    disknode.setAttribute("type","file")
+    disknode.setAttribute("device","disk")
+    ddrvnode = xml.createElement("driver")
+    ddrvnode.setAttribute("name","qemu")
+    ddrvnode.setAttribute("type",diskformat)
+    disknode.appendChild(ddrvnode)
+    dsrcnode = xml.createElement("source")
+    # libvirtd needs an absolute path to the image file
+    if ( vmimage.startswith("/") ):
+        dsrcnode.setAttribute("file",vmimage)
+    else:
+        cwd = os.getcwd()
+        dsrcnode.setAttribute("file",cwd+"/"+vmimage)
+    disknode.appendChild(dsrcnode)
+    dtgtnode = xml.createElement("target")
+    dtgtnode.setAttribute("bus",diskbus)
+    if ( diskbus=="virtio" ):
+        dtgtnode.setAttribute("dev","vda")
+    elif ( diskbus in ["scsi","usb"] ):
+        dtgtnode.setAttribute("dev","sda")
+    elif ( diskbus in ["ide","sata"] ):
+        dtgtnode.setAttribute("dev","hda") 
+    disknode.appendChild(dtgtnode)
+    devnode.appendChild(disknode)
+    if ( cdrom is not None ):
+        cdromnode = xml.createElement("disk")
+        cdromnode.setAttribute("type","file")
+        cdromnode.setAttribute("device","cdrom")
+        cdrvnode = xml.createElement("driver")
+        cdrvnode.setAttribute("name","qemu")
+        cdromnode.appendChild(cdrvnode)
+        csrcnode = xml.createElement("source")
+        csrcnode.setAttribute("file",cdrom)
+        cdromnode.appendChild(csrcnode)
+        ctgtnode = xml.createElement("target")
+        ctgtnode.setAttribute("dev","hdc")
+        ctgtnode.setAttribute("bus","ide")
+        cdromnode.appendChild(ctgtnode)
+        crdonlynode = xml.createElement("readonly")
+        cdromnode.appendChild(crdonlynode)
+        devnode.appendChild(cdromnode)
+    # how to handle other disk devices?
+    # how to handle MAC addresses and other network settings?
+    if ( len(networks)==0 ):
+        ifnode = xml.createElement("interface")
+        ifnode.setAttribute("type","user")
+        macnode = xml.createElement("mac")
+        macnode.setAttribute("address",macaddress)
+        ifnode.appendChild(macnode)
+        devnode.appendChild(ifnode)
+    inputnode = xml.createElement("input")
+    inputnode.setAttribute("type","mouse")
+    inputnode.setAttribute("bus","ps2")
+    devnode.appendChild(inputnode)
+    graphicsnode = xml.createElement("graphics")
+    if ( graphics is not None ):
+        graphicsnode.setAttribute("type",graphics)
+    else:
+        graphicsnode.setAttribute("type","vnc")
+    graphicsnode.setAttribute("port","-1")
+    devnode.appendChild(graphicsnode)
+    consolenode = xml.createElement("console")
+    consolenode.setAttribute("type","pty")
+    devnode.appendChild(consolenode)
+    videonode = xml.createElement("video")
+    modelnode = xml.createElement("model")
+    modelnode.setAttribute("type","cirrus")
+    videonode.appendChild(modelnode)
+    devnode.appendChild(videonode)
+    domnode.appendChild(devnode)
+    xml.appendChild(domnode)
+
+    # save XML, if possible
+    try:
+        #xml.writexml(open("/tmp/"+vmname+".xml","w"),"","  ","\n")
+        xml.writexml(open("/tmp/"+vmname+".xml","w"))
+        log.write("Saved guest description as /tmp/"+vmname+".xml\n")
+    except:
+        log.write("Failed to save guest description as /tmp/"+vmname+".xml\n")
+
+    # 'twould be nice to validate the XML here...
+    if ( validatexml and
+         os.path.exists("/tmp/"+vmname+".xml") and
+         which("virt-xml-validate") is not None ):
+        try:
+            exitcode = os.system("virt-xml-validate /tmp/"+vmname+".xml")
+        except:
+            raise RuntimeError("virt-xml-validate /tmp/"+vmname+".xml failed")
+        if ( exitcode!=0 ):
+            sys.exit(exitcode)
+
+    # start VM
+    try:
+        guestvm = conn.createXML(xml.toxml(),0)
+        log.write("Domain "+vmname+" created from /tmp/"+vmname+".xml\n")
+    except libvirt.libvirtError as e:
+        log.write("Failed to start guest "+vmname+" in hypervisor "+hypervisor+", trying alternate method.\n")
+        try:
+            os.system("virsh -c "+hypervisor+" create /tmp/"+vmname+".xml")
+        except:
+            log.write("Alternate guest startup method failed, exiting.\n")
+            sys.exit(-1)
+    log.write("To connect to VM text console, run \"virsh --connect="+hypervisor+" console "+vmname+"\"\n")
+    if ( "DISPLAY" in os.environ.keys() ):
+        log.write("To connect to VM graphical console, run \"virt-viewer --connect="+hypervisor+" --wait "+vmname+"\"\n")
+    log.write("To terminate VM, run \"virsh --connect="+hypervisor+" destroy "+vmname+"\"\n")
+
+    # set signal handler in case the job ends before the VM shuts down
+    # or user hits ^C
+    signal.signal(signal.SIGINT,cleanup)
+    signal.signal(signal.SIGTERM,cleanup)
+
+    # give the VM some time for its network interface to come up
+    time.sleep(15)
+
+    # give job owner some hints about how to connect to VM
+    if ( macaddress is not None ):
+        ipaddr = None
+        arp = "arp | grep -i "+macaddress+" | awk '{print $1}' | head -1"
+        fd = os.popen(arp)
+        for line in fd.readlines():
+            ipaddr = line[:-1]
+        fd.close()
+        if ( ipaddr is not None ):
+            log.write("VM MAC address "+macaddress+" has IP address "+ipaddr+"\n")
+        else:
+            log.write("VM MAC address "+macaddress+" does not appear in host ARP table (normal for hypervisor=qemu:///session)\n")
+    else:
+        log.write("No MAC address set\n")
+    log.flush()
+
+    # wait for VM to end
+    if ( block ):
+        try:
+            while ( guestvm.isActive() ):
+                time.sleep(1)
+        except:
+            # the guest probably went away while we were sleeping;
+            # do nothing
+            pass
+    sys.exit(0)
+
+# put resulting process in cpuset, if possible
+if ( os.path.exists(cpusetroot+"/"+cpuset+"/tasks") and
+     os.access(cpusetroot+"/"+cpuset+"/tasks",os.W_OK) ):
+    fd = open(cpusetroot+"/"+cpuset+"/tasks",'w')
+    fd.write(str(childpid))
+    fd.close()
+
+if ( block ):
+    # wait on child
+    status = os.waitpid(childpid,0)
+    exit(status[0])
+else:
+    # wait on guest network to come up before exiting
+    time.sleep(17)
+    exit(exitcode)
+
+

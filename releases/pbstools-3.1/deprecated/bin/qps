@@ -1,0 +1,155 @@
+#!/usr/bin/perl -w
+#
+# qps -- process listing for PBS jobs
+# Copyright 2006 Ohio Supercomputer Center
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+#
+# for jobs in queue, show ps on each node
+#
+
+# perl version of uniq(1) for array
+sub uniq(@) {
+    my %seen = ();
+    my @tmp_uniq;
+    my $item;
+    foreach $item (@_) {
+	push(@tmp_uniq, $item) unless $seen{$item}++;
+    }
+    return @tmp_uniq;
+}
+
+$parallel = 0;
+$show_all = 0;
+$full = 0;
+$all = "all";
+
+# rsh to nodes to get ps
+sub qps($@)  {
+    my ($user, @nodes) = (shift, @_);
+    my $cmd;
+    if ($full) {
+	$cmd = "env COLUMNS=70 ps -o time,pid,rss,stat,command -u $user --no-heading";
+    } else {
+	$cmd = "env COLUMNS=70 ps -o time,stat,command -u $user --no-heading";
+    }
+    if ($parallel) {
+	map { s/piv// } @nodes;
+	my $nl = "-" . join(",", @nodes);
+	# print "nl is $nl\n";
+	if (! $show_all) {
+	    $cmd .= " \| egrep -v ' 00:00:00 '";
+	}
+	system("$all -p $nl $cmd");
+    } else {
+	for $node (@nodes) {
+	    my $rsh = "rsh $node $cmd";
+	    if (! $show_all) {
+		$rsh .= " | egrep -v '^00:00:00'";
+	    }
+	    $lines = `$rsh`;
+	    if (length($lines) > 0) {
+		$lines =~ s/^/"$node "/emg;
+		print $lines;
+	    }
+	}
+    }
+}
+
+sub usage {
+    print STDERR "Usage: $0 [-apf] [-n <hosntame>] [<jobid>...]\n";
+    print STDERR "  -a : show all processes, default ignores zero time ones\n";
+    print STDERR "  -p : use all program to output in parallel\n";
+    print STDERR "  -f : show \"full\" output\n";
+    print STDERR "  -n <hostname> : just jobs using this node\n";
+    print STDERR "  <jobid> : just one particular job, or list of jobs\n";
+    exit(1);
+}
+
+undef $hostname;
+
+while (scalar(@ARGV) >= 1) {
+    my $arg = shift @ARGV;
+    if ($arg eq "-a") {
+	$show_all = 1;
+    } elsif ($arg eq "-p") {
+	$parallel = 1;
+    } elsif ($arg eq "-f") {
+	$full = 1;
+    } elsif ($arg eq "-ap" || $arg eq "-pa") {
+	$show_all = 1;
+	$parallel = 1;
+    } elsif ($arg eq "-af" || $arg eq "-fa") {
+	$show_all = 1;
+	$full = 1;
+    } elsif ($arg eq "-pf" || $arg eq "-fp") {
+	$full = 1;
+	$parallel = 1;
+    } elsif ($arg eq "-apf" || $arg eq "-afp" || $arg eq "-fap" || $arg eq "-fpa" || $arg eq "-paf" || $arg eq "-pfa") {
+	$full = 1;
+	$show_all = 1;
+	$parallel = 1;
+    } elsif ($arg eq "-n") {
+	$hostname = shift @ARGV;
+    } elsif ($arg =~ /(\d+).*/) {
+	push @show_one, $1;
+    } else {
+	usage;
+    }
+}
+
+open(QSTAT, "qstat -rn |");
+while (<QSTAT>) {
+    if (/^\d/) {
+  line:
+	($job,$user,undef,$jobname,undef,$nds,$tsk) = split;
+	($job) = split /\./,$job;
+	if (defined(@show_one)) {
+	    for ($i=0; $i<scalar(@show_one); $i++) {
+		if ($show_one[$i] eq $job) {
+		    last;
+		}
+	    }
+	    if ($i == scalar(@show_one)) {
+		next;
+	    }
+	}
+	$nodeline = "";
+	while (<QSTAT>) {
+	    if (/^\d/) {
+		last;
+	    }
+	    chomp;
+	    s/\s*(.*)/$1/;
+	    $nodeline .= $_;
+	}
+	$nodeline =~ s:/[\d\-]+::g;  # kill /cpu designators
+	$nodeline =~ tr/+/ /;
+	@nodes = sort(split / /,$nodeline);
+	$numnodes = scalar(@nodes);
+	@nodes = uniq(@nodes);
+	if (defined($hostname)) {
+	    $found = 0;
+	    map { if ($_ eq $hostname) { $found = 1; }} @nodes;
+	    if (!$found) {
+		goto more;
+	    }
+	}
+	if ($tsk ne "--" && $nds ne $tsk) {
+	    print "*** $job $user ncpus=$tsk name=$jobname\n";
+	} else {
+	    print "*** $job $user procs=$numnodes name=$jobname\n";
+	}
+	qps($user, @nodes);
+      more:
+	if (defined && /^\d/) {
+	    goto line;
+	}
+    }
+}
+close(QSTAT);
+exit;
