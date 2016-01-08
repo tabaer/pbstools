@@ -840,7 +840,7 @@ else
 	    if ( $pkg1 ne $pkg2 && !defined($done{$pkg1}{$pkg2}) )
 	      {
 		#print "$pkg1:$pkg2\n";
-		my $sql = "SELECT '".$pkg1."' AS pkg1, '".$pkg2."' AS pkg2, COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours FROM Jobs WHERE system='".$hostname."' AND sw_app='".$pkg1."' AND ( ".$pkgmatch{$pkg2}." )";
+		my $sql = "SELECT '".$pkg1."' AS pkg1, '".$pkg2."' AS pkg2, COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours FROM Jobs WHERE system='".$hostname."' AND ( ( sw_app='".$pkg1."' AND ( ".$pkgmatch{$pkg2}." ) ) OR ( sw_app='".$pkg2."' AND ( ".$pkgmatch{$pkg1}." )  ) )";
 		if ( defined($start_date) )
 		  {
 		    $sql .= " AND submit_date>='".$start_date."'";
