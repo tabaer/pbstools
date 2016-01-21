@@ -21,7 +21,7 @@ import time
 #
 class Launcher:
     def launch(self,cmdline,env,propagate_env=False,
-               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"]):
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],tpn=None):
         raise NotImplementedError
     def sleep(self):
         sleeptime = 5
@@ -42,7 +42,7 @@ class Launcher:
 
 class ExecLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
-               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"]):
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],tpn=None):
         time.sleep(1)
         
         # lots of squick to try to limit the number of cores used on big
@@ -96,24 +96,32 @@ class ExecLauncher(Launcher):
 
 class PBSDSHLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
-               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"]):
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],tpn=None):
         time.sleep(1)
         cmd = cmdline
         if ( propagate_env ):
             cmd = self.env_string(env,prop_env_list)+" "+cmdline
-        os.system("pbsdsh "+cmdline+" &")
+        if ( tpn is None ):
+            os.system("pbsdsh "+cmdline+" &")
+        else:
+            nodes = nodelist(unique=True)
+            for node in nodes:
+                for i in range(int(tpn)):
+                    os.system("pbsdsh -h "+node+" "+cmdline+" &")
         self.sleep()
 
 
 class SSHLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
-               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"]):
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],tpn=None):
         time.sleep(1)
         if ( "PBS_NODEFILE" in os.environ.keys() ):
-            nodefile = open(os.environ["PBS_NODEFILE"])
-            for line in nodefile.readlines():
+            if ( tpn is None ):
+                nodes = nodelist()
+            else:
+                nodes = nodelist(unique=True)
+            for node in nodes:
                 argv = cmdline.split()
-                node = line.rstrip("\n")
                 ssh = "ssh"
                 if ( "SPARK_SSH" in env.keys() ):
                     ssh=env["SPARK_SSH"]
@@ -123,13 +131,30 @@ class SSHLauncher(Launcher):
                     for arg in self.env_list(env,prop_env_list):
                         argv.insert(2,arg)
                 sys.stderr.write(" ".join(argv)+"\n")
-                child_pid = os.fork()
-                if ( child_pid==0 ):
-                    os.execvpe(argv[0],argv,env)   
-            nodefile.close()
+                if ( tpn is None ):
+                    nforks = 1
+                else:
+                    nforks = int(tpn)
+                for i in range(nforks):
+                    child_pid = os.fork()
+                    if ( child_pid==0 ):
+                        os.execvpe(argv[0],argv,env)   
             self.sleep()
         else:
             raise EnvironmentError("PBS_NODEFILE undefined")
+
+#
+# functions to help with PBS node file
+#
+def nodelist(unique=False):
+    nodes = []
+    if ( "PBS_NODEFILE" in os.environ.keys() ):
+        nodefile = open(os.environ["PBS_NODEFILE"])
+        for line in nodefile.readlines():
+            node = line.rstrip("\n")
+            if ( not unique or not ( node in nodes ) ):
+                nodes.append(node)
+    return nodes
 
 
 #
@@ -199,6 +224,7 @@ child_args = []
 properties = {}
 pausetime = 5
 launcher = PBSDSHLauncher()
+tpn = None
 log4j_props = None
 if ( "SPARK_LAUNCHER" in os.environ.keys() ):
     if ( os.environ["SPARK_LAUNCHER"] in ("exec","EXEC") ):
@@ -226,7 +252,7 @@ elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
 
 # command line argument handling
 try:
-    opts, child_args = getopt.getopt(sys.argv[1:],"C:D:d:hL:l:m:P:p:",["help","init","no-init","exec","pbsdsh","ssh","conf-dir","log-dir=","log4j-properties=","work-dir=","memory=","properties-file","pause-time"])
+    opts, child_args = getopt.getopt(sys.argv[1:],"C:D:d:hL:l:m:P:p:t:",["help","init","no-init","exec","pbsdsh","ssh","conf-dir","log-dir=","log4j-properties=","work-dir=","memory=","properties-file","pause-time","tpn=","tasks-per-node="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -266,6 +292,9 @@ for opt in opts:
                 properties[key] = props[key]
     elif ( opt[0]=="--pause-time" or opt[0]=="-p" ):
         pausetime = opt[1]
+    elif ( opt[0]=="--tpn" or opt[0]=="--tasks-per-node" or
+           opt[0]=="-t" ):
+        tpn = opt[1]
 
 # read any properties files in the conf directory
 for propfile in glob.glob(os.environ["SPARK_CONF_DIR"]+"/*.properties"):
@@ -326,7 +355,7 @@ if ( init_svcs ):
         cmdline += " --work-dir "+workdir
     cmdline += " "+os.environ["SPARK_MASTER"]
     sys.stderr.write(cmdline+"\n")
-    launcher.launch(cmdline,os.environ)
+    launcher.launch(cmdline,os.environ,tpn=tpn)
     time.sleep(pausetime)
 
 # run the user's Spark "job", if one is given
