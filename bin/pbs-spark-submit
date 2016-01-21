@@ -201,8 +201,21 @@ def usage():
     sys.stderr.write("\t--memory <memlimit> or -m <memlimit>\n\t\tSet per-worker memory limit.\n")
     sys.stderr.write("\t--tpn <N> or -t <N>\n\t\tLaunch <N> tasks per node instead of the default from the job.\n")
     sys.stderr.write("\t--pausetime <N> or -p <N>\n\t\tPause <N> seconds between startup stages (default 5).\n")
-    sys.stderr.write("\t-D <key>=<value>\n\t\tSet the Java property <key> to <value>.\n")
+    sys.stderr.write("\t--conf <key>=<value> or -D <key>=<value>\n\t\tSet the Java property <key> to <value>.\n")
     sys.stderr.write("\t--properties-file <propfile> or -P <propfile>\n\t\tRead Java properties from <propfile>.\n")
+    sys.stderr.write("\t--class <classname>\n\t\tApplication's main class (for Java/Scala apps).\n")
+    sys.stderr.write("\t--name <name>\n\t\tThe name of your application.\n")
+    sys.stderr.write("\t--jars <jarlist>\n\t\tComma-separated list of local jars to include on the driver\n\t\tand executor classpaths.\n")
+    sys.stderr.write("\t--packages <pkglist>\n\t\tComma-separated list of maven coordinates of jars to include\n\t\ton the driver and executor classpaths. Will search the local\n\t\tmaven repo, then maven central and any additional remote\n\t\trepositories given by --repositories. The format for the\n\t\tcoordinates should be groupId:artifactId:version.\n")
+    sys.stderr.write("\t--exclude-packages <pkhlist>\n\t\tComma-separated list of groupId:artifactId to exclude\n\t\twhile resolving the dependencies provided in --packages\n\t\tto avoid dependency conflicts.\n")
+    sys.stderr.write("\t--repositories <repolist>\n\t\tComma-separated list of additional remote repositories\n\t\tto search for the maven coordinates given with --packages.\n")
+    sys.stderr.write("\t--py-files <filelist>\n\t\tComma-separated list of .zip, .egg, or .py files to place\n\t\ton PYTHONPATH for Python apps.\n")
+    sys.stderr.write("\t--files <filelist>\n\t\tComma-separated list of files to be placed in the\n\t\tworking directory of each executor.\n")
+    sys.stderr.write("\t--driver-memory <mem>\n\t\tMemory for driver (e.g. 1000M, 2G; default is 1024M).\n")
+    sys.stderr.write("\t--driver-java-options <opts>\n\t\tExtra Java options to pass to the driver.\n")
+    sys.stderr.write("\t--driver-library-path <libpath>\n\t\tExtra library path entries to pass to the driver.\n")
+    sys.stderr.write("\t--driver-class-path <classpth>\n\t\tExtra class path entries to pass to the driver. Note\n\t\tthat jars added with --jars are automatically included\n\t\tin the classpath.\n")
+    sys.stderr.write("\t--executor-memory <mem>\n\t\tMemory per executor (e.g. 1000M, 2G; default is 1G).\n")
     sys.stderr.write("\n")
     sys.stderr.write("Run \"man pbs-spark-submit\" for more details.\n")
     sys.stderr.write("\n")
@@ -215,13 +228,26 @@ def usage():
 
 # set up default environment
 init_svcs = True
-memlimit = None
 child_args = []
 properties = {}
 pausetime = 5
 launcher = PBSDSHLauncher()
-tpn = None
 log4j_props = None
+tpn = None
+memlimit = None
+driver_mem = None
+driver_java_opts = None
+driver_lib_path = None
+driver_class_path = None
+exec_mem = None
+classname = None
+name = None
+jars = None
+pkgs = None
+excl_pkgs = None
+repos = None
+pyfiles = None
+files = None
 if ( "SPARK_LAUNCHER" in os.environ.keys() ):
     if ( os.environ["SPARK_LAUNCHER"] in ("exec","EXEC") ):
         launcher = ExecLauncher()
@@ -248,7 +274,37 @@ elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
 
 # command line argument handling
 try:
-    opts, child_args = getopt.getopt(sys.argv[1:],"C:D:d:hL:l:m:P:p:t:",["help","init","no-init","exec","pbsdsh","ssh","conf-dir","log-dir=","log4j-properties=","work-dir=","memory=","properties-file","pause-time","tpn=","tasks-per-node="])
+    opts, child_args = getopt.getopt(sys.argv[1:],
+                                     "C:D:d:hL:l:m:P:p:t:",
+                                     ["help",
+                                      "init",
+                                      "no-init",
+                                      "exec",
+                                      "pbsdsh",
+                                      "ssh",
+                                      "conf-dir",
+                                      "log-dir=",
+                                      "log4j-properties=",
+                                      "work-dir=",
+                                      "memory=",
+                                      "tpn=",
+                                      "tasks-per-node="
+                                      "properties-file",
+                                      "pause-time",
+                                      "driver-memory=",
+                                      "driver-java-options=",
+                                      "driver-library-path",
+                                      "driver-class-path=",
+                                      "executor-memory=",
+                                      "conf=",
+                                      "class=",
+                                      "name=",
+                                      "jars=",
+                                      "packages=",
+                                      "exclude-packages=",
+                                      "repositories=",
+                                      "py-files=",
+                                      "files="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -275,7 +331,10 @@ for opt in opts:
         workdir = opt[1]
     elif ( opt[0]=="--memory" or opt[0]=="-m" ):
         memlimit = opt[1]
-    elif ( opt[0]=="-D" ):
+    elif ( opt[0]=="--tpn" or opt[0]=="--tasks-per-node" or
+           opt[0]=="-t" ):
+        tpn = opt[1]
+    elif ( opt[0]=="-D" or opt[0]=="--conf" ):
         keyval = opt[1].split("=",1)
         if ( len(keyval)==2 ):
             properties[keyval[0]] = keyval[1]
@@ -288,9 +347,32 @@ for opt in opts:
                 properties[key] = props[key]
     elif ( opt[0]=="--pause-time" or opt[0]=="-p" ):
         pausetime = opt[1]
-    elif ( opt[0]=="--tpn" or opt[0]=="--tasks-per-node" or
-           opt[0]=="-t" ):
-        tpn = opt[1]
+    elif ( opt[0]=="--class" ):
+        classname = opt[1]
+    elif ( opt[0]=="--name" ):
+        name = opt[1]
+    elif ( opt[0]=="--jars" ):
+        jars = opt[1]
+    elif ( opt[0]=="--packages" ):
+        pkgs = opt[1]
+    elif ( opt[0]=="--exclude-packages" ):
+        excl_pkgs = opt[1]
+    elif ( opt[0]=="--repositories" ):
+        repos = opt[1]
+    elif ( opt[0]=="--py-files" ):
+        pyfiles = opt[1]
+    elif ( opt[0]=="--files" ):
+        files = opt[1]
+    elif ( opt[0]=="--driver-memory" ):
+        driver_mem = opt[1]
+    elif ( opt[0]=="--driver-java-options" ):
+        driver_java_opts = opt[1]
+    elif ( opt[0]=="--driver-library-path" ):
+        driver_lib_path = opt[1]
+    elif ( opt[0]=="--driver-class-path" ):
+        driver_class_path = opt[1]
+    elif ( opt[0]=="--executor-memory" ):
+        exec_mem = opt[1]
 
 # environment sanity checks
 if ( not ( "PBS_JOBID" in os.environ.keys() ) ):
@@ -309,23 +391,6 @@ for propfile in glob.glob(os.environ["SPARK_CONF_DIR"]+"/*.properties"):
 # make sure the work dir actually exists
 if ( workdir is not None and not os.path.exists(workdir) ):
     os.mkdir(workdir)
-
-# if certain props aren't set, set some sane defaults,
-# inspired by http://mbonaci.github.io/mbo-spark/
-# This is mostly to prevent Spark defaulting to stupid things
-# like trying to write logs in $SPARK_HOME/logs without
-# checking if it's writeable...
-# Currently commented out because it's not working
-#if ( not ( "log4j.rootCategory" in properties.keys() ) ):
-#    properties["log4j.rootCategory"] = "ERROR,console"
-#if ( not ( "log4j.appender.console" in properties.keys() ) ):
-#    properties["log4j.appender.console"] = "org.apache.log4j.ConsoleAppender"
-#if ( not ( "log4j.appender.console.target" in properties.keys() ) ):
-#    properties["log4j.appender.console.target"] = "System.err"
-#if ( not ( "log4j.appender.console.layout" in properties.keys() ) ):
-#    properties["log4j.appender.console.layout"] = "org.apache.log4j.PatternLayout"
-#if ( not ( "log4j.appender.console.layout.ConversionPattern" in properties.keys() ) ):
-#    properties["log4j.appender.console.layout.ConversionPattern"] = "%d{yy/MM/dd HH:mm:ss} %p %c{1}: %m%n"
 
 # **ASSUMPTION**:  master runs on mother superior node
 os.environ["SPARK_MASTER_IP"] = platform.node()
@@ -363,7 +428,36 @@ if ( init_svcs ):
 # run the user's Spark "job", if one is given
 if ( len(child_args)>0 ):
     cmdline = os.environ["SPARK_HOME"]+"/bin/spark-submit --master "+os.environ["SPARK_MASTER"]
-    if ( log4j_props is not None ):
+    if ( classname is not None ):
+        cmdline += " --class "+classname
+    if ( name is not None ):
+        cmdline += " --name "+name
+    if ( jars is not None ):
+        cmdline += " --jars "+jars
+    if ( pkgs is not None ):
+        cmdline += " --packages "+pkgs
+    if ( excl_pkgs is not None ):
+        cmdline += " --exclude-packages "+excl_pkgs
+    if ( repos is not None ):
+        cmdline += " --repositories "+repos
+    if ( pyfiles is not None ):
+        cmdline += " --py-files "+pyfiles
+    if ( files is not None ):
+        cmdline += " --files "+files
+    if ( log4j_props is not None and driver_java_opts is None ):
         cmdline += " --driver-java-options -Dlog4j.configuration=file:"+log4j_props
+    elif ( driver_java_opts is not None ):
+        cmdline += " --driver-java-options "+driver_java_opts
+    else:
+        # how to support both?
+        pass
+    if ( driver_mem is not None ):
+        cmdline += " --driver-memory "+driver_mem
+    if ( driver_lib_path is not None ):
+        cmdline += " --driver-library-path "+driver_lib_path
+    if ( driver_class_path is not None ):
+        cmdline += " --driver-class-path "+driver_class_path
+    if ( exec_mem is not None ):
+        cmdline += " --executor-memory "+exec_mem
     cmdline += " "+" ".join(child_args)
     os.system(cmdline)
