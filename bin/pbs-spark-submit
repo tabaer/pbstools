@@ -213,12 +213,6 @@ def usage():
 # main program begins here
 #
 
-# sanity checks
-if ( not ( "PBS_JOBID" in os.environ.keys() ) ):
-    raise EnvironmentError("Not in a PBS job")
-if ( not ( "SPARK_HOME" in os.environ.keys() ) ):
-    raise EnvironmentError("SPARK_HOME not defined")
-
 # set up default environment
 init_svcs = True
 memlimit = None
@@ -297,6 +291,12 @@ for opt in opts:
     elif ( opt[0]=="--tpn" or opt[0]=="--tasks-per-node" or
            opt[0]=="-t" ):
         tpn = opt[1]
+
+# environment sanity checks
+if ( not ( "PBS_JOBID" in os.environ.keys() ) ):
+    raise EnvironmentError("Not in a PBS job")
+if ( not ( "SPARK_HOME" in os.environ.keys() ) ):
+    raise EnvironmentError("SPARK_HOME not defined")
 
 # read any properties files in the conf directory
 for propfile in glob.glob(os.environ["SPARK_CONF_DIR"]+"/*.properties"):
