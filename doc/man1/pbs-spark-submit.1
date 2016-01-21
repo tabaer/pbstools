@@ -92,6 +92,10 @@ is set, in which case that will be used.  The working directory
 Set the per-worker memory limit to <memlimit>; defaults to the
 physical memory on the node minus 1 GB.
 .TP
+.B --tpn <N> or --tasks-per-node <N> or -t <N>
+Launch <N> worker tasks per node.  The default is to use the :ppn=
+value from the job request.
+.TP
 .B --pausetime <N> or -p <N>
 Pause <N> seconds between startup stages (default 5)
 .TP
