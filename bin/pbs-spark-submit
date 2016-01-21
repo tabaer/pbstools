@@ -3,6 +3,7 @@
 # pbs-spark-submit:  Run an Apache Spark "job" (including optionally
 #                    starting the Spark services) inside a PBS job.
 # Copyright 2014, 2015 University of Tennessee
+# Copyright 2015, 2016 Ohio Supercomputer Center
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
@@ -198,6 +199,7 @@ def usage():
     sys.stderr.write("\t--log4j-properties <propsfile> or -l <propsfile>\n\t\tRead log4j properties from <propsfile>.\n")
     sys.stderr.write("\t--work-dir <workdir> or -d <workdir>\n\t\tUse <workdir> as Spark program's working directory.\n")
     sys.stderr.write("\t--memory <memlimit> or -m <memlimit>\n\t\tSet per-worker memory limit.\n")
+    sys.stderr.write("\t--tpn <N> or -t <N>\n\t\tLaunch <N> tasks per node instead of the default from the job.\n")
     sys.stderr.write("\t--pausetime <N> or -p <N>\n\t\tPause <N> seconds between startup stages (default 5).\n")
     sys.stderr.write("\t-D <key>=<value>\n\t\tSet the Java property <key> to <value>.\n")
     sys.stderr.write("\t--properties-file <propfile> or -P <propfile>\n\t\tRead Java properties from <propfile>.\n")
