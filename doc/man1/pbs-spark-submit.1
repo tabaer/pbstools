@@ -66,6 +66,15 @@ Use the
 process launcher.  Intended for use on clusters; should not be used
 unless the pbsdsh launcher does not work for whatever reason.
 .TP
+.B --worker-on-mother-superior
+Run a worker on the mother superior node as well as the driver program.
+This is the default.
+.TP
+.B --no-worker-on-mother-superior or -N
+Do not run a worker on the mother superior node, only the driver program.
+This might be necessary if the driver program consumes a large amount of
+memory.
+.TP
 .B --conf-dir <confdir> or -C <confdir>
 Search for configuration properties in <confdir>.  This is equivalent
 to setting the environment variable 

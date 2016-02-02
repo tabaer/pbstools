@@ -22,7 +22,8 @@ import time
 #
 class Launcher:
     def launch(self,cmdline,env,propagate_env=False,
-               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],tpn=None):
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
+               tpn=None,worker_on_mother_superior=True):
         raise NotImplementedError
     def sleep(self):
         sleeptime = 5
@@ -43,8 +44,13 @@ class Launcher:
 
 class ExecLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
-               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],tpn=None):
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
+               tpn=None,worker_on_mother_superior=True):
         time.sleep(1)
+
+        # sanity check
+        if ( not worker_on_mother_superior ):
+            raise RuntimeError("Cannot use --no-worker-on-mother-superior with Exec launcher")
         
         # lots of squick to try to limit the number of cores used on big
         # SMP/NUMA systems that are likely shared with other users
@@ -97,7 +103,8 @@ class ExecLauncher(Launcher):
 
 class PBSDSHLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
-               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],tpn=None):
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
+               tpn=None,worker_on_mother_superior=True):
         time.sleep(1)
         cmd = cmdline
         if ( propagate_env ):
@@ -107,14 +114,17 @@ class PBSDSHLauncher(Launcher):
         else:
             nodes = nodelist(unique=True)
             for node in nodes:
-                for i in range(int(tpn)):
-                    os.system("pbsdsh -h "+node+" "+cmdline+" &")
+                if ( worker_on_mother_superior or
+                     not ( node in platform.node() ) ):
+                    for i in range(int(tpn)):
+                        os.system("pbsdsh -h "+node+" "+cmdline+" &")
         self.sleep()
 
 
 class SSHLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
-               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],tpn=None):
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
+               tpn=None,worker_on_mother_superior=True):
         time.sleep(1)
         if ( "PBS_NODEFILE" in os.environ.keys() ):
             if ( tpn is None ):
@@ -122,24 +132,26 @@ class SSHLauncher(Launcher):
             else:
                 nodes = nodelist(unique=True)
             for node in nodes:
-                argv = cmdline.split()
-                ssh = "ssh"
-                if ( "SPARK_SSH" in env.keys() ):
-                    ssh=env["SPARK_SSH"]
-                argv.insert(0,ssh)
-                argv.insert(1,node)
-                if ( propagate_env ):
-                    for arg in self.env_list(env,prop_env_list):
-                        argv.insert(2,arg)
-                sys.stderr.write(" ".join(argv)+"\n")
-                if ( tpn is None ):
-                    nforks = 1
-                else:
-                    nforks = int(tpn)
-                for i in range(nforks):
-                    child_pid = os.fork()
-                    if ( child_pid==0 ):
-                        os.execvpe(argv[0],argv,env)   
+                if ( worker_on_mother_superior or
+                     not ( node in platform.node() ) ):
+                    argv = cmdline.split()
+                    ssh = "ssh"
+                    if ( "SPARK_SSH" in env.keys() ):
+                        ssh=env["SPARK_SSH"]
+                    argv.insert(0,ssh)
+                    argv.insert(1,node)
+                    if ( propagate_env ):
+                        for arg in self.env_list(env,prop_env_list):
+                            argv.insert(2,arg)
+                    sys.stderr.write(" ".join(argv)+"\n")
+                    if ( tpn is None ):
+                        nforks = 1
+                    else:
+                        nforks = int(tpn)
+                    for i in range(nforks):
+                        child_pid = os.fork()
+                        if ( child_pid==0 ):
+                            os.execvpe(argv[0],argv,env)   
             self.sleep()
         else:
             raise EnvironmentError("PBS_NODEFILE undefined")
@@ -194,6 +206,8 @@ def usage():
     sys.stderr.write("\t--exec\n\t\tUse the exec process launcher.\n")
     sys.stderr.write("\t--pbsdsh\n\t\tUse the pbsdsh process launcher (default).\n")
     sys.stderr.write("\t--ssh\n\t\tUse the ssh process launcher.\n")
+    sys.stderr.write("\t--worker-on-mother-superior\n\t\tRun a worker on the mother superior node as well as\n\t\tthe driver program (default).\n")
+    sys.stderr.write("\t--no-worker-on-mother-superior or -N\n\t\tDo not run a worker on the mother superior node, only\n\t\tthe driver program.\n")
     sys.stderr.write("\t--conf-dir <confdir> or -C <confdir>\n\t\tLook in <confdir> for Java properties files.\n")
     sys.stderr.write("\t--log-dir <logdir> or -L <logdir>\n\t\tPlace logs in <logdir>.\n")
     sys.stderr.write("\t--log4j-properties <propsfile> or -l <propsfile>\n\t\tRead log4j properties from <propsfile>.\n")
@@ -248,6 +262,7 @@ excl_pkgs = None
 repos = None
 pyfiles = None
 files = None
+worker_on_mother_superior = True
 if ( "SPARK_LAUNCHER" in os.environ.keys() ):
     if ( os.environ["SPARK_LAUNCHER"] in ("exec","EXEC") ):
         launcher = ExecLauncher()
@@ -275,7 +290,7 @@ elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
 # command line argument handling
 try:
     opts, child_args = getopt.getopt(sys.argv[1:],
-                                     "C:D:d:hL:l:m:P:p:t:",
+                                     "C:D:d:hL:l:m:NP:p:t:",
                                      ["help",
                                       "init",
                                       "no-init",
@@ -288,7 +303,9 @@ try:
                                       "work-dir=",
                                       "memory=",
                                       "tpn=",
-                                      "tasks-per-node="
+                                      "tasks-per-node=",
+                                      "worker-on-mother-superior",
+                                      "no-worker-on-mother-superior",
                                       "properties-file",
                                       "pause-time",
                                       "driver-memory=",
@@ -334,6 +351,10 @@ for opt in opts:
     elif ( opt[0]=="--tpn" or opt[0]=="--tasks-per-node" or
            opt[0]=="-t" ):
         tpn = opt[1]
+    elif ( opt[0]=="--worker-on-mother-superior" ):
+        worker_on_mother_superior = True
+    elif ( opt[0]=="--no-worker-on-mother-superior" or opt[0]=="-N" ):
+        worker_on_mother_superior = False
     elif ( opt[0]=="-D" or opt[0]=="--conf" ):
         keyval = opt[1].split("=",1)
         if ( len(keyval)==2 ):
@@ -422,7 +443,8 @@ if ( init_svcs ):
         cmdline += " --work-dir "+workdir
     cmdline += " "+os.environ["SPARK_MASTER"]
     sys.stderr.write(cmdline+"\n")
-    launcher.launch(cmdline,os.environ,tpn=tpn)
+    launcher.launch(cmdline,os.environ,tpn=tpn,
+                    worker_on_mother_superior=worker_on_mother_superior)
     time.sleep(pausetime)
 
 # run the user's Spark "job", if one is given
