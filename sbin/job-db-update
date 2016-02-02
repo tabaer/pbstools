@@ -422,7 +422,7 @@ while ( defined($ARGV[0]) )
                 if ( defined($resource{"resources_used.energy_used"}) )
                   {
                     $qhead.=",energy";
-                    $qtail.="\'".$resource{"resources_used.energy_used"}."\'";
+                    $qtail.=",\'".$resource{"resources_used.energy_used"}."\'";
                   }
 		if ( defined($resource{"account"}) )
 		  {
@@ -435,7 +435,7 @@ while ( defined($ARGV[0]) )
 	      }
 	    $query=$qhead.$qtail;
 	    #print "$query\n";
-	    $dbh->do($query) || die "$0:  query failed -- ".$dbh::errstr;
+	    $dbh->do($query) || die "$0:  query failed -- ".$dbh::errstr."\n".$query;
 	  }
       }
     shift(@ARGV);
