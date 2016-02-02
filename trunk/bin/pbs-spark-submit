@@ -445,12 +445,11 @@ if ( len(child_args)>0 ):
     if ( files is not None ):
         cmdline += " --files "+files
     if ( log4j_props is not None and driver_java_opts is None ):
-        cmdline += " --driver-java-options -Dlog4j.configuration=file:"+log4j_props
-    elif ( driver_java_opts is not None ):
-        cmdline += " --driver-java-options "+driver_java_opts
-    else:
-        # how to support both?
-        pass
+        cmdline += " --driver-java-options \"-Dlog4j.configuration=file:"+log4j_props+"\""
+    elif ( log4j_props is None and driver_java_opts is not None ):
+        cmdline += " --driver-java-options \""+driver_java_opts+"\""
+    elif ( log4j_props is not None and driver_java_opts is not None ):
+        cmdline += " --driver-java-options \"-Dlog4j.configuration=file:"+log4j_props+" "+driver_java_opts+"\""
     if ( driver_mem is not None ):
         cmdline += " --driver-memory "+driver_mem
     if ( driver_lib_path is not None ):
