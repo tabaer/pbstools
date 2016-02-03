@@ -10,10 +10,13 @@
 # $HeadURL$
 # $Revision$
 # $Date$
+import fcntl
 import getopt
 import glob
 import os
 import platform
+import socket
+import struct
 import sys
 import time
 
@@ -192,6 +195,18 @@ def propsFromFile(filename):
     return proplist
 
 #
+# get IP address of network interface
+# borrowed from http://code.activestate.com/recipes/439094-get-the-ip-address-associated-with-a-network-inter/
+#
+def get_ip_address(ifname):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8915,  # SIOCGIFADDR
+            struct.pack('256s', ifname[:15])
+            )[20:24])
+
+#
 # documentation
 #
 def usage():
@@ -208,6 +223,7 @@ def usage():
     sys.stderr.write("\t--ssh\n\t\tUse the ssh process launcher.\n")
     sys.stderr.write("\t--worker-on-mother-superior\n\t\tRun a worker on the mother superior node as well as\n\t\tthe driver program (default).\n")
     sys.stderr.write("\t--no-worker-on-mother-superior or -N\n\t\tDo not run a worker on the mother superior node, only\n\t\tthe driver program.\n")
+    sys.stderr.write("\t--master-interface <IF> or -M <IF>\n\t\tHave Spark master listen on network interface <IF> rather\n\t\tthan the default.\n")
     sys.stderr.write("\t--conf-dir <confdir> or -C <confdir>\n\t\tLook in <confdir> for Java properties files.\n")
     sys.stderr.write("\t--log-dir <logdir> or -L <logdir>\n\t\tPlace logs in <logdir>.\n")
     sys.stderr.write("\t--log4j-properties <propsfile> or -l <propsfile>\n\t\tRead log4j properties from <propsfile>.\n")
@@ -263,6 +279,7 @@ repos = None
 pyfiles = None
 files = None
 worker_on_mother_superior = True
+iface = None
 if ( "SPARK_LAUNCHER" in os.environ.keys() ):
     if ( os.environ["SPARK_LAUNCHER"] in ("exec","EXEC") ):
         launcher = ExecLauncher()
@@ -290,7 +307,7 @@ elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
 # command line argument handling
 try:
     opts, child_args = getopt.getopt(sys.argv[1:],
-                                     "C:D:d:hL:l:m:NP:p:t:",
+                                     "C:D:d:hL:l:M:m:NP:p:t:",
                                      ["help",
                                       "init",
                                       "no-init",
@@ -306,6 +323,7 @@ try:
                                       "tasks-per-node=",
                                       "worker-on-mother-superior",
                                       "no-worker-on-mother-superior",
+                                      "master-interface",
                                       "properties-file",
                                       "pause-time",
                                       "driver-memory=",
@@ -355,6 +373,8 @@ for opt in opts:
         worker_on_mother_superior = True
     elif ( opt[0]=="--no-worker-on-mother-superior" or opt[0]=="-N" ):
         worker_on_mother_superior = False
+    elif ( opt[0]=="--master-interface" or opt[0]=="-M" ):
+        iface = opt[1]
     elif ( opt[0]=="-D" or opt[0]=="--conf" ):
         keyval = opt[1].split("=",1)
         if ( len(keyval)==2 ):
@@ -415,6 +435,8 @@ if ( workdir is not None and not os.path.exists(workdir) ):
 
 # **ASSUMPTION**:  master runs on mother superior node
 os.environ["SPARK_MASTER_IP"] = platform.node()
+if ( iface is not None ):
+    os.environ["SPARK_MASTER_IP"] = get_ip_address(iface)
 if ( not ( "SPARK_MASTER_PORT" in os.environ.keys() ) ):
     os.environ["SPARK_MASTER_PORT"] = "7077"
 os.environ["SPARK_MASTER"] = "spark://"+os.environ["SPARK_MASTER_IP"]+":"+str(os.environ["SPARK_MASTER_PORT"])
