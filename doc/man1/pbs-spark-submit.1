@@ -75,6 +75,10 @@ Do not run a worker on the mother superior node, only the driver program.
 This might be necessary if the driver program consumes a large amount of
 memory.
 .TP
+.B --master-interface <IF> or -M <IF>
+Have Spark master listen on network interface <IF> (e.g. eth1, ib0) rather
+than the default.
+.TP
 .B --conf-dir <confdir> or -C <confdir>
 Search for configuration properties in <confdir>.  This is equivalent
 to setting the environment variable 
