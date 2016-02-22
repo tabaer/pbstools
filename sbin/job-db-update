@@ -152,7 +152,8 @@ while ( defined($ARGV[0]) )
 
 	    # construct query string(s)
 	    if ( &keyval_exists("jobid",$job,$dbtable,$dbh)>0 && 
-		 defined($resource{"start"}) )
+		 defined($resource{"start"}) &&
+		 $resource{"start"}>0 )
 	      {
 		# This jobid already exists in the table,
 		# so do an UPDATE
@@ -283,7 +284,8 @@ while ( defined($ARGV[0]) )
 		    $qhead.=",account = \'".$resource{"account"}."\'";
 		  }
 	      }
-	    elsif ( defined($resource{"start"}) )
+	    elsif ( defined($resource{"start"}) &&
+		    $resource{"start"}>0 )
 	      {
 		# This jobid does *NOT* already exist in the table,
 		# so do an INSERT
