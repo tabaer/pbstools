@@ -151,7 +151,8 @@ while ( defined($ARGV[0]) )
 	    $vmem=~s/kb$//;
 
 	    # construct query string(s)
-	    if ( &keyval_exists("jobid",$job,$dbtable,$dbh)>0 )
+	    if ( &keyval_exists("jobid",$job,$dbtable,$dbh)>0 && 
+		 defined($resource{"start"}) )
 	      {
 		# This jobid already exists in the table,
 		# so do an UPDATE
@@ -228,7 +229,14 @@ while ( defined($ARGV[0]) )
 		  }
 		if ( defined($resource{"resources_used.walltime"}) )
 		  {
-		    $qhead.=",walltime = \'".$resource{"resources_used.walltime"}."\'";
+		    if ( $resource{"resources_used.walltime"} =~ /^\d+$/ ) 
+		      {
+                        $qhead.=",walltime = SEC_TO_TIME(".$resource{"resources_used.walltime"}.")";
+                      }
+		    else
+		      {
+		        $qhead.=",walltime = \'".$resource{"resources_used.walltime"}."\'";
+		      }
 		  }
 		if ( defined($resource{"Resource_List.mem"}) )
 		  {
@@ -275,7 +283,7 @@ while ( defined($ARGV[0]) )
 		    $qhead.=",account = \'".$resource{"account"}."\'";
 		  }
 	      }
-	    else
+	    elsif ( defined($resource{"start"}) )
 	      {
 		# This jobid does *NOT* already exist in the table,
 		# so do an INSERT
@@ -372,7 +380,14 @@ while ( defined($ARGV[0]) )
 		if ( defined($resource{"resources_used.walltime"}) )
 		  {
 		    $qhead.=",walltime";
-		    $qtail.=",\'".$resource{"resources_used.walltime"}."\'";
+		    if ( $resource{"resources_used.walltime"} =~ /^\d+$/ )
+                      {
+		        $qtail.=",SEC_TO_TIME(".$resource{"resources_used.walltime"}.")";
+                      }
+                    else
+                      {
+		        $qtail.=",\'".$resource{"resources_used.walltime"}."\'";
+                      }
 		  }
 		if ( defined($resource{"Resource_List.mem"}) )
 		  {
