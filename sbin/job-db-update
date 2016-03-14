@@ -452,7 +452,10 @@ while ( defined($ARGV[0]) )
 	      }
 	    $query=$qhead.$qtail;
 	    #print "$query\n";
-	    $dbh->do($query) || die "$0:  query failed -- ".$dbh::errstr."\n".$query;
+	    if ( $query ne "" )
+              {
+	        $dbh->do($query) || die "$0:  query failed -- ".$dbh::errstr."\n".$query;
+              }
 	  }
       }
     shift(@ARGV);
