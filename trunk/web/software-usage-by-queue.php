@@ -45,12 +45,6 @@ page_header($title);
 # connect to DB
 $db = db_connect();
 
-# list of software packages
-$packages=software_list($db);
-
-# regular expressions for different software packages
-#$pkgmatch=software_match_list($db);
-
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
@@ -70,14 +64,6 @@ if ( isset($_POST['system']) )
 // 	      }
 	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY queue UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours FROM Jobs WHERE system LIKE '".$_POST['system']."' AND queue IS NOT NULL AND ( ";
-// 	    if ( isset($pkgmatch[$key]) )
-// 	      {
-// 		$sql .= $pkgmatch[$key];
-// 	      }
-// 	    else
-// 	      {
-// 		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
-// 	      }
 	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
@@ -107,6 +93,9 @@ if ( isset($_POST['system']) )
   }
 else
   {
+    # list of software packages
+    $packages=software_list($db);
+
     begin_form("software-usage-by-queue.php");
 
     system_chooser();
