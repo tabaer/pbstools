@@ -48,12 +48,6 @@ if ( isset($_POST['system']) )
   {
     $db = db_connect();
 
-    # list of software packages
-    #$packages=software_list($db);
-
-    # regular expressions for different software packages
-    #$pkgmatch=software_match_list();
-
     $queues = array();
     $sql = "SELECT DISTINCT(queue) FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ".dateselect("start",$_POST['start_date'],$_POST['end_date']);
     #echo "<PRE>\n".$sql."</PRE>\n";
@@ -80,36 +74,11 @@ if ( isset($_POST['system']) )
       {
 	echo "<H3>System <TT>".$_POST['system']."</TT> queue <TT>".$queue."</TT></H3>\n";
 	echo "<TABLE border=1>\n";
-	echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>accounts</TH></TR>\n";
+	echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
 	ob_flush();
 	flush();
 	
-// 	$first=1;
-// 	$sql = "SELECT * FROM ( \n";
-// 	foreach ( $packages as $pkg )
-// 	  {
-// 	    if ( $first==1 )
-// 	      {
-// 		$first=0;
-// 	      }
-// 	    else
-// 	      {
-// 		$sql .= "UNION\n";
-// 	      }
-// 	    $sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND queue LIKE '".$queue."' AND ( ";
-// 	    if ( isset($pkgmatch[$pkg]) )
-// 	      {
-// 		$sql .= $pkgmatch[$pkg];
-// 	      }
-// 	    else
-// 	      {
-// 		$sql .= "script LIKE '%".$pkg."%' OR software LIKE '%".$package."%'";
-// 	      }
-// 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
-// 	    $sql .= "\n";
-// 	  }
-// 	$sql .= " ) AS qsofttmp WHERE jobs > 0 ORDER BY ".$_POST['order']." DESC";
-	$sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE sw_app IS NOT NULL AND system LIKE '".$_POST['system']."' AND queue LIKE '".$queue."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
+	$sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE sw_app IS NOT NULL AND system LIKE '".$_POST['system']."' AND queue LIKE '".$queue."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
 	
 	
         #echo "<PRE>\n".$sql."</PRE>\n";
@@ -131,19 +100,19 @@ if ( isset($_POST['system']) )
 	if ( isset($_POST['csv']) )
 	  {
 	    $csvresult = db_query($db,$sql);
-	    $columns = array("package","jobs","cpuhours","accounts");
+	    $columns = array("package","jobs","cpuhours","charges","users","groups","accounts");
 	    result_as_csv($csvresult,$columns,$_POST['system']."-".$_POST['username']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
 	  }
 	if ( isset($_POST['xls']) )
 	  {
 	    $xlsresult = db_query($db,$sql);
-	    $columns = array("package","jobs","cpuhours","accounts");
+	    $columns = array("package","jobs","cpuhours","charges","users","groups","accounts");
 	    result_as_xls($xlsresult,$columns,$_POST['system']."-".$_POST['username']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
 	  }
 	if ( isset($_POST['ods']) )
 	  {
 	    $odsresult = db_query($db,$sql);
-	    $columns = array("package","jobs","cpuhours","accounts");
+	    $columns = array("package","jobs","cpuhours","charges","users","groups","accounts");
 	    result_as_ods($odsresult,$columns,$_POST['system']."-".$_POST['username']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
 	  }
       }
@@ -159,7 +128,7 @@ else
     system_chooser();
     date_fields();
 
-    $orders=array("jobs","cpuhours","accounts");
+    $orders=array("jobs","cpuhours","charges","users","groups","accounts");
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
     checkbox("Generate CSV file","csv");

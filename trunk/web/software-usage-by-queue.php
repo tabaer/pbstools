@@ -53,17 +53,9 @@ if ( isset($_POST['system']) )
 	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT queue, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt FROM Jobs WHERE system LIKE '".$_POST['system']."' AND queue IS NOT NULL AND ( ";
-// 	    if ( isset($pkgmatch[$key]) )
-// 	      {
-// 		$sql .= $pkgmatch[$key];
-// 	      }
-// 	    else
-// 	      {
-// 		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
-// 	      }
+	    $sql = "SELECT queue, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges FROM Jobs WHERE system LIKE '".$_POST['system']."' AND queue IS NOT NULL AND ( ";
 	    $sql .= "sw_app='".$key."'";
-	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY queue UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours FROM Jobs WHERE system LIKE '".$_POST['system']."' AND queue IS NOT NULL AND ( ";
+	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY queue UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges FROM Jobs WHERE system LIKE '".$_POST['system']."' AND queue IS NOT NULL AND ( ";
 	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
@@ -73,7 +65,7 @@ if ( isset($_POST['system']) )
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
 	      }
 	    echo "<TABLE border=1>\n";
-	    echo "<TR><TH>username</TH><TH>jobs</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH></TR>\n";
+	    echo "<TR><TH>queue</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH></TR>\n";
 	    while ($result->fetchInto($row))
 	      {
 		$rkeys=array_keys($row);
