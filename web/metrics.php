@@ -127,23 +127,43 @@ function units($metric)
 // date selector
 function dateselect($action,$start_date,$end_date)
 {
-    if ( isset($start_date) && isset($end_date) &&
-	 $start_date!="" && $end_date!="" )
-      {
-	return $action."_date >= '".$start_date."' AND ".$action."_date <= '".$end_date."'";
-      }
-    else if ( isset($start_date) && $start_date!="" )
-      {
-	return $action."_date >= '".$start_date."'";
-      }
-    else if ( isset($end_date) && $end_date!="" )
-     {
-	return $action."_date <= '".$_POST['end_date']."'";
-      }
-    else
-      {
-	return $action."_date IS NOT NULL";
-      }
+  if ( $action=="during" )
+    {
+      if ( isset($start_date) && isset($end_date) &&
+	    $start_date!="" && $end_date!="" )
+	{
+	  return "( start_date>='".$start_date."' AND start_date<='".$end_date."' ) OR ( end_date>='".$end_date."' AND end_date<='".$end_date."' )";
+	}
+      else if ( isset($start_date) && $start_date!="" )
+	{
+	  return "start_date>='".$start_date."'";
+	}
+      else if ( isset($end_date) && $end_date!="" )
+	{
+	  return "end_date>='".$end_date."'";
+	}
+      else
+	{
+	  return "start_date IS NOT NULL AND end_date IS NOT NULL";
+	}
+    }
+  else if ( isset($start_date) && isset($end_date) &&
+	    $start_date!="" && $end_date!="" )
+    {
+      return $action."_date >= '".$start_date."' AND ".$action."_date <= '".$end_date."'";
+    }
+  else if ( isset($start_date) && $start_date!="" )
+    {
+      return $action."_date >= '".$start_date."'";
+    }
+  else if ( isset($end_date) && $end_date!="" )
+    {
+      return $action."_date <= '".$_POST['end_date']."'";
+    }
+  else
+    {
+      return $action."_date IS NOT NULL";
+    }
 }
 
 
@@ -305,7 +325,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_acce
        $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
      }
    $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-     dateselect("start",$start_date,$end_date).")";
+     dateselect("during",$start_date,$end_date).")";
    if ( $limit_access )
      {
        $query .= " AND ( ".limit_user_access($_SERVER['PHP_AUTH_USER'])." )";
@@ -337,7 +357,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_acce
        #   $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
        # }
        #$query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-       # dateselect("start",$start_date,$end_date).") AND ".
+       # dateselect("during",$start_date,$end_date).") AND ".
        # "( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%' OR username LIKE 'test%') )";
        #if ( clause($xaxis,$metric)!="" )
        # {
@@ -372,7 +392,7 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$l
       $query .= ",MIN(".$xaxis.") AS hidden";
     }
   $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-    dateselect("start",$start_date,$end_date).")";
+    dateselect("during",$start_date,$end_date).")";
   if ( clause($xaxis,$metric)!="" )
     {
       $query .= " AND ".clause($xaxis,$metric);

@@ -22,20 +22,20 @@ if ( isset($_POST['account']) )
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
 	     $_POST['start_date']!="" )
       {
-	$title .= " submitted on ".$_POST['start_date'];
+	$title .= " running on ".$_POST['start_date'];
       }
     else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
 	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
       {
-	$title .= " submitted between ".$_POST['start_date']." and ".$_POST['end_date'];
+	$title .= " running between ".$_POST['start_date']." and ".$_POST['end_date'];
       }
     else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
       {
-	$title .= " submitted after ".$_POST['start_date'];
+	$title .= " running after ".$_POST['start_date'];
       }
     else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
       {
-	$title .= " submitted before ".$_POST['end_date'];
+	$title .= " running before ".$_POST['end_date'];
       }
   }
 else
@@ -57,7 +57,7 @@ if ( isset($_POST['account']) )
 	    $sql .= ",".$key;
 	  }
       }
-    $sql = $sql." FROM Jobs WHERE account = '".$_POST['account']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY submit_ts;";
+    $sql = $sql." FROM Jobs WHERE account = '".$_POST['account']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("during",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY submit_ts;";
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
