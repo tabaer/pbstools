@@ -53,9 +53,9 @@ if ( isset($_POST['system']) )
 	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT ".xaxis_column("walltime").",COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, MIN(TIME_TO_SEC(walltime)) AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( script IS NOT NULL AND ";
+	    $sql = "SELECT ".xaxis_column("walltime").",COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, MIN(TIME_TO_SEC(walltime)) AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( script IS NOT NULL AND ";
 	    $sql .= "sw_app='".$key."'";
-	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY walltime_bucketed UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, 100000000 AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
+	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY walltime_bucketed UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, 100000000 AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
 	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY hidden;";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
