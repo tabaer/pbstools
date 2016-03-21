@@ -220,17 +220,17 @@ function columns($metric,$system,$db,$start_date,$end_date)
   if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS users";
   if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS groups";
   if ( $metric=='accounts' ) return "COUNT(DISTINCT(account)) AS accounts";
-  if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system,$db);
+  if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system,$db,$start_date,$end_date);
   if ( $metric=='nproc' ) return "MIN(nproc),MAX(nproc),AVG(nproc),STDDEV(nproc)";
-  if ( $metric=='usage' ) return columns('cpuhours',$system,$db).",".columns('charges',$system,$db).",".columns('usercount',$system,$db);
+  if ( $metric=='usage' ) return columns('cpuhours',$system,$db,$start_date,$end_date).", ".columns('charges',$system,$db,$start_date,$end_date).", ".columns('usercount',$system,$db,$start_date,$end_date);
   if ( $metric=='pscmetrics' )
     {
       $first = 0;
       $maxs = bucket_maxs("walltime");
-      $column = "SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")<=TIME_TO_SEC('".$maxs[0]."') THEN ".cpuhours($db,$system)." ELSE 0 END ) AS '<=".$maxs[0]."'";
+      $column = "SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")<=TIME_TO_SEC('".$maxs[0]."') THEN ".cpuhours($db,$system,$start_date,$end_date)." ELSE 0 END ) AS '<=".$maxs[0]."'";
       for ( $i=1 ; $i<count($maxs) ; $i++ )
 	{
-	  $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")>TIME_TO_SEC('".$maxs[$i-1]."') AND TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[$i]."') THEN ".cpuhours($db,$system$start_date,$end_date)." ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
+	  $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")>TIME_TO_SEC('".$maxs[$i-1]."') AND TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[$i]."') THEN ".cpuhours($db,$system,$start_date,$end_date)." ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
 	}
       $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN ".cpuhours($db,$system,$start_date,$end_date)." ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
       return $column;
@@ -300,9 +300,9 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_acce
       $query .= xaxis_column($xaxis,$system).",";
     }
    $query .= "COUNT(jobid) AS jobs";
-   if ( columns($metric,$system,$db)!="" )
+   if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
      {
-       $query .= ",".columns($metric,$system,$db);
+       $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
      }
    $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
      dateselect("start",$start_date,$end_date).")";
@@ -332,9 +332,9 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_acce
      {
        # OSC site-specific logic begins here
        #$query .= " UNION SELECT 'osc' AS institution,COUNT(jobid) AS jobs";
-       #if ( columns($metric,$system,$db)!="" )
+       #if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
        # {
-       #   $query .= ",".columns($metric,$system,$db);
+       #   $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
        # }
        #$query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
        # dateselect("start",$start_date,$end_date).") AND ".
@@ -355,9 +355,9 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_acce
 function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_access=false)
 {
   $query = "SELECT ".xaxis_column($xaxis,$system).",COUNT(jobid) AS jobs";
-  if ( columns($metric,$system,$db)!="" )
+  if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
     {
-      $query .= ",".columns($metric,$system,$db);
+      $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
     }
   if ( $xaxis=="walltime" || $xaxis=="walltime_req" )
     {
