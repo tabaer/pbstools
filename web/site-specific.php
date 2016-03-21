@@ -993,6 +993,7 @@ function software_list($db = NULL)
 	    }
 	}
 
+      natsort($list);
       return $list;
     }
 }
