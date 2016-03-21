@@ -55,9 +55,9 @@ if ( isset($_POST['system']) )
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
 	    $sql = "SELECT account, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges FROM Jobs WHERE system LIKE '".$_POST['system']."'  AND account IS NOT NULL AND ( ";
 	    $sql .= "sw_app='".$key."'";
-	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges FROM Jobs WHERE system LIKE '".$_POST['system']."'  AND account IS NOT NULL AND ( ";
+	    $sql .= " ) AND ( ".dateselect("during",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges FROM Jobs WHERE system LIKE '".$_POST['system']."'  AND account IS NOT NULL AND ( ";
 	    $sql .= "sw_app='".$key."'";
-	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
+	    $sql .= " ) AND ( ".dateselect("during",$_POST['start_date'],$_POST['end_date'])." )";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
 	    if ( PEAR::isError($result) )

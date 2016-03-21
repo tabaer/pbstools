@@ -59,7 +59,7 @@ if ( isset($_POST['system']) )
     ob_flush();
     flush();
     
-    $sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE sw_app IS NOT NULL AND system LIKE '".$_POST['system']."' AND groupname LIKE '".$_POST['groupname']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
+    $sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE sw_app IS NOT NULL AND system LIKE '".$_POST['system']."' AND groupname LIKE '".$_POST['groupname']."' AND ( ".dateselect("during",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
     
     #echo "<PRE>\n".$sql."</PRE>\n";
     $result = db_query($db,$sql);

@@ -22,20 +22,20 @@ if ( isset($_POST['node']) )
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
 	     $_POST['start_date']!="" )
       {
-	$title .= " started on ".$_POST['start_date'];
+	$title .= " running on ".$_POST['start_date'];
       }
     else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
 	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
       {
-	$title .= " started between ".$_POST['start_date']." and ".$_POST['end_date'];
+	$title .= " running between ".$_POST['start_date']." and ".$_POST['end_date'];
       }
     else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
       {
-	$title .= " started after ".$_POST['start_date'];
+	$title .= " running after ".$_POST['start_date'];
       }
     else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
       {
-	$title .= " started before ".$_POST['end_date'];
+	$title .= " running before ".$_POST['end_date'];
       }
   }
 else
@@ -56,7 +56,7 @@ if ( isset($_POST['node']) )
 	    $sql .= ",".$key;
 	  }
       }
-    $sql .= " FROM Jobs WHERE hostlist REGEXP '".$_POST['node']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
+    $sql .= " FROM Jobs WHERE hostlist REGEXP '".$_POST['node']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("during",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
