@@ -200,21 +200,21 @@ function ndays($db,$system,$start_date,$end_date)
 
 
 // metric -> column mapping
-function columns($metric,$system,$db)
+function columns($metric,$system,$db,$start_date,$end_date)
 {
-  if ( $metric=='cpuhours' ) return "SUM(".cpuhours($db,$system).") AS cpuhours";
-  if ( $metric=='nodehours' ) return "SUM(".nodehours($db,$system).") AS nodehours";
-  if ( $metric=='charges' ) return "SUM(".charges($db,$system).") AS charges";
-  if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(start_ts-submit_ts)) AS 'MIN(qtime)',SEC_TO_TIME(MAX(start_ts-submit_ts)) AS 'MAX(qtime)',SEC_TO_TIME(AVG(start_ts-submit_ts)) AS 'AVG(qtime)',SEC_TO_TIME(STDDEV(start_ts-submit_ts))  AS 'STDDEV(qtime)'";
-  if ( $metric=='mem_kb' ) return "MIN(mem_kb),MAX(mem_kb),AVG(mem_kb),STDDEV(mem_kb)";
-  if ( $metric=='vmem_kb' ) return "MIN(vmem_kb),MAX(vmem_kb),AVG(vmem_kb),STDDEV(vmem_kb)";
-  if ( $metric=='walltime' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(walltime))) AS 'MIN(walltime)',SEC_TO_TIME(MAX(TIME_TO_SEC(walltime))) AS 'MAX(walltime)',SEC_TO_TIME(AVG(TIME_TO_SEC(walltime))) AS 'AVG(walltime)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(walltime))) AS 'STDDEV(walltime)'";
+  if ( $metric=='cpuhours' ) return "SUM(".cpuhours($db,$system,$start_date,$end_date).") AS cpuhours";
+  if ( $metric=='nodehours' ) return "SUM(".nodehours($db,$system,$start_date,$end_date).") AS nodehours";
+  if ( $metric=='charges' ) return "SUM(".charges($db,$system,$start_date,$end_date).") AS charges";
+  if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(start_ts-submit_ts)) AS 'MIN(qtime)', SEC_TO_TIME(MAX(start_ts-submit_ts)) AS 'MAX(qtime)', SEC_TO_TIME(AVG(start_ts-submit_ts)) AS 'AVG(qtime)' ,SEC_TO_TIME(STDDEV(start_ts-submit_ts))  AS 'STDDEV(qtime)'";
+  if ( $metric=='mem_kb' ) return "MIN(mem_kb), MAX(mem_kb), AVG(mem_kb), STDDEV(mem_kb)";
+  if ( $metric=='vmem_kb' ) return "MIN(vmem_kb), MAX(vmem_kb), AVG(vmem_kb), STDDEV(vmem_kb)";
+  if ( $metric=='walltime' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(walltime))) AS 'MIN(walltime)', SEC_TO_TIME(MAX(TIME_TO_SEC(walltime))) AS 'MAX(walltime)', SEC_TO_TIME(AVG(TIME_TO_SEC(walltime))) AS 'AVG(walltime)', SEC_TO_TIME(STDDEV(TIME_TO_SEC(walltime))) AS 'STDDEV(walltime)'";
   if ( $metric=='cput' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(cput))) AS 'MIN(cput)',SEC_TO_TIME(MAX(TIME_TO_SEC(cput))) AS 'MAX(cput)',SEC_TO_TIME(AVG(TIME_TO_SEC(cput))) AS 'AVG(cput)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(cput))) AS 'STDDEV(cput)'";
-  if ( $metric=='cputime' ) return "SEC_TO_TIME(MIN(3600*".cpuhours($db,$system).")) AS 'MIN(cputime)',SEC_TO_TIME(MAX(3600*".cpuhours($db,$system).")) AS 'MAX(cputime)',SEC_TO_TIME(AVG(3600*".cpuhours($db,$system).")) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(3600*".cpuhours($db,$system).")) AS 'STDDEV(cputime)'";
+  if ( $metric=='cputime' ) return "SEC_TO_TIME(MIN(3600*".cpuhours($db,$system,$start_date,$end_date).")) AS 'MIN(cputime)', SEC_TO_TIME(MAX(3600*".cpuhours($db,$system,$start_date,$end_date).")) AS 'MAX(cputime)', SEC_TO_TIME(AVG(3600*".cpuhours($db,$system,$start_date,$end_date).")) AS 'AVG(cputime)', SEC_TO_TIME(STDDEV(3600*".cpuhours($db,$system,$start_date,$end_date).")) AS 'STDDEV(cputime)'";
   if ( $metric=='walltime_acc' ) return "MIN(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MIN(walltime_acc)',MAX(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MAX(walltime_acc)',AVG(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'AVG(walltime_acc)',STDDEV(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'STDDEV(walltime_acc)'";
-  if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system).")),MAX(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system).")),AVG(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system).")),STDDEV(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system)."))";
+  if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date).")), MAX(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date).")), AVG(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date).")), STDDEV(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date)."))";
   if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups";
-  if ( $metric=='backlog' ) return cpuhours($db,$system)." AS cpuhours, SUM(start_ts-submit_ts)/3600.0 AS 'SUM(qtime)'";
+  if ( $metric=='backlog' ) return cpuhours($db,$system,$start_date,$end_date)." AS cpuhours, SUM(start_ts-submit_ts)/3600.0 AS 'SUM(qtime)'";
 #  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
   if ( $metric=='xfactor' ) return "MIN(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MIN(xfactor)', MAX(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MAX(xfactor)', AVG(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'AVG(xfactor)', STDDEV(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'STDDEV(xfactor)'";
   if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS users";
@@ -227,12 +227,12 @@ function columns($metric,$system,$db)
     {
       $first = 0;
       $maxs = bucket_maxs("walltime");
-      $column = "SUM( CASE WHEN TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[0]."') THEN ".cpuhours($db,$system)." ELSE 0 END ) AS '<=".$maxs[0]."'";
+      $column = "SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")<=TIME_TO_SEC('".$maxs[0]."') THEN ".cpuhours($db,$system)." ELSE 0 END ) AS '<=".$maxs[0]."'";
       for ( $i=1 ; $i<count($maxs) ; $i++ )
 	{
-	  $column .= ", SUM( CASE WHEN TIME_TO_SEC(walltime)>TIME_TO_SEC('".$maxs[$i-1]."') AND TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[$i]."') THEN ".cpuhours($db,$system)." ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
+	  $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")>TIME_TO_SEC('".$maxs[$i-1]."') AND TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[$i]."') THEN ".cpuhours($db,$system$start_date,$end_date)." ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
 	}
-      $column .= ", SUM( CASE WHEN TIME_TO_SEC(walltime)>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN ".cpuhours($db,$system)." ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
+      $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN ".cpuhours($db,$system,$start_date,$end_date)." ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
       return $column;
     }
 

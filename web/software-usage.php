@@ -53,13 +53,13 @@ if ( isset($_POST['system']) )
 	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ";
+	    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ";
 	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect('start',$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system";
 	    if ( $_POST['system']=="%" )
 	      {
                 # compute totals iff wildcarding on all systems
-		$sql .= " UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( ";
+		$sql .= " UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ";
 		$sql .= "sw_app='".$key."'";
 		$sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
 	      }
@@ -70,7 +70,7 @@ if ( isset($_POST['system']) )
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
 	      }
 	    echo "<TABLE border=1>\n";
-	    echo "<TR><TH>system</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH><TH>users</TH><TH>groups</TH></TR>\n";
+	    echo "<TR><TH>system</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
 	    while ($result->fetchInto($row))
 	      {
 		$rkeys=array_keys($row);
