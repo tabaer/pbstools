@@ -1005,7 +1005,7 @@ function software_list($db = NULL)
 	{
 	  foreach ($row as $element)
 	    {
-              if ( $element ne "" )
+              if ( $element!="" )
 		{
                   #echo "<PRE>$element</PRE>\n";
 		  array_push($list,$element);
