@@ -56,7 +56,7 @@ if ( isset($_POST['system']) )
   {
     # software usage
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>accounts</TH></TR>\n";
+    echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH><TH>accounts</TH></TR>\n";
     ob_flush();
     flush();
     
