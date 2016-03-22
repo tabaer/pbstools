@@ -30,24 +30,25 @@ $title = "Usage summary";
 if ( isset($_POST['system']) )
   {
     $title .= " for ".$_POST['system'];
+    $verb = title_verb($_POST['datelogic']);
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) &&
 	 $_POST['start_date']==$_POST['end_date'] && 
 	 $_POST['start_date']!="" )
       {
-	$title .= " on ".$_POST['start_date'];
+	$title .= " ".$verb." on ".$_POST['start_date'];
       }
     else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
 	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
       {
-	$title .= " from ".$_POST['start_date']." to ".$_POST['end_date'];
+	$title .= " ".$verb." between ".$_POST['start_date']." and ".$_POST['end_date'];
       }
     else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
       {
-	$title .= " after ".$_POST['start_date'];
+	$title .= " ".$verb." after ".$_POST['start_date'];
       }
     else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
       {
-	$title .= " before ".$_POST['end_date'];
+	$title .= " ".$verb." before ".$_POST['end_date'];
       }
   }
 page_header($title);
@@ -57,7 +58,7 @@ if ( isset($_POST['system']) )
   {
     # system overview
     echo "<H3>Overview</H3>\n";
-    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, NULL AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("during",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY ".$_POST['order']." DESC";
+    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, NULL AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY ".$_POST['order']." DESC";
     #echo "<PRE>\n".$sql."</PRE>\n";
     echo "<TABLE border=1>\n";
     echo "<TR><TH>system</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH><TH>%util</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
@@ -114,7 +115,7 @@ if ( isset($_POST['system']) )
       }
     if ( $_POST['system']=="%" )
       {
-	$sql = "SELECT 'TOTAL', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, 'N/A' AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("during",$_POST['start_date'],$_POST['end_date'])." )";
+	$sql = "SELECT 'TOTAL', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, 'N/A' AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." )";
 	$result = db_query($db,$sql);
 	if ( PEAR::isError($result) )
 	  {
@@ -159,7 +160,7 @@ if ( isset($_POST['system']) )
 	echo "<H3>Usage By Institution</H3>\n";
 	if  ( isset($_POST['table']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -168,25 +169,25 @@ if ( isset($_POST['system']) )
 	  }
 	if ( isset($_POST['csv']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
 	      }
-	    metric_as_csv($result,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	    metric_as_csv($result,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
 	  }
 	if ( isset($_POST['xls']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
 	      }
-	    metric_as_xls($result,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	    metric_as_xls($result,'institution','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
 	  }
 	if ( isset($_POST['ods']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -203,7 +204,7 @@ if ( isset($_POST['system']) )
 	echo "<H3>Usage By Account</H3>\n";
 	if ( isset($_POST['table']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -212,16 +213,16 @@ if ( isset($_POST['system']) )
 	  }
 	if ( isset($_POST['csv']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
 	      }
-	    metric_as_csv($result,'account','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date']);
+	    metric_as_csv($result,'account','usage',$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
 	  }
 	if ( isset($_POST['xls']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -230,7 +231,7 @@ if ( isset($_POST['system']) )
 	  }
 	if ( isset($_POST['ods']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date']);
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -245,7 +246,7 @@ if ( isset($_POST['system']) )
     if ( isset($_POST['software']) )
       {
 	echo "<H3>Software Usage</H3>\n";
-	$sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE sw_app IS NOT NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("during",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
+	$sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE sw_app IS NOT NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
         #echo "<PRE>\n".$sql."</PRE>\n";
 	$columns = array("package","jobs","cpuhours","charges","users","groups", "accounts");
 	if (  isset($_POST['table']) )

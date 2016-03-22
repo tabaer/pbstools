@@ -132,7 +132,7 @@ function dateselect($action,$start_date,$end_date)
       if ( isset($start_date) && isset($end_date) &&
 	    $start_date!="" && $end_date!="" )
 	{
-	  return "( start_date>='".$start_date."' AND start_date<='".$end_date."' ) OR ( end_date>='".$end_date."' AND end_date<='".$end_date."' )";
+	  return "( start_date>='".$start_date."' AND start_date<='".$end_date."' ) OR ( end_date>='".$end_date."' AND end_date<='".$end_date."' ) OR ( start_date<='".$start_date."' AND end_date>='".$end_date."' )";
 	}
       else if ( isset($start_date) && $start_date!="" )
 	{
@@ -312,7 +312,7 @@ function columnnames($metric)
 }
 
 
-function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_access=false)
+function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic="during",$limit_access=false)
 {
   $query = "SELECT ";
    if ( $xaxis!="" )
@@ -325,7 +325,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_acce
        $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
      }
    $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-     dateselect("during",$start_date,$end_date).")";
+     dateselect($datelogic,$start_date,$end_date).")";
    if ( $limit_access )
      {
        $query .= " AND ( ".limit_user_access($_SERVER['PHP_AUTH_USER'])." )";
@@ -372,7 +372,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_acce
 
 
 
-function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_access=false)
+function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic="during",$limit_access=false)
 {
   $query = "SELECT ".xaxis_column($xaxis,$system).",COUNT(jobid) AS jobs";
   if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
@@ -392,7 +392,7 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$l
       $query .= ",MIN(".$xaxis.") AS hidden";
     }
   $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-    dateselect("during",$start_date,$end_date).")";
+    dateselect($datelogic,$start_date,$end_date).")";
   if ( clause($xaxis,$metric)!="" )
     {
       $query .= " AND ".clause($xaxis,$metric);
@@ -1050,7 +1050,7 @@ function jobstats_input_metric($name,$fn)
 }
 
 
-function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$limit_access=false)
+function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$datelogic="during",$limit_access=false)
 {
   
   if (    isset($_POST[$fn.'_graph'])
@@ -1064,37 +1064,37 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$lim
       
       if ( isset($_POST[$fn.'_graph']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
 	  metric_as_graph($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
       
       if ( isset($_POST[$fn.'_table']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
 	  metric_as_table($result,xaxis($fn),metric($fn));
 	}
 
       if ( isset($_POST[$fn.'_csv']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
 	  metric_as_csv($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_xls']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
      if ( isset($_POST[$fn.'_ods']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
 	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
 }
 
-function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_date,$limit_access=false)
+function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_date,$datelogic,$limit_access=false)
 {
   
   if (    isset($_POST[$fn.'_graph'])
@@ -1108,40 +1108,40 @@ function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_
       
       if ( isset($_POST[$fn.'_graph']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
 	  metric_as_graph($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
       
       if ( isset($_POST[$fn.'_table']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
 	  metric_as_table($result,xaxis($fn),metric($fn));
 	}
 
       if ( isset($_POST[$fn.'_csv']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
 	  metric_as_csv($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_xls']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_ods']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
 	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
 }
 
 
-function jobstats_summary($db,$system,$start_date,$end_date)
+function jobstats_summary($db,$system,$start_date,$end_date,$datelogic="during")
 {
-  $result=get_metric($db,$system,"","cpuhours",$start_date,$end_date);
+  $result=get_metric($db,$system,"","cpuhours",$start_date,$end_date,$datelogic);
   $result->fetchInto($row);
   $jobs=$row[0];
   $cpuhours=$row[1];
@@ -1161,7 +1161,7 @@ function jobstats_summary($db,$system,$start_date,$end_date)
 	}
     }
   echo "<BR>\n";
-  $usercount=get_metric($db,$system,"","usercount",$start_date,$end_date);
+  $usercount=get_metric($db,$system,"","usercount",$start_date,$end_date,$datelogic);
   $usercount->fetchInto($counts);
   $nusers=$counts[1];
   $ngroups=$counts[2];
