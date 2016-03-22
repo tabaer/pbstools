@@ -106,9 +106,6 @@ if ( isset($_POST['system']) )
   }
 else
   {
-    # list of software packages
-    $packages=software_list($db);
-
     begin_form("user-software.php");
 
     text_field("User","username",16);
