@@ -24,25 +24,26 @@ if ( isset($_POST['account']) )
   }
 if ( isset($_POST['system']) )
   {
+    $verb = title_verb($_POST['datelogic']);
     $title .= " on ".$_POST['system'];
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) &&
 	 $_POST['start_date']==$_POST['end_date'] && 
 	 $_POST['start_date']!="" )
       {
-	$title .= " on ".$_POST['start_date'];
+	$title .= " ".$verb." on ".$_POST['start_date'];
       }
     else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
 	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
       {
-	$title .= " from ".$_POST['start_date']." to ".$_POST['end_date'];
+	$title .= " ".$verb." from ".$_POST['start_date']." to ".$_POST['end_date'];
       }
     else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
       {
-	$title .= " after ".$_POST['start_date'];
+	$title .= " ".$verb." after ".$_POST['start_date'];
       }
     else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
       {
-	$title .= " before ".$_POST['end_date'];
+	$title .= " ".$verb." before ".$_POST['end_date'];
       }
   }
 page_header($title);
@@ -59,7 +60,7 @@ if ( isset($_POST['system']) )
     ob_flush();
     flush();
     
-    $sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE sw_app IS NOT NULL AND system LIKE '".$_POST['system']."' AND account LIKE '".$_POST['account']."' AND ( ".dateselect("during",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
+    $sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE sw_app IS NOT NULL AND system LIKE '".$_POST['system']."' AND account LIKE '".$_POST['account']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
     
     #echo "<PRE>\n".$sql."</PRE>\n";
     $result = db_query($db,$sql);

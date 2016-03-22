@@ -21,25 +21,26 @@ $title = "Software usage by user";
 if ( isset($_POST['system']) )
   {
     $title .= " on ".$_POST['system'];
+    $verb = title_verb($_POST['datelogic']);
+    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && 
+	 $_POST['start_date']==$_POST['end_date'] && $_POST['start_date']!="" )
+      {
+	$title .= " ".$verb." on ".$_POST['start_date'];
+      }
+    else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
+	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
+      {
+	$title .= " ".$verb." between ".$_POST['start_date']." and ".$_POST['end_date'];
+      }
+    else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
+      {
+	$title .= " ".$verb." after ".$_POST['start_date'];
+      }
+    else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
+      {
+	$title .= " ".$verb." before ".$_POST['end_date'];
+      }
   }
-if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
-     $_POST['start_date']!="" )
-  {
-    $title .= " running on ".$_POST['start_date'];
-  }
- else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
-	   $_POST['start_date']!="" &&  $_POST['end_date']!="" )
-   {
-     $title .= " running between ".$_POST['start_date']." and ".$_POST['end_date'];
-   }
- else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-   {
-     $title .= " running after ".$_POST['start_date'];
-   }
- else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-   {
-     $title .= " running before ".$_POST['end_date'];
-   }
 page_header($title);
 
 # connect to DB
@@ -50,14 +51,15 @@ if ( isset($_POST['system']) )
   {
     foreach ($keys as $key)
       {
-	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
+	if ( $key!='system' && $key!='start_date' && $key!='end_date' &&
+	     $key!='datelogic' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
 	    $sql = "SELECT username, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
 	    $sql .= "sw_app='".$key."'";
-	    $sql .= " ) AND ( ".dateselect("during",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
+	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
 	    $sql .= "sw_app='".$key."'";
-	    $sql .= " ) AND ( ".dateselect("during",$_POST['start_date'],$_POST['end_date'])." )";
+	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." )";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
 	    if ( PEAR::isError($result) )
