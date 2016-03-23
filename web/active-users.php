@@ -49,7 +49,7 @@ $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
     $db = db_connect();
-    $sql = "SELECT username, groupname, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
+    $sql = "SELECT username, groupname, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -82,7 +82,7 @@ else
     system_chooser();
     date_fields();
 
-    $choices=array("cpuhours","jobs");
+    $choices=array("cpuhours","charges","jobs");
     $defaultchoice="cpuhours";
     pulldown("order","Order by",$choices,$defaultchoice);
     textfield("limit","Max shown","10",4);
