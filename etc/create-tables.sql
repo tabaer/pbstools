@@ -47,6 +47,7 @@ CREATE INDEX queue_jobs ON Jobs (queue(16));
 CREATE INDEX submit_jobs ON Jobs (submit_date);
 CREATE INDEX start_jobs ON Jobs (start_date);
 CREATE INDEX end_jobs ON Jobs (end_date);
+CREATE INDEX start_end_jobs ON Jobs (start_date,end_date);
 CREATE INDEX sw_app_jobs ON Jobs (sw_app(32));
 GRANT INSERT,UPDATE,SELECT ON Jobs TO 'pbsacct'@'localhost' IDENTIFIED BY 'pbsRroxor';
 GRANT SELECT ON Jobs TO 'webapp'@'localhost';
