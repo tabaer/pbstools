@@ -115,8 +115,8 @@ function sys_list()
   return array("opt",
 	       "oak",
 	       "ruby",
-	       "bucki",
-	       "owens");
+	       "bmibucki",
+	       "bmiowens");
 }
 
 # system selector
@@ -393,7 +393,7 @@ function charges($db,$system,$start_date,$end_date,$datelogic="during")
       $retval .= " ELSE 0.1*20*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
       $retval .= " END";
     }
-  else if ( $system=="bucki" | $system=="owens" | $system=="quick" )
+  else if ( $system=="bmibucki" | $system=="bmiowens" | $system=="quick" )
     {
       $retval = "0.0";
     }
@@ -415,8 +415,8 @@ function institution_match()
 {
 # OSC
   $case  = "CASE";
-  $case .= " WHEN system='bucki' THEN 'osu'";
-  $case .= " WHEN system='owens' THEN 'osu'";
+  $case .= " WHEN system='bmibucki' THEN 'osu'";
+  $case .= " WHEN system='bmiowens' THEN 'osu'";
   $case .= " WHEN username REGEXP '^[a-z]{4}[0-9]{3,4}$' THEN SUBSTRING(username,1,4)";
   $case .= " WHEN username REGEXP '^[a-z]{3}[0-9]{3,4}$' THEN SUBSTRING(username,1,3)";
   $case .= " WHEN username REGEXP '^an[0-9]{3,4}$' THEN 'awe'";
