@@ -207,9 +207,13 @@ function nprocs($system)
   return 0;
 }
 
-function bounded_walltime($start_date,$end_date)
+function bounded_walltime($start_date,$end_date,$datelogic="during")
 {
-  if ( isset($start_date) && isset($end_date) )
+  if ( $datelogic!="during" )
+    {
+      return "walltime";
+    }
+  elseif ( isset($start_date) && isset($end_date) )
     {
       return "CASE  WHEN ( start_date>='".$start_date."' AND end_date<='".$end_date."' ) THEN walltime   WHEN ( start_date<='".$start_date."' AND end_date<='".$end_date."' ) THEN ADDTIME(walltime,TIMEDIFF(FROM_UNIXTIME(start_ts),'".$start_date." 00:00:00'))   WHEN ( start_date>='".$start_date."' AND end_date>='".$end_date."' ) THEN ADDTIME(walltime,TIMEDIFF('".$end_date." 23:59:59',FROM_UNIXTIME(end_ts)))   ELSE '00:00:00' END";
     }
@@ -227,9 +231,9 @@ function bounded_walltime($start_date,$end_date)
     }
 }
 
-function cpuhours($db,$system,$start_date,$end_date)
+function cpuhours($db,$system,$start_date,$end_date,$datelogic="during")
 {
-  $retval = "nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
+  $retval = "nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
   if ( $system=="%" || $system=="keeneland" || $system=="kraken-all" || $system=="xt4-all" )
     {
       	# get list of systems
@@ -254,22 +258,22 @@ function cpuhours($db,$system,$start_date,$end_date)
 	  {
 	    if ( $thissystem!="%" )
 	      {
-		$retval .= " WHEN '".$thissystem."' THEN ".cpuhours($db,$thissystem,$start_date,$end_date)."\n";
+		$retval .= " WHEN '".$thissystem."' THEN ".cpuhours($db,$thissystem,$start_date,$end_date,$datelogic)."\n";
 	      }
 	  }
 	$retval .= " END";
     }
   elseif ( $system=="nautilus" )
     {
-      $retval = "8*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
+      $retval = "8*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="kid" || $system=="kids" )
     {
-      $retval = "12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
+      $retval = "12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="bcndev" || $system=="beacon" || $system=="beacon2" || $system=="kfs" )
     {
-      $retval = "16*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
+      $retval = "16*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="x1" )
     {
@@ -278,9 +282,9 @@ function cpuhours($db,$system,$start_date,$end_date)
   return $retval;
 }
 
-function nodehours($db,$system,$start_date,$end_date)
+function nodehours($db,$system,$start_date,$end_date,$datelogic="during")
 {
-  $retval = "nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
+  $retval = "nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
   if ( $system=="%" || $system=="keeneland" || $system=="kraken-all" || $system=="xt4-all" )
     {
       	# get list of systems
@@ -305,29 +309,29 @@ function nodehours($db,$system,$start_date,$end_date)
 	  {
 	    if ( $thissystem!="%" )
 	      {
-		$retval .= " WHEN '".$thissystem."' THEN ".nodehours($db,$thissystem,$start_date,$end_date)."\n";
+		$retval .= " WHEN '".$thissystem."' THEN ".nodehours($db,$thissystem,$start_date,$end_date,$datelogic)."\n";
 	      }
 	  }
 	$retval .= " END";
     }
   else if ( $system=="kraken" || $system=="athena" )
     {
-      $retval = "(nproc/4)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
+      $retval = "(nproc/4)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="krakenpf" )
     {
-      $retval = "(nproc/12)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
+      $retval = "(nproc/12)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="darter" )
     {
-      $retval = "(nproc/16)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
+      $retval = "(nproc/16)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
     }
   return $retval;
 }
 
-function charges($db,$system,$start_date,$end_date)
+function charges($db,$system,$start_date,$end_date,$datelogic="during")
 {
-  $retval = cpuhours($db,$system,$start_date,$end_date);
+  $retval = cpuhours($db,$system,$start_date,$end_date,$datelogic);
   if ( $system=="%" || $system=="keeneland" || $system=="kraken-all" || $system=="xt4-all" )
     {
       	# get list of systems
@@ -352,41 +356,41 @@ function charges($db,$system,$start_date,$end_date)
 	  {
 	    if ( $thissystem!="%" )
 	      {
-		$retval .= " WHEN '".$thissystem."' THEN ".charges($db,$thissystem,$start_date,$end_date)."\n";
+		$retval .= " WHEN '".$thissystem."' THEN ".charges($db,$thissystem,$start_date,$end_date,$datelogic)."\n";
 	      }
 	  }
 	$retval .= " END";
     }
   else if ( $system=="bcndev" | $system=="beacon" | $system=="beacon2" )
     {
-      $retval = "nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
+      $retval = "nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="kid" | $system=="kids" | $system=="kfs" )
     {
-      $retval = "3*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
+      $retval = "3*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="darter" )
     {
-      $retval = "2*".cpuhours($db,$system,$start_date,$end_date);
+      $retval = "2*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
     }
   else if ( $system=="opt" )
     {
-      $retval = "0.1*".cpuhours($db,$system,$start_date,$end_date);
+      $retval = "0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
     }
   else if ( $system=="oak" )
     {
       $retval  = "CASE queue";
-      $retval .= " WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
-      $retval .= " WHEN 'parallel' THEN 0.1*12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
-      $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
-      $retval .= " ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date);
+      $retval .= " WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= " WHEN 'parallel' THEN 0.1*12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= " ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
       $retval .= " END";
     }
   else if ( $system=="ruby" )
     {
       $retval  = "CASE queue";
-      $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
-      $retval .= " ELSE 0.1*20*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date).")/3600.0";
+      $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= " ELSE 0.1*20*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
       $retval .= " END";
     }
   else if ( $system=="bucki" | $system=="owens" | $system=="quick" )
