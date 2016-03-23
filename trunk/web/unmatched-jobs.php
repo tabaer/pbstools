@@ -89,7 +89,7 @@ if ( isset($_POST['system']) )
 
     # account summary table
     echo "<H3>Account Summary</H3>\n";
-    $sql = "SELECT account, system, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date']).") AS charges FROM Jobs WHERE script IS NOT NULL AND sw_app IS NULL AND system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account, system ORDER BY cpuhours DESC";
+    $sql = "SELECT account, system, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges FROM Jobs WHERE script IS NOT NULL AND sw_app IS NULL AND system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account, system ORDER BY cpuhours DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
