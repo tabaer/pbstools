@@ -132,7 +132,7 @@ function dateselect($action,$start_date,$end_date)
       if ( isset($start_date) && isset($end_date) &&
 	    $start_date!="" && $end_date!="" )
 	{
-	  return "( start_date>='".$start_date."' AND start_date<='".$end_date."' ) OR ( end_date>='".$end_date."' AND end_date<='".$end_date."' ) OR ( start_date<='".$start_date."' AND end_date>='".$end_date."' )";
+	  return "( start_date>='".$start_date."' AND start_date<='".$end_date."' ) OR ( end_date>='".$start_date."' AND end_date<='".$end_date."' ) OR ( start_date<='".$start_date."' AND end_date>='".$end_date."' )";
 	}
       else if ( isset($start_date) && $start_date!="" )
 	{
