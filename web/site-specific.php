@@ -463,11 +463,23 @@ function user_accounts($user = NULL)
   $accts = array();
   # OSC ASSUMPTION:  accounts are groups fitting a particular pattern
   $groups = user_groups($user);
+  # staff projects that have a different name in LDAP than in the USDB
+  $wonky_groups = array();
+  $wonky_groups['appl'] = "PZS0002";
+  $wonky_groups['gsi'] = "PZS0420";
+  $wonky_groups['oscgen'] = "PZS0200";
+  $wonky_groups['oscguest'] = "PZS0205";
+  $wonky_groups['oscsys'] = "PZS0201";
+  $wonky_groups['sysp'] = "PZS0090";
   foreach ( $groups as $group )
     {
       if ( preg_match('/^P[A-Z]{2,3}\d{4}$/',$group)==1 )
 	{
 	  array_push($accts,$group);
+	}
+      else if ( isset($wonky_groups[$group]) )
+	{
+	  array_push($accts,$wonky_groups[$group]);
 	}
     }
   # NICS ASSUMPTION:  user->account mappings can be groveled out of
