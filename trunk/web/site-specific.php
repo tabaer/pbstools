@@ -420,6 +420,7 @@ function institution_match()
   $case .= " WHEN username REGEXP '^[a-z]{4}[0-9]{3,4}$' THEN SUBSTRING(username,1,4)";
   $case .= " WHEN username REGEXP '^[a-z]{3}[0-9]{3,4}$' THEN SUBSTRING(username,1,3)";
   $case .= " WHEN username REGEXP '^an[0-9]{3,4}$' THEN 'awe'";
+  $case .= " WHEN username='nova' THEN 'ucn'";
   $case .= " ELSE 'osc'";
   $case .= " END";
   return $case." AS institution";
