@@ -73,7 +73,7 @@ if ( isset($_POST['account']) )
     echo "<TR><TH>jobid</TH><TH>account</TH><TH>username</TH>";
     foreach ($keys as $key)
       {
-	if ( $key!='jobid' && $key!='username' && $key!='account' && $key!='start_date' && $key!='end_date' )
+	if ( $key!='jobid' && $key!='username' && $key!='account' && $key!='start_date' && $key!='end_date' && $key!='datelogic' )
 	  {
 	    echo "<TH>".$key."</TH>";
 	    $col[$ncols]=$key;
