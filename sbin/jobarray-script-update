@@ -38,6 +38,9 @@ my $dbpasswd="pbsRroxor";
 my $dbname="pbsacct";
 my $dbtable="Jobs";
 
+my $start_date;
+my $end_date;
+
 while ( $ARGV[0] =~ /^-.*/ )
   {
     if ( $ARGV[0] eq "-d" )
@@ -70,6 +73,16 @@ while ( $ARGV[0] =~ /^-.*/ )
         $dbuser=$ARGV[1];
         shift(@ARGV);
       }
+    elsif ( $ARGV[0] eq "-E" )
+     {
+        $end_date = $ARGV[1];
+        shift(@ARGV);
+     }
+    elsif ( $ARGV[0] eq "-S" )
+     {
+        $start_date = $ARGV[1];
+        shift(@ARGV);
+     }
 
     shift(@ARGV);
   }
@@ -81,6 +94,13 @@ my $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
 
 my @scriptlesssubjob = ();
 my $initselect = "SELECT jobid FROM Jobs WHERE system='$system' AND jobid REGEXP '^[0-9]+-[0-9]+..*\$' AND script IS NULL";
+{
+    $initselect .= " AND submit_date>='".$start_date."'";
+}
+if ( defined($end_date) )
+{
+    $initselect .= " AND submit_date<='".$end_date."'";
+}
 my $sth = $dbh->prepare($initselect)
     or die "Could not prepare query:  ".$dbh::errstr;
 my $n = $sth->execute()
@@ -100,8 +120,24 @@ foreach ( @scriptlesssubjob )
 @jobid = unique(@jobid);
 
 my $selectquery = "SELECT script FROM Jobs WHERE system=? AND jobid=? AND script IS NOT NULL";
+if ( defined($start_date) )
+{
+    $selectquery .= " AND submit_date>='".$start_date."'";
+}
+if ( defined($end_date) )
+{
+    $selectquery .= " AND submit_date<='".$end_date."'";
+}
 my $select = $dbh->prepare($selectquery) or die "Could not prepare query:  ".$dbh::errstr;
 my $updatequery = "UPDATE Jobs SET script=? WHERE system=? AND jobid REGEXP ? AND script IS NULL";
+if ( defined($start_date) )
+{
+    $updatequery .= " AND submit_date>='".$start_date."'";
+}
+if ( defined($end_date) )
+{  
+    $updatequery .= " AND submit_date<='".$end_date."'";
+}
 my $update = $dbh->prepare($updatequery) or die "Could not prepare query:  ".$dbh::errstr;
 foreach ( @jobid )
 {
