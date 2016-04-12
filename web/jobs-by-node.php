@@ -71,7 +71,7 @@ if ( isset($_POST['node']) )
     echo "<TR><TH>jobid</TH>";
     foreach ($keys as $key)
       {
-	if ( $key!='node' && $key!='start_date' && $key!='end_date' )
+	if ( $key!='node' && $key!='start_date' && $key!='end_date' && $key!='datelogic' )
 	  {
 	    echo "<TH>".$key."</TH>";
 	    $col[$ncols]=$key;
