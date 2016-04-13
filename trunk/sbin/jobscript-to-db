@@ -73,6 +73,8 @@ $dbpasswd="pbsRroxor";
 $dbname="pbsacct";
 $dbtable="Jobs";
 
+$doupdate = 0;
+
 while ( $ARGV[0] =~ /^-.*/ )
   {
     if ( $ARGV[0] eq "-d" )
@@ -104,6 +106,10 @@ while ( $ARGV[0] =~ /^-.*/ )
       {
 	$dbuser=$ARGV[1];
 	shift(@ARGV);
+      }
+    elsif ( $ARGV[0] eq "-U" )
+      {
+        $doupdate = 1;
       }
 
     shift(@ARGV);
@@ -148,11 +154,11 @@ foreach $scriptfile (@ARGV)
 		# do the DB insert
 		$insert->execute($jobid,$system,$script) || die "problem executing query -- ".$insert->errstr;;
 	    }
-            else
+            elsif ( $doupdate==1 )
             {
                 # do the DB update
                 # note that this is turned off by default
-                #$update->execute($script,$system,$jobid) || die "problem executing query -- ".$update->errstr;;
+                $update->execute($script,$system,$jobid) || die "problem executing query -- ".$update->errstr;;
             }
 	}
     }
