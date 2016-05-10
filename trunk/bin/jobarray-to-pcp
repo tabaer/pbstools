@@ -55,7 +55,8 @@ class request():
 
 
 def usage():
-    sys.exit(1)
+  sys.stderr.write("Usage:  jobarray-to-pcp [qsub args] <arrayjobscript>\n")
+  sys.exit(1)
 
 
 def parse_args(arglist,request):
