@@ -3,7 +3,7 @@
 jobarray-to-pcp \- Run the equivalent of a TORQUE job array using parallel-command-processor.
 
 .SH SYNOPSIS
-.B jobarray-to-pcp [qsub args] <arrayjobscript>
+.B jobarray-to-pcp [args] [qsub args] <arrayjobscript>
 
 .SH DESCRIPTION
 .B jobarray-to-pcp
@@ -15,9 +15,25 @@ and
 To the extent possible, the resulting parallel job will emulate the job
 array's output naming behavior.
 
+.SH OPTIONS
+
+All options for the PBS
+.B qsub
+command are supported.  In addition, the following are supported:
+
+.TP
+.B --help
+Print out a help message and exit.
+.TP
+.B --tpn N or --tasks-per-node=N
+Run N instances of 
+.B parallel-command-processor
+per node.  The default is 1 instance per core.
+
 .SH EXAMPLES
 
 Consider the following array job script:
+
 .nf
 #PBS -N array-job
 #PBS -S /bin/bash
@@ -26,6 +42,7 @@ Consider the following array job script:
 echo $PBS_ARRAYID
 sleep 1
 .fi
+
 Normally one would submit this with something like
 .B qsub -t 1-100 array-job.pbs
 , which would result in 100 (single-core) job array elements running

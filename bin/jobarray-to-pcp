@@ -29,12 +29,15 @@ class request():
     self.values['errfile'] = None
     self.values['join'] = None
     self.values['pbs_header'] = "PBS"
+    self.values['tpn'] = None
   def set(self,key,value):
     self.values[key] = value
   def get(self,key):
     if ( key not in self.values.keys() ):
       raise ValueError("Unknown key '"+key+"'")
     return self.values[key]
+  def keys(self):
+    return self.values.keys()
   def add_range(self,thisrange):
     self.values['ranges'].append(thisrange)
   def add_qsub_arg(self,arg):
@@ -55,7 +58,11 @@ class request():
 
 
 def usage():
-  sys.stderr.write("Usage:  jobarray-to-pcp [qsub args] <arrayjobscript>\n")
+  sys.stderr.write("jobarray-to-pcp:\tRun the equivalent of a TORQUE job array using\n\t\t\tparallel-command-processor (PCP).\n\n")
+  sys.stderr.write("Usage:  jobarray-to-pcp [args] [qsub args] <arrayjobscript>\n\n")
+  sys.stderr.write("Arguments:\n")
+  sys.stderr.write("\t--help\t\t\t\tPrint this help message\n")
+  sys.stderr.write("\t--tpn N, --tasks-per-node=N\tRun N instances of PCP per node.\n\t\t\t\t\t(default is 1 per core)\n")
   sys.exit(1)
 
 
@@ -63,7 +70,8 @@ def parse_args(arglist,request):
   # command line/script argument processing
   try:
     opts, args = getopt.getopt(arglist,
-                               "A:C:IM:N:P:S:T:VW:Xa:b:c:d:e:fhj:k:l:m:no:p:q:r:t:u:v:w:xz")
+                               "A:C:IM:N:P:S:T:VW:Xa:b:c:d:e:fhj:k:l:m:no:p:q:r:t:u:v:w:xz",
+                               ["help","tasks-per-node=","tpn="])
   except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -98,6 +106,10 @@ def parse_args(arglist,request):
           taskstart = int(thisrange)
           taskend = int(taskstart)
         request.add_range([taskstart,taskend])
+    elif ( opt[0]=="--tasks-per-node" or opt[0]=="--tpn" ):
+      request.set('tpn',int(opt[1]))
+    elif ( opt[0]=="--help" ):
+      usage()
     else:
       request.add_qsub_arg(opt[0])
       if ( len(opt)>1 ):
@@ -119,7 +131,6 @@ jobend = "\n"
 # * the MPI launcher argument used to set how many MPI tasks per node (TPN)
 mpiexec = "mpiexec"
 mpiexec_tpn_arg = "-ppn"
-tpn = None
 
 # command line argument processing
 req = request()
@@ -202,8 +213,8 @@ for thisrange in req.get('ranges'):
 cmd = "qsub "+" ".join(req.get('qsub_args'))
 jobscript = jobstart
 jobscript += mpiexec
-if ( tpn is not None ):
-  jobscript += " "+mpiexec_tpn_arg+" "+str(tpn)
+if ( "tpn" in req.keys() and req.get('tpn') is not None ):
+  jobscript += " "+mpiexec_tpn_arg+" "+str(req.get('tpn'))
 jobscript += " parallel-command-processor <<EOF\n"
 jobscript += pcp_cfg
 jobscript += "EOF\n"
