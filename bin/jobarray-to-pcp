@@ -12,6 +12,7 @@
 
 import getopt
 import os
+import re
 import subprocess
 import sys
 
@@ -137,12 +138,16 @@ fp = open(jobarrayscript)
 lines = fp.readlines()
 fp.close()
 for line in lines:
-    if ( line.startswith("#"+req.get('pbs_header')) ):
-        for elt in line.rstrip("\n").split()[1:]:
-            if ( elt.startswith("#") ):
-                break
-            else:
-                script_args.append(elt)
+  if ( line.startswith("#"+req.get('pbs_header')) ):
+    for elt in line.rstrip("\n").split()[1:]:
+      if ( elt.startswith("#") ):
+        break
+      else:
+        script_args.append(elt)
+  # emulate qsub behavior of only reading PBS headers up to the first
+  # non-comment, non-whitespace line
+  elif ( not line.startswith("#") and not ( re.match('^\s*$',line) ) ):
+    break
 
 # parse script arguments
 script_req = request()
