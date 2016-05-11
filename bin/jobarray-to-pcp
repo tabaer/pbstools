@@ -19,17 +19,18 @@ import sys
 class request():
   def __init__(self):
     self.values = {}
-    self.values['shell'] = "/bin/bash"
+    self.set('shell',"/bin/bash")
     if ( "SHELL" in os.environ.keys() ):
-      self.values['shell'] = os.environ["SHELL"]
-    self.values['qsub_args'] = []
-    self.values['ranges'] = []
-    self.values['jobname'] = None
-    self.values['outfile'] = None
-    self.values['errfile'] = None
-    self.values['join'] = None
-    self.values['pbs_header'] = "PBS"
-    self.values['tpn'] = None
+      self.set('shell',os.environ["SHELL"])
+    self.set('qsub_args',[])
+    self.set('ranges',[])
+    self.set('jobname',None)
+    self.set('outfile',None)
+    self.set('errfile',None)
+    self.set('join',None)
+    self.set('pbs_header',"PBS")
+    self.set('tpn',None)
+    self.set('test_mode',False)
   def set(self,key,value):
     self.values[key] = value
   def get(self,key):
@@ -61,8 +62,9 @@ def usage():
   sys.stderr.write("jobarray-to-pcp:\tRun the equivalent of a TORQUE job array using\n\t\t\tparallel-command-processor (PCP).\n\n")
   sys.stderr.write("Usage:  jobarray-to-pcp [args] [qsub args] <arrayjobscript>\n\n")
   sys.stderr.write("Arguments:\n")
-  sys.stderr.write("\t--help\t\t\t\tPrint this help message\n")
+  sys.stderr.write("\t--help\t\t\t\tPrint this help message.\n")
   sys.stderr.write("\t--tpn N, --tasks-per-node=N\tRun N instances of PCP per node.\n\t\t\t\t\t(default is 1 per core)\n")
+  sys.stderr.write("\t--test\t\t\t\tPrint job script to stdout rather than\n\t\t\t\t\tsubmit it.\n")
   sys.exit(1)
 
 
@@ -71,7 +73,7 @@ def parse_args(arglist,request):
   try:
     opts, args = getopt.getopt(arglist,
                                "A:C:IM:N:P:S:T:VW:Xa:b:c:d:e:fhj:k:l:m:no:p:q:r:t:u:v:w:xz",
-                               ["help","tasks-per-node=","tpn="])
+                               ["help","tasks-per-node=","test","tpn="])
   except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -108,6 +110,8 @@ def parse_args(arglist,request):
         request.add_range([taskstart,taskend])
     elif ( opt[0]=="--tasks-per-node" or opt[0]=="--tpn" ):
       request.set('tpn',int(opt[1]))
+    elif ( opt[0]=="--test" ):
+      request.set('test_mode',True)
     elif ( opt[0]=="--help" ):
       usage()
     else:
@@ -209,8 +213,7 @@ for thisrange in req.get('ranges'):
       stderr = "2>&1"
     pcp_cfg += "PBS_ARRAYID="+str(taskid)+" "+shell+" "+jobarrayscript+" "+stdout+" "+stderr+"\n"
 
-# submit PCP job
-cmd = "qsub "+" ".join(req.get('qsub_args'))
+# generate job script
 jobscript = jobstart
 jobscript += mpiexec
 if ( "tpn" in req.keys() and req.get('tpn') is not None ):
@@ -219,9 +222,17 @@ jobscript += " parallel-command-processor <<EOF\n"
 jobscript += pcp_cfg
 jobscript += "EOF\n"
 jobscript += jobend
-p = subprocess.Popen(cmd, shell=True,
-                     stdin=subprocess.PIPE,
-                     close_fds=True)
-p.stdin.write(jobscript)
-p.stdin.close()
-sys.exit(p.wait())
+
+# submit PCP job
+cmd = "qsub "+" ".join(req.get('qsub_args'))
+if ( req.get('test_mode') ):
+  sys.stdout.write("# "+cmd+"\n")
+  sys.stdout.write(jobscript)
+  sys.exit(0)
+else:
+  p = subprocess.Popen(cmd, shell=True,
+                       stdin=subprocess.PIPE,
+                       close_fds=True)
+  p.stdin.write(jobscript)
+  p.stdin.close()
+  sys.exit(p.wait())
