@@ -383,7 +383,7 @@ function charges($db,$system,$start_date,$end_date,$datelogic="during")
     {
       $retval = "0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
     }
-  else if ( $system=="oak" )
+  else if ( $system=="oak" | $system=="oak-gpu" )
     {
       $retval  = "CASE queue";
       $retval .= " WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
@@ -392,7 +392,7 @@ function charges($db,$system,$start_date,$end_date,$datelogic="during")
       $retval .= " ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
       $retval .= " END";
     }
-  else if ( $system=="ruby" )
+  else if ( $system=="ruby" | $system=="ruby-gpu" | $system=="ruby-mic" )
     {
       $retval  = "CASE queue";
       $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
