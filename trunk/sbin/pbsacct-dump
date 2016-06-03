@@ -1,0 +1,108 @@
+#!/usr/bin/python
+#
+# pbsacct-dump -- Dump records from pbsacct DB into CSV format
+# Copyright 2016 Ohio Supercomputer Center
+#
+# Usage:  pbsacct-dump [-s dbserver] [-d dbname] [-t dbtable ]
+#                      [-u dbuser] [-p dbpasswd]
+#                      [-h system] [-S start_date] [-E end_date]
+# Dates must be in YYYY-MM-DD format.
+# Default system is '%' (i.e. all).
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+# Revision info:
+# $HeadURL$
+# $Revision$
+# $Date$
+
+import getopt
+import MySQLdb
+import os
+import sys
+
+def usage():
+    sys.stderr.write("Usage:  pbsacct-dump [-s dbserver] [-d dbname] [-t dbtable ]\n")
+    sys.stderr.write("                     [-u dbuser] [-p dbpasswd]\n")
+    sys.stderr.write("                     [-h system] [-S start_date] [-E end_date]\n")
+    sys.stderr.write("Dates must be in YYYY-MM-DD format.\n")
+    sys.stderr.write("Default system is '%' (i.e. all).\n")
+    sys.exit(1)
+
+#
+# Main program starts here
+#
+dbhost = "localhost"
+dbuser = "pbsacct"
+dbpasswd = "pbsRroxor"
+dbname = "pbsacct"
+dbtable = "Jobs"
+hostname = "%"
+start_date = None
+end_date = None
+
+# command line processing
+try:
+    opts, args = getopt.getopt(sys.argv[1:],
+                               "E:S:d:h:p:s:t:u:",
+                               [])
+except getopt.GetoptError, err:
+    sys.stderr.write(str(err)+"\n")
+    usage()
+for opt in opts:
+    if ( opt[0]=="-E" ):
+        end_date = opt[1]
+    elif ( opt[0]=="-S" ):
+        start_date = opt[1]
+    elif ( opt[0]=="-d" ):
+        dbname = opt[1]
+    elif ( opt[0]=="-h" ):
+        hostname = opt[1]
+    elif ( opt[0]=="-p" ):
+        dbpasswd = opt[1]
+    elif ( opt[0]=="-s" ):
+        dbhost = opt[1]
+    elif ( opt[0]=="-t" ):
+        dbtable = opt[1]
+    elif ( opt[0]=="-u" ):
+        dbuser = opt[1]
+
+# connect to DB
+db = MySQLdb.connect(host=dbhost,db=dbname,user=dbuser,passwd=dbpasswd)
+cursor = db.cursor()
+
+# dump job records
+sql = "SELECT * FROM Jobs WHERE system LIKE '"+hostname+"'"
+if ( start_date is not None ):
+    sql += " AND submit_date>='"+start_date+"'"
+if ( end_date is not None ):
+    sql += " AND submit_date<='"+end_date+"'"
+#sys.stderr.write(sql+"\n")
+records = 0
+try:
+    cursor.execute(sql)
+    results = cursor.fetchone()
+    while ( results!=None ):
+        records = records+1
+        output = ""
+        # because of the mixed types, you can't just do ",".join(results) here
+        for result in results:
+            if ( isinstance(result,str) ):
+                # transliterate '\n' into '\\n'
+                result = "'"+result.replace("\n","\\n")+"'"
+            elif ( result is None ):
+                result = "NULL"
+            if ( output=="" ):
+                output = str(result)
+            else:
+                output = output+","+str(result)
+        sys.stdout.write(output+"\n")
+        results=cursor.fetchone()
+except KeyboardInterrupt:
+    raise
+except Exception as e:
+    sys.stderr.write("ERROR:  unable to fetch results -- "+(str(e))+"\n")
+else:
+    sys.stderr.write("Read "+str(records)+" records\n")
+
+# close DB connection
+db.close()
