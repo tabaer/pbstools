@@ -55,6 +55,12 @@ CREATE INDEX sw_app_jobs ON Jobs (sw_app(32));
 GRANT INSERT,UPDATE,SELECT ON Jobs TO 'pbsacct'@'localhost' IDENTIFIED BY 'pbsRroxor';
 GRANT SELECT ON Jobs TO 'webapp'@'localhost';
 GRANT SELECT ON Jobs TO 'cmdline'@'localhost';
+CREATE TABLE Software (
+  package VARCHAR(32) PRIMARY KEY
+);
+GRANT INSERT,UPDATE,SELECT ON Software TO 'pbsacct'@'localhost' IDENTIFIED BY 'pbsRroxor';
+GRANT SELECT ON Software TO 'webapp'@'localhost';
+GRANT SELECT ON Software TO 'cmdline'@'localhost';
 CREATE TABLE Config (
   row_number   SERIAL PRIMARY KEY,
   system       VARCHAR(8),
