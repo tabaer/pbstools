@@ -14,6 +14,7 @@ CREATE TABLE Jobs (
   nodes        TEXT,
   nodect       INT UNSIGNED DEFAULT 0,
   feature      TINYTEXT,
+  gattr        TINYTEXT,
   gres         TINYTEXT,
   queue        TINYTEXT,
   qos          TINYTEXT,

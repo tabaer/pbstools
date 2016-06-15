@@ -204,6 +204,12 @@ while ( defined($ARGV[0]) )
                     $ihead.=",feature";
                     $itail.=",\'".$resource{"Resource_List.feature"}."\'";
                   }
+		if ( defined($resource{"Resource_List.gattr"}) )
+                  {
+                    $uhead.=",gattr = \'".$resource{"Resource_List.gattr"}."\'";
+                    $ihead.=",gattr";
+                    $itail.=",\'".$resource{"Resource_List.gattr"}."\'";
+                  }
 		if ( defined($resource{"Resource_List.gres"}) )
                   {
                     $uhead.=",gres = \'".$resource{"Resource_List.gres"}."\'";
