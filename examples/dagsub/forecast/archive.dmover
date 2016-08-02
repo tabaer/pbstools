@@ -1,6 +1,0 @@
-file:${PBS_O_WORKDIR}/${day}-0100.nc hpss:${day}-0100.nc
-file:${PBS_O_WORKDIR}/${day}-0200.nc hpss:${day}-0200.nc
-file:${PBS_O_WORKDIR}/${day}-0300.nc hpss:${day}-0300.nc
-file:${PBS_O_WORKDIR}/${day}-0400.nc hpss:${day}-0400.nc
-file:${PBS_O_WORKDIR}/${day}-0500.nc hpss:${day}-0500.nc
-file:${PBS_O_WORKDIR}/${day}-0600.nc hpss:${day}-0600.nc

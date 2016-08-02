@@ -1,111 +1,228 @@
 <?php
-# Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2009, 2011, 2014 University of Tennessee
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
-require_once 'dbutils.php';
+require_once 'DB.php';
 require_once 'page-layout.php';
-require_once 'metrics.php';
-require_once 'site-specific.php';
-
-# accept get queries too for handy command-line usage:  suck all the
-# parameters into _POST.
-if (isset($_GET['system']))
-  {
-    $_POST = $_GET;
-  }
 
 $title = "Software usage";
 if ( isset($_POST['system']) )
   {
     $title .= " on ".$_POST['system'];
-    $verb = title_verb($_POST['datelogic']);
-    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && 
-	 $_POST['start_date']==$_POST['end_date'] && $_POST['start_date']!="" )
-      {
-	$title .= " ".$verb." on ".$_POST['start_date'];
-      }
-    else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && 
-	      $_POST['start_date']!=$_POST['end_date'] && 
-	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
-      {
-	$title .= " ".$verb." between ".$_POST['start_date']." and ".$_POST['end_date'];
-      }
-    else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-      {
-	$title .= " ".$verb." after ".$_POST['start_date'];
-      }
-    else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-      {
-	$title .= " ".$verb." before ".$_POST['end_date'];
-      }
   }
+if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+     $_POST['start_date']!="" )
+  {
+    $title .= " started on ".$_POST['start_date'];
+  }
+ else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
+	   $_POST['start_date']!="" &&  $_POST['end_date']!="" )
+   {
+     $title .= " started between ".$_POST['start_date']." and ".$_POST['end_date'];
+   }
+ else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
+   {
+     $title .= " started after ".$_POST['start_date'];
+   }
+ else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
+   {
+     $title .= " started before ".$_POST['end_date'];
+   }
 page_header($title);
 
-# connect to DB
-$db = db_connect();
+# list of software packages
+$packages=array("a.out",
+		"abaqus",
+		"adf",
+		"amber",
+		"ansys",
+		"cbl",
+		"fidap",
+		"flow3d",
+		"fluent",
+		"gaussian",
+		"gamess",
+		"gromacs",
+		"mathematica",
+		"matlab",
+		"NAG",
+		"namd",
+		"NCBI",
+		"nwchem",
+		"octave",
+		"sable",
+		"sas",
+		"scalapack",
+		"turbomole",
+		"vasp");
+
+# regular expressions for different software packages
+$pkgre['a_out']="a\.out";
+$pkgre['adf']="[Aa][Dd][Ff]";
+$pkgre['cbl']="(cbl|pcbl|biolib)";
+$pkgre['gamess']="(gamess|rungmx)";
+$pkgre['gaussian']="(g98|g03)";
+$pkgre['gromacs']="(gromacs|mdrun_d)";
+$pkgre['NCBI']="(ncbi|blastall|fastacmd|formatdb|rpsblast|seqtest)";
+$pkgre['vasp']="[Vv][Aa][Ss][Pp]";
 
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
-    foreach ($keys as $key)
+    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
+    if ( DB::isError($db) )
       {
-	if ( $key!='system' && $key!='start_date' && $key!='end_date' &&
-	     $key!='datelogic' )
+	die ($db->getMessage());
+      }
+    else
+      {
+	foreach ($keys as $key)
 	  {
-	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ";
-	    $sql .= "sw_app='".$key."'";
-	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system";
-	    if ( $_POST['system']=="%" )
+	    if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	      {
-                # compute totals iff wildcarding on all systems
-		$sql .= " UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ";
-		$sql .= "sw_app='".$key."'";
-		$sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." )";
-	      }
-            #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
-	    $result = db_query($db,$sql);
-	    if ( PEAR::isError($result) )
-	      {
-		echo "<PRE>".$result->getMessage()."</PRE>\n";
-	      }
-	    echo "<TABLE border=1>\n";
-	    echo "<TR><TH>system</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
-	    while ($result->fetchInto($row))
-	      {
-		$rkeys=array_keys($row);
-		echo "<TR>";
-		foreach ($rkeys as $rkey)
+		echo "<H3><CODE>".$key."</CODE></H3>\n";
+		$sql = "SELECT system,COUNT(jobid) AS jobcount,SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours FROM Jobs WHERE system LIKE '".$_POST['system']."' AND script REGEXP ";
+		if ( isset($pkgre[$key]) )
 		  {
-		    $data[$rkey]=array_shift($row);
-		    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+		    $sql .= "'".$pkgre[$key]."'";
 		  }
-		echo "</TR>\n";
+		else
+		  {
+		    $sql .= "'".$key."'";
+		  }
+		if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+		     $_POST['start_date']!="" )
+		  {
+		    $sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+		    $sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
+		  }
+		else
+		  {
+		    if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
+		      {
+			$sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+		      }
+		    if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
+		      {
+			$sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
+		      }
+		  }
+		$sql .= " GROUP BY system;";
+		$result = $db->query($sql);
+		if ( DB::isError($db) )
+		  {
+		    die ($db->getMessage());
+		  }
+		else
+		  {
+		    echo "<TABLE border=1>\n";
+		    echo "<TR><TH>system</TH><TH>jobcount</TH><TH>cpuhours</TH></TR>\n";
+		    while ($result->fetchInto($row))
+		      {
+			$rkeys=array_keys($row);
+			echo "<TR>";
+			foreach ($rkeys as $rkey)
+			  {
+			    $data[$rkey]=array_shift($row);
+			    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+			  }
+			echo "</TR>\n";
+		      }
+		    if ( $_POST['system']=="%" )
+		      {
+                        # compute totals iff wildcarding on all systems
+			$sql = "SELECT COUNT(jobid) AS jobcount,SEC_TO_TIME(SUM(nproc*TIME_TO_SEC(walltime))) AS cpuhours FROM Jobs WHERE script REGEXP ";
+			if ( isset($pkgre[$key]) )
+			  {
+			    $sql .= "'".$pkgre[$key]."'";
+			  }
+			else
+			  {
+			    $sql .= "'".$key."'";
+			  }
+			if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+			     $_POST['start_date']!="" )
+			  {
+			    $sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+			    $sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
+			  }
+			else
+			  {
+			    if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
+			      {
+				$sql = $sql." AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+			      }
+			    if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
+			      {
+				$sql = $sql." AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
+			      }
+			  }
+			$sql .= ";";
+			#echo "<PRE>".$sql."</PRE>\n";
+			$result = $db->query($sql);
+			if ( DB::isError($db) )
+			  {
+			    die ($db->getMessage());
+			  }
+			else
+			  {
+			    while ($result->fetchInto($row))
+			      {
+				$rkeys=array_keys($row);
+				echo "<TR><TH>Total</TH>";
+				foreach ($rkeys as $rkey)
+				  {
+				    $data[$rkey]=array_shift($row);
+				    echo "<TD align=\"right\"><PRE>".$data[$rkey]."</PRE></TD>";
+				  }
+				echo "</TR>\n";
+			      }
+			  }
+		      }
+		    echo "</TABLE>\n";
+		  }
 	      }
-	    echo "</TABLE>\n";
 	  }
       }
-    page_timer();
-    bookmarkable_url();
+    $db->disconnect();
   }
 else
   {
-    # list of software packages
-    $packages=software_list($db);
+    echo "<FORM method=\"POST\" action=\"software-usage.php\">\n";
+    echo "System:  <SELECT name=\"system\" size=\"1\">\n";
+    echo "<OPTION value=\"%\">Any\n";
+    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
+    if ( DB::isError($db) )
+      {
+        die ($db->getMessage());
+      }
+    else
+      {
+	$sql = "SELECT DISTINCT(system) FROM Jobs;";
+	$result = $db->query($sql);
+	if ( DB::isError($db) )
+	  {
+	    die ($db->getMessage());
+	  }
+	else
+	  {
+	    while ($result->fetchInto($row))
+	      {
+		$rkeys = array_keys($row);
+		foreach ($rkeys as $rkey)
+		  {
+		    echo "<OPTION>".$row[$rkey]."\n";
+		  }
+	      }
+	  }
+      }
+    $db->disconnect();
+    echo "</SELECT><BR>\n";
+    echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
+    echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
 
-    begin_form("software-usage.php");
+    echo "Show packages:<BR>\n";
+    checkboxes_from_array($packages);
 
-    system_chooser();
-    date_fields();
-
-    checkboxes_from_array("Packages",$packages);
-
-    end_form();
+    echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
   }
 
-db_disconnect($db);
 page_footer();
 ?>
