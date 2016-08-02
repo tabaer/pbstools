@@ -2,8 +2,6 @@
 #
 # job-db-update-contacts -- Update job records with no contact info
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-#
-# License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
 # $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/sbin/job-db-update-contacts $
 # $Revision: 214 $
@@ -11,8 +9,9 @@
 #
 # Usage:  job-db-update-contacts [-h system] [-s dbhost] [-d dbname]
 #                                [-t dbtable] [-u dbuser] [-p dbpasswd]
+
 #
-# This is largely site-specific logic, but it's an example of what can be
+# This is largely site-specific logic, but it's example of what can be
 # done with the contact field in Jobs table.
 #
 

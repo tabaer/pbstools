@@ -1,5 +1,0 @@
-#!/bin/bash
-while [ ! -e $1 ]
-do
-  sleep 15
-done

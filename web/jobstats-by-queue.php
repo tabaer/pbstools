@@ -1,6 +1,5 @@
 <?php
 # Copyright 2006 Ohio Supercomputer Center
-# Copyright 2008 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -49,9 +48,8 @@ echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)
 
 // by queue
 jobstats_input_header();
-jobstats_input_metric("Job Count vs. Job Class","jobs_vs_queue");
+jobstats_input_metric("Job Count vs. Job Class","jobcount_vs_queue");
 jobstats_input_metric("CPU Time vs. Job Class","cpuhours_vs_queue");
-jobstats_input_metric("Charges vs. Job Class","charges_vs_queue");
 jobstats_input_metric("Job Length vs. Job Class","walltime_vs_queue");
 jobstats_input_metric("Queue Time vs. Job Class","qtime_vs_queue");
 jobstats_input_metric("Real Memory vs. Job Class","mem_kb_vs_queue");
@@ -59,8 +57,7 @@ jobstats_input_metric("Virtual Memory vs. Job Class","vmem_kb_vs_queue");
 jobstats_input_metric("Walltime Accuracy vs. Job Class","walltime_acc_vs_queue");
 jobstats_input_metric("CPU Efficiency vs. Job Class","cpu_eff_vs_queue");
 jobstats_input_metric("Active Users vs. Job Class","users_vs_queue");
-jobstats_input_metric("Active Groups vs. Job Class","groups_vs_queue");
-jobstats_input_metric("Active Accounts vs. Job Class","accounts_vs_queue");
+jobstats_input_metric("Active Groups/Projects vs. Job Class","groups_vs_queue");
 jobstats_input_footer();
 
 echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";   

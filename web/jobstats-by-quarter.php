@@ -1,10 +1,9 @@
 <?php
 # Copyright 2006 Ohio Supercomputer Center
-# Copyright 2008 University of Tennessee
 # Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/jobstats.php $
+# $Revision: 93 $
+# $Date: 2006-02-15 13:53:25 -0500 (Wed, 15 Feb 2006) $
 require_once 'page-layout.php';
 require_once 'dbutils.php';
 require_once 'metrics.php';
@@ -43,16 +42,14 @@ date_fields();
 
 // by quarter
 jobstats_input_header();
-jobstats_input_metric("Job Count by Quarter","jobs_vs_quarter");
+jobstats_input_metric("Job Count by Quarter","jobcount_vs_quarter");
 jobstats_input_metric("CPU Time by Quarter","cpuhours_vs_quarter");
-jobstats_input_metric("Charges by Quarter","charges_vs_quarter");
 jobstats_input_metric("Job Length by Quarter","walltime_vs_quarter");
 jobstats_input_metric("Queue Time by Quarter","qtime_vs_quarter");
 jobstats_input_metric("Backlog by Quarter","backlog_vs_quarter");
 jobstats_input_metric("Expansion Factor by Quarter","xfactor_vs_quarter");
 jobstats_input_metric("Active Users by Quarter","users_vs_quarter");
-jobstats_input_metric("Active Groups by Quarter","groups_vs_quarter");
-jobstats_input_metric("Active Accounts by Quarter","accounts_vs_quarter");
+jobstats_input_metric("Active Groups/Projects by Quarter","groups_vs_quarter");
 jobstats_input_footer();
 
 end_form();

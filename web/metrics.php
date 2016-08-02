@@ -1,6 +1,5 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008, 2009, 2010, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -20,7 +19,7 @@ function xaxis($fn)
   return preg_replace('/^.*_vs_/','',$fn);
 }
 
-function xaxis_column($x,$system)
+function xaxis_column($x)
 {
   if ( $x=="quarter" )
     {
@@ -36,7 +35,7 @@ function xaxis_column($x,$system)
     }
   elseif ( $x=="institution" )
     {
-      return institution_match();
+      return "SUBSTRING(username,1,3) AS institution";
     }
   elseif ( $x=="qtime" )
     {
@@ -50,10 +49,10 @@ function xaxis_column($x,$system)
 	{
 	  $column .= " WHEN ".$x." > '".$maxs[$i-1]."' AND ".$x." <= '".$maxs[$i]."' THEN '&gt;".$maxs[$i-1]."-".$maxs[$i]."'";
 	}
-      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS ".$x."_bucketed";
+      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS ".$x;
       return $column;
     }
-  elseif ( $x=="nproc_bucketed" )
+  elseif ( $x=="nproc_bucketed")
     {
       $maxs = bucket_maxs("nproc");
       $column = "CASE WHEN nproc <= '".$maxs[0]."' THEN '<=".$maxs[0]."'";
@@ -61,26 +60,9 @@ function xaxis_column($x,$system)
 	{
 	  $column .= " WHEN nproc > '".$maxs[$i-1]."' AND nproc <= '".$maxs[$i]."' THEN '&gt;".$maxs[$i-1]."-".$maxs[$i]."'";
 	}
-      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS nproc_bucketed";
+      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS nproc";
       return $column;
     }
-  elseif ( $x=="nproc_norm" )
-    {
-      $maxs = bucket_maxs("nproc_norm");
-      $column = "CASE WHEN nproc/".nprocs($system)." <= '".$maxs[0]."' THEN '<=".$maxs[0]."'";
-      for ( $i=1 ; $i<count($maxs) ; $i++ )
-	{
-	  $column .= " WHEN nproc/".nprocs($system)." > '".$maxs[$i-1]."' AND nproc/".nprocs($system)." <= '".$maxs[$i]."' THEN '&gt;".$maxs[$i-1]."-".$maxs[$i]."'";
-	}
-      $column .= " ELSE '>".$maxs[count($maxs)-1]."' END AS nproc_norm";
-      return $column;
-    }
-  elseif ( $x=="qos" )
-    {
-      $column = "CASE WHEN qos IS NULL THEN 'default' ELSE qos END as qos";
-      return $column;
-    }
-
   else
     {
       return $x;
@@ -90,7 +72,6 @@ function xaxis_column($x,$system)
 function clause($xaxis,$metric)
 {
   if ( $metric=="qtime" || $metric=="xfactor" ) return "( start_ts >= submit_ts )";
-  if ( $xaxis=="account" ) return "account IS NOT NULL";
   return "";
 }
 
@@ -127,43 +108,23 @@ function units($metric)
 // date selector
 function dateselect($action,$start_date,$end_date)
 {
-  if ( $action=="during" )
-    {
-      if ( isset($start_date) && isset($end_date) &&
-	    $start_date!="" && $end_date!="" )
-	{
-	  return "( start_date BETWEEN '".$start_date."' AND '".$end_date."' ) OR ( end_date BETWEEN '".$start_date."' AND '".$end_date."' ) OR ( start_date<='".$start_date."' AND end_date>='".$end_date."' )";
-	}
-      else if ( isset($start_date) && $start_date!="" )
-	{
-	  return "start_date>='".$start_date."'";
-	}
-      else if ( isset($end_date) && $end_date!="" )
-	{
-	  return "end_date>='".$end_date."'";
-	}
-      else
-	{
-	  return "start_date IS NOT NULL AND end_date IS NOT NULL";
-	}
-    }
-  else if ( isset($start_date) && isset($end_date) &&
-	    $start_date!="" && $end_date!="" )
-    {
-      return $action."_date BETWEEN '".$start_date."' AND '".$end_date."'";
-    }
-  else if ( isset($start_date) && $start_date!="" )
-    {
-      return $action."_date >= '".$start_date."'";
-    }
-  else if ( isset($end_date) && $end_date!="" )
-    {
-      return $action."_date <= '".$_POST['end_date']."'";
-    }
-  else
-    {
-      return $action."_date IS NOT NULL";
-    }
+    if ( isset($start_date) && isset($end_date) &&
+	 $start_date!="" && $end_date!="" )
+      {
+	return $action."_date >= '".$start_date."' AND ".$action."_date <= '".$end_date."'";
+      }
+    else if ( isset($start_date) && $start_date!="" )
+      {
+	return $action."_date >= '".$start_date."'";
+      }
+    else if ( isset($end_date) && $end_date!="" )
+      {
+	return $action."_date <= '".$_POST['end_date']."'";
+      }
+    else
+      {
+	return $action."_date IS NOT NULL";
+      }
 }
 
 
@@ -209,10 +170,6 @@ function ndays($db,$system,$start_date,$end_date)
 
   #echo "<PRE>".$query."</PRE><BR>\n";
   $result = db_query($db,$query);
-  if ( PEAR::isError($result) )
-      {
-        echo "<PRE>".$result->getMessage()."</PRE>\n";
-      }
   $result->fetchInto($row);
 
   return $row;
@@ -220,41 +177,35 @@ function ndays($db,$system,$start_date,$end_date)
 
 
 // metric -> column mapping
-function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
+function columns($metric,$system)
 {
-  if ( $metric=='cpuhours' ) return "SUM(".cpuhours($db,$system,$start_date,$end_date,$datelogic).") AS cpuhours";
-  if ( $metric=='nodehours' ) return "SUM(".nodehours($db,$system,$start_date,$end_date,$datelogic).") AS nodehours";
-  if ( $metric=='charges' ) return "SUM(".charges($db,$system,$start_date,$end_date,$datelogic).") AS charges";
-  if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(start_ts-submit_ts)) AS 'MIN(qtime)', SEC_TO_TIME(MAX(start_ts-submit_ts)) AS 'MAX(qtime)', SEC_TO_TIME(AVG(start_ts-submit_ts)) AS 'AVG(qtime)' ,SEC_TO_TIME(STDDEV(start_ts-submit_ts))  AS 'STDDEV(qtime)'";
-  if ( $metric=='mem_kb' ) return "MIN(mem_kb), MAX(mem_kb), AVG(mem_kb), STDDEV(mem_kb)";
-  if ( $metric=='vmem_kb' ) return "MIN(vmem_kb), MAX(vmem_kb), AVG(vmem_kb), STDDEV(vmem_kb)";
-  if ( $metric=='walltime' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(walltime))) AS 'MIN(walltime)', SEC_TO_TIME(MAX(TIME_TO_SEC(walltime))) AS 'MAX(walltime)', SEC_TO_TIME(AVG(TIME_TO_SEC(walltime))) AS 'AVG(walltime)', SEC_TO_TIME(STDDEV(TIME_TO_SEC(walltime))) AS 'STDDEV(walltime)'";
+  if ( $metric=='cpuhours' ) 
+    {
+      if ( $system=='x1' )
+	return "SUM(TIME_TO_SEC(cput)/3600) AS cpuhours";
+      else
+	return "SUM(nproc*TIME_TO_SEC(walltime)/3600) AS cpuhours";
+    }
+  if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(start_ts-submit_ts)) AS 'MIN(qtime)',SEC_TO_TIME(MAX(start_ts-submit_ts)) AS 'MAX(qtime)',SEC_TO_TIME(AVG(start_ts-submit_ts)) AS 'AVG(qtime)',SEC_TO_TIME(STDDEV(start_ts-submit_ts))  AS 'STDDEV(qtime)'";
+  if ( $metric=='mem_kb' ) return "MIN(mem_kb),MAX(mem_kb),AVG(mem_kb),STDDEV(mem_kb)";
+  if ( $metric=='vmem_kb' ) return "MIN(vmem_kb),MAX(vmem_kb),AVG(vmem_kb),STDDEV(vmem_kb)";
+  if ( $metric=='walltime' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(walltime))) AS 'MIN(walltime)',SEC_TO_TIME(MAX(TIME_TO_SEC(walltime))) AS 'MAX(walltime)',SEC_TO_TIME(AVG(TIME_TO_SEC(walltime))) AS 'AVG(walltime)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(walltime))) AS 'STDDEV(walltime)'";
   if ( $metric=='cput' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(cput))) AS 'MIN(cput)',SEC_TO_TIME(MAX(TIME_TO_SEC(cput))) AS 'MAX(cput)',SEC_TO_TIME(AVG(TIME_TO_SEC(cput))) AS 'AVG(cput)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(cput))) AS 'STDDEV(cput)'";
-  if ( $metric=='cputime' ) return "SEC_TO_TIME(MIN(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'MIN(cputime)', SEC_TO_TIME(MAX(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'MAX(cputime)', SEC_TO_TIME(AVG(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'AVG(cputime)', SEC_TO_TIME(STDDEV(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'STDDEV(cputime)'";
+  if ( $metric=='cputime' )
+    if ( $system=='x1' )
+      return "SEC_TO_TIME(MIN(TIME_TO_SEC(cput))) AS 'MIN(cputime)',SEC_TO_TIME(MAX(TIME_TO_SEC(cput))) AS 'MAX(cputime)',SEC_TO_TIME(AVG(TIME_TO_SEC(cput))) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(cput))) AS 'STDDEV(cputime)'";      
+    else
+      return "SEC_TO_TIME(MIN(nproc*TIME_TO_SEC(walltime))) AS 'MIN(cputime)',SEC_TO_TIME(MAX(nproc*TIME_TO_SEC(walltime))) AS 'MAX(cputime)',SEC_TO_TIME(AVG(nproc*TIME_TO_SEC(walltime))) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(nproc*TIME_TO_SEC(walltime))) AS 'STDDEV(cputime)'";
   if ( $metric=='walltime_acc' ) return "MIN(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MIN(walltime_acc)',MAX(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MAX(walltime_acc)',AVG(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'AVG(walltime_acc)',STDDEV(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'STDDEV(walltime_acc)'";
-  if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), MAX(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), AVG(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), STDDEV(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic)."))";
+  if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),MAX(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),AVG(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime))),STDDEV(TIME_TO_SEC(cput)/(nproc*TIME_TO_SEC(walltime)))";
   if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups";
-  if ( $metric=='backlog' ) return cpuhours($db,$system,$start_date,$end_date,$datelogic)." AS cpuhours, SUM(start_ts-submit_ts)/3600.0 AS 'SUM(qtime)'";
-#  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
-  if ( $metric=='xfactor' ) return "MIN(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MIN(xfactor)', MAX(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MAX(xfactor)', AVG(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'AVG(xfactor)', STDDEV(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'STDDEV(xfactor)'";
+  if ( $metric=='backlog' ) return "SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(start_ts-submit_ts)/3600.0 AS 'SUM(qtime)'";
+  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
   if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS users";
   if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS groups";
-  if ( $metric=='accounts' ) return "COUNT(DISTINCT(account)) AS accounts";
-  if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system,$db,$start_date,$end_date,$datelogic);
+  if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system);
   if ( $metric=='nproc' ) return "MIN(nproc),MAX(nproc),AVG(nproc),STDDEV(nproc)";
-  if ( $metric=='usage' ) return columns('cpuhours',$system,$db,$start_date,$end_date,$datelogic).", ".columns('charges',$system,$db,$start_date,$end_date,$datelogic).", ".columns('usercount',$system,$db,$start_date,$end_date,$datelogic);
-  if ( $metric=='pscmetrics' )
-    {
-      $first = 0;
-      $maxs = bucket_maxs("walltime");
-      $column = "SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")<=TIME_TO_SEC('".$maxs[0]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '<=".$maxs[0]."'";
-      for ( $i=1 ; $i<count($maxs) ; $i++ )
-	{
-	  $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")>TIME_TO_SEC('".$maxs[$i-1]."') AND TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[$i]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
-	}
-      $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
-      return $column;
-    }
+  if ( $metric=='usage' ) return columns('cpuhours',$system).",".columns('usercount',$system);
 
   return "";
 }
@@ -264,8 +215,6 @@ function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
 function columnnames($metric)
 {
   if ( $metric=='cpuhours' ) return array("cpuhours");
-  if ( $metric=='nodehours' ) return array("nodehours");
-  if ( $metric=='charges' ) return array("charges");
   if ( $metric=='qtime' ) return array("MIN(qtime)","MAX(qtime)","AVG(qtime)","STDDEV(qtime)");
   if ( $metric=='mem_kb' ) return array("MIN(mem_kb)","MAX(mem_kb)","AVG(mem_kb)","STDDEV(mem_kb)");
   if ( $metric=='vmem_kb' ) return array("MIN(vmem_kb)","MAX(vmem_kb)","AVG(vmem_kb)","STDDEV(vmem_kb)");
@@ -276,35 +225,18 @@ function columnnames($metric)
   if ( $metric=='cpu_eff' ) return array("MIN(cpu_eff)","MAX(cpu_eff)","AVG(cpu_eff)","STDDEV(cpu_eff)");
   if ( $metric=='usercount' ) return array("users","groups");
   if ( $metric=='backlog' ) return array("cpuhours","SUM(qtime)");
-#  if ( $metric=='xfactor' ) return array("xfactor");
-  if ( $metric=='xfactor' ) return array("MIN(xfactor)","MAX(xfactor)","AVG(xfactor)","STDDEV(xfactor)");
+  if ( $metric=='xfactor' ) return array("xfactor");
   if ( $metric=='users' ) return array("users");
   if ( $metric=='groups' ) return array("groups");
-  if ( $metric=='accounts' ) return array("accounts");
   if ( $metric=='dodmetrics' ) return array("users","projects","cpuhours");
   if ( $metric=='nproc' ) return array("MIN(nproc)","MAX(nproc)","AVG(nproc)","STDDEV(nproc)");
   if ( $metric=='usage' )
     {
       $output = columnnames('cpuhours');
-      foreach (columnnames('charges') as $element)
-	{
-	  array_push($output,$element);
-	}
       foreach (columnnames('usercount') as $element)
 	{
 	  array_push($output,$element);
 	}
-      return $output;
-    }
-  if ( $metric=='pscmetrics' )
-    {
-      $maxs = bucket_maxs("walltime");
-      $output = array("&lt;=".$maxs[0]);
-      for ( $i=1 ; $i<count($maxs) ; $i++ )
-	{
-	  $output[] = $maxs[$i-1]."-".$maxs[$i];
-	}
-      $output[] = "&gt;".$maxs[count($maxs)-1];
       return $output;
     }
 
@@ -312,35 +244,29 @@ function columnnames($metric)
 }
 
 
-function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic="during",$limit_access=false)
+function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 {
   $query = "SELECT ";
    if ( $xaxis!="" )
     { 
-      $query .= xaxis_column($xaxis,$system).",";
+      $query .= xaxis_column($xaxis).",";
     }
-   $query .= "COUNT(jobid) AS jobs";
-   if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
+   $query .= "COUNT(jobid) AS jobcount";
+   if ( columns($metric,$system)!="" )
      {
-       $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
+       $query .= ",".columns($metric,$system);
      }
    $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-     dateselect($datelogic,$start_date,$end_date).")";
-   if ( $limit_access )
-     {
-       $query .= " AND ( ".limit_user_access($_SERVER['PHP_AUTH_USER'])." )";
-     }
+     dateselect("start",$start_date,$end_date).")";
    if ( $xaxis!="" )
      {
        if ( $xaxis=="institution" )
 	 {
-           # OSC site-specific logic begins here
-	   #$query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' AND username NOT LIKE 'osc%' AND username NOT LIKE 'wrk%' AND username NOT LIKE 'test%')";
-           # OSC site-specific logic ends here
+	   $query .= " AND ( username IS NOT NULL AND username REGEXP '[A-z]{3,4}[0-9]{3,4}' AND username NOT LIKE 'osc%' AND username NOT LIKE 'wrk%' AND username NOT LIKE 'test%')";
 	 }
 #       else
 #	 {
-#	   $query .= " AND (".xaxis_column($xaxis,$system)." IS NOT NULL)";
+#	   $query .= " AND (".xaxis_column($xaxis)." IS NOT NULL)";
 #	 }
        if ( clause($xaxis,$metric)!="" )
 	 {
@@ -350,20 +276,18 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic=
      }
    if ( $xaxis=="institution" )
      {
-       # OSC site-specific logic begins here
-       #$query .= " UNION SELECT 'osc' AS institution,COUNT(jobid) AS jobs";
-       #if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
-       # {
-       #   $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
-       # }
-       #$query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-       # dateselect("during",$start_date,$end_date).") AND ".
-       # "( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%' OR username LIKE 'test%') )";
-       #if ( clause($xaxis,$metric)!="" )
-       # {
-       #   $query .= " AND ".clause($xaxis,$metric);
-       # }
-       # OSC site-specific logic ends here
+       $query .= " UNION SELECT 'osc' AS institution,COUNT(jobid) AS jobcount";
+       if ( columns($metric,$system)!="" )
+	 {
+	   $query .= ",".columns($metric,$system);
+	 }
+       $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
+	 dateselect("start",$start_date,$end_date).") AND ".
+	 "( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%' OR username LIKE 'test%') )";
+       if ( clause($xaxis,$metric)!="" )
+	 {
+	   $query .= " AND ".clause($xaxis,$metric);
+	 }
      }
    $query .= " ".sort_criteria($metric."_vs_".$xaxis);
    #print "<PRE>".$query."</PRE>\n";
@@ -372,18 +296,18 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic=
 
 
 
-function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic="during",$limit_access=false)
+function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date)
 {
-  $query = "SELECT ".xaxis_column($xaxis,$system).",COUNT(jobid) AS jobs";
-  if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
+  $query = "SELECT ".xaxis_column($xaxis).",COUNT(jobid) AS jobcount";
+  if ( columns($metric,$system)!="" )
     {
-      $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
+      $query .= ",".columns($metric,$system);
     }
   if ( $xaxis=="walltime" || $xaxis=="walltime_req" )
     {
       $query .= ",MIN(TIME_TO_SEC(".$xaxis.")) AS hidden";
     }
-  elseif ( $xaxis=="nproc_bucketed" || $xaxis=="nproc_norm" )
+  elseif ( $xaxis=="nproc_bucketed" )
     {
       $query .= ",MIN(nproc) AS hidden";
     }
@@ -392,26 +316,18 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$d
       $query .= ",MIN(".$xaxis.") AS hidden";
     }
   $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-    dateselect($datelogic,$start_date,$end_date).")";
+    dateselect("start",$start_date,$end_date).")";
   if ( clause($xaxis,$metric)!="" )
     {
       $query .= " AND ".clause($xaxis,$metric);
     }
-  if ( $limit_access )
-    {
-      $query .= " AND ( ".limit_user_access($_SERVER['PHP_AUTH_USER'])." )";
-    }
   if ( $xaxis=="nproc_bucketed" )
     {
-      $query .= " GROUP BY nproc_bucketed";
+      $query .= " GROUP BY nproc";
     }
-  elseif ( $xaxis=="nproc_norm" )
-    {
-      $query .= " GROUP BY nproc_norm";
-    }  
   else
     {
-      $query .= " GROUP BY ".$xaxis."_bucketed";
+      $query .= " GROUP BY ".$xaxis;
     }
   $query .= " ORDER BY hidden;";
   #print "<PRE>".$query."</PRE>\n";
@@ -448,7 +364,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
 	  $ysigma[2*$i+1]="";
 	}
     }
-  if ( $metric=='jobs' )
+  if ( $metric=='jobcount' )
     {
       for ($i=0; $i<$nrows; $i++)
 	{
@@ -589,7 +505,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
     {
       $graph->yscale->SetAutoMin(1.0);
     }
-  if ( $metric!="jobs" && $metric!="cpuhours" && 
+  if ( $metric!="jobcount" && $metric!="cpuhours" && 
        $metric!="backlog" && $metric!="xfactor" &&
        $metric!="users" && $metric!="groups" )
     {
@@ -609,7 +525,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
     }
   $ybar = new BarPlot($y);
   $ybar->SetWidth(1.0);
-  if ( $metric!="jobs" && $metric!="cpuhours" && 
+  if ( $metric!="jobcount" && $metric!="cpuhours" && 
        $metric!="backlog" && $metric!="xfactor" &&
        $metric!="users" && $metric!="groups" )
     {
@@ -620,7 +536,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
       $ybar->SetLegend("Queue Hours");      
     }  
   $graph->Add($ybar);
-  if ( $metric!="jobs" && $metric!="cpuhours" &&
+  if ( $metric!="jobcount" && $metric!="cpuhours" &&
        $metric!="backlog" && $metric!="xfactor" &&
        $metric!="users" && $metric!="groups" )
     {
@@ -644,7 +560,7 @@ function metric_as_graph($result,$xaxis,$metric,$system,$start_date,$end_date)
 
 function metric_as_table($result,$xaxis,$metric)
 {
-  $mycolumnname=array($xaxis,"jobs");
+  $mycolumnname=array($xaxis,"jobcount");
   foreach (columnnames($metric) as $columnname)
     {
       array_push($mycolumnname,$columnname);
@@ -668,21 +584,7 @@ function metric_as_table($result,$xaxis,$metric)
 	{
 	  if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
 	    {
-	      # if a float, format appropriately
-	      if ( preg_match("/^-?\d*\.\d+$/",$row[$key])==1 )
-		{
-		  echo "<TD align=\"right\"><PRE>".number_format(floatval($row[$key]),4)."</PRE></TD>";
-		}
-              # if an int, format appropriately
-	      else if ( preg_match("/^-?\d+$/",$row[$key])==1 )
-		{
-		  echo "<TD align=\"right\"><PRE>".number_format(floatval($row[$key]))."</PRE></TD>";
-		}
-	      # otherwise print verbatim
-	      else
-		{
-		  echo "<TD align=\"right\"><PRE>".$row[$key]."</PRE></TD>";
-		}
+	      echo "<TD align=\"right\"><PRE>".$row[$key]."</PRE></TD>";
 	    }
 	}
       echo "</TR>\n";
@@ -707,7 +609,7 @@ function metric_as_xls($result,$xaxis,$metric,$system,$start_date,$end_date)
   $format_hdr->set_bold();
   $format_hdr->set_align('center');
 
-  $mycolumnname=array($xaxis,"jobs");
+  $mycolumnname=array($xaxis,"jobcount");
   foreach (columnnames($metric) as $columnname)
     {
       array_push($mycolumnname,$columnname);
@@ -734,7 +636,7 @@ function metric_as_xls($result,$xaxis,$metric,$system,$start_date,$end_date)
 	}
     }
   $workbook->close();
-  echo "<P>Excel file:  <A href=\"/tmp/".$cache.rawurlencode($xlsfile)."\">".$xlsfile."</A></P>\n";
+  echo "<P>Excel file:  <A href=\"".$cache.rawurlencode($xlsfile)."\">".$xlsfile."</A></P>\n";
 }
 
 function metric_as_ods($result,$xaxis,$metric,$system,$start_date,$end_date)
@@ -753,7 +655,7 @@ function metric_as_ods($result,$xaxis,$metric,$system,$start_date,$end_date)
   $rowctr=0;
   $colctr=0;
 
-  $mycolumnname=array($xaxis,"jobs");
+  $mycolumnname=array($xaxis,"jobcount");
   foreach (columnnames($metric) as $columnname)
     {
       array_push($mycolumnname,$columnname);
@@ -782,104 +684,7 @@ function metric_as_ods($result,$xaxis,$metric,$system,$start_date,$end_date)
 	}
     }
   saveOds($workbook,"/tmp/".$cache.$odsfile);
-  echo "<P>ODF file:  <A href=\"/tmp/".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";
-}
-
-function metric_as_csv($result,$xaxis,$metric,$system,$start_date,$end_date)
-{
-  $csvfile=$system."-".$metric."_vs_".$xaxis."-".$start_date."-".$end_date.".csv";
-  $cache = APACHE_CACHE_DIR;
-  if ( ! file_exists("/tmp/".$cache) )
-    {
-      mkdir("/tmp/".$cache,0750);
-    }
-  $fh = fopen("/tmp/".$cache.$csvfile,'w');
-
-  $mycolumnname=array($xaxis,"jobs");
-  foreach (columnnames($metric) as $columnname)
-    {
-      array_push($mycolumnname,$columnname);
-    }
-  $myresult=$result;
-
-  fwrite($fh,"#");
-  foreach ($mycolumnname as $header)
-    {
-      if ( !($header=='hidden') && !($header=='') )
-	{
-	  fwrite($fh,$header.",");
-	}
-    }
-  fwrite($fh,"\n");
-
-  while ($myresult->fetchInto($row))
-    {
-      $keys=array_keys($row);
-      foreach ($keys as $key)
-	{
-	  if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
-	    {
-              if ( $mycolumnname[$key]=='jobname' )
-                {
-                  fwrite($fh,"\"".$row[$key]."\",");
-                }
-              else
-                {
-	          fwrite($fh,$row[$key].",");
-                }
-	    }
-	}
-      fwrite($fh,"\n");
-    }
-  fclose($fh);
-  echo "<P>CSV file:  <A href=\"/tmp/".$cache.rawurlencode($csvfile)."\">".$csvfile."</A></P>\n";
-}
-
-function result_as_table($result,$mycolumnname)
-{
-  $myresult=$result;
-  echo "<TABLE border=\"1\">\n";
-  echo "<TR>";
-  foreach ($mycolumnname as $header)
-    {
-      if ( !($header=='hidden') && !($header=='') )
-        {
-          echo "<TH>".$header."</TH>";
-        }
-    }
-  echo "</TR>\n";
-  while ($myresult->fetchInto($row))
-    {
-      echo "<TR valign=\"top\">";
-      $keys=array_keys($row);
-      foreach ($keys as $key)
-        {
-          if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') && !($mycolumnname[$key]=='script') )
-            {
-	      # if a float, format appropriately
-	      if ( preg_match("/^-?\d*\.\d+$/",$row[$key])==1 )
-		{
-		  echo "<TD align=\"right\"><PRE>".number_format(floatval($row[$key]),4)."</PRE></TD>";
-		}
-              # if an int, format appropriately
-	      else if ( preg_match("/^-?\d+$/",$row[$key])==1 )
-		{
-		  echo "<TD align=\"right\"><PRE>".number_format(floatval($row[$key]))."</PRE></TD>";
-		}
-	      # otherwise print verbatim
-	      else
-		{
-		  echo "<TD align=\"right\"><PRE>".$row[$key]."</PRE></TD>";
-		}
-            }
-	  else if ( $mycolumnname[$key]=='script' )
-	    {
-              echo "<TD><PRE>".$row[$key]."</PRE></TD>";
-	    }
-        }
-      echo "</TR>\n";
-    }
-  echo "</TABLE>\n";
+  echo "<P>ODF file:  <A href=\"".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";
 }
 
 function result_as_xls($result,$mycolumnname,$filebase)
@@ -922,7 +727,7 @@ function result_as_xls($result,$mycolumnname,$filebase)
 	}
     }
   $workbook->close();
-  echo "<P>Excel file:  <A href=\"/tmp/".$cache.rawurlencode($xlsfile)."\">".$xlsfile."</A></P>\n";
+  echo "<P>Excel file:  <A href=\"".$cache.rawurlencode($xlsfile)."\">".$xlsfile."</A></P>\n";
 }
 
 function result_as_ods($result,$mycolumnname,$filebase)
@@ -965,54 +770,8 @@ function result_as_ods($result,$mycolumnname,$filebase)
 	}
     }
   saveOds($workbook,"/tmp/".$cache.$odsfile);
-  echo "<P>ODS file:  <A href=\"/tmp/".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";
+  echo "<P>ODF file:  <A href=\"".$cache.rawurlencode($odsfile)."\">".$odsfile."</A></P>\n";  
 }
-
-function result_as_csv($result,$mycolumnname,$filebase)
-{
-  $csvfile=$filebase.".csv";
-  $cache = APACHE_CACHE_DIR;
-  if ( ! file_exists("/tmp/".$cache) )
-    {
-      mkdir("/tmp/".$cache,0750);
-    }
-  $fh = fopen("/tmp/".$cache.$csvfile,'w');
-
-  $myresult=$result;
-
-  fwrite($fh,"#");
-  foreach ($mycolumnname as $header)
-    {
-      if ( !($header=='hidden') && !($header=='') )
-	{
-	  fwrite($fh,$header.",");
-	}
-    }
-  fwrite($fh,"\n");
-
-  while ($myresult->fetchInto($row))
-    {
-      $keys=array_keys($row);
-      foreach ($keys as $key)
-	{
-	  if ( isset($mycolumnname[$key]) && !($mycolumnname[$key]=='hidden') )
-	    {
-              if ( $mycolumnname[$key]=='jobname' )
-                {
-                  fwrite($fh,"\"".$row[$key]."\",");
-                }
-              else
-                {
-                  fwrite($fh,$row[$key].",");
-                }
-	    }
-	}
-      fwrite($fh,"\n");
-    }
-  fclose($fh);
-  echo "<P>CSV file:  <A href=\"/tmp/".$cache.rawurlencode($csvfile)."\">".$csvfile."</A></P>\n";  
-}
-
 
 function jobstats_input_header()
 {
@@ -1021,7 +780,6 @@ function jobstats_input_header()
   echo "  <TH>Metrics</TH>\n";
   #echo "  <TH>Graph</TH>";
   echo "  <TH>Table</TH>\n";
-  echo "  <TH>CSV</TH>\n";
   echo "  <TH>Excel</TH>\n";
   echo "  <TH>ODF</TH>\n";
   echo "</TR>\n";
@@ -1043,109 +801,94 @@ function jobstats_input_metric($name,$fn)
     echo "  <TD>".$name."</TD>";
     #echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_graph\" value=\"1\"></TD>\n";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_table\" value=\"1\">\n";
-    echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_csv\" value=\"1\">\n";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_xls\" value=\"1\">\n";
     echo "  <TD align=\"center\"><INPUT type=\"checkbox\" name=\"".$fn."_ods\" value=\"1\">\n";
     echo "</TR>\n";
 }
 
 
-function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$datelogic="during",$limit_access=false)
+function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date)
 {
   
   if (    isset($_POST[$fn.'_graph'])
        || isset($_POST[$fn.'_table'])
-       || isset($_POST[$fn.'_csv']) 
        || isset($_POST[$fn.'_xls']) 
-       || isset($_POST[$fn.'_ods'])
+       ||  isset($_POST[$fn.'_ods'])
        )
     {
       echo "<H2>".$name."</H2>\n";
       
       if ( isset($_POST[$fn.'_graph']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 	  metric_as_graph($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
       
       if ( isset($_POST[$fn.'_table']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 	  metric_as_table($result,xaxis($fn),metric($fn));
-	}
-
-      if ( isset($_POST[$fn.'_csv']) )
-	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
-	  metric_as_csv($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_xls']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
      if ( isset($_POST[$fn.'_ods']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
 }
 
-function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_date,$datelogic,$limit_access=false)
+function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_date)
 {
   
   if (    isset($_POST[$fn.'_graph'])
        || isset($_POST[$fn.'_table'])
-       || isset($_POST[$fn.'_csv'])
        || isset($_POST[$fn.'_xls']) 
-       || isset($_POST[$fn.'_ods'])
+       ||  isset($_POST[$fn.'_ods'])
        )
     {
       echo "<H2>".$name."</H2>\n";
       
       if ( isset($_POST[$fn.'_graph']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 	  metric_as_graph($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
       
       if ( isset($_POST[$fn.'_table']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 	  metric_as_table($result,xaxis($fn),metric($fn));
-	}
-
-      if ( isset($_POST[$fn.'_csv']) )
-	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
-	  metric_as_csv($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_xls']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_ods']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date);
 	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
 }
 
 
-function jobstats_summary($db,$system,$start_date,$end_date,$datelogic="during")
+function jobstats_summary($db,$system,$start_date,$end_date)
 {
-  $result=get_metric($db,$system,"","cpuhours",$start_date,$end_date,$datelogic);
+  $result=get_metric($db,$system,"","cpuhours",$start_date,$end_date);
   $result->fetchInto($row);
-  $jobs=$row[0];
+  $jobcount=$row[0];
   $cpuhours=$row[1];
-  echo "<P><B>".$jobs." jobs run<BR>\n";
+  echo "<P><B>".$jobcount." jobs run<BR>\n";
   echo $cpuhours." CPU-hours consumed";
   $nproc=nprocs($system);
   if ( $nproc>0 )
@@ -1161,7 +904,7 @@ function jobstats_summary($db,$system,$start_date,$end_date,$datelogic="during")
 	}
     }
   echo "<BR>\n";
-  $usercount=get_metric($db,$system,"","usercount",$start_date,$end_date,$datelogic);
+  $usercount=get_metric($db,$system,"","usercount",$start_date,$end_date);
   $usercount->fetchInto($counts);
   $nusers=$counts[1];
   $ngroups=$counts[2];

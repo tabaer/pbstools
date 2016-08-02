@@ -1,10 +1,9 @@
 <?php
 # Copyright 2006 Ohio Supercomputer Center
-# Copyright 2008 University of Tennessee
 # Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/jobstats.php $
+# $Revision: 93 $
+# $Date: 2006-02-15 13:53:25 -0500 (Wed, 15 Feb 2006) $
 require_once 'page-layout.php';
 require_once 'dbutils.php';
 require_once 'metrics.php';
@@ -43,12 +42,10 @@ date_fields();
 
 // by institution
 jobstats_input_header();
-jobstats_input_metric("Job Count by Institution","jobs_vs_institution");
+jobstats_input_metric("Job Count by Institution","jobcount_vs_institution");
 jobstats_input_metric("CPU Time by Institution","cpuhours_vs_institution");
-jobstats_input_metric("Charges by Institution","charges_vs_institution");
 jobstats_input_metric("Active Users by Institution","users_vs_institution");
-jobstats_input_metric("Active Groups by Institution","groups_vs_institution");
-jobstats_input_metric("Active Accounts by Institution","accounts_vs_institution");
+jobstats_input_metric("Active Groups/Projects by Institution","groups_vs_institution");
 jobstats_input_footer();
 
 end_form();

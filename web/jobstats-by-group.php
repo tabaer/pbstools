@@ -1,6 +1,5 @@
 <?php
 # Copyright 2006, 2007 Ohio Supercomputer Center
-# Copyright 2009 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -43,18 +42,16 @@ date_fields();
 
 // by groupname
 jobstats_input_header();
-jobstats_input_metric("Job Count vs. Group","jobs_vs_groupname");
-jobstats_input_metric("CPU Time vs. Group","cpuhours_vs_groupname");
-jobstats_input_metric("Charges vs. Group","charges_vs_groupname");
-jobstats_input_metric("Job Length vs. Group","walltime_vs_groupname");
-jobstats_input_metric("Queue Time vs. Group","qtime_vs_groupname");
-jobstats_input_metric("Real Memory vs. Group","mem_kb_vs_groupname");
-jobstats_input_metric("Virtual Memory vs. Group","vmem_kb_vs_groupname");
-jobstats_input_metric("Walltime Accuracy vs. Group","walltime_acc_vs_groupname");
-jobstats_input_metric("CPU Efficiency vs. Group","cpu_eff_vs_groupname");
-jobstats_input_metric("Active Users vs. Group","users_vs_groupname");
-jobstats_input_metric("Active Accounts vs. Group","accounts_vs_groupname");
-jobstats_input_metric("Processor Count vs. Group","nproc_vs_groupname");
+jobstats_input_metric("Job Count vs. Group/Project","jobcount_vs_groupname");
+jobstats_input_metric("CPU Time vs. Group/Project","cpuhours_vs_groupname");
+jobstats_input_metric("Job Length vs. Group/Project","walltime_vs_groupname");
+jobstats_input_metric("Queue Time vs. Group/Project","qtime_vs_groupname");
+jobstats_input_metric("Real Memory vs. Group/Project","mem_kb_vs_groupname");
+jobstats_input_metric("Virtual Memory vs. Group/Project","vmem_kb_vs_groupname");
+jobstats_input_metric("Walltime Accuracy vs. Group/Project","walltime_acc_vs_groupname");
+jobstats_input_metric("CPU Efficiency vs. Group/Project","cpu_eff_vs_groupname");
+jobstats_input_metric("Active Users vs. Group/Project","users_vs_groupname");
+jobstats_input_metric("Processor Count vs. Group/Project","nproc_vs_groupname");
 jobstats_input_footer();
 
 end_form();

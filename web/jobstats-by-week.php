@@ -1,10 +1,9 @@
 <?php
-# Copyright 2006, 2008 Ohio Supercomputer Center
-# Copyright 2008 University of Tennessee
+# Copyright 2006 Ohio Supercomputer Center
 # Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/jobstats.php $
+# $Revision: 93 $
+# $Date: 2006-02-15 13:53:25 -0500 (Wed, 15 Feb 2006) $
 require_once 'page-layout.php';
 require_once 'dbutils.php';
 require_once 'metrics.php';
@@ -43,16 +42,14 @@ date_fields();
 
 // by week
 jobstats_input_header();
-jobstats_input_metric("Job Count by Week","jobs_vs_week");
+jobstats_input_metric("Job Count by Week","jobcount_vs_week");
 jobstats_input_metric("CPU Time by Week","cpuhours_vs_week");
-jobstats_input_metric("Charges by Week","charges_vs_week");
 jobstats_input_metric("Job Length by Week","walltime_vs_week");
 jobstats_input_metric("Queue Time by Week","qtime_vs_week");
 jobstats_input_metric("Backlog by Week","backlog_vs_week");
 jobstats_input_metric("Expansion Factor by Week","xfactor_vs_week");
 jobstats_input_metric("Active Users by Week","users_vs_week");
-jobstats_input_metric("Active Groups by Week","groups_vs_week");
-jobstats_input_metric("Active Accounts by Week","accounts_vs_week");
+jobstats_input_metric("Active Groups/Projects by Week","groups_vs_week");
 jobstats_input_footer();
 
 end_form();

@@ -1,9 +1,9 @@
 <?php
 # Copyright 2006, 2008 Ohio Supercomputer Center
 # Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+# $HeadURL: https://svn.osc.edu/repos/pbstools/trunk/web/dbutils.php $
+# $Revision: 136 $
+# $Date: 2006-07-12 18:28:58 -0400 (Wed, 12 Jul 2006) $
 
 # Database abstraction module to reduce the duplication of DB access code
 # in the various other reports.
