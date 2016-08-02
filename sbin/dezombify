@@ -2,13 +2,7 @@
 #
 # dezombify:  Requeue a "running" PBS job that's not actually running
 #             because it had JOIN JOB failures.
-# Copyright 2006 Ohio Supercomputer Center
-#
-# License:  GNU GPL v2; see ../COPYING for details.
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+# Copyright 2005 Ohio Supercomputer Center
 #
 # Usage:  dezombify jobid [...jobids...]
 #
@@ -19,8 +13,8 @@
 # Signs of a zombie job:
 # * "qstat -f $jobid" reports job state as R but no CPU time or memory consumed
 # * "qps -a $jobid" shows *NO* processes
-# * "qtracejob $jobid | grep -c JOIN" gives a number that's less than (N-1),
-#    where N==# nodes assigned to the job
+# * "qtracejob | grep -c JOIN" gives a number that's less than (N-1), where
+#    N==# nodes assigned to the job
 
 # First, make sure we know where to look for the appropriate files to clobber
 if [ -z "$PBS_HOME" ]
@@ -37,7 +31,7 @@ for job in $*
 do
     # Since this will later runs an rm -rf command as root,
     # sanity-check that the jobid is really a running job
-    jobid=$(echo $job | sed 's/\..*$//' | egrep '^[0-9]+$')
+    jobid=$(echo $job | sed 's/\..*$//' | egrep '^[^0-9]+$')
     if [ -z "$jobid" ]
     then
         echo "Bogus jobid $job!"

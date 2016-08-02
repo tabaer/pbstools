@@ -2,13 +2,7 @@
 #
 # jobstats -- Generate a web report of PBS job usage over some period of
 #             months
-# Copyright 2006 Ohio Supercomputer Center
-#
-# License:  GNU GPL v2; see ../COPYING for details.
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+# Copyright 2005 Ohio Supercomputer Center
 #
 # job metrics requirements:
 #
@@ -523,9 +517,8 @@ for ( $i=1 ; $i <= $nmonths ; $i++ )
         while ( <ACCTFILE> )
           {
 	    chop;
-	    ($etime,$type,$job,$resources)=split(/;/);
-	    undef %resource;
-	    %resource=&resourcelist($resources);
+	   ($etime,$type,$job,$resources)=split(/;/);
+	   %resource=&resourcelist($resources);
 
 	   if ( $type eq "E" )
 	     {
@@ -543,7 +536,6 @@ for ( $i=1 ; $i <= $nmonths ; $i++ )
 		 }
 	       $ncpus=&max($resource{"Resource_List.ncpus"},
 			   $resource{"resources_used.ncpus"});
-               $ncpus=&max($ncpus,$resource{"Resource_List.size"});
 	       $nprocs=&max($processors,$ncpus);
 	       if ( $nprocs > $sysprocs )
 		 {
@@ -813,7 +805,7 @@ open(GNUPLOT,"|gnuplot");
 print GNUPLOT <<EOP;
 # job count vs. cpu count
 set title "$hostname -- $subtitle"
-set xrange [0:$maxprocs]
+set xrange [1:$maxprocs]
 set term png small color
 set logscale y
 set xlabel "CPU Count"

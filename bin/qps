@@ -1,13 +1,7 @@
 #!/usr/bin/perl -w
 #
 # qps -- process listing for PBS jobs
-# Copyright 2006 Ohio Supercomputer Center
-#
-# License:  GNU GPL v2; see ../COPYING for details.
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+# Copyright 2005 Ohio Supercomputer Center
 #
 # for jobs in queue, show ps on each node
 #
@@ -110,7 +104,7 @@ while (<QSTAT>) {
 	($job) = split /\./,$job;
 	if (defined(@show_one)) {
 	    for ($i=0; $i<scalar(@show_one); $i++) {
-		if ($show_one[$i] eq $job) {
+		if ($show_one[$i] == $job) {
 		    last;
 		}
 	    }
@@ -127,7 +121,7 @@ while (<QSTAT>) {
 	    s/\s*(.*)/$1/;
 	    $nodeline .= $_;
 	}
-	$nodeline =~ s:/[\d\-]+::g;  # kill /cpu designators
+	$nodeline =~ s#/\d##g;  # kill /cpu designators
 	$nodeline =~ tr/+/ /;
 	@nodes = sort(split / /,$nodeline);
 	$numnodes = scalar(@nodes);

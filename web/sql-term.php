@@ -1,54 +1,45 @@
 <?php
-# Copyright 2006 Ohio Supercomputer Center
-# Copyright 2011 University of Tennessee
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
-require_once 'dbutils.php';
-require_once 'page-layout.php';
+require_once 'DB.php';
 
-page_header("PHP SQL Terminal");
+echo "<HTML>\n<HEAD>\n<TITLE>\nPHP SQL Terminal\n</TITLE>\n</HEAD>\n<BODY>\n";
 
 echo "<FORM method=\"POST\" action=\"sql-term.php\">\n";
 echo "<TEXTAREA name=\"sql\" cols=\"80\" rows=\"5\">\n";
 if ( isset($_POST['sql']) )
   {
-    echo stripslashes($_POST['sql']);
+    echo $_POST['sql'];
   }
 echo "</TEXTAREA>\n<BR>\n";
 echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
 
 if ( isset($_POST['sql']) )
   {
-    $db = db_connect();
+    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
     if ( DB::isError($db) )
       {
 	die ($db->getMessage());
       }
-    $result = db_query($db,stripslashes($_POST['sql']));
-    if ( PEAR::isError($result) )
+    $result = $db->query($_POST['sql']);
+    if ( DB::isError($db) )
       {
-        echo "<PRE>".$result->getMessage()."</PRE>\n";
+	die ($db->getMessage());
       }
     else
       {
 	echo "<TABLE border=1>\n";
 	while ($result->fetchInto($row))
 	  {
-	    echo "<TR valign=\"top\">";
+	    echo "<TR>";
 	    $keys=array_keys($row);
 	    foreach ($keys as $key)
 	      {
 		$data=array_shift($row);
-		echo "<TD><PRE>".htmlspecialchars($data)."</PRE></TD>";
+	        echo "<TD>".$data."</TD>";
 	      }
 	    echo "</TR>\n";
 	  }
 	echo "</TABLE>\n";
       }
-    db_disconnect($db);
   }
 
-page_footer();
-?>
+echo "</BODY>\n</HTML>\n";
