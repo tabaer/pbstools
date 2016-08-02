@@ -1,13 +1,7 @@
 #!/usr/bin/perl -w
 #
 # pbsdcp -- Distributed copy command for the PBS environment
-# Copyright 2006 Ohio Supercomputer Center
-#
-# License:  GNU GPL v2; see ../COPYING for details.
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+# Copyright 2005 Ohio Supercomputer Center
 #
 # Usage:  pbsdcp [-g|-s] [options] srcfile [...srcfiles...] target
 #
@@ -83,8 +77,7 @@ else
       }
     else # scatter -- default
       {
-	$sharedfs = "^/(gpfs|lustre|pvfs|home|[a-z])/";
-	if ( -s $ENV{'PBS_NODEFILE'} && !($target =~ $sharedfs) )
+	if ( -e $ENV{'PBS_NODEFILE'} )
 	  {
 	    open(NODES,"uniq ".$ENV{'PBS_NODEFILE'}." |");
 	    @node=<NODES>;

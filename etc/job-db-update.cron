@@ -2,11 +2,7 @@
 #
 # job-db-update.cron -- Cron job to run job-db-update on yesterday's PBS
 #                       accounting records.
-# Copyright 2006 Ohio Supercomputer Center
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+# Copyright 2005 Ohio Supercomputer Center
 #
 # Meant to be run nightly by cron:
 # 15 0 * * * * /usr/local/etc/job-db-update.cron
@@ -24,5 +20,3 @@ export PBS_HOME=/var/spool/batch/pbs
 export pbstools=/usr/local
 
 $pbstools/sbin/job-db-update -h $system $PBS_HOME/server_priv/accounting/$yesterday
-$pbstools/sbin/job-db-update-contacts -h $system
-$pbstools/sbin/fixup-nodect

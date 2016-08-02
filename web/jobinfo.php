@@ -1,19 +1,6 @@
 <?php
-# Copyright 2006 Ohio Supercomputer Center
-# Copyright 2009, 2010, 2011, 2014 University of Tennessee
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+require_once 'DB.php';
 require_once 'page-layout.php';
-require_once 'dbutils.php';
-
-# accept get queries too for handy command-line usage:  suck all the
-# parameters into _POST.
-if (isset($_GET['jobid']))
-  {
-    $_POST = $_GET;
-  }
 
 if ( isset($_POST['jobid']) )
   { 
@@ -25,70 +12,104 @@ if ( isset($_POST['jobid']) )
   }
 page_header($title);
 
-$props=array("username","groupname","account","jobname","nproc","mppe","mppssp",
-	     "nodes","feature","gres","queue","qos","submit_ts","start_ts","end_ts",
-	     "cput_req","cput","walltime_req","walltime","mem_req","mem_kb",
-	     "vmem_req","vmem_kb","energy","software","submithost","hostlist",
-             "exit_status","script","sw_app");
-
-// special key "all=1" turns on all the $props.
-if (!empty($_POST['all'])) {
-    unset($_POST['all']);
-    foreach ($props as $key)
-	$_POST[$key] = 1;
-}
-
 $keys = array_keys($_POST);
 if ( isset($_POST['jobid']) )
   {
-    $db = db_connect();
-    $sql = "SELECT jobid";
-    foreach ($keys as $key)
+    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
+    if ( DB::isError($db) )
       {
-	if ( isset($_POST[$key]) && $key!='jobid' ) { $sql = $sql.",".$key; }
+        die ($db->getMessage());
       }
-    $sql = $sql." FROM Jobs WHERE jobid LIKE '".$_POST['jobid'].".%' AND system LIKE '".$_POST['system']."';";
-    $result = db_query($db,$sql);
-    if ( PEAR::isError($result) )
+    else
       {
-        echo "<PRE>".$result->getMessage()."</PRE>\n";
-      }
-    while ($result->fetchInto($row))
-      {
-	echo "<TABLE border=\"1\">\n";
+	$sql = "SELECT jobid";
 	foreach ($keys as $key)
 	  {
-	    if ( isset($_POST[$key]) )
-	      {
-		$data[$key]=array_shift($row);
-		echo "<TR><TD width=\"10%\"><PRE>".$key."</PRE></TD><TD width=\"90%\"><PRE>";
-		if ( $key=="submit_ts" || $key=="start_ts" || $key=="end_ts" )
-		  {
-		    echo date("Y-m-d H:i:s",$data[$key]);
-		  }
-		else
-		  {
-		    echo htmlspecialchars($data[$key]);
-		  }
-		echo "</PRE></TD></TR>\n";
-	      }
+	    if ( isset($_POST[$key]) && $key!='jobid' ) { $sql = $sql.",".$key; }
 	  }
-	echo "</TABLE>\n";
+	$sql = $sql." FROM Jobs WHERE jobid LIKE '".$_POST['jobid'].".%' AND system LIKE '".$_POST['system']."';";
+	$result = $db->query($sql);
+	if ( DB::isError($db) )
+	  {
+	    die ($db->getMessage());
+	  }
+	else
+	  {
+	    while ($result->fetchInto($row))
+	      {
+		echo "<TABLE border=1 width=\"100%\">\n";
+		foreach ($keys as $key)
+		  {
+		    if ( isset($_POST[$key]) )
+		      {
+			$data[$key]=array_shift($row);
+			echo "<TR><TD width=\"10%\"><PRE>".$key."</PRE></TD><TD width=\"90%\"><PRE>".$data[$key]."</PRE></TD></TR>\n";
+		      }
+		  }
+		echo "</TABLE>\n";
+	       }
+	  }
       }
-    db_disconnect($db);
-    page_timer();
-    bookmarkable_url();
+
+    $db->disconnect();
   }
 else
   {
-    begin_form("jobinfo.php");
-
-    text_field("Job id","jobid",8);
-    system_chooser();
-
-    checkboxes_from_array("Properties",$props);
-
-    end_form();
+    echo "<FORM method=\"POST\" action=\"jobinfo.php\">\n";
+    echo "Job id:  <INPUT type=\"text\" name=\"jobid\" size=\"8\"> (Numeric jobid only!)<BR>\n";
+    echo "System:  <SELECT name=\"system\" size=\"1\">\n";
+    echo "<OPTION value=\"%\">Any\n";
+    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
+    if ( DB::isError($db) )
+      {
+        die ($db->getMessage());
+      }
+    else
+      {
+	$sql = "SELECT DISTINCT(system) FROM Jobs;";
+	$result = $db->query($sql);
+	if ( DB::isError($db) )
+	  {
+	    die ($db->getMessage());
+	  }
+	else
+	  {
+	    while ($result->fetchInto($row))
+	      {
+		$rkeys = array_keys($row);
+		foreach ($rkeys as $rkey)
+		  {
+		    echo "<OPTION>".$row[$rkey]."\n";
+		  }
+	      }
+	  }
+      }
+    $db->disconnect();
+    echo "</SELECT><BR>\n";
+    echo "Show properties:<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"username\" value=\"1\"> user]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"groupname\" value=\"1\"> group]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"jobname\" value=\"1\"> job name]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"nproc\" value=\"1\"> # procs]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"mppe\" value=\"0\"> MSPs (Cray X1 only)]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"mppssp\" value=\"0\"> SSPs (Cray X1 only)]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"nodes\" value=\"1\"> node request]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"queue\" value=\"1\"> queue]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"submit_ts\" value=\"0\"> submission time]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"start_ts\" value=\"0\"> start time]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"end_ts\" value=\"0\"> end time]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"cput_req\" value=\"0\"> CPU time requested]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"cput\" value=\"1\"> CPU time used]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"walltime_req\" value=\"0\"> wallclock time requested]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"walltime\" value=\"1\"> wallclock time used]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"mem_req\" value=\"0\"> real memory requested]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"mem_kb\" value=\"1\"> real memory used]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"vmem_req\" value=\"0\"> virtual memory requested]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"vmem_kb\" value=\"1\"> virtual memory used]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"hostlist\" value=\"1\"> host list]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"exit_status\" value=\"1\"> exit status]<BR>\n";
+    echo "[<INPUT type=\"checkbox\" name=\"script\" value=\"0\"> job script]<BR>\n";
+    echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
   }
 
 page_footer();
