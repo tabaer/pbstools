@@ -1,11 +1,6 @@
 <?php
-# Copyright 2006 Ohio Supercomputer Center
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+require_once 'DB.php';
 require_once 'page-layout.php';
-require_once 'dbutils.php';
 require_once 'metrics.php';
 require_once 'site-specific.php';
 
@@ -35,25 +30,36 @@ if ( isset($_POST['system']) )
   }
 page_header($title);
 
-begin_form("jobstats.php");
-
-virtual_system_chooser();
-date_fields();
+echo "<FORM method=\"POST\" action=\"jobstats.php\">\n";
+echo "System:  <SELECT name=\"system\" size=\"1\">\n";
+echo "<OPTION value=\"%\">Any\n";
+foreach (sys_list() as $host)
+{
+  echo "<OPTION>".$host."\n";
+}
+echo "</SELECT><BR>\n";
+echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
+echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
+echo "<TABLE>\n";
+echo "<TR>\n";
+echo "  <TH>Metrics</TH>\n";
+echo "  <TH>Graph</TH>";
+echo "  <TH>Table</TH>\n";
+echo "</TR>\n";
 
 // by username
-jobstats_input_header();
-jobstats_input_metric("Job Count vs. User","jobs_vs_username");
+echo "<TR><TH colspan=\"3\"><HR></TH></TR>\n";
+jobstats_input_metric("Job Count vs. User","jobcount_vs_username");
 jobstats_input_metric("CPU Time vs. User","cpuhours_vs_username");
-jobstats_input_metric("Charges vs. User","charges_vs_username");
 jobstats_input_metric("Job Length vs. User","walltime_vs_username");
 jobstats_input_metric("Queue Time vs. User","qtime_vs_username");
 jobstats_input_metric("Real Memory vs. User","mem_kb_vs_username");
 jobstats_input_metric("Virtual Memory vs. User","vmem_kb_vs_username");
 jobstats_input_metric("Walltime Accuracy vs. User","walltime_acc_vs_username");
 jobstats_input_metric("CPU Efficiency vs. User","cpu_eff_vs_username");
-jobstats_input_footer();
 
-end_form();
+echo "</TABLE>\n";
+echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";   
 
 page_footer();
 ?>

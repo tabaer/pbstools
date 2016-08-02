@@ -2,13 +2,7 @@
 #
 # dezombify:  Requeue a "running" PBS job that's not actually running
 #             because it had JOIN JOB failures.
-# Copyright 2006 Ohio Supercomputer Center
-#
-# License:  GNU GPL v2; see ../COPYING for details.
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+# Copyright 2005 Ohio Supercomputer Center
 #
 # Usage:  dezombify jobid [...jobids...]
 #

@@ -1,12 +1,6 @@
 <?php
-# Copyright 2006, 2007 Ohio Supercomputer Center
-# Copyright 2009 University of Tennessee
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+require_once 'DB.php';
 require_once 'page-layout.php';
-require_once 'dbutils.php';
 require_once 'metrics.php';
 require_once 'site-specific.php';
 
@@ -36,28 +30,35 @@ if ( isset($_POST['system']) )
   }
 page_header($title);
 
-begin_form("jobstats.php");
-
-virtual_system_chooser();
-date_fields();
+echo "<FORM method=\"POST\" action=\"jobstats.php\">\n";
+echo "System:  <SELECT name=\"system\" size=\"1\">\n";
+echo "<OPTION value=\"%\">Any\n";
+foreach (sys_list() as $host)
+{
+  echo "<OPTION>".$host."\n";
+}
+echo "</SELECT><BR>\n";
+echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
+echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
+echo "<TABLE>\n";
+echo "<TR>\n";
+echo "  <TH>Metrics</TH>\n";
+echo "  <TH>Graph</TH>";
+echo "  <TH>Table</TH>\n";
+echo "</TR>\n";
 
 // by groupname
-jobstats_input_header();
-jobstats_input_metric("Job Count vs. Group","jobs_vs_groupname");
-jobstats_input_metric("CPU Time vs. Group","cpuhours_vs_groupname");
-jobstats_input_metric("Charges vs. Group","charges_vs_groupname");
-jobstats_input_metric("Job Length vs. Group","walltime_vs_groupname");
-jobstats_input_metric("Queue Time vs. Group","qtime_vs_groupname");
-jobstats_input_metric("Real Memory vs. Group","mem_kb_vs_groupname");
-jobstats_input_metric("Virtual Memory vs. Group","vmem_kb_vs_groupname");
-jobstats_input_metric("Walltime Accuracy vs. Group","walltime_acc_vs_groupname");
-jobstats_input_metric("CPU Efficiency vs. Group","cpu_eff_vs_groupname");
-jobstats_input_metric("Active Users vs. Group","users_vs_groupname");
-jobstats_input_metric("Active Accounts vs. Group","accounts_vs_groupname");
-jobstats_input_metric("Processor Count vs. Group","nproc_vs_groupname");
-jobstats_input_footer();
+jobstats_input_metric("Job Count vs. Group/Project","jobcount_vs_groupname");
+jobstats_input_metric("CPU Time vs. Group/Project","cpuhours_vs_groupname");
+jobstats_input_metric("Job Length vs. Group/Project","walltime_vs_groupname");
+jobstats_input_metric("Queue Time vs. Group/Project","qtime_vs_groupname");
+jobstats_input_metric("Real Memory vs. Group/Project","mem_kb_vs_groupname");
+jobstats_input_metric("Virtual Memory vs. Group/Project","vmem_kb_vs_groupname");
+jobstats_input_metric("Walltime Accuracy vs. Group/Project","walltime_acc_vs_groupname");
+jobstats_input_metric("CPU Efficiency vs. Group/Project","cpu_eff_vs_groupname");
 
-end_form();
+echo "</TABLE>\n";
+echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
 
 page_footer();
 ?>

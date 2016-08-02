@@ -1,13 +1,7 @@
 #!/usr/bin/perl -w
 #
 # showscript:  Display the script associated with a job.
-# Copyright 2006 Ohio Supercomputer Center
-#
-# License:  GNU GPL v2; see ../COPYING for details.
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
+# Copyright 2005 Ohio Supercomputer Center
 #
 # Usage:  showscript [options] JOBID
 #
@@ -103,10 +97,6 @@ if ( !defined($spool) )
 $pbsserver=`cat $spool/server_name` || 
   die "Unable to find PBS server name!\n";
 chop($pbsserver);
-# in HA configurations, server_name contains a comma-separated list of
-# servers with the primary listed first
-# strip off all others
-$pbsserver =~ s/,.*$//;
 # hack for sloppy admins who don't put the full hostname
 # in $PBS_HOME/server_name
 if ( $pbsserver =~ /:/ )
