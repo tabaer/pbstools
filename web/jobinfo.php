@@ -1,6 +1,5 @@
 <?php
 # Copyright 2006 Ohio Supercomputer Center
-# Copyright 2009, 2010, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -10,10 +9,9 @@ require_once 'dbutils.php';
 
 # accept get queries too for handy command-line usage:  suck all the
 # parameters into _POST.
-if (isset($_GET['jobid']))
-  {
+if (isset($_GET['jobid'])) {
     $_POST = $_GET;
-  }
+}
 
 if ( isset($_POST['jobid']) )
   { 
@@ -25,11 +23,10 @@ if ( isset($_POST['jobid']) )
   }
 page_header($title);
 
-$props=array("username","groupname","account","jobname","nproc","mppe","mppssp",
-	     "nodes","feature","gres","queue","qos","submit_ts","start_ts","end_ts",
-	     "cput_req","cput","walltime_req","walltime","mem_req","mem_kb",
-	     "vmem_req","vmem_kb","energy","software","submithost","hostlist",
-             "exit_status","script","sw_app");
+$props=array("username","groupname","jobname","nproc","mppe","mppssp",
+	     "nodes","queue","submit_ts","start_ts","end_ts","cput_req",
+	     "cput","walltime_req","walltime","mem_req","mem_kb",
+	     "vmem_req","vmem_kb","hostlist","exit_status","script");
 
 // special key "all=1" turns on all the $props.
 if (!empty($_POST['all'])) {
@@ -49,13 +46,9 @@ if ( isset($_POST['jobid']) )
       }
     $sql = $sql." FROM Jobs WHERE jobid LIKE '".$_POST['jobid'].".%' AND system LIKE '".$_POST['system']."';";
     $result = db_query($db,$sql);
-    if ( PEAR::isError($result) )
-      {
-        echo "<PRE>".$result->getMessage()."</PRE>\n";
-      }
     while ($result->fetchInto($row))
       {
-	echo "<TABLE border=\"1\">\n";
+	echo "<TABLE border=1 width=\"100%\">\n";
 	foreach ($keys as $key)
 	  {
 	    if ( isset($_POST[$key]) )
@@ -76,8 +69,6 @@ if ( isset($_POST['jobid']) )
 	echo "</TABLE>\n";
       }
     db_disconnect($db);
-    page_timer();
-    bookmarkable_url();
   }
 else
   {

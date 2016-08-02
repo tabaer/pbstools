@@ -2,8 +2,6 @@
 #
 # spool-jobscripts -- copy newly created job scripts to a spool directory
 # Copyright 2006 Ohio Supercomputer Center
-#
-# License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -13,10 +11,8 @@
 # equivalent thereof):
 # dnotify -b -p 1 -C $PBS_HOME/server_priv/jobs -e /usr/local/sbin/spool-jobscripts '{}'
 
-use strict;
-
 # my spool dir
-my $spooldir="/tmp/scripts";
+$spooldir="/tmp/scripts";
 if ( ! -d $spooldir )
 {
     mkdir($spooldir) || die "Unable to create $spooldir:  $!";
@@ -28,22 +24,16 @@ elsif ( ! -w $spooldir )
 }
 
 # sanity check $ARGV[0]
-my $pbsjobdir=$ARGV[0];
-if ( ! defined($pbsjobdir) )
-{
-  $pbsjobdir = "/var/spool/torque/server_priv/jobs";
-}
+$pbsjobdir=$ARGV[0];
 
 # get list of script files
 opendir(DIR,$pbsjobdir) || die "Can't opendir ".$pbsjobdir.":  $!";
-my @scriptfiles = grep { /\.SC$/ && -f "$pbsjobdir/$_" } readdir(DIR);
+@scriptfiles = grep { /\.SC$/ && -f "$pbsjobdir/$_" } readdir(DIR);
 closedir(DIR);
 
 # for each script file, copy it to the spool directory if it's not already
 # there
-my @file;
-my @newfile;
-foreach my $scriptfile (@scriptfiles)
+foreach $scriptfile (@scriptfiles)
 {
     if ( -e "$pbsjobdir/$scriptfile" && ! -e "$spooldir/$scriptfile" )
     {
@@ -53,7 +43,7 @@ foreach my $scriptfile (@scriptfiles)
 }
 
 # copy files to spool dir
-if ( $#file>=0 )
+if ( defined(@file) )
 {
     unshift(@file,"cp");
     push(@file,"$spooldir");
@@ -61,9 +51,9 @@ if ( $#file>=0 )
 }
 
 # fork/exec jobscript-to-db; don't wait for completion
-if ( $#newfile>=0 )
+if ( defined(@newfile) )
 {
-    my $pid=fork();
+    $pid=fork();
     if ( $pid==0 )
     {
 	unshift(@newfile,"jobscript-to-db");
