@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # qexec -- A workalike for SGE qlogin/qsh/qrsh
-# Copyright 2007, 2015 Ohio Supercomputer Center
+# Copyright 2007 Ohio Supercomputer Center
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
@@ -14,8 +14,6 @@ use POSIX;
 
 my @qsub;
 my @mpiexec;
-
-my $wait = 1;
 
 my $cmd;
 if ( defined($ENV{"SHELL"}) )
@@ -89,12 +87,6 @@ while ( $ARGV[0] =~ /^-.*$/ )
       my @args = (shift(@ARGV),shift(@ARGV));
       unshift(@mpiexec,@args);
     }
-    elsif ( $ARGV[0] =~ /^-wait$/ )
-    {
-      # timeout
-      shift @ARGV;
-      $wait = shift @ARGV;
-    }
     # unknown args
     else
     {
@@ -161,7 +153,6 @@ if ( $0 =~ /qrsh$/ || $0 =~ /qsh$/ || $0 =~ /mpi(exec|run)$/ )
 	print SCRIPT "test -e \$HOME/.profile && . \$HOME/.profile\n";
     }
     print SCRIPT "@ARGV \n";
-    print SCRIPT "sleep $wait\n";
     close(SCRIPT);
     chmod(0755,$script);
     system("@qsub -S $script");

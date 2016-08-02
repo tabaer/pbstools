@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2009, 2010, 2011, 2014 University of Tennessee
+# Copyright 2009, 2010, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -17,37 +17,32 @@ if (isset($_GET['system']))
     $_POST = $_GET;
   }
 
-# connect to DB
-$db = db_connect();
-
 # list of software packages
-#$packages=software_list($db);
+$packages=software_list();
 
 # regular expressions for different software packages
-#$pkgmatch=software_match_list($db);
+$pkgmatch=software_match_list();
 
 if ( isset($_POST['system']) )
   { 
     $title = "Unclassified jobs on ".$_POST['system'];
-    $verb = title_verb($_POST['datelogic']);
-    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && 
-	 $_POST['start_date']==$_POST['end_date'] && $_POST['start_date']!="" )
+    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+	     $_POST['start_date']!="" )
       {
-	$title .= " ".$verb." on ".$_POST['start_date'];
+	$title .= " submitted on ".$_POST['start_date'];
       }
-    else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && 
-	      $_POST['start_date']!=$_POST['end_date'] && 
+    else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
 	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
       {
-	$title .= " ".$verb." between ".$_POST['start_date']." and ".$_POST['end_date'];
+	$title .= " submitted between ".$_POST['start_date']." and ".$_POST['end_date'];
       }
     else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
       {
-	$title .= " ".$verb." after ".$_POST['start_date'];
+	$title .= " submitted after ".$_POST['start_date'];
       }
     else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
       {
-	$title .= " ".$verb." before ".$_POST['end_date'];
+	$title .= " submitted before ".$_POST['end_date'];
       }
   }
 else
@@ -59,9 +54,24 @@ page_header($title);
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
+    $db = db_connect();
+
     # system summary table
     echo "<H3>System Summary</H3>\n";
-    $sql = "SELECT system, COUNT(jobid) AS jobs, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE script IS NOT NULL AND sw_app is NULL AND system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY jobs DESC";
+    $sql = "SELECT system, COUNT(jobid) AS jobs, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE script IS NOT NULL";
+    foreach ( $packages as $pkg )
+      {
+	$sql .= " AND ";
+	if ( isset($pkgmatch[$pkg]) )
+	  {
+	    $sql .= "(NOT (".$pkgmatch[$pkg]."))";
+	  }
+	else
+	  {
+	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
+	  }
+      }
+    $sql .= " AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY jobs DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -89,7 +99,28 @@ if ( isset($_POST['system']) )
 
     # account summary table
     echo "<H3>Account Summary</H3>\n";
-    $sql = "SELECT account, system, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges FROM Jobs WHERE script IS NOT NULL AND sw_app IS NULL AND system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account, system ORDER BY cpuhours DESC";
+    $sql = "SELECT account, system, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours FROM Jobs WHERE ( ";
+    $isfirst = 1;
+    foreach ( $packages as $pkg )
+      {
+	if ( $isfirst==1 )
+	  {
+	    $isfirst = 0;
+	  }
+	else
+	  {
+	    $sql .= " AND ";
+	  }
+	if ( isset($pkgmatch[$pkg]) )
+	  {
+	    $sql .= "NOT (".$pkgmatch[$pkg].")";
+	  }
+	else
+	  {
+	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
+	  }
+      }
+    $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account, system ORDER BY cpuhours DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -97,7 +128,7 @@ if ( isset($_POST['system']) )
         echo "<PRE>".$result->getMessage()."</PRE>\n";
       }
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>account</TH><TH>system</TH><TH>users</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH></TR>\n";
+    echo "<TR><TH>account</TH><TH>system</TH><TH>users</TH><TH>jobs</TH><TH>cpuhours</TH></TR>\n";
     while ($result->fetchInto($row))
       {
 	echo "<TR>";
@@ -117,7 +148,28 @@ if ( isset($_POST['system']) )
 
     # user summary table
     echo "<H3>User Summary</H3>\n";
-    $sql = "SELECT DISTINCT(username) AS username, groupname, account, system, COUNT(jobid) AS jobs FROM Jobs WHERE script IS NOT NULL AND sw_app IS NULL AND system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, account, system ORDER BY jobs DESC";
+    $sql = "SELECT DISTINCT(username) AS username, groupname, account, system, COUNT(jobid) AS jobs FROM Jobs WHERE ( ";
+    $isfirst = 1;
+    foreach ( $packages as $pkg )
+      {
+	if ( $isfirst==1 )
+	  {
+	    $isfirst = 0;
+	  }
+	else
+	  {
+	    $sql .= " AND ";
+	  }
+	if ( isset($pkgmatch[$pkg]) )
+	  {
+	    $sql .= "NOT (".$pkgmatch[$pkg].")";
+	  }
+	else
+	  {
+	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
+	  }
+      }
+    $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, account, system ORDER BY jobs DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -154,8 +206,27 @@ if ( isset($_POST['system']) )
 	  }
       }
     $sql .= " FROM Jobs WHERE ( ";
-    $sql .= "script IS NOT NULL AND sw_app IS NULL";
-    $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
+    $isfirst = 1;
+    foreach ( $packages as $pkg )
+      {
+	if ( $isfirst==1 )
+	  {
+	    $isfirst = 0;
+	  }
+	else
+	  {
+	    $sql .= " AND ";
+	  }
+	if ( isset($pkgmatch[$pkg]) )
+	  {
+	    $sql .= "NOT (".$pkgmatch[$pkg].")";
+	  }
+	else
+	  {
+	    $sql .= "( script NOT LIKE '%".$pkg."%' AND software NOT LIKE '%".$pkg."%' )";
+	  }
+      }
+    $sql .= " ) AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -205,7 +276,7 @@ if ( isset($_POST['system']) )
       }
     echo "</TABLE>\n";
   
-    page_timer();
+    db_disconnect($db);
     bookmarkable_url();
   }
 else
@@ -218,13 +289,11 @@ else
     $props=array("username","groupname","account","jobname","nproc","mppe","mppssp",
 		 "nodes","feature","gres","queue","qos","submit_ts","start_ts","end_ts","cput_req",
 		 "cput","walltime_req","walltime","mem_req","mem_kb",
-		 "vmem_req","vmem_kb","energy","software","submithost","hostlist",
-		 "exit_status","script");
+		 "vmem_req","vmem_kb","submithost","hostlist","exit_status","script");
     checkboxes_from_array("Properties",$props);
 
     end_form();
   }
 
-db_disconnect($db);
 page_footer();
 ?>

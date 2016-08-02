@@ -1,17 +1,17 @@
 Summary: Tools for the PBS family of batch systems (OpenPBS, PBS Pro, TORQUE)
 Name: pbstools
-Version: 3.1
+Version: 3.0
 Release: 1%{?dist}
 License: GPLv2
 Group: System Environment/Base
-Vendor:  Ohio Supercomputer Center
-URL: http://www.osc.edu/~troy/pbstools
+Vendor:  National Institute for Computational Sciences, University of Tennessee
+URL: http://www.nics.tennessee.edu/~troy/pbstools/
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Prefix: /usr
 %description
-Several utilities that have been developed at OSC, NICS, and elsewhere
+Several utilities that have been developed at NICS, OSC, and elsewhere
 to aid in the administration and management of PBS variants (including
 OpenPBS, PBS Pro, and TORQUE).
 
@@ -70,26 +70,6 @@ submission of large, complex sets of dependent jobs using a relatively
 simple syntax. It relies on dmsub for data movement.
 
 
-%package job-vm-launch
-Summary:  PBStools VM Launcher
-Group:  System Environment/Base
-Requires:  python,libvirt-python
-%description job-vm-launch
-job-vm-launch launches a virtual machine instance within a TORQUE job
-using KVM.  It should be installed on compute nodes running pbs_mom
-and libvirtd/qemu-kvm.
-
-
-%package pbs-spark-submit
-Summary:  PBStools Spark Launcher
-Group:  System Environment/Base
-Requires:  python
-%description pbs-spark-submit
-pbs-spark-submit launches an Apache Spark program within a TORQUE job,
-including starting the Spark master and worker processes in standalone
-mode by default.
-
-
 %package reaver
 Summary:  PBStools Process Killer
 Group:  System Environment/Base
@@ -135,7 +115,6 @@ pbsacct-jobscript-watcher is an optional part of the pbsacct workload
 analysis system that captures job scripts as they are submitted.  It
 should be installed on the same host as a pbs_server instance for
 OpenPBS, PBS Pro, or TORQUE.
-
 
 %prep
 %setup -q
@@ -186,14 +165,6 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %{_bindir}/dagsub
 %doc %{_mandir}/man1/dagsub.1.gz
 
-%files job-vm-launch
-%{_bindir}/job-vm-launch
-%doc %{_mandir}/man1/job-vm-launch.1.gz
-
-%files pbs-spark-submit
-%{_bindir}/pbs-spark-submit
-%doc %{_mandir}/man1/pbs-spark-submit.1.gz
-
 %files reaver
 %{_sbindir}/reaver
 %doc %{_mandir}/man8/reaver.8.gz
@@ -206,8 +177,8 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 
 %files -n pbsacct-php
 %dir /var/www/html/pbsacct
-%config /var/www/html/pbsacct/default.css
-%config /var/www/html/pbsacct/db.cfg
+/var/www/html/pbsacct/default.css
+/var/www/html/pbsacct/db.cfg
 /var/www/html/pbsacct/*.php
 
 %files -n pbsacct-db

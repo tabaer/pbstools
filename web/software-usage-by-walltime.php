@@ -1,6 +1,6 @@
 <?php
 # Copyright 2007, 2008 Ohio Supercomputer Center
-# Copyright 2009, 2011, 2014 University of Tennessee
+# Copyright 2009, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -21,45 +21,61 @@ $title = "Software usage by job length";
 if ( isset($_POST['system']) )
   {
     $title .= " on ".$_POST['system'];
-    $verb = title_verb($_POST['datelogic']);
-    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && 
-	 $_POST['start_date']==$_POST['end_date'] && $_POST['start_date']!="" )
-      {
-	$title .= " ".$verb." on ".$_POST['start_date'];
-      }
-    else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
-	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
-      {
-	$title .= " ".$verb." between ".$_POST['start_date']." and ".$_POST['end_date'];
-      }
-    else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-      {
-	$title .= " ".$verb." after ".$_POST['start_date'];
-      }
-    else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-      {
-	$title .= " ".$verb." before ".$_POST['end_date'];
-      }
   }
+if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+     $_POST['start_date']!="" )
+  {
+    $title .= " started on ".$_POST['start_date'];
+  }
+ else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
+	   $_POST['start_date']!="" &&  $_POST['end_date']!="" )
+   {
+     $title .= " started between ".$_POST['start_date']." and ".$_POST['end_date'];
+   }
+ else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
+   {
+     $title .= " started after ".$_POST['start_date'];
+   }
+ else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
+   {
+     $title .= " started before ".$_POST['end_date'];
+   }
 page_header($title);
 
-# connect to DB
-$db = db_connect();
+# list of software packages
+$packages=software_list();
+
+# regular expressions for different software packages
+$pkgmatch=software_match_list();
 
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
+    $db = db_connect();
     foreach ($keys as $key)
       {
-	if ( $key!='system' && $key!='start_date' && $key!='end_date' &&
-	     $key!='datelogic' )
+	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT ".xaxis_column("walltime").",COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, MIN(TIME_TO_SEC(walltime)) AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( script IS NOT NULL AND ";
-	    $sql .= "sw_app='".$key."'";
-	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY walltime_bucketed UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, 100000000 AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
-	    $sql .= "sw_app='".$key."'";
-	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) ORDER BY hidden;";
+	    $sql = "SELECT ".xaxis_column("walltime").",COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, MIN(TIME_TO_SEC(walltime)) AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( script IS NOT NULL AND ";
+	    if ( isset($pkgmatch[$key]) )
+	      {
+		$sql .= $pkgmatch[$key];
+	      }
+	    else
+	      {
+		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
+	      }
+	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) GROUP BY walltime_bucketed UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system']).") AS cpuhours, SUM(".charges($db,$_POST['system']).") AS charges, 100000000 AS hidden FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username IS NOT NULL AND ( ";
+	    if ( isset($pkgmatch[$key]) )
+	      {
+		$sql .= $pkgmatch[$key];
+	      }
+	    else
+	      {
+		$sql .= "script LIKE '%".$key."%' OR software LIKE '%".$key."%'";
+	      }
+	    $sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY hidden;";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
 	    if ( PEAR::isError($result) )
@@ -85,14 +101,11 @@ if ( isset($_POST['system']) )
 	    echo "</TABLE>\n";
 	  }
       }
-    page_timer();
+    db_disconnect($db);
     bookmarkable_url();
   }
 else
   {
-    # list of software packages
-    $packages=software_list($db);
-
     begin_form("software-usage-by-walltime.php");
 
     system_chooser();
@@ -103,6 +116,5 @@ else
     end_form();
   }
 
-db_disconnect($db);
 page_footer();
 ?>

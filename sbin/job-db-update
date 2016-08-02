@@ -151,247 +151,284 @@ while ( defined($ARGV[0]) )
 	    $vmem=~s/kb$//;
 
 	    # construct query string(s)
-	    $update = "";
-	    $insert = "";
-	    if ( defined($resource{"start"}) &&
-		 $resource{"start"}>0 )
+	    if ( &keyval_exists("jobid",$job,$dbtable,$dbh)>0 )
 	      {
-		$uhead = "UPDATE $dbtable SET jobid = \'".$job."\'";
-		$utail = " WHERE jobid = \'".$job."\';";
-		$ihead = "INSERT INTO $dbtable \(jobid,system";
-		$itail = " VALUES \(\'$job\',\'$hostname\'";
+		# This jobid already exists in the table,
+		# so do an UPDATE
+		$qhead = "UPDATE $dbtable SET jobid = \'".$job."\'";
+		$qtail = " WHERE jobid = \'".$job."\';";
 		if ( defined($resource{"user"}) )
 		  {
-		    $uhead.=",username = \'".$resource{"user"}."\'";
-		    $ihead.=",username";
-		    $itail.=",\'".$resource{"user"}."\'";
+		    $qhead.=",username = \'".$resource{"user"}."\'";
 		  }
 		if ( defined($resource{"group"}) )
 		  {
-		    $uhead.=",groupname = \'".$resource{"group"}."\'";
-		    $ihead.=",groupname";
-		    $itail.=",\'".$resource{"group"}."\'";
+		    $qhead.=",groupname = \'".$resource{"group"}."\'";
 		  }
 		if ( defined($resource{"owner"}) )
 		  {
 		    $submithost = $resource{"owner"};
 		    $submithost =~ s/^.+\@//;
-		    $uhead.=",submithost = \'".$submithost."\'";
-		    $ihead.=",submithost";
-		    $itail.=",\'".$submithost."\'";
+		    $qhead.=",submithost = \'".$submithost."\'";
 		  }
 		if ( defined($resource{"jobname"}) )
 		  {
-		    $uhead.=",jobname = \'".$resource{"jobname"}."\'";
-		    $ihead.=",jobname";
-		    $itail.=",\'".$resource{"jobname"}."\'";
+		    $qhead.=",jobname = \'".$resource{"jobname"}."\'";
 		  }
 		if ( $nprocs>0 )
 		  {
-		    $uhead.=",nproc = \'".$nprocs."\'";
-		    $ihead.=",nproc";
-		    $itail.=",\'$nprocs\'";
+		    $qhead.=",nproc = \'".$nprocs."\'";
 		  }
 		if ( defined($resource{"Resource_List.nodes"}) )
 		  {
-		    $uhead.=",nodes = \'".$resource{"Resource_List.nodes"}."\'";
-		    $ihead.=",nodes";
-		    $itail.=",\'".$resource{"Resource_List.nodes"}."\'";
+		    $qhead.=",nodes = \'".$resource{"Resource_List.nodes"}."\'";
 		  }
                 if ( defined($resource{"Resource_List.feature"}) )
                   {
-                    $uhead.=",feature = \'".$resource{"Resource_List.feature"}."\'";
-                    $ihead.=",feature";
-                    $itail.=",\'".$resource{"Resource_List.feature"}."\'";
-                  }
-		if ( defined($resource{"Resource_List.gattr"}) )
-                  {
-                    $uhead.=",gattr = \'".$resource{"Resource_List.gattr"}."\'";
-                    $ihead.=",gattr";
-                    $itail.=",\'".$resource{"Resource_List.gattr"}."\'";
+                    $qhead.=",feature = \'".$resource{"Resource_List.feature"}."\'";
                   }
 		if ( defined($resource{"Resource_List.gres"}) )
                   {
-                    $uhead.=",gres = \'".$resource{"Resource_List.gres"}."\'";
-                    $ihead.=",gres";
-                    $itail.=",\'".$resource{"Resource_List.gres"}."\'";
+                    $qhead.=",gres = \'".$resource{"Resource_List.gres"}."\'";
                   }
 		if ( defined($resource{"queue"}) )
 		  {
-		    $uhead.=",queue = \'".$resource{"queue"}."\'";
-		    $ihead.=",queue";
-		    $itail.=",\'".$resource{"queue"}."\'";
+		    $qhead.=",queue = \'".$resource{"queue"}."\'";
 		  }
                 if ( defined($resource{"Resource_List.qos"}) )
                   {
-                    $uhead.=",qos = \'".$resource{"Resource_List.qos"}."\'";
-                    $ihead.=",qos";
-                    $itail.=",\'".$resource{"Resource_List.qos"}."\'";
+                    $qhead.=",qos = \'".$resource{"Resource_List.qos"}."\'";
                   }
 		if ( defined($resource{"ctime"}) )
 		  {
-		    $uhead.=",submit_ts = \'".$resource{"ctime"}."\'";
-		    $uhead.=",submit_date = DATE(FROM_UNIXTIME(\'".$resource{"ctime"}."\'))";
-		    $ihead.=",submit_ts";
-		    $itail.=",\'".$resource{"ctime"}."\'";
-		    $ihead.=",submit_date";
-		    $itail.=",DATE(FROM_UNIXTIME(\'".$resource{"ctime"}."\'))";
+		    $qhead.=",submit_ts = \'".$resource{"ctime"}."\'";
+		    $qhead.=",submit_date = DATE(FROM_UNIXTIME(\'".$resource{"ctime"}."\'))";
 		  }
 		if ( defined($resource{"start"}) )
 		  {
-		    $uhead.=",start_ts = \'".$resource{"start"}."\'";
-		    $uhead.=",start_date = DATE(FROM_UNIXTIME(\'".$resource{"start"}."\'))";
-		    $ihead.=",start_ts";
-		    $itail.=",\'".$resource{"start"}."\'";
-		    $ihead.=",start_date";
-		    $itail.=",DATE(FROM_UNIXTIME(\'".$resource{"start"}."\'))";
+		    $qhead.=",start_ts = \'".$resource{"start"}."\'";
+		    $qhead.=",start_date = DATE(FROM_UNIXTIME(\'".$resource{"start"}."\'))";
 		  }
 		if ( defined($resource{"end"}) )
 		  {
-		    $uhead.=",end_ts = \'".$resource{"end"}."\'";
-		    $uhead.=",end_date = DATE(FROM_UNIXTIME(\'".$resource{"end"}."\'))";
-		    $ihead.=",end_ts";
-		    $itail.=",\'".$resource{"end"}."\'";
-		    $ihead.=",end_date";
-		    $itail.=",DATE(FROM_UNIXTIME(\'".$resource{"end"}."\'))";
+		    $qhead.=",end_ts = \'".$resource{"end"}."\'";
+		    $qhead.=",end_date = DATE(FROM_UNIXTIME(\'".$resource{"end"}."\'))";
 		  }
 		if ( defined($resource{"Resource_List.cput"}) )
 		  {
-		    $uhead.=",cput_req = \'".$resource{"Resource_List.cput"}."\'";
-		    $ihead.=",cput_req";
-		    $itail.=",\'".$resource{"Resource_List.cput"}."\'";
+		    $qhead.=",cput_req = \'".$resource{"Resource_List.cput"}."\'";
 		  }
 		if ( defined($resource{"resources_used.cput"}) )
 		  {
-		    $uhead.=",cput = \'".$resource{"resources_used.cput"}."\'";
-		    $ihead.=",cput";
-		    $itail.=",\'".$resource{"resources_used.cput"}."\'";
+		    $qhead.=",cput = \'".$resource{"resources_used.cput"}."\'";
 		  }
 		if ( defined($resource{"Resource_List.walltime"}) )
 		  {
-		    $uhead.=",walltime_req = \'".$resource{"Resource_List.walltime"}."\'";
-		    $ihead.=",walltime_req";
-		    $itail.=",\'".$resource{"Resource_List.walltime"}."\'";
+		    $qhead.=",walltime_req = \'".$resource{"Resource_List.walltime"}."\'";
 		  }
 		if ( defined($resource{"resources_used.walltime"}) )
 		  {
-		    $ihead.=",walltime";
-		    if ( $resource{"resources_used.walltime"} =~ /^\d+$/ ) 
-		      {
-                        $uhead.=",walltime = SEC_TO_TIME(".$resource{"resources_used.walltime"}.")";
-		        $itail.=",SEC_TO_TIME(".$resource{"resources_used.walltime"}.")";
-                      }
-		    else
-		      {
-		        $uhead.=",walltime = \'".$resource{"resources_used.walltime"}."\'";
-		        $itail.=",\'".$resource{"resources_used.walltime"}."\'";
-		      }
+		    $qhead.=",walltime = \'".$resource{"resources_used.walltime"}."\'";
 		  }
 		if ( defined($resource{"Resource_List.mem"}) )
 		  {
-		    $uhead.=",mem_req = \'".$resource{"Resource_List.mem"}."\'";
-		    $ihead.=",mem_req";
-		    $itail.=",\'".$resource{"Resource_List.mem"}."\'";
+		    $qhead.=",mem_req = \'".$resource{"Resource_List.mem"}."\'";
 		  }
 		if ( defined($resource{"resources_used.mem"}) )
 		  {
-		    $uhead.=",mem_kb = \'".$resource{"resources_used.mem"}."\'";
-		    $ihead.=",mem_kb";
-		    $itail.=",\'$mem\'";
+		    $qhead.=",mem_kb = \'".$resource{"resources_used.mem"}."\'";
 		  }
 		if ( defined($resource{"Resource_List.vmem"}) )
 		  {
-		    $uhead.=",vmem_req = \'".$resource{"Resource_List.vmem"}."\'";
-		    $ihead.=",vmem_req";
-		    $itail.=",\'".$resource{"Resource_List.vmem"}."\'";
+		    $qhead.=",vmem_req = \'".$resource{"Resource_List.vmem"}."\'";
 		  }
 		if ( defined($resource{"resources_used.vmem"}) )
 		  {
-		    $uhead.=",vmem_kb = \'".$resource{"resources_used.vmem"}."\'";
-		    $ihead.=",vmem_kb";
-		    $itail.=",\'$vmem\'";
+		    $qhead.=",vmem_kb = \'".$resource{"resources_used.vmem"}."\'";
 		  }
 		if ( defined($resource{"resources_used.mppe"}) )
 		  {
-		    $uhead.=",mppe = \'".$resource{"resources_used.mppe"}."\'";
-		    $ihead.=",mppe";
-		    $itail.=",\'".$resource{"resources_used.mppe"}."\'";
+		    $qhead.=",mppe = \'".$resource{"resources_used.mppe"}."\'";
 		  }		
 		if ( defined($resource{"resources_used.mppssp"}) )
 		  {
-		    $uhead.=",mppssp = \'".$resource{"resources_used.mppssp"}."\'";
-		    $ihead.=",mppssp";
-		    $itail.=",\'".$resource{"resources_used.mppssp"}."\'";
+		    $qhead.=",mppssp = \'".$resource{"resources_used.mppssp"}."\'";
 		  }		
 		if ( defined($resource{"exec_host"}) )
 		  {
-		    $uhead.=",hostlist = \'".$resource{"exec_host"}."\'";
-		    $ihead.=",hostlist";
-		    $itail.=",\'".$resource{"exec_host"}."\'";
+		    $qhead.=",hostlist = \'".$resource{"exec_host"}."\'";
 		  }
 		if ( defined($resource{"Exit_status"}) )
 		  {
-		    $uhead.=",exit_status = \'".$resource{"Exit_status"}."\'";
-		    $ihead.=",exit_status";
-		    $itail.=",\'".$resource{"Exit_status"}."\'";
+		    $qhead.=",exit_status = \'".$resource{"Exit_status"}."\'";
 		  }
 		if ( defined($resource{"Resource_List.software"}) )
 		  {
-		    $uhead.=",software = \'".$resource{"Resource_List.software"}."\'";
-		    $ihead.=",software";
-		    $itail.=",\'".$resource{"Resource_List.software"}."\'";
+		    $qhead.=",software = \'".$resource{"Resource_List.software"}."\'";
 		  }
-                if ( defined($resource{"resources_used.energy_used"}) )
-                  {
-                    $uhead.=",energy = \'".$resource{"resources_used.energy_used"}."\'";
-                    $ihead.=",energy";
-                    $itail.=",\'".$resource{"resources_used.energy_used"}."\'";
-                  }
 		if ( defined($resource{"account"}) )
 		  {
-		    $uhead.=",account = \'".$resource{"account"}."\'";
-		    $ihead.=",account";
-		    $itail.=",\'".$resource{"account"}."\'";
+		    $qhead.=",account = \'".$resource{"account"}."\'";
 		  }
-		$ihead.="\)";
-		$itail.="\);";
-		
-		$update = $uhead.$utail;
-		$insert = $ihead.$itail;
-	      }
-	    if ( &keyval_exists("jobid",$job,$dbtable,$dbh)>0 )
-	      {
-		# This jobid already exists in the table,
-		# so do an UPDATE
-		$query = $update;
 	      }
 	    else
 	      {
 		# This jobid does *NOT* already exist in the table,
 		# so do an INSERT
-		$query = $insert;
-	      }
-            #print "$query\n";
-	    if ( $query ne "" )
-              {
-	    	if ( ! $dbh->do($query) )
-		  { 
-	    	    if ( $query eq $insert && $update ne "" )
-	    	      {
-	    		# INSERT failed, which can happen due to a race
-	    		# condition with job script capture; try doing
-	    		# the UPDATE before squawking about it
-	    		$dbh->do($update) || warn "$0:  query failed -- ".$dbh::errstr."\n".$update;
-	    	      }
-	    	    else
-	    	      {
-	    	        warn "$0:  query failed -- ".$dbh::errstr."\n".$query;
-		      }
+		$qhead = "INSERT INTO $dbtable \(jobid,system";
+		$qtail = " VALUES \(\'$job\',\'$hostname\'";
+		if ( defined($resource{"user"}) )
+		  {
+		    $qhead.=",username";
+		    $qtail.=",\'".$resource{"user"}."\'";
 		  }
+		if ( defined($resource{"group"}) )
+		  {
+		    $qhead.=",groupname";
+		    $qtail.=",\'".$resource{"group"}."\'";
+		  }
+		if ( defined($resource{"owner"}) )
+		  {
+		    $submithost = $resource{"owner"};
+		    $submithost =~ s/^.+\@//;
+		    $qhead.=",submithost";
+		    $qtail.=",\'".$submithost."\'";
+		  }
+		if ( defined($resource{"jobname"}) )
+		  {
+		    $qhead.=",jobname";
+		    $qtail.=",\'".$resource{"jobname"}."\'";
+		  }
+		if ( $nprocs>0 )
+		  {
+		    $qhead.=",nproc";
+		    $qtail.=",\'$nprocs\'";
+		  }
+		if ( defined($resource{"Resource_List.nodes"}) )
+		  {
+		    $qhead.=",nodes";
+		    $qtail.=",\'".$resource{"Resource_List.nodes"}."\'";
+		  }
+                if ( defined($resource{"Resource_List.feature"}) )
+                  {
+                    $qhead.=",feature";
+                    $qtail.=",\'".$resource{"Resource_List.feature"}."\'";
+                  }
+		if ( defined($resource{"Resource_List.gres"}) )
+                  {
+                    $qhead.=",gres";
+                    $qtail.=",\'".$resource{"Resource_List.gres"}."\'";
+                  }
+		if ( defined($resource{"queue"}) )
+		  {
+		    $qhead.=",queue";
+		    $qtail.=",\'".$resource{"queue"}."\'";
+		  }
+                if ( defined($resource{"Resource_List.qos"}) )
+                  {
+                    $qhead.=",qos";
+                    $qtail.=",\'".$resource{"Resource_List.qos"}."\'";
+                  }
+		if ( defined($resource{"ctime"}) )
+		  {
+		    $qhead.=",submit_ts";
+		    $qtail.=",\'".$resource{"ctime"}."\'";
+		    $qhead.=",submit_date";
+		    $qtail.=",DATE(FROM_UNIXTIME(\'".$resource{"ctime"}."\'))";
+		  }
+		if ( defined($resource{"start"}) )
+		  {
+		    $qhead.=",start_ts";
+		    $qtail.=",\'".$resource{"start"}."\'";
+		    $qhead.=",start_date";
+		    $qtail.=",DATE(FROM_UNIXTIME(\'".$resource{"start"}."\'))";
+		  }
+		if ( defined($resource{"end"}) )
+		  {
+		    $qhead.=",end_ts";
+		    $qtail.=",\'".$resource{"end"}."\'";
+		    $qhead.=",end_date";
+		    $qtail.=",DATE(FROM_UNIXTIME(\'".$resource{"end"}."\'))";
+		  }
+		if ( defined($resource{"Resource_List.cput"}) )
+		  {
+		    $qhead.=",cput_req";
+		    $qtail.=",\'".$resource{"Resource_List.cput"}."\'";
+		  }
+		if ( defined($resource{"resources_used.cput"}) )
+		  {
+		    $qhead.=",cput";
+		    $qtail.=",\'".$resource{"resources_used.cput"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.walltime"}) )
+		  {
+		    $qhead.=",walltime_req";
+		    $qtail.=",\'".$resource{"Resource_List.walltime"}."\'";
+		  }
+		if ( defined($resource{"resources_used.walltime"}) )
+		  {
+		    $qhead.=",walltime";
+		    $qtail.=",\'".$resource{"resources_used.walltime"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.mem"}) )
+		  {
+		    $qhead.=",mem_req";
+		    $qtail.=",\'".$resource{"Resource_List.mem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.mem"}) )
+		  {
+		    $qhead.=",mem_kb";
+		    $qtail.=",\'$mem\'";
+		  }
+		if ( defined($resource{"Resource_List.vmem"}) )
+		  {
+		    $qhead.=",vmem_req";
+		    $qtail.=",\'".$resource{"Resource_List.vmem"}."\'";
+		  }
+		if ( defined($resource{"resources_used.vmem"}) )
+		  {
+		    $qhead.=",vmem_kb";
+		    $qtail.=",\'$vmem\'";
+		  }
+		if ( defined($resource{"resources_used.mppe"}) )
+		  {
+		    $qhead.=",mppe";
+		    $qtail.=",\'".$resource{"resources_used.mppe"}."\'";
+		  }		
+		if ( defined($resource{"resources_used.mppssp"}) )
+		  {
+		    $qhead.=",mppssp";
+		    $qtail.=",\'".$resource{"resources_used.mppssp"}."\'";
+		  }		
+		if ( defined($resource{"exec_host"}) )
+		  {
+		    $qhead.=",hostlist";
+		    $qtail.=",\'".$resource{"exec_host"}."\'";
+		  }
+		if ( defined($resource{"Exit_status"}) )
+		  {
+		    $qhead.=",exit_status";
+		    $qtail.=",\'".$resource{"Exit_status"}."\'";
+		  }
+		if ( defined($resource{"Resource_List.software"}) )
+		  {
+		    $qhead.=",software";
+		    $qtail.=",\'".$resource{"Resource_List.software"}."\'";
+		  }
+		if ( defined($resource{"account"}) )
+		  {
+		    $qhead.=",account";
+		    $qtail.=",\'".$resource{"account"}."\'";
+		  }
+
+		$qhead.="\)";
+		$qtail.="\);";
 	      }
+	    $query=$qhead.$qtail;
+	    #print "$query\n";
+	    $dbh->do($query) || die "$0:  query failed -- ".$dbh::errstr;
 	  }
       }
-    close(ACCTFILE);
     shift(@ARGV);
   }
 $dbh->disconnect();

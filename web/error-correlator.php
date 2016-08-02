@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006 Ohio Supercomputer Center
-# Copyright 2008, 2009, 2010, 2011, 2014 University of Tennessee
+# Copyright 2008, 2009, 2010, 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -28,8 +28,7 @@ page_header($title);
 $props=array("username","groupname","account","jobname","nproc","mppe","mppssp",
 	     "nodes","feature","gres","queue","qos","submit_ts","start_ts","end_ts","cput_req",
 	     "cput","walltime_req","walltime","mem_req","mem_kb",
-	     "vmem_req","vmem_kb","energy","software","submithost","hostlist",
-	     "exit_status","script","sw_app");
+	     "vmem_req","vmem_kb","software","hostlist","exit_status","script");
 
 // special key "all=1" turns on all the $props.
 if (!empty($_POST['all'])) {
@@ -77,7 +76,6 @@ if ( isset($_POST['error_time']) )
 	echo "</TABLE>\n";
       }
     db_disconnect($db);
-    page_timer();
     bookmarkable_url();
   }
 else

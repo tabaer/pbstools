@@ -14,7 +14,6 @@ CREATE TABLE Jobs (
   nodes        TEXT,
   nodect       INT UNSIGNED DEFAULT 0,
   feature      TINYTEXT,
-  gattr        TINYTEXT,
   gres         TINYTEXT,
   queue        TINYTEXT,
   qos          TINYTEXT,
@@ -32,12 +31,10 @@ CREATE TABLE Jobs (
   mem_kb       INT UNSIGNED,
   vmem_req     TINYTEXT,
   vmem_kb      INT UNSIGNED,
-  energy       INT UNSIGNED DEFAULT 0,
   software     TINYTEXT,
   hostlist     TEXT,
   exit_status  INT,
   script       MEDIUMTEXT,
-  sw_app       TINYTEXT,
   contact      TINYTEXT
 );
 CREATE INDEX system_jobs ON Jobs (system);
@@ -48,20 +45,9 @@ CREATE INDEX queue_jobs ON Jobs (queue(16));
 CREATE INDEX submit_jobs ON Jobs (submit_date);
 CREATE INDEX start_jobs ON Jobs (start_date);
 CREATE INDEX end_jobs ON Jobs (end_date);
-CREATE INDEX start_end_jobs ON Jobs (start_date,end_date);
-CREATE INDEX system_start_jobs ON Jobs (system,start_date);
-CREATE INDEX system_end_jobs ON Jobs (system,end_date);
-CREATE INDEX system_start_end_jobs ON Jobs (system,start_date,end_date);
-CREATE INDEX sw_app_jobs ON Jobs (sw_app(32));
 GRANT INSERT,UPDATE,SELECT ON Jobs TO 'pbsacct'@'localhost' IDENTIFIED BY 'pbsRroxor';
 GRANT SELECT ON Jobs TO 'webapp'@'localhost';
 GRANT SELECT ON Jobs TO 'cmdline'@'localhost';
-CREATE TABLE Software (
-  package VARCHAR(32) PRIMARY KEY
-);
-GRANT INSERT,UPDATE,SELECT ON Software TO 'pbsacct'@'localhost' IDENTIFIED BY 'pbsRroxor';
-GRANT SELECT ON Software TO 'webapp'@'localhost';
-GRANT SELECT ON Software TO 'cmdline'@'localhost';
 CREATE TABLE Config (
   row_number   SERIAL PRIMARY KEY,
   system       VARCHAR(8),
