@@ -25,11 +25,9 @@ sub software_list()
   my @list=(
 	    "3dcavity",
 	    "3dh",
-            "3n_bound",
 	    "55_x",
 	    "a_out",
 	    "abaqus",
-            "ABCsampler",
 	    "abinit",
 	    "accorrsf",
 	    "aces2",
@@ -45,19 +43,16 @@ sub software_list()
 	    "airebo",
 	    "AliEn",
 	    "amber",
-            "amdat",
 	    "amg2006",
 	    "AnalyzePathP",
 	    "anolis",
 	    "ansys",
 	    "anton",
-            "AraSim",
 	    "armcibench",
 	    "arps",
 	    "arts",
 	    "ash",
 	    "astrobear",
-            "atat",
 	    "athena",
 	    "atmc",
 	    "ausam",
@@ -65,7 +60,6 @@ sub software_list()
 	    "awm",
 	    "bam",
 	    "beast",
-            "beopest",
 	    "berkeleygw",
 	    "bgw",
 	    "bicg_solver",
@@ -77,7 +71,6 @@ sub software_list()
 	    "brams-opt",
 	    "bugget",
 	    "cactus",
-            "cafemol",
 	    "calc1",
 	    "calc_group_stats",
 	    "cam",
@@ -175,7 +168,6 @@ sub software_list()
 	    "featureComputation",
 	    "fedvr",
 	    "fidap",
-            "firefly",
             "fit_exe",
 	    "flash2",
 	    "flash4",
@@ -186,19 +178,16 @@ sub software_list()
 	    "foam",
 	    "force_free",
 	    "foxexe",
-            "fsc25221",
 	    "fsweep",
 	    "ftb",
 	    "ftes",
 	    "gaac",
-            "gabe",
 	    "gadget",
 	    "gamess",
 	    "garli",
 	    "gaussian",
 	    "gc",
 	    "gdl",
-            "gemc_x",
 	    "gen.v4",
 	    "geodict",
 	    "genlatmu",
@@ -249,7 +238,6 @@ sub software_list()
 	    "idl",
 	    "ifs",
 	    "imb",
-            "imc",
 	    "inca",
 	    "intestine3d",
 	    "ior",
@@ -257,7 +245,6 @@ sub software_list()
 	    "isodata",
 	    "jaguar",
 	    "jet_02",
-            "jetxb",
 	    "jobgrd",
 	    "josephson",
 	    "jrmc",
@@ -273,16 +260,13 @@ sub software_list()
 	    "liso",
 	    "lkh",
 	    "lmf",
-            "lobster",
 	    "lodn",
 	    "lsdyna",
 	    "lsms",
-            "lsp",
 	    "lu_lesh",
 	    "m2md",
 	    "madness",
 	    "maestro",
-            "makethemcross",
 	    "masa",
 	    "mathematica",
 	    "matlab",
@@ -294,7 +278,6 @@ sub software_list()
 	    "md_xx",
 	    "mddriver",
 	    "mdsim",
-            "meamzilla",
 	    "measurements",
 	    "meep",
 	    "meta",
@@ -327,10 +310,8 @@ sub software_list()
 	    "mrobb6dipzz",
 	    "mtrsassi",
 	    "music",
-            "mustem",
 	    "mykim9dgt",
 	    "myq",
-            "mysql",
 	    #"nag",
 	    "namd",
 	    "nb",
@@ -347,7 +328,6 @@ sub software_list()
 	    "npb",
 	    "npemd",
 	    "nplqcd",
-            "nonpareil",
 	    "nsbsintheat",
 	    "nscale",
 	    "nsmpicuf",
@@ -363,8 +343,6 @@ sub software_list()
 	    #"openeye",
 	    "opt_exe",
 	    "optics",
-            "orca",
-            "os2z",
 	    "overlap",
 	    "p3dfft",
 	    "p3ripple",
@@ -391,7 +369,6 @@ sub software_list()
             "phraider",
 	    "pic-star",
             "picard",
-            "picrun",
 	    "pimd",
 	    "pkdgrav",
 	    "pluto",
@@ -408,7 +385,6 @@ sub software_list()
 	    "propagators",
 	    "proto2",
 	    "pse",
-            "psi4",
 	    "psolve",
 	    "pstg",
 	    "pulsar",
@@ -451,7 +427,6 @@ sub software_list()
 	    "sas",
 	    "sauron",
 	    "scalapack",
-            "scattering",
 	    "sddt",
 	    "seissol",
 	    "sfeles",
@@ -462,7 +437,6 @@ sub software_list()
 	    "sigma",
 	    "simfactory",
 	    "simpleio",
-            "simu_pow",
 	    "sleuth",
 	    "sms",
 	    "sne3d",
@@ -470,8 +444,6 @@ sub software_list()
 	    "sord",
 	    "sovereign",
             "spark",
-            "sparkfuse",
-            "spce",
 	    "spdcp",
 	    "srad",
 	    "sses",
@@ -520,7 +492,6 @@ sub software_list()
 	    "vli",
 	    "vorpal",
 	    "vmd",
-            "vnc",
 	    "vpic",
 	    "walksat",
 	    "wave_packet",
@@ -565,7 +536,6 @@ sub software_match_list()
   $pkgmatch{'adda'} = "( script LIKE '%adda%' AND NOT ( script LIKE '%FindRadDat%' ) )";
   $pkgmatch{'adf'} = "( script LIKE '%adf%' AND NOT ( script LIKE '%radfile%' ) AND NOT ( script LIKE '%adfs%' ) )";
   $pkgmatch{'AliEn'} = "( script LIKE '%aliroot%' OR script LIKE '%agent.startup%' )";
-  $pkgmatch{'amdat'} = "script LIKE '%/AMDAT %'";
   $pkgmatch{'arts'} = "( script LIKE '%arts%' AND script NOT LIKE '%starts%' )";
   $pkgmatch{'ash'} = "( script LIKE '%ash_1%' OR script LIKE '%ash_2%' OR script LIKE '%ash_fd%' )";
   $pkgmatch{'athena'} = "script LIKE '%/athena %'";
@@ -592,11 +562,9 @@ sub software_match_list()
   $pkgmatch{'fit_exe'} = "script LIKE '%fit.exe%'";
   $pkgmatch{'fluent'} = "( script LIKE '%fluent%' OR ( software IS NOT NULL AND software LIKE '%fluent%' ) )";
   $pkgmatch{'fsweep'} = "( script LIKE '%fsweep.exe%' OR script LIKE '%fsweep2.exe%' )";
-  $pkgmatch{'gabe'} = "script LIKE '%./gabe %'";
   $pkgmatch{'gamess'} = "( script LIKE '%gamess%' OR script LIKE '%rungms%' OR script LIKE '%rungmx%' )";
   $pkgmatch{'gaussian'} = "( script LIKE '%g98%' OR script LIKE '%g03%' OR script LIKE '%g09%' )";
   $pkgmatch{'gc'} = "script LIKE '%kland_gc%'";
-  $pkgmatch{'gemc_x'} = "script LIKE '%gemc.x%'";
   $pkgmatch{'glast'} = "( script LIKE '%glast%' OR script LIKE '%gp run%' )";
   $pkgmatch{'harness'} = "script LIKE '%test_harness_driver.py%'";
   $pkgmatch{'harris'} = "script LIKE '%harris.cxx.op%'";
@@ -610,11 +578,9 @@ sub software_match_list()
   $pkgmatch{'hsi'} = "( script LIKE '%hsi%' OR script LIKE '%htar%' OR queue='hpss' )";
   $pkgmatch{'ice'} = "script LIKE '%IceModule%'";
   $pkgmatch{'imb'} = "script LIKE '%IMB-%'";
-  $pkgmatch{'imc'} = "script LIKE '%/imc.x%'";
   $pkgmatch{'lammps'} = "( script LIKE '%lammps%' OR script LIKE '% lmp_%' OR script LIKE '%/lmp_%' )";
   $pkgmatch{'liso'} = "script LIKE '%/liso %'";
   $pkgmatch{'lsdyna'} = "( script LIKE '%lsdyna%' OR script LIKE '%ls-dyna%' OR script LIKE '%mpp-dyna%' OR script LIKE '%mpp971%' OR ( software IS NOT NULL AND software LIKE '%lsdyna%' ) )";
-  $pkgmatch{'lsp'} = "script LIKE '%/lsp.%'";
   $pkgmatch{'madness'} = "( script LIKE '%m-a-d-n-e-s-s%' OR script LIKE '%slda%' )";
   $pkgmatch{'md_xx'} = "script LIKE '%md.xx%'";
   $pkgmatch{'meta'} = "( script LIKE '%anti.meta%' OR script LIKE '%para.meta%' OR script LIKE '%xray.meta%' )";
@@ -629,10 +595,8 @@ sub software_match_list()
   $pkgmatch{'omega'} = "script LIKE '%omega.exe%'";
   $pkgmatch{'openeye'} = "( script LIKE '%babel3%' OR script LIKE '%checkcff%' OR script LIKE '%chunker%' OR script LIKE '%fred2%' OR script LIKE '%fredPA%' OR script LIKE '%ligand_info%' OR script LIKE '%makefraglib%' OR script LIKE '%makerocsdb%' OR script LIKE '%nam2mol%' OR script LIKE '%omega2%' OR script LIKE '%szybki%' )";
   $pkgmatch{'opt_exe'} = "( script LIKE '%opt_exe%' OR script LIKE '%scriptLaunchAll%' )";
-  $pkgmatch{'os2z'} = "( script LIKE '%/oS2x_%' OR script LIKE '%/oS2z_%' )";
   $pkgmatch{'paraview'} = "( script LIKE '%paraview%' OR script LIKE '%pvserver%' )";
   $pkgmatch{'pse'} = "( script LIKE '%/PSE\n' OR script LIKE '%/PSE2\n' )";
-  $pkgmatch{'psi4'} = "( script LIKE '%/psi4 %' OR script LIKE '%\npsi4%' )";
   $pkgmatch{'pwscf'} = "( script LIKE '%pwscf%' OR script LIKE '%/pw.x %' OR script LIKE '%/ph.x %' )";
   $pkgmatch{'r_out'} = "( script LIKE '%/r.out %' OR script LIKE '%/r.out\n%' )";
   $pkgmatch{'radhyd'} = "( script LIKE '%radhyd%' OR script LIKE '%rhd_hyb%' OR script LIKE '%orion2%' )";
@@ -645,8 +609,6 @@ sub software_match_list()
   $pkgmatch{'rtp'} = "( script LIKE '%rtp%' AND NOT ( script like '%RestartP%' ) AND NOT ( script LIKE '%addpertpath%' ) )";
   $pkgmatch{'sable'} = "( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )";
   $pkgmatch{'sas'} = "( script LIKE '%\nsas%' OR ( software IS NOT NULL AND software LIKE '%sas%' ) OR queue  LIKE '%sas%' )";
-  $pkgmatch{'scattering'} = "script LIKE '%/scattering %'";
-  $pkgmatch{'simu_pow'} = "( script LIKE '%simu_pow%' OR script LIKE '%simu_thres%' )";
   $pkgmatch{'spark'} = "script LIKE '%spark-submit%'";
   $pkgmatch{'tbms'} = "( script LIKE '%tbms%dvm%' OR script LIKE '%distr%dvm%' OR script LIKE '%jac%dvm%' OR script LIKE '%mt%dvm%' )";
   $pkgmatch{'track'} = "script LIKE '%TRACKdir%'";
@@ -654,7 +616,6 @@ sub software_match_list()
   $pkgmatch{'upc'} = "script LIKE '%upcrun%'";
   $pkgmatch{'vasp'} = "script LIKE '%vasp%'";
   $pkgmatch{'visit'} = "( script LIKE '%visit%' AND script NOT LIKE '%revisit%' )";
-  $pkgmatch{'vnc'} = "script LIKE '%vncserver%'";
   $pkgmatch{'vpic'} = "( script LIKE '%npic%' OR script LIKE '%open.cxx.op%' )";
   $pkgmatch{'xtest'} = "script LIKE '%/xtest%'";
   $pkgmatch{'xx'} = "script LIKE '%./xx\n%'";
@@ -713,7 +674,7 @@ sub software_match_list()
   $pkgmatch{'radhyd'} = "( script LIKE '%radhyd%' AND NOT ( ".$pkgmatch{'chimera'}." ) )";
   $pkgmatch{'res'} = "( script LIKE '%/res_%' AND NOT ( ".$pkgmatch{'enzo'}." ) AND NOT ( ".$pkgmatch{'grib'}." ) AND NOT ( ".$pkgmatch{'lammps'}." ) )";
   $pkgmatch{'run_im'} = "( script LIKE '%run_im%' AND NOT ( ".$pkgmatch{'aims'}." ) AND NOT ( ".$pkgmatch{'flash4'}." ) AND NOT ( ".$pkgmatch{'ncl'}." ) AND NOT ( ".$pkgmatch{'wrf'}." ) )";
-  $pkgmatch{'run_xyzvort'} = "( ( script LIKE '%run_xvort%' OR script LIKE '%run_yvort%' OR script LIKE '%run_zvort%' OR script LIKE '%run_thpert%' OR script LIKE '%run_u%' OR script LIKE '%run_v%' OR script LIKE '%run_w%' OR script LIKE '%run_dBZ%' ) AND NOT ( ".$pkgmatch{'beopest'}." ) AND NOT ( ".$pkgmatch{'lobster'}." ) AND NOT ( ".$pkgmatch{'paraview'}." ) AND NOT ( ".$pkgmatch{'vasp'}." ) AND NOT ( ".$pkgmatch{'vnc'}." ) AND NOT ( ".$pkgmatch{'wrf'}." ) )";
+  $pkgmatch{'run_xyzvort'} = "( ( script LIKE '%run_xvort%' OR script LIKE '%run_yvort%' OR script LIKE '%run_zvort%' OR script LIKE '%run_thpert%' OR script LIKE '%run_u%' OR script LIKE '%run_v%' OR script LIKE '%run_w%' OR script LIKE '%run_dBZ%' ) AND NOT ( ".$pkgmatch{'paraview'}." ) )";
   $pkgmatch{'s3d'} = "( script LIKE '%s3d%' AND NOT ( ".$pkgmatch{'adf'}." ) AND NOT ( ".$pkgmatch{'arps'}." ) AND NOT ( ".$pkgmatch{'cam'}." ) AND NOT ( ".$pkgmatch{'cctm'}." ) )";
   $pkgmatch{'sgf'} = "( script LIKE '%sgf%' AND NOT ( ".$pkgmatch{'lsdyna'}." ) AND NOT ( ".$pkgmatch{'sigma'}." ) )";
   $pkgmatch{'sord'} = "( script LIKE '%sord%' AND NOT ( ".$pkgmatch{'namd'}." ) )";
@@ -879,7 +840,7 @@ else
 	    if ( $pkg1 ne $pkg2 && !defined($done{$pkg1}{$pkg2}) )
 	      {
 		#print "$pkg1:$pkg2\n";
-		my $sql = "SELECT '".$pkg1."' AS pkg1, '".$pkg2."' AS pkg2, COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours FROM Jobs WHERE system='".$hostname."' AND ( ( sw_app='".$pkg1."' AND ( ".$pkgmatch{$pkg2}." ) ) OR ( sw_app='".$pkg2."' AND ( ".$pkgmatch{$pkg1}." )  ) )";
+		my $sql = "SELECT '".$pkg1."' AS pkg1, '".$pkg2."' AS pkg2, COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours FROM Jobs WHERE system='".$hostname."' AND sw_app='".$pkg1."' AND ( ".$pkgmatch{$pkg2}." )";
 		if ( defined($start_date) )
 		  {
 		    $sql .= " AND submit_date>='".$start_date."'";

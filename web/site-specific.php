@@ -1,5 +1,5 @@
 <?php
-# Copyright 2006, 2007, 2008, 2015, 2016 Ohio Supercomputer Center
+# Copyright 2006, 2007, 2008 Ohio Supercomputer Center
 # Copyright 2008, 2009, 2010, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL$
@@ -115,11 +115,8 @@ function sys_list()
   return array("opt",
 	       "oak",
 	       "ruby",
-	       "bmibucki",
-	       "bmiowens",
-	       "oak-gpu",
-	       "ruby-gpu",
-	       "ruby-mic");
+	       "bucki",
+	       "owens");
 }
 
 # system selector
@@ -160,9 +157,6 @@ function sysselect($system)
   if ( $system=='xt4-all' ) return "system = 'kraken' OR system = 'athena'";
   if ( $system=='keeneland' ) return "system = 'kid' OR system = 'kfs' OR system = 'kids'";
   if ( $system=='beacon-all' ) return "system = 'beacon' OR system = 'beacon2' OR system = 'bcndev'";
-  if ( $system=='oak-gpu' ) return "system = 'oak' AND hostlist REGEXP '^n0(28[19]|29[0-9]|3[01][0-9]|320|64[1-9]|65[0-9]|660)' ";
-  if ( $system=='ruby-gpu' ) return "system = 'ruby' AND hostlist REGEXP '^r02(0[1-9]|1[0-9]|20)' ";
-  if ( $system=='ruby-mic' ) return "system = 'ruby' AND hostlist REGEXP '^r0(2(2[1-9]|3[0-9]|40)|50[1-5])' ";
   return "system LIKE '".$system."'";
 }
 
@@ -213,33 +207,9 @@ function nprocs($system)
   return 0;
 }
 
-function bounded_walltime($start_date,$end_date,$datelogic="during")
+function cpuhours($db,$system)
 {
-  if ( $datelogic!="during" )
-    {
-      return "walltime";
-    }
-  elseif ( isset($start_date) && isset($end_date) )
-    {
-      return "CASE  WHEN ( start_date>='".$start_date."' AND end_date<='".$end_date."' ) THEN walltime   WHEN ( start_date<='".$start_date."' AND end_date<='".$end_date."' ) THEN ADDTIME(walltime,TIMEDIFF(FROM_UNIXTIME(start_ts),'".$start_date." 00:00:00'))   WHEN ( start_date>='".$start_date."' AND end_date>='".$end_date."' ) THEN ADDTIME(walltime,TIMEDIFF('".$end_date." 23:59:59',FROM_UNIXTIME(end_ts)))   ELSE '00:00:00' END";
-    }
-  elseif ( isset($start_date) )
-    {
-      return "CASE  WHEN start_date<'".$start_date."' THEN ADDTIME(walltime,TIMEDIFF(FROM_UNIXTIME(start_ts),'".$start_date." 00:00:00'))   ELSE walltime END";
-    }
-  elseif ( isset($end_date) )
-    {
-      return "CASE  WHEN end_date>'".$end_date."' THEN  ADDTIME(walltime,TIMEDIFF('".$end_date." 23:59:59',FROM_UNIXTIME(end_ts)))  ELSE walltime END";
-    }
-  else
-    {
-      return "walltime";
-    }
-}
-
-function cpuhours($db,$system,$start_date,$end_date,$datelogic="during")
-{
-  $retval = "nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+  $retval = "nproc*TIME_TO_SEC(walltime)/3600.0";
   if ( $system=="%" || $system=="keeneland" || $system=="kraken-all" || $system=="xt4-all" )
     {
       	# get list of systems
@@ -264,22 +234,22 @@ function cpuhours($db,$system,$start_date,$end_date,$datelogic="during")
 	  {
 	    if ( $thissystem!="%" )
 	      {
-		$retval .= " WHEN '".$thissystem."' THEN ".cpuhours($db,$thissystem,$start_date,$end_date,$datelogic)."\n";
+		$retval .= " WHEN '".$thissystem."' THEN ".cpuhours($db,$thissystem)."\n";
 	      }
 	  }
 	$retval .= " END";
     }
   elseif ( $system=="nautilus" )
     {
-      $retval = "8*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "8*nodect*TIME_TO_SEC(walltime)/3600.0";
     }
   else if ( $system=="kid" || $system=="kids" )
     {
-      $retval = "12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "12*nodect*TIME_TO_SEC(walltime)/3600.0";
     }
   else if ( $system=="bcndev" || $system=="beacon" || $system=="beacon2" || $system=="kfs" )
     {
-      $retval = "16*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "16*nodect*TIME_TO_SEC(walltime)/3600.0";
     }
   else if ( $system=="x1" )
     {
@@ -288,9 +258,9 @@ function cpuhours($db,$system,$start_date,$end_date,$datelogic="during")
   return $retval;
 }
 
-function nodehours($db,$system,$start_date,$end_date,$datelogic="during")
+function nodehours($db,$system)
 {
-  $retval = "nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+  $retval = "nodect*TIME_TO_SEC(walltime)/3600.0";
   if ( $system=="%" || $system=="keeneland" || $system=="kraken-all" || $system=="xt4-all" )
     {
       	# get list of systems
@@ -315,29 +285,29 @@ function nodehours($db,$system,$start_date,$end_date,$datelogic="during")
 	  {
 	    if ( $thissystem!="%" )
 	      {
-		$retval .= " WHEN '".$thissystem."' THEN ".nodehours($db,$thissystem,$start_date,$end_date,$datelogic)."\n";
+		$retval .= " WHEN '".$thissystem."' THEN ".nodehours($db,$thissystem)."\n";
 	      }
 	  }
 	$retval .= " END";
     }
   else if ( $system=="kraken" || $system=="athena" )
     {
-      $retval = "(nproc/4)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "(nproc/4)*TIME_TO_SEC(walltime)/3600.0";
     }
   else if ( $system=="krakenpf" )
     {
-      $retval = "(nproc/12)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "(nproc/12)*TIME_TO_SEC(walltime)/3600.0";
     }
   else if ( $system=="darter" )
     {
-      $retval = "(nproc/16)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "(nproc/16)*TIME_TO_SEC(walltime)/3600.0";
     }
   return $retval;
 }
 
-function charges($db,$system,$start_date,$end_date,$datelogic="during")
+function charges($db,$system)
 {
-  $retval = cpuhours($db,$system,$start_date,$end_date,$datelogic);
+  $retval = cpuhours($db,$system);
   if ( $system=="%" || $system=="keeneland" || $system=="kraken-all" || $system=="xt4-all" )
     {
       	# get list of systems
@@ -362,44 +332,44 @@ function charges($db,$system,$start_date,$end_date,$datelogic="during")
 	  {
 	    if ( $thissystem!="%" )
 	      {
-		$retval .= " WHEN '".$thissystem."' THEN ".charges($db,$thissystem,$start_date,$end_date,$datelogic)."\n";
+		$retval .= " WHEN '".$thissystem."' THEN ".charges($db,$thissystem)."\n";
 	      }
 	  }
 	$retval .= " END";
     }
   else if ( $system=="bcndev" | $system=="beacon" | $system=="beacon2" )
     {
-      $retval = "nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "nodect*TIME_TO_SEC(walltime)/3600.0";
     }
   else if ( $system=="kid" | $system=="kids" | $system=="kfs" )
     {
-      $retval = "3*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "3*nodect*TIME_TO_SEC(walltime)/3600.0";
     }
   else if ( $system=="darter" )
     {
-      $retval = "2*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
+      $retval = "2*".cpuhours($db,$system);
     }
   else if ( $system=="opt" )
     {
-      $retval = "0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
+      $retval = "0.1*".cpuhours($db,$system);
     }
-  else if ( $system=="oak" | $system=="oak-gpu" )
+  else if ( $system=="oak" )
     {
       $retval  = "CASE queue";
-      $retval .= " WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " WHEN 'parallel' THEN 0.1*12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
+      $retval .= " WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(walltime)/3600.0";
+      $retval .= " WHEN 'parallel' THEN 0.1*12*nodect*TIME_TO_SEC(walltime)/3600.0";
+      $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(walltime)/3600.0";
+      $retval .= " ELSE 0.1*".cpuhours($db,$system);
       $retval .= " END";
     }
-  else if ( $system=="ruby" | $system=="ruby-gpu" | $system=="ruby-mic" )
+  else if ( $system=="ruby" )
     {
       $retval  = "CASE queue";
-      $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " ELSE 0.1*20*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(walltime)/3600.0";
+      $retval .= " ELSE 0.1*20*nodect*TIME_TO_SEC(walltime)/3600.0";
       $retval .= " END";
     }
-  else if ( $system=="bmibucki" | $system=="bmiowens" | $system=="quick" )
+  else if ( $system=="bucki" | $system=="owens" | $system=="quick" )
     {
       $retval = "0.0";
     }
@@ -421,12 +391,11 @@ function institution_match()
 {
 # OSC
   $case  = "CASE";
-  $case .= " WHEN system='bmibucki' THEN 'osu'";
-  $case .= " WHEN system='bmiowens' THEN 'osu'";
+  $case .= " WHEN system='bucki' THEN 'osu'";
+  $case .= " WHEN system='owens' THEN 'osu'";
   $case .= " WHEN username REGEXP '^[a-z]{4}[0-9]{3,4}$' THEN SUBSTRING(username,1,4)";
   $case .= " WHEN username REGEXP '^[a-z]{3}[0-9]{3,4}$' THEN SUBSTRING(username,1,3)";
   $case .= " WHEN username REGEXP '^an[0-9]{3,4}$' THEN 'awe'";
-  $case .= " WHEN username='nova' THEN 'ucn'";
   $case .= " ELSE 'osc'";
   $case .= " END";
   return $case." AS institution";
@@ -469,23 +438,11 @@ function user_accounts($user = NULL)
   $accts = array();
   # OSC ASSUMPTION:  accounts are groups fitting a particular pattern
   $groups = user_groups($user);
-  # staff projects that have a different name in LDAP than in the USDB
-  $wonky_groups = array();
-  $wonky_groups['appl'] = "PZS0002";
-  $wonky_groups['gsi'] = "PZS0420";
-  $wonky_groups['oscgen'] = "PZS0200";
-  $wonky_groups['oscguest'] = "PZS0205";
-  $wonky_groups['oscsys'] = "PZS0201";
-  $wonky_groups['sysp'] = "PZS0090";
   foreach ( $groups as $group )
     {
       if ( preg_match('/^P[A-Z]{2,3}\d{4}$/',$group)==1 )
 	{
 	  array_push($accts,$group);
-	}
-      else if ( isset($wonky_groups[$group]) )
-	{
-	  array_push($accts,$wonky_groups[$group]);
 	}
     }
   # NICS ASSUMPTION:  user->account mappings can be groveled out of
@@ -1014,9 +971,7 @@ function software_list($db = NULL)
     {
       # if we do have access to the DB, query out all the known packages
       $list = array();
-      # do the sort and filter out null here rather than in the DB
-      #$sql = "SELECT DISTINCT(sw_app) FROM Jobs";
-      $sql = "SELECT sw_app FROM Jobs GROUP BY sw_app";
+      $sql = "SELECT DISTINCT(sw_app) AS package FROM Jobs WHERE sw_app IS NOT NULL ORDER BY package";
       #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 
       $result = db_query($db,$sql);
@@ -1028,15 +983,11 @@ function software_list($db = NULL)
 	{
 	  foreach ($row as $element)
 	    {
-              if ( $element!="" )
-		{
-                  #echo "<PRE>$element</PRE>\n";
-		  array_push($list,$element);
-		}
+	      #echo "<PRE>$element</PRE>\n";
+	      array_push($list,$element);
 	    }
 	}
 
-      natsort($list);
       return $list;
     }
 }

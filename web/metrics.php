@@ -127,43 +127,23 @@ function units($metric)
 // date selector
 function dateselect($action,$start_date,$end_date)
 {
-  if ( $action=="during" )
-    {
-      if ( isset($start_date) && isset($end_date) &&
-	    $start_date!="" && $end_date!="" )
-	{
-	  return "( start_date BETWEEN '".$start_date."' AND '".$end_date."' ) OR ( end_date BETWEEN '".$start_date."' AND '".$end_date."' ) OR ( start_date<='".$start_date."' AND end_date>='".$end_date."' )";
-	}
-      else if ( isset($start_date) && $start_date!="" )
-	{
-	  return "start_date>='".$start_date."'";
-	}
-      else if ( isset($end_date) && $end_date!="" )
-	{
-	  return "end_date>='".$end_date."'";
-	}
-      else
-	{
-	  return "start_date IS NOT NULL AND end_date IS NOT NULL";
-	}
-    }
-  else if ( isset($start_date) && isset($end_date) &&
-	    $start_date!="" && $end_date!="" )
-    {
-      return $action."_date BETWEEN '".$start_date."' AND '".$end_date."'";
-    }
-  else if ( isset($start_date) && $start_date!="" )
-    {
-      return $action."_date >= '".$start_date."'";
-    }
-  else if ( isset($end_date) && $end_date!="" )
-    {
-      return $action."_date <= '".$_POST['end_date']."'";
-    }
-  else
-    {
-      return $action."_date IS NOT NULL";
-    }
+    if ( isset($start_date) && isset($end_date) &&
+	 $start_date!="" && $end_date!="" )
+      {
+	return $action."_date >= '".$start_date."' AND ".$action."_date <= '".$end_date."'";
+      }
+    else if ( isset($start_date) && $start_date!="" )
+      {
+	return $action."_date >= '".$start_date."'";
+      }
+    else if ( isset($end_date) && $end_date!="" )
+     {
+	return $action."_date <= '".$_POST['end_date']."'";
+      }
+    else
+      {
+	return $action."_date IS NOT NULL";
+      }
 }
 
 
@@ -220,39 +200,39 @@ function ndays($db,$system,$start_date,$end_date)
 
 
 // metric -> column mapping
-function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
+function columns($metric,$system,$db)
 {
-  if ( $metric=='cpuhours' ) return "SUM(".cpuhours($db,$system,$start_date,$end_date,$datelogic).") AS cpuhours";
-  if ( $metric=='nodehours' ) return "SUM(".nodehours($db,$system,$start_date,$end_date,$datelogic).") AS nodehours";
-  if ( $metric=='charges' ) return "SUM(".charges($db,$system,$start_date,$end_date,$datelogic).") AS charges";
-  if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(start_ts-submit_ts)) AS 'MIN(qtime)', SEC_TO_TIME(MAX(start_ts-submit_ts)) AS 'MAX(qtime)', SEC_TO_TIME(AVG(start_ts-submit_ts)) AS 'AVG(qtime)' ,SEC_TO_TIME(STDDEV(start_ts-submit_ts))  AS 'STDDEV(qtime)'";
-  if ( $metric=='mem_kb' ) return "MIN(mem_kb), MAX(mem_kb), AVG(mem_kb), STDDEV(mem_kb)";
-  if ( $metric=='vmem_kb' ) return "MIN(vmem_kb), MAX(vmem_kb), AVG(vmem_kb), STDDEV(vmem_kb)";
-  if ( $metric=='walltime' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(walltime))) AS 'MIN(walltime)', SEC_TO_TIME(MAX(TIME_TO_SEC(walltime))) AS 'MAX(walltime)', SEC_TO_TIME(AVG(TIME_TO_SEC(walltime))) AS 'AVG(walltime)', SEC_TO_TIME(STDDEV(TIME_TO_SEC(walltime))) AS 'STDDEV(walltime)'";
+  if ( $metric=='cpuhours' ) return "SUM(".cpuhours($db,$system).") AS cpuhours";
+  if ( $metric=='nodehours' ) return "SUM(".nodehours($db,$system).") AS nodehours";
+  if ( $metric=='charges' ) return "SUM(".charges($db,$system).") AS charges";
+  if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(start_ts-submit_ts)) AS 'MIN(qtime)',SEC_TO_TIME(MAX(start_ts-submit_ts)) AS 'MAX(qtime)',SEC_TO_TIME(AVG(start_ts-submit_ts)) AS 'AVG(qtime)',SEC_TO_TIME(STDDEV(start_ts-submit_ts))  AS 'STDDEV(qtime)'";
+  if ( $metric=='mem_kb' ) return "MIN(mem_kb),MAX(mem_kb),AVG(mem_kb),STDDEV(mem_kb)";
+  if ( $metric=='vmem_kb' ) return "MIN(vmem_kb),MAX(vmem_kb),AVG(vmem_kb),STDDEV(vmem_kb)";
+  if ( $metric=='walltime' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(walltime))) AS 'MIN(walltime)',SEC_TO_TIME(MAX(TIME_TO_SEC(walltime))) AS 'MAX(walltime)',SEC_TO_TIME(AVG(TIME_TO_SEC(walltime))) AS 'AVG(walltime)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(walltime))) AS 'STDDEV(walltime)'";
   if ( $metric=='cput' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(cput))) AS 'MIN(cput)',SEC_TO_TIME(MAX(TIME_TO_SEC(cput))) AS 'MAX(cput)',SEC_TO_TIME(AVG(TIME_TO_SEC(cput))) AS 'AVG(cput)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(cput))) AS 'STDDEV(cput)'";
-  if ( $metric=='cputime' ) return "SEC_TO_TIME(MIN(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'MIN(cputime)', SEC_TO_TIME(MAX(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'MAX(cputime)', SEC_TO_TIME(AVG(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'AVG(cputime)', SEC_TO_TIME(STDDEV(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'STDDEV(cputime)'";
+  if ( $metric=='cputime' ) return "SEC_TO_TIME(MIN(3600*".cpuhours($db,$system).")) AS 'MIN(cputime)',SEC_TO_TIME(MAX(3600*".cpuhours($db,$system).")) AS 'MAX(cputime)',SEC_TO_TIME(AVG(3600*".cpuhours($db,$system).")) AS 'AVG(cputime)',SEC_TO_TIME(STDDEV(3600*".cpuhours($db,$system).")) AS 'STDDEV(cputime)'";
   if ( $metric=='walltime_acc' ) return "MIN(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MIN(walltime_acc)',MAX(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MAX(walltime_acc)',AVG(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'AVG(walltime_acc)',STDDEV(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'STDDEV(walltime_acc)'";
-  if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), MAX(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), AVG(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), STDDEV(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic)."))";
+  if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system).")),MAX(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system).")),AVG(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system).")),STDDEV(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system)."))";
   if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups";
-  if ( $metric=='backlog' ) return cpuhours($db,$system,$start_date,$end_date,$datelogic)." AS cpuhours, SUM(start_ts-submit_ts)/3600.0 AS 'SUM(qtime)'";
+  if ( $metric=='backlog' ) return cpuhours($db,$system)." AS cpuhours, SUM(start_ts-submit_ts)/3600.0 AS 'SUM(qtime)'";
 #  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
   if ( $metric=='xfactor' ) return "MIN(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MIN(xfactor)', MAX(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MAX(xfactor)', AVG(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'AVG(xfactor)', STDDEV(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'STDDEV(xfactor)'";
   if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS users";
   if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS groups";
   if ( $metric=='accounts' ) return "COUNT(DISTINCT(account)) AS accounts";
-  if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system,$db,$start_date,$end_date,$datelogic);
+  if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system,$db);
   if ( $metric=='nproc' ) return "MIN(nproc),MAX(nproc),AVG(nproc),STDDEV(nproc)";
-  if ( $metric=='usage' ) return columns('cpuhours',$system,$db,$start_date,$end_date,$datelogic).", ".columns('charges',$system,$db,$start_date,$end_date,$datelogic).", ".columns('usercount',$system,$db,$start_date,$end_date,$datelogic);
+  if ( $metric=='usage' ) return columns('cpuhours',$system,$db).",".columns('charges',$system,$db).",".columns('usercount',$system,$db);
   if ( $metric=='pscmetrics' )
     {
       $first = 0;
       $maxs = bucket_maxs("walltime");
-      $column = "SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")<=TIME_TO_SEC('".$maxs[0]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '<=".$maxs[0]."'";
+      $column = "SUM( CASE WHEN TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[0]."') THEN ".cpuhours($db,$system)." ELSE 0 END ) AS '<=".$maxs[0]."'";
       for ( $i=1 ; $i<count($maxs) ; $i++ )
 	{
-	  $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")>TIME_TO_SEC('".$maxs[$i-1]."') AND TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[$i]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
+	  $column .= ", SUM( CASE WHEN TIME_TO_SEC(walltime)>TIME_TO_SEC('".$maxs[$i-1]."') AND TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[$i]."') THEN ".cpuhours($db,$system)." ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
 	}
-      $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
+      $column .= ", SUM( CASE WHEN TIME_TO_SEC(walltime)>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN ".cpuhours($db,$system)." ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
       return $column;
     }
 
@@ -312,7 +292,7 @@ function columnnames($metric)
 }
 
 
-function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic="during",$limit_access=false)
+function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_access=false)
 {
   $query = "SELECT ";
    if ( $xaxis!="" )
@@ -320,12 +300,12 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic=
       $query .= xaxis_column($xaxis,$system).",";
     }
    $query .= "COUNT(jobid) AS jobs";
-   if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
+   if ( columns($metric,$system,$db)!="" )
      {
-       $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
+       $query .= ",".columns($metric,$system,$db);
      }
    $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-     dateselect($datelogic,$start_date,$end_date).")";
+     dateselect("start",$start_date,$end_date).")";
    if ( $limit_access )
      {
        $query .= " AND ( ".limit_user_access($_SERVER['PHP_AUTH_USER'])." )";
@@ -352,12 +332,12 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic=
      {
        # OSC site-specific logic begins here
        #$query .= " UNION SELECT 'osc' AS institution,COUNT(jobid) AS jobs";
-       #if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
+       #if ( columns($metric,$system,$db)!="" )
        # {
-       #   $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
+       #   $query .= ",".columns($metric,$system,$db);
        # }
        #$query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-       # dateselect("during",$start_date,$end_date).") AND ".
+       # dateselect("start",$start_date,$end_date).") AND ".
        # "( username IS NOT NULL AND (username NOT REGEXP '[A-z]{3,4}[0-9]{3,4}' OR username LIKE 'osc%' OR username LIKE 'wrk%' OR username LIKE 'test%') )";
        #if ( clause($xaxis,$metric)!="" )
        # {
@@ -372,12 +352,12 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic=
 
 
 
-function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic="during",$limit_access=false)
+function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$limit_access=false)
 {
   $query = "SELECT ".xaxis_column($xaxis,$system).",COUNT(jobid) AS jobs";
-  if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
+  if ( columns($metric,$system,$db)!="" )
     {
-      $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
+      $query .= ",".columns($metric,$system,$db);
     }
   if ( $xaxis=="walltime" || $xaxis=="walltime_req" )
     {
@@ -392,7 +372,7 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$d
       $query .= ",MIN(".$xaxis.") AS hidden";
     }
   $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
-    dateselect($datelogic,$start_date,$end_date).")";
+    dateselect("start",$start_date,$end_date).")";
   if ( clause($xaxis,$metric)!="" )
     {
       $query .= " AND ".clause($xaxis,$metric);
@@ -1050,7 +1030,7 @@ function jobstats_input_metric($name,$fn)
 }
 
 
-function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$datelogic="during",$limit_access=false)
+function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$limit_access=false)
 {
   
   if (    isset($_POST[$fn.'_graph'])
@@ -1064,37 +1044,37 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$dat
       
       if ( isset($_POST[$fn.'_graph']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_graph($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
       
       if ( isset($_POST[$fn.'_table']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_table($result,xaxis($fn),metric($fn));
 	}
 
       if ( isset($_POST[$fn.'_csv']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_csv($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_xls']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
      if ( isset($_POST[$fn.'_ods']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
 }
 
-function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_date,$datelogic,$limit_access=false)
+function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_date,$limit_access=false)
 {
   
   if (    isset($_POST[$fn.'_graph'])
@@ -1108,40 +1088,40 @@ function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_
       
       if ( isset($_POST[$fn.'_graph']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_graph($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
       
       if ( isset($_POST[$fn.'_table']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_table($result,xaxis($fn),metric($fn));
 	}
 
       if ( isset($_POST[$fn.'_csv']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_csv($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_xls']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_ods']) )
 	{
-	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_bucketed_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$limit_access);
 	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
 }
 
 
-function jobstats_summary($db,$system,$start_date,$end_date,$datelogic="during")
+function jobstats_summary($db,$system,$start_date,$end_date)
 {
-  $result=get_metric($db,$system,"","cpuhours",$start_date,$end_date,$datelogic);
+  $result=get_metric($db,$system,"","cpuhours",$start_date,$end_date);
   $result->fetchInto($row);
   $jobs=$row[0];
   $cpuhours=$row[1];
@@ -1161,7 +1141,7 @@ function jobstats_summary($db,$system,$start_date,$end_date,$datelogic="during")
 	}
     }
   echo "<BR>\n";
-  $usercount=get_metric($db,$system,"","usercount",$start_date,$end_date,$datelogic);
+  $usercount=get_metric($db,$system,"","usercount",$start_date,$end_date);
   $usercount->fetchInto($counts);
   $nusers=$counts[1];
   $ngroups=$counts[2];

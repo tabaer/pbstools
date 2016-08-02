@@ -24,25 +24,23 @@ if (isset($_GET['system']))
 if ( isset($_POST['system']) )
   {
     $title = "Jobs using ".$_POST['pkg']." on ".$_POST['system'];
-    $verb = title_verb($_POST['datelogic']);
-    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && 
-	 $_POST['start_date']==$_POST['end_date'] && $_POST['start_date']!="" )
+    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+	 $_POST['start_date']!="" )
       {
-	$title .= " ".$verb." on ".$_POST['start_date'];
+	$title .= " ending on ".$_POST['start_date'];
       }
-    else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && 
-	      $_POST['start_date']!=$_POST['end_date'] && 
+    else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
 	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
       {
-	$title .= " ".$verb." between ".$_POST['start_date']." and ".$_POST['end_date'];
+	$title .= " ending between ".$_POST['start_date']." and ".$_POST['end_date'];
       }
     else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
       {
-	$title .= " ".$verb." after ".$_POST['start_date'];
+	$title .= " ending after ".$_POST['start_date'];
       }
     else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
       {
-	$title .= " ".$verb." before ".$_POST['end_date'];
+	$title .= " submitted before ".$_POST['end_date'];
       }
   }
 else
@@ -57,10 +55,11 @@ $db =db_connect();
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
-    #$pkgmatch = software_match_list();
-    $sql = "SELECT system, jobid, username, groupname, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic'])." AS cpuhours, ".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic'])." AS charges, queue, script FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) AND sw_app='".$_POST['pkg']."' ORDER BY start_ts;";
+    $pkgmatch = software_match_list();
+    #$sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".cpuhours($db,$_POST['system'])." AS cpuhours, queue, script FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("end",$_POST['start_date'],$_POST['end_date'])." ) AND ".$pkgmatch[$_POST['pkg']]." ORDER BY start_ts;";
+    $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".cpuhours($db,$_POST['system'])." AS cpuhours, queue, script FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect("end",$_POST['start_date'],$_POST['end_date'])." ) AND sw_app='".$_POST['pkg']."' ORDER BY start_ts;";
     #echo "<PRE>".$sql."</PRE>\n";
-    $columns = array("system", "jobid", "username", "groupname", "account", "jobname", "nproc", "nodes", "mem_req", "mem_used", "submit_time", "start_time", "end_time", "walltime_req", "walltime", "cpuhours", "charges", "queue", "script");
+    $columns = array("system", "jobid", "username", "account", "jobname", "nproc", "nodes", "mem_req", "mem_used", "submit_time", "start_time", "end_time", "walltime_req", "walltime", "cpuhours", "queue", "script");
     $file_base = $_POST['system']."-joblist-".$_POST['start_date']."-".$_POST['end_date'];
     // if table
     if ( isset( $_POST['table'] ) )

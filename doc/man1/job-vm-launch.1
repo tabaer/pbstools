@@ -138,15 +138,21 @@ requested by the job.)
 The following job script launches a VM called "ssohub" in the default
 hypervisor and then attaches virt-viewer to it:
 
-.nf
+.NF
 #PBS -N ssohub
+.BR
 #PBS -S /bin/bash
+.BR
 #PBS -j oe
+.BR
 #PBS -v DISPLAY
+.BR
 #PBS -l ncpus=2,mem=4gb,walltime=24:00:00
+.P
 job-vm-launch --image $SCRATCHDIR/vms/ssohub.img --disk-format qcow2 --mac 52:54:00:cd:65:23 -n ssohub --no-block
+.BR
 virt-viewer --connect=$hypervisor --wait ssohub
-.fi
+.FI
 
 .SH LIMITATIONS
 

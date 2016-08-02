@@ -66,19 +66,6 @@ Use the
 process launcher.  Intended for use on clusters; should not be used
 unless the pbsdsh launcher does not work for whatever reason.
 .TP
-.B --worker-on-mother-superior
-Run a worker on the mother superior node as well as the driver program.
-This is the default.
-.TP
-.B --no-worker-on-mother-superior or -N
-Do not run a worker on the mother superior node, only the driver program.
-This might be necessary if the driver program consumes a large amount of
-memory.
-.TP
-.B --master-interface <IF> or -M <IF>
-Have Spark master listen on network interface <IF> (e.g. eth1, ib0) rather
-than the default.
-.TP
 .B --conf-dir <confdir> or -C <confdir>
 Search for configuration properties in <confdir>.  This is equivalent
 to setting the environment variable 
@@ -105,57 +92,14 @@ is set, in which case that will be used.  The working directory
 Set the per-worker memory limit to <memlimit>; defaults to the
 physical memory on the node minus 1 GB.
 .TP
-.B --tpn <N> or --tasks-per-node <N> or -t <N>
-Launch <N> worker tasks per node.  The default is to use the :ppn=
-value from the job request.
-.TP
 .B --pausetime <N> or -p <N>
 Pause <N> seconds between startup stages (default 5)
 .TP
-.B --conf key=value or -D <key>=<value>
+.B -D <key>=<value>
 Set the Java property <key> to <value>.
 .TP
 .B --properties-file <propfile> or -P <propfile>
 Read Java properties from <propfile>.
-.TP
-.B --class <classname>
-Application's main class (for Java/Scala apps).
-.TP
-.B --name <name>
-The name of your application.
-.TP
-.B --jars <jarlist>
-Comma-separated list of local jars to include on the driver and executor classpaths.
-.TP
-.B --packages <pkglist>
-Comma-separated list of maven coordinates of jars to include on the driver and executor classpaths. Will search the local maven repo, then maven central and any additional remote repositories given by --repositories. The format for the coordinates should be groupId:artifactId:version.
-.TP
-.B --exclude-packages <pkglist>
-Comma-separated list of groupId:artifactId to exclude while resolving the dependencies provided in --packagesto avoid dependency conflicts.
-.TP
-.B --repositories <repolist>
-Comma-separated list of additional remote repositories to search for the maven coordinates given with --packages.
-.TP
-.B --py-files <filelist>
-Comma-separated list of .zip, .egg, or .py files to place on PYTHONPATH for Python apps.
-.TP
-.B --files <filelist>
-Comma-separated list of files to be placed in the working directory of each executor.
-.TP
-.B --driver-memory <mem>
-Memory for driver (e.g. 1000M, 2G; default is 1024M).
-.TP
-.B --driver-java-options <opts>
-Extra Java options to pass to the driver.
-.TP
-.B --driver-library-path <libpath>
-Extra library path entries to pass to the driver.
-.TP
-.B --driver-class-path <classpath>
-Extra class path entries to pass to the driver. Note that jars added with --jars are automatically included in the classpath.
-.TP
-.B --executor-memory <mem>
-Memory per executor (e.g. 1000M, 2G; default is 1G).
 
 .SH ENVIRONMENT VARIABLES
 

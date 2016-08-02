@@ -24,24 +24,23 @@ if (isset($_GET['system']))
 if ( isset($_POST['system']) )
   {
     $title = "Jobs on ".$_POST['system'];
-    $verb = title_verb($_POST['datelogic']);
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
 	 $_POST['start_date']!="" )
       {
-	$title .= " ".$verb." on ".$_POST['start_date'];
+	$title .= " ending on ".$_POST['start_date'];
       }
     else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
 	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
       {
-	$title .= " ".$verb." between ".$_POST['start_date']." and ".$_POST['end_date'];
+	$title .= " ending between ".$_POST['start_date']." and ".$_POST['end_date'];
       }
     else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
       {
-	$title .= " ".$verb." after ".$_POST['start_date'];
+	$title .= " ending after ".$_POST['start_date'];
       }
     else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
       {
-	$title .= " ".$verb." before ".$_POST['end_date'];
+	$title .= " submitted before ".$_POST['end_date'];
       }
   }
 else
@@ -54,7 +53,14 @@ $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
     $db =db_connect();
-    $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],"")." AS charges, queue, IF(script IS NULL,'interactive','batch') AS type, sw_app AS software FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
+//     $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".charges($db,$_POST['system'])." AS charges, queue, IF(script IS NULL,'interactive','batch') AS type, CASE ";
+//     $pkgmatch = software_match_list();
+//     foreach (array_keys($pkgmatch ) as $pkg)
+//       {
+// 	$sql .= "WHEN ".$pkgmatch[$pkg]." THEN '".$pkg."' ";
+//       }
+//     $sql .= "ELSE NULL END AS software FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("end",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
+    $sql = "SELECT system, jobid, username, account, jobname, nproc, nodes, mem_req, mem_kb, FROM_UNIXTIME(submit_ts), FROM_UNIXTIME(start_ts), FROM_UNIXTIME(end_ts), walltime_req, walltime, ".charges($db,$_POST['system'])." AS charges, queue, IF(script IS NULL,'interactive','batch') AS type, sw_app AS software FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect("end",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
     #echo "<PRE>".$sql."</PRE>\n";
     $columns = array("system", "jobid", "username", "account", "jobname", "nproc", "nodes", "mem_req", "mem_used", "submit_time", "start_time", "end_time", "walltime_req", "walltime", "charges", "queue", "type", "software");
     $file_base = $_POST['system']."-joblist-".$_POST['start_date']."-".$_POST['end_date'];

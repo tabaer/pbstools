@@ -19,24 +19,23 @@ if (isset($_GET['account']))
 if ( isset($_POST['account']) )
   { 
     $title = "Jobs owned by account ".$_POST['account']." on ".$_POST['system'];
-    $verb = title_verb($_POST['datelogic']);
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
 	     $_POST['start_date']!="" )
       {
-	$title .= " ".$verb." on ".$_POST['start_date'];
+	$title .= " submitted on ".$_POST['start_date'];
       }
     else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
 	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
       {
-	$title .= " ".$verb." between ".$_POST['start_date']." and ".$_POST['end_date'];
+	$title .= " submitted between ".$_POST['start_date']." and ".$_POST['end_date'];
       }
     else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
       {
-	$title .= " ".$verb." after ".$_POST['start_date'];
+	$title .= " submitted after ".$_POST['start_date'];
       }
     else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
       {
-	$title .= " ".$verb." before ".$_POST['end_date'];
+	$title .= " submitted before ".$_POST['end_date'];
       }
   }
 else
@@ -53,12 +52,12 @@ if ( isset($_POST['account']) )
     foreach ($keys as $key)
       {
 	if ( isset($_POST[$key]) && $key!='jobid' && $key!='account' && $key!='username' &&
-	     $key!='start_date' && $key!='end_date' && $key!='datelogic' )
+	     $key!='start_date' && $key!='end_date' )
 	  {
 	    $sql .= ",".$key;
 	  }
       }
-    $sql = $sql." FROM Jobs WHERE account = '".$_POST['account']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) ORDER BY submit_ts;";
+    $sql = $sql." FROM Jobs WHERE account = '".$_POST['account']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY submit_ts;";
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -73,7 +72,7 @@ if ( isset($_POST['account']) )
     echo "<TR><TH>jobid</TH><TH>account</TH><TH>username</TH>";
     foreach ($keys as $key)
       {
-	if ( $key!='jobid' && $key!='username' && $key!='account' && $key!='start_date' && $key!='end_date' && $key!='datelogic' )
+	if ( $key!='jobid' && $key!='username' && $key!='account' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<TH>".$key."</TH>";
 	    $col[$ncols]=$key;

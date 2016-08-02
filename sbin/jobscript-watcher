@@ -16,7 +16,7 @@ use Getopt::Long;
 #use Sys::Syslog;
 
 # defaults
-my $inotify = "/usr/bin/inotifywait";
+my $inotify = "/usr/local/sbin/inotifywait";
 my $pidfile = "/var/run/jobscript-watcher.pid";
 my $use_syslog = "no";
 #my $syslog_facility = LOG_LOCAL2;
@@ -102,10 +102,6 @@ if ( defined($opt_pid) ) { $pidfile = $opt_pid; }
 if ( defined($opt_syslog) ) { $use_syslog = "yes"; }
 
 # sanity checks
-if ( ! -e $inotify )
-{
-    die "$inotify:  Command not found";
-}
 if ( !defined($ENV{'PBS_HOME'}) )
 {
     die "PBS_HOME not set, exiting!";

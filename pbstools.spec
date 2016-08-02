@@ -206,8 +206,8 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 
 %files -n pbsacct-php
 %dir /var/www/html/pbsacct
-%config /var/www/html/pbsacct/default.css
-%config /var/www/html/pbsacct/db.cfg
+/var/www/html/pbsacct/default.css
+/var/www/html/pbsacct/db.cfg
 /var/www/html/pbsacct/*.php
 
 %files -n pbsacct-db
