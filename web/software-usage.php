@@ -1,79 +1,117 @@
 <?php
-# Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2009, 2011, 2014 University of Tennessee
+# Copyright 2006 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL$
 # $Revision$
 # $Date$
-require_once 'dbutils.php';
 require_once 'page-layout.php';
-require_once 'metrics.php';
+require_once 'dbutils.php';
 require_once 'site-specific.php';
-
-# accept get queries too for handy command-line usage:  suck all the
-# parameters into _POST.
-if (isset($_GET['system']))
-  {
-    $_POST = $_GET;
-  }
 
 $title = "Software usage";
 if ( isset($_POST['system']) )
   {
     $title .= " on ".$_POST['system'];
-    $verb = title_verb($_POST['datelogic']);
-    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && 
-	 $_POST['start_date']==$_POST['end_date'] && $_POST['start_date']!="" )
-      {
-	$title .= " ".$verb." on ".$_POST['start_date'];
-      }
-    else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && 
-	      $_POST['start_date']!=$_POST['end_date'] && 
-	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
-      {
-	$title .= " ".$verb." between ".$_POST['start_date']." and ".$_POST['end_date'];
-      }
-    else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-      {
-	$title .= " ".$verb." after ".$_POST['start_date'];
-      }
-    else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-      {
-	$title .= " ".$verb." before ".$_POST['end_date'];
-      }
   }
+if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+     $_POST['start_date']!="" )
+  {
+    $title .= " started on ".$_POST['start_date'];
+  }
+ else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
+	   $_POST['start_date']!="" &&  $_POST['end_date']!="" )
+   {
+     $title .= " started between ".$_POST['start_date']." and ".$_POST['end_date'];
+   }
+ else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
+   {
+     $title .= " started after ".$_POST['start_date'];
+   }
+ else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
+   {
+     $title .= " started before ".$_POST['end_date'];
+   }
 page_header($title);
 
-# connect to DB
-$db = db_connect();
+# list of software packages
+$packages=software_list();
+
+# regular expressions for different software packages
+$pkgmatch=software_match_list();
 
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
+    $db = db_connect();
     foreach ($keys as $key)
       {
-	if ( $key!='system' && $key!='start_date' && $key!='end_date' &&
-	     $key!='datelogic' )
+	if ( $key!='system' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ";
-	    $sql .= "sw_app='".$key."'";
-	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system";
+	    $sql = "SELECT system, COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS cpuhours_alt, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( script IS NOT NULL AND ";
+	    if ( isset($pkgmatch[$key]) )
+	      {
+		$sql .= $pkgmatch[$key];
+	      }
+	    else
+	      {
+		$sql .= "script LIKE '%".$key."%'";
+	      }
+	    $sql .= " )";
+	    if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+		 $_POST['start_date']!="" )
+		  {
+		    $sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+		    $sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
+		  }
+		else
+		  {
+		    if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
+		      {
+			$sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+		      }
+		    if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
+		      {
+			$sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
+		      }
+		  }
+	    $sql .= " GROUP BY system";
 	    if ( $_POST['system']=="%" )
 	      {
-                # compute totals iff wildcarding on all systems
-		$sql .= " UNION SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ";
-		$sql .= "sw_app='".$key."'";
-		$sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." )";
+# compute totals iff wildcarding on all systems
+		$sql .= " UNION SELECT 'TOTAL:',COUNT(jobid) AS jobcount, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, SUM(TIME_TO_SEC(cput))/3600.0 AS alt_cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE ( script IS NOT NULL AND ";
+		if ( isset($pkgmatch[$key]) )
+		  {
+		    $sql .= $pkgmatch[$key];
+		  }
+		else
+		  {
+		    $sql .= " = '".$key."'";
+		  }
+		$sql .= " )";
+		if ( isset($_POST['start_date']) &&   isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
+		     $_POST['start_date']!="" )
+		  {
+		    $sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+		    $sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['start_date']." 23:59:59'";
+		  }
+		else
+		  {
+		    if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
+		      {
+			$sql .= " AND FROM_UNIXTIME(start_ts) >= '".$_POST['start_date']." 00:00:00'";
+		      }
+		    if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
+		      {
+			$sql .= " AND FROM_UNIXTIME(start_ts) <= '".$_POST['end_date']." 23:59:59'";
+		      }
+		  }
 	      }
+	    $sql .= ";";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 	    $result = db_query($db,$sql);
-	    if ( PEAR::isError($result) )
-	      {
-		echo "<PRE>".$result->getMessage()."</PRE>\n";
-	      }
 	    echo "<TABLE border=1>\n";
-	    echo "<TR><TH>system</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
+	    echo "<TR><TH>system</TH><TH>jobcount</TH><TH>cpuhours</TH><TH>cpuhours_alt</TH><TH>users</TH><TH>groups</TH></TR>\n";
 	    while ($result->fetchInto($row))
 	      {
 		$rkeys=array_keys($row);
@@ -88,14 +126,10 @@ if ( isset($_POST['system']) )
 	    echo "</TABLE>\n";
 	  }
       }
-    page_timer();
-    bookmarkable_url();
+    db_disconnect($db);
   }
 else
   {
-    # list of software packages
-    $packages=software_list($db);
-
     begin_form("software-usage.php");
 
     system_chooser();
@@ -106,6 +140,5 @@ else
     end_form();
   }
 
-db_disconnect($db);
 page_footer();
 ?>

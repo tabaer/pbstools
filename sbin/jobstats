@@ -3,8 +3,6 @@
 # jobstats -- Generate a web report of PBS job usage over some period of
 #             months
 # Copyright 2006 Ohio Supercomputer Center
-#
-# License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -543,7 +541,6 @@ for ( $i=1 ; $i <= $nmonths ; $i++ )
 		 }
 	       $ncpus=&max($resource{"Resource_List.ncpus"},
 			   $resource{"resources_used.ncpus"});
-               $ncpus=&max($ncpus,$resource{"Resource_List.size"});
 	       $nprocs=&max($processors,$ncpus);
 	       if ( $nprocs > $sysprocs )
 		 {

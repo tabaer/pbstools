@@ -1,11 +1,10 @@
 <?php
 # Copyright 2006 Ohio Supercomputer Center
-# Copyright 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
 # $Date$
-require_once 'dbutils.php';
+require_once 'DB.php';
 require_once 'page-layout.php';
 
 page_header("PHP SQL Terminal");
@@ -21,15 +20,15 @@ echo "<INPUT type=\"submit\">\n<INPUT type=\"reset\">\n</FORM>\n";
 
 if ( isset($_POST['sql']) )
   {
-    $db = db_connect();
+    $db = DB::connect("mysql://webapp@localhost/pbsacct", FALSE);
     if ( DB::isError($db) )
       {
 	die ($db->getMessage());
       }
-    $result = db_query($db,stripslashes($_POST['sql']));
-    if ( PEAR::isError($result) )
+    $result = $db->query(stripslashes($_POST['sql']));
+    if ( DB::isError($db) )
       {
-        echo "<PRE>".$result->getMessage()."</PRE>\n";
+	die ($db->getMessage());
       }
     else
       {
@@ -41,13 +40,12 @@ if ( isset($_POST['sql']) )
 	    foreach ($keys as $key)
 	      {
 		$data=array_shift($row);
-		echo "<TD><PRE>".htmlspecialchars($data)."</PRE></TD>";
+	        echo "<TD><PRE>".htmlspecialchars($data)."</PRE></TD>";
 	      }
 	    echo "</TR>\n";
 	  }
 	echo "</TABLE>\n";
       }
-    db_disconnect($db);
   }
 
 page_footer();

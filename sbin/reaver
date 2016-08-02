@@ -2,16 +2,14 @@
 #
 # reaver:  Kill any processes that are not owned by users with jobs assigned
 #          to this node.
-# Copyright 2006, 2007, 2011, 2012, 2015 Ohio Supercomputer Center
-#
-# License:  GNU GPL v2; see ../COPYING for details.
+# Copyright 2006 Ohio Supercomputer Center
 # Revision info:
 # $HeadURL$
 # $Revision$
 # $Date$
 #
 # Originally intended to be run inside a PBS job epilogue:
-#   all -j$PBS_JOBID -p /usr/local/sbin/reaver
+#   all -j$PBS_JOBID -p /usr/local/sbin/reaver [jobid [jobids...]]
 # where jobid = (jobid to clean up)
 #
 # Why is this called "reaver" and not "reaper"?  Because I like
@@ -20,7 +18,6 @@
 use strict;
 use POSIX();
 use Getopt::Long;
-use diagnostics;
 
 # Turn off output buffering so that "sleep" calls don't cause a delay
 # on standard output
@@ -31,71 +28,31 @@ my $sysuid_threshold=100;
 
 # regexp of usernames with uids above $sysuid_threshold that are allowed
 # to have processes running on a node without a PBS job
-my $safelist="arraysvcs|oscmon|decypher|rtkit|nagios";
+my $safelist="arraysvcs|oscmon|decypher";
 
 # Should we attempt to kill strays? (0 = no, 1 = yes)
 my $kill_mode = 0;
-
-# Clean up after a particular job (i.e. don't whitelist its owner)
-my $reap_job;
 
 # Output is either brief, normal, or verbose.  In brief mode, we output only
 # the PIDs for stray processes (one per line).  Normal mode displays "ps" 
 # listing for stray procs.  Verbose mode is same as brief mode with extras.
 my $brief_mode = 0;
 my $verbose_mode = 0;
-my $long_ps_mode = 1;
 
 # Usage/help functions
-my $USAGE = "$0 [-bchklv] [-j <jobid>]";
+my $USAGE = "$0 [-hkbv] [jobid [jobids...]]";
 my $HELP = "Options:
- -b, --brief
-    Display only the stray process IDs
- -c, --classic
-    Display \"classic\" summary of process information
  -h, --help
     Print detailed help screen
- -j <jobid>, --job=<jobid>
-    Clean up processes associated with <jobid>
  -k, --kill
     Attempt to kill all stray processes
- -l, --long
-    Display long summary of process information (default)
+ -b, --brief
+    Display only the stray process IDs
  -v, --verbose
     Display extra info
+ <jobid>
+    ID of batch job to remove from safe list
 ";
-
-# Find $PBS_HOME
-my $spool = undef;
-if ( defined($ENV{"PBS_HOME"}) )
-  {
-      $spool=$ENV{"PBS_HOME"};
-  }
-else
-  {
-    my @defaults=("/usr/spool/PBS",
-		  "/var/spool/pbs",
-		  "/var/spool/torque",
-		  "/var/spool/batch/pbs",
-		  "/var/spool/batch/torque",
-		  "/var/spool/batch/pbs-piv",
-		  "/var/spool/batch/pbs-ipf",
-		  ".",
-		  );
-    foreach my $dir ( @defaults )
-    {
-        if ( -d $dir )
-	{
-            $spool=$dir;
-            last;
-	}
-    }
-  }
-if ( !defined($spool) )
-  {
-    die "Unable to find PBS spool directory!\n";
-  }
-
 
 sub print_usage {
         print "Usage: $USAGE\n";
@@ -114,87 +71,149 @@ sub usage_error {
 }
 
 # Process command line options
-my ($opt_b, $opt_c, $opt_h, $opt_j, $opt_k, $opt_l, $opt_v);
+my ($opt_h, $opt_k, $opt_b, $opt_v);
 Getopt::Long::Configure('bundling');
 GetOptions(
-         "b"  => \$opt_b, "brief"   => \$opt_b,
-         "c"  => \$opt_c, "classic" => \$opt_c,
          "h"  => \$opt_h, "help"    => \$opt_h,
-         "j=s"=> \$opt_j, "job=s"   => \$opt_j,
          "k"  => \$opt_k, "kill"    => \$opt_k,
-         "l"  => \$opt_l, "long"    => \$opt_l,
+         "b"  => \$opt_b, "brief"   => \$opt_b,
          "v"  => \$opt_v, "verbose" => \$opt_v
 ) || usage_error();
 
 if ($opt_h) { print_help(); exit(0); }
-if ($opt_b) { $brief_mode = 1; }
-if ($opt_c) { $long_ps_mode = 0; }
-if ($opt_j)
-{
-    $reap_job = $opt_j;
-    $reap_job =~ s/\..*$//;
-}
 if ($opt_k) { $kill_mode = 1; }
-if ($opt_l) { $long_ps_mode = 1; }
+if ($opt_b) { $brief_mode = 1; }
 if ($opt_v) { $verbose_mode = 1; $brief_mode = 0; }
 
-# Append to $safelist the names of all users who have jobs currently running
+# append to $safelist the names of all users who have jobs currently running
 # on this host
-# The following approach doesn't put any load on the PBS server, but forces
-# reaver to be run by root
-my $ptn = "$spool/mom_priv/jobs/*.JB";
-if ( glob($ptn) )
+# first, we have to get a list of all the PBS jobids assigned to this host
+my $hostname=`hostname`;
+chomp($hostname);
+my $joblist=undef;
+
+# Guess absolute path to command if it isn't already in $PATH
+eval
   {
-    foreach my $jobfile (glob($ptn))
-    {
-      if ( ! defined($reap_job) || 
-           ! $jobfile=~/\/$reap_job\..*\.JB$/ || 
-           ! $jobfile=~/\/$reap_job\.JB$/ )
-	{
-	  my $jobuserlist;
-	  # TORQUE 4(?) and after have XML .JB files; earlier versions
-	  # are binary
-	  my $isxml = `head -1 $jobfile | grep -ic xml`;
-          chop($isxml);
-	  if ( $isxml==1 )
-	    {
-	      $jobuserlist = `grep euser $jobfile | sed 's/ *<euser [A-Za-z0-9=\"]*>//g' | sed 's:</euser>::'`;
-	    }
-	  else
-	    {
-	      $jobuserlist = `cat $jobfile | strings | grep -A 1 euser | grep -v euser | sort | uniq | tr '\n' '|'`;
-	    }
-    	  chop($jobuserlist);
-	  if ( $jobuserlist ne "" )
-	    {
-	      if ( $safelist eq "" )
-	        {
-		  $safelist = $jobuserlist;
-		}
-	      else
-	        {
-		  $safelist .= "|".$jobuserlist;
-		}
-	    }
-	}
-    }
+    no warnings "exec";
+    open(PBSNODES, "pbsnodes -a |")
+    or open(PBSNODES, "/usr/local/pbs/bin/pbsnodes -a |");
+  } or die "Cannot run pbsnodes command: $!";
+
+while (<PBSNODES>)
+  {
+    # pbsnodes -a output looks like this
+    # host
+    #      indented list of key = value pairs for host
+    # blank line
+    #
+    # so we want to find $hostname in the list and then get the value
+    # of "jobs = " under that
+    chomp;
+    if ( $_ eq $hostname )
+      {
+        $joblist="";
+	while (<PBSNODES>)
+	  {
+	    chomp;
+	    my ($key,$value) = split(/ \= /);
+	    last unless $key;
+	    $key =~ s/^ *//g;
+	    if ( $key eq "jobs" )
+	      {
+		$joblist=$value;
+		$joblist =~ s/[0-9]+\///g;
+		$joblist =~ s/\,//g;
+		last;
+	      }
+	  }
+	last;
+      }
   }
+close(PBSNODES);
+die "pbsnodes failure" if ( ($?>>8)!=0 );
 
-# Append to $safelist the owner of /dev/console
-my $consoleowner = `stat -c %U /dev/console`;
-chop($consoleowner);
-if ( $consoleowner ne "root" )
-{
-    if ( $safelist eq "" )
-    {
-	$safelist = $consoleowner;
-    }
-    else
-    {
-	$safelist .= "|".$consoleowner;
-    }
-}
+die "Host $hostname not found in pbsnodes output.\n" unless defined($joblist);
 
+if ( $joblist ne "" )
+  {
+    my @alljobs = split(/ /,$joblist);
+    # there may be duplicates in the job list; extract unique values
+    # using method taken from online version of O'Reilly's Perl Cookbook
+    my %seen = ();
+    foreach my $item (@alljobs) {
+      $seen{$item}++;
+    }
+    my @jobs = keys %seen;
+    print "Running jobs:  @jobs\n" if $verbose_mode;
+    
+    # remove from @jobs any jobids given on the command line
+    if ( defined($ARGV[0]) )
+      {
+	my $ptn="";
+	foreach my $jobid ( @ARGV )
+	  {
+	    if ( $ptn eq "" )
+	      {
+		$ptn = $jobid;
+	      }
+	    else
+	      {
+		$ptn .= "|$jobid"
+	      }
+	  }
+	if ( $ptn ne "" )
+	  {
+	    @alljobs=@jobs;
+	    @jobs=();
+	    for ( my $i=0; $i<=$#alljobs; $i++ )
+	      {
+		if ( !($alljobs[$i] =~ /^($ptn)/) )
+		  {
+		    push(@jobs,$alljobs[$i]);
+		  }
+	      }
+	  }
+      }
+      
+    # now that we have a list of unique jobids, we need to get their
+    # usernames and add them to $safelist
+    print "Safe jobs:  " if $verbose_mode;
+    if ( @jobs )
+      {
+        eval {
+            no warnings "exec";
+            open(QSTAT,"qstat @jobs |")
+            or open(QSTAT,"/usr/local/pbs/bin/qstat @jobs |");
+        } or die "Cannot run qstat command: $!";
+	# skip 1st 2 lines of qstat output -- it's just headers
+	<QSTAT>;
+	<QSTAT>;
+	while (<QSTAT>)
+	  {
+	    my ($jobid,$jobname,$user,$time,$status,$queue)=split(/ +/);
+	    print "$jobid($user) " if $verbose_mode;
+	    if ( ! ($safelist =~ /$user/) )
+	      {
+		if ( $safelist eq "" )
+		  {
+		    $safelist = "$user";
+		  }
+		else
+		  {
+		    $safelist .= "|$user";
+		  }
+	      }
+	  }
+	close(QSTAT);
+	die "qstat failure" if ( ($?>>8)!=0 );
+      }
+    print "\n" if $verbose_mode;
+  }
+else
+  {
+    print "Running jobs:  (none)\n" if $verbose_mode;
+  }  
   
 if ( $safelist ne "" )
   {
@@ -203,29 +222,14 @@ if ( $safelist ne "" )
 
 # find all the target pids
 my @pids=();
-if ( $long_ps_mode )
-  {
-    open(PS,"ps -w -A -o pid,%cpu,%mem,state,uid,user,lstart,command |");
-  }
-else
-  {
-    open(PS,"ps -A -o pid,state,uid,user,command |");
-  }
+open(PS,"ps -A -o pid,state,uid,user,command |");
 # snarf the 1st line
 <PS>;
 print "Stray processes:\n" if $verbose_mode;
 while (<PS>)
   {
-    my ($pid,$p_cpu,$p_mem,$state,$uid,$user,$lstart,$command);
     chomp;
-    if ($long_ps_mode )
-      {
-        ($pid,$p_cpu,$p_mem,$state,$uid,$user,$lstart,$command) = split(' ', $_, 8);
-      }
-    else
-      {
-        ($pid,$state,$uid,$user,$command) = split(' ', $_, 5);
-      }
+    my ($pid,$state,$uid,$user,$command)=split(' ', $_, 5);
     if ( ($uid > $sysuid_threshold) && !($user =~ /^($safelist)$/) && ($uid!=$>) )
       {
 	push(@pids,$pid);
@@ -235,14 +239,7 @@ while (<PS>)
 	  }
 	else
 	  {
-	    if ($long_ps_mode )
-	      {
-		print $pid," ",$p_cpu," ",$p_mem," ",$state," ",$user," ",$lstart," ",$command,"\n";
-              }
-	    else
-	      {
-                printf "%8d  %-3s %-9.9s %-10.50s\n", $pid, $state, $user, $command;
-	      } 
+	    printf "%8d  %-3s %-9.9s %-10.50s\n", $pid, $state, $user, $command;
 	  }
       }
   }
