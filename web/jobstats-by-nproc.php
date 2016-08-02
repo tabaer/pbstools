@@ -45,7 +45,6 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count vs. CPU Count","jobs_vs_nproc");
 jobstats_input_metric("CPU Time vs. CPU Count","cpuhours_vs_nproc");
-jobstats_input_metric("Charges vs. CPU Count","charges_vs_nproc");
 jobstats_input_metric("Job Length vs. CPU Count","walltime_vs_nproc");
 jobstats_input_metric("Queue Time vs. CPU Count","qtime_vs_nproc");
 jobstats_input_metric("Real Memory vs. CPU Count","mem_kb_vs_nproc");

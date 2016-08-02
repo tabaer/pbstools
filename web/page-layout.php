@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2008, 2009, 2011, 2014 University of Tennessee
+# Copyright 2008, 2009 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -9,17 +9,15 @@ require_once 'dbutils.php';
 
 function page_header($title)
 {
-  $GLOBALS['pagestart'] = microtime(true);
   echo "<HTML>\n<HEAD>\n";
   echo "<TITLE>".$title."</TITLE>\n";
   echo "<LINK rel=stylesheet type=\"text/css\" href=\"default.css\">\n";
-  echo "<SCRIPT type='text/javascript' src='jquery.js'></SCRIPT>\n";
+  echo "<SCRIPT type='text/javascript' src='http://jqueryui.com/latest/jquery-1.3.2.js'></SCRIPT>\n";
   echo "<SCRIPT type='text/javascript' src='utils.js'></SCRIPT>\n";
   echo "</HEAD>\n<BODY>\n";
   echo "<TABLE height=\"100%\" width=\"100%\">\n";
   echo "<TR height=\"10%\">\n";
   echo "  <TD width=\"15%\">\n";
-#  echo "  <IMG src=\"http://www.nics.tennessee.edu/themes/foliage/images/nics_logo.gif\">\n";
   echo "  </TD>\n";
   echo "  <TD>\n";
   echo "    <H1>".$title."</H1>\n";
@@ -36,7 +34,6 @@ function page_header($title)
   echo "    </UL>\n";
   echo "    <UL><U>Job stats by</U>\n";
   echo "      <LI><A href=\"jobstats-by-nproc.php\">CPU Count</A></LI>\n";
-  echo "      <LI><A href=\"jobstats-by-nodect.php\">Node Count</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-queue.php\">Job Class</A></LI>\n";
   echo "      <LI><A href=\"jobstats-by-walltime.php\">Job Length</A></LI>\n";
 # NOTE By-institution jobstats involves site-specific logic.  You may
@@ -50,7 +47,7 @@ function page_header($title)
   echo "      <LI><A href=\"jobstats-by-week.php\">Week</A></LI>\n";
   echo "      <LI><A href=\"jobstats.php\">All</A></LI>\n";
   echo "    </UL>\n";
-  echo "    <UL><U>Software package usage by</U>\n";
+  echo "    <UL><U>Software usage by</U>\n";
   echo "      <LI><A href=\"software-usage.php\">System</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-queue.php\">Job Class</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-walltime.php\">Job Length</A></LI>\n";
@@ -64,18 +61,11 @@ function page_header($title)
   echo "      <LI><A href=\"software-usage-by-month.php\">Month</A></LI>\n";
   echo "      <LI><A href=\"software-usage-by-week.php\">Week</A></LI>\n";
   echo "    </UL>\n";
-  echo "    <UL><U>Software packages used by</U>\n";
-#  echo "      <LI><A href=\"queue-software.php\">Job Class</A></LI>\n";
-  echo "      <LI><A href=\"user-software.php\">User</A></LI>\n";
-  echo "      <LI><A href=\"group-software.php\">Group</A></LI>\n";
-  echo "      <LI><A href=\"account-software.php\">Account</A></LI>\n";
-  echo "    </UL>\n";
   echo "    <UL><U>Miscellaneous reports</U>\n";
   echo "      <LI><A href=\"usage-summary.php\">Usage Summary</A></LI>\n";
 # NOTE Identifying problematic jobs involves site-specific logic.  You may
 # want to comment it out.
-#  echo "      <LI><A href=\"problem-jobs.php\">Problematic Jobs</A></LI>\n";
-  echo "      <LI><A href=\"job-list.php\">Job List</A></LI>\n";
+  echo "      <LI><A href=\"problem-jobs.php\">Problematic Jobs</A></LI>\n";
   echo "      <LI><A href=\"active-users.php\">Most Active Users</A></LI>\n";
   echo "      <LI><A href=\"active-groups.php\">Most Active Groups</A></LI>\n";
   echo "      <LI><A href=\"active-accounts.php\">Most Active Accounts</A></LI>\n";
@@ -111,14 +101,9 @@ function hidden_field($field,$value)
   echo "<INPUT type=\"hidden\" name=\"".$field."\" size=\"".$value."\">\n";
 }
 
-function checkbox($label,$name,$checked=NULL)
+function checkbox($label,$name)
 {
-  echo "<INPUT type=\"checkbox\" name=\"".$name."\" value=\"1\"";
-  if ( !is_null($checked) )
-    {
-      echo "checked";
-    }
-  echo "> ".$label."<BR>\n";
+  echo "<INPUT type=\"checkbox\" name=\"".$name."\" value=\"1\"> ".$label."<BR>\n";
 }
 
 function checkboxes_from_array($label,$array)
@@ -128,7 +113,7 @@ function checkboxes_from_array($label,$array)
     {
       echo "<INPUT class='checkbox_item' type=\"checkbox\" name=\"".$value."\" value=\"1\"> ".$value."<BR>\n";
     }
-  echo "<INPUT type=\"checkbox\" id=\"select_all\" />Select All\n<br />";
+  echo "<INPUT type=\"checkbox\" id=\"select_all\">Select All\n<BR>";
 }
 
 function system_chooser()
@@ -138,10 +123,6 @@ function system_chooser()
   $db = db_connect();
   $sql = "SELECT DISTINCT(system) FROM Jobs;";
   $result = db_query($db,$sql);
-  if ( PEAR::isError($result) )
-    {
-      echo "<PRE>".$result->getMessage()."</PRE>\n";
-    }
   while ($result->fetchInto($row))
     {
       $rkeys = array_keys($row);
@@ -169,32 +150,6 @@ function date_fields()
 {
   echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
   echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
-  pulldown("datelogic","Date Logic",array("submit","start","end","during"),"start");
-  echo "</SELECT><BR>\n";
-}
-
-function title_verb($datelogic)
-{
-  if ( $datelogic=="during" )
-    {
-      return "running";
-    }
-  else if ( $datelogic=="end" )
-    {
-      return "ending";
-    }
-  else if ( $datelogic=="start" )
-    {
-      return "starting";
-    }
-  else if ( $datelogic=="submit" )
-    {
-      return "submitted";
-    }
-  else
-    {
-      return "existing";
-    }
 }
 
 function pulldown($name,$label,$choices,$default)
@@ -259,13 +214,6 @@ function bookmarkable_url()
 	}
     }
   echo "<P>Bookmarkable URL for this report:  <A href=\"".$pageURL."\"><PRE>".htmlspecialchars($pageURL)."</PRE></A></P>\n";
-}
-
-function page_timer()
-{
-  $GLOBALS['pageend'] = microtime(true);
-  $tottime = $GLOBALS['pageend']-$GLOBALS['pagestart'];
-  echo "<P>Page generated in $tottime seconds</P>\n";
 }
 
 ?>

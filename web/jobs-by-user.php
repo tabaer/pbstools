@@ -1,6 +1,6 @@
 <?php
 # Copyright 2006, 2007, 2008 Ohio Supercomputer Center
-# Copyright 2009, 2010, 2011, 2014 University of Tennessee
+# Copyright 2009 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -19,24 +19,23 @@ if (isset($_GET['username']))
 if ( isset($_POST['username']) )
   {
     $title = "Jobs owned by user ".$_POST['username']." on ".$_POST['system'];
-    $verb = title_verb($_POST['datelogic']);
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']==$_POST['end_date'] && 
 	 $_POST['start_date']!="" )
       {
-	$title .= " ".$verb." on ".$_POST['start_date'];
+	$title .= " submitted on ".$_POST['start_date'];
       }
     else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
 	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
       {
-	$title .= " ".$verb." between ".$_POST['start_date']." and ".$_POST['end_date'];
+	$title .= " submitted between ".$_POST['start_date']." and ".$_POST['end_date'];
       }
     else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
       {
-	$title .= " ".$verb." after ".$_POST['start_date'];
+	$title .= " submitted after ".$_POST['start_date'];
       }
     else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
       {
-	$title .= " ".$verb." before ".$_POST['end_date'];
+	$title .= " submitted before ".$_POST['end_date'];
       }
   }
 else
@@ -52,19 +51,14 @@ if ( isset($_POST['username']) )
     $sql = "SELECT jobid,username";
     foreach ($keys as $key)
       {
-	if ( isset($_POST[$key]) && $key!='jobid' && $key!='username' && 
-	     $key!='start_date' && $key!='end_date' && $key!='datelogic' )
+	if ( isset($_POST[$key]) && $key!='jobid' && $key!='username' && $key!='start_date' && $key!='end_date' )
 	  {
 	    $sql .= ",".$key;
 	  }
       }
-    $sql .= " FROM Jobs WHERE username = '".$_POST['username']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) ORDER BY submit_ts;";
+    $sql .= " FROM Jobs WHERE username = '".$_POST['username']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect("submit",$_POST['start_date'],$_POST['end_date'])." ) ORDER BY submit_ts;";
 #	echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
-    if ( PEAR::isError($result) )
-      {
-        echo "<PRE>".$result->getMessage()."</PRE>\n";
-      }
     echo "<TABLE border=\"1\">\n";
     $col[0]="jobid";
     $col[1]="username";
@@ -72,7 +66,7 @@ if ( isset($_POST['username']) )
     echo "<TR><TH>jobid</TH><TH>username</TH>";
     foreach ($keys as $key)
       {
-	if ( $key!='jobid' && $key!='username' && $key!='start_date' && $key!='end_date' && $key!='datelogic' )
+	if ( $key!='jobid' && $key!='username' && $key!='start_date' && $key!='end_date' )
 	  {
 	    echo "<TH>".$key."</TH>";
 	    $col[$ncols]=$key;
@@ -103,7 +97,6 @@ if ( isset($_POST['username']) )
     echo "</TABLE>\n";
 
     db_disconnect($db);
-    page_timer();
     bookmarkable_url();
   }
 else
@@ -115,10 +108,9 @@ else
     date_fields();
 
     $props=array("groupname","account","jobname","nproc","mppe","mppssp",
-		 "nodes","feature","gres","queue","qos","submit_ts","start_ts","end_ts",
-		 "cput_req","cput","walltime_req","walltime","mem_req","mem_kb",
-		 "vmem_req","vmem_kb","energy","software","submithost","hostlist",
-		 "exit_status","script","sw_app");
+		 "nodes","feature","queue","qos","submit_ts","start_ts","end_ts","cput_req",
+		 "cput","walltime_req","walltime","mem_req","mem_kb",
+		 "vmem_req","vmem_kb","software","hostlist","exit_status","script");
     checkboxes_from_array("Properties",$props);
 
     end_form();

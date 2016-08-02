@@ -25,4 +25,3 @@ export pbstools=/usr/local
 
 $pbstools/sbin/job-db-update -h $system $PBS_HOME/server_priv/accounting/$yesterday
 $pbstools/sbin/job-db-update-contacts -h $system
-$pbstools/sbin/fixup-nodect

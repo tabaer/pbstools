@@ -85,7 +85,16 @@ does not support the full DAG syntax described at
 http://www.cs.wisc.edu/condor/manual/v7.0/2_10DAGMan_Applications.html.
 In particular, it does not currently support the following keywords
 and features:
+.PP
+.B DATA
+.fi
+.B CATEGORY
+.fi
+.B MAXJOBS
+.fi
 .B CONFIG
+.fi
+.B ABORT-DAG-ON
 .fi
 Inner DAGs
 .PP
@@ -109,11 +118,9 @@ http://www.supercluster.org/pipermail/torqueusers/2009-July/009282.html
 for details.
 
 .SH AUTHORS
-Troy Baer (troy (at) osc.edu)
+Troy Baer (tbaer (at) utk.edu)
 .fi
 Patrick Lu (ylu14 (at) utk.edu)
-.fi
-Nicholas Lineback (nlinebac (at) utk.edu)
 
 .SH SEE ALSO
 qsub(1B)

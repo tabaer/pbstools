@@ -23,10 +23,10 @@ $packages=software_list();
 # regular expressions for different software packages
 $pkgmatch=software_match_list();
 
-$title = "Software usage by group ";
-if ( isset($_POST['groupname']) )
+$title = "Software usage by project ";
+if ( isset($_POST['project']) )
   {
-    $title .= $_POST['groupname'];
+    $title .= $_POST['project'];
   }
 if ( isset($_POST['system']) )
   {
@@ -60,7 +60,7 @@ if ( isset($_POST['system']) )
 
     # software usage
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>users</TH><TH>accounts</TH></TR>\n";
+    echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>users</TH><TH>groups</TH></TR>\n";
     ob_flush();
     flush();
     
@@ -76,7 +76,7 @@ if ( isset($_POST['system']) )
 	  {
 	    $sql .= "UNION\n";
 	  }
-	$sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND groupname LIKE '".$_POST['groupname']."' AND ( ";
+	$sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups FROM Jobs WHERE system LIKE '".$_POST['system']."' AND account LIKE '".$_POST['project']."' AND ( ";
 	if ( isset($pkgmatch[$pkg]) )
 	  {
 	    $sql .= $pkgmatch[$pkg];
@@ -110,14 +110,14 @@ if ( isset($_POST['system']) )
     if ( isset($_POST['xls']) )
       {
 	$xlsresult = db_query($db,$sql);
-	$columns = array("package","jobs","cpuhours","users","accounts");
-	result_as_xls($xlsresult,$columns,$_POST['system']."-".$_POST['groupname']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
+	$columns = array("package","jobs","cpuhours","users","groups");
+	result_as_xls($xlsresult,$columns,$_POST['system']."-".$_POST['project']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
       }
     if ( isset($_POST['ods']) )
       {
 	$odsresult = db_query($db,$sql);
-	$columns = array("package","jobs","cpuhours","users","accounts");
-	result_as_ods($odsresult,$columns,$_POST['system']."-".$_POST['groupname']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
+	$columns = array("package","jobs","cpuhours","users","groups");
+	result_as_ods($odsresult,$columns,$_POST['system']."-".$_POST['project']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
       }
 
     db_disconnect($db);
@@ -125,13 +125,13 @@ if ( isset($_POST['system']) )
   }
 else
   {
-    begin_form("group-software.php");
+    begin_form("project-software.php");
 
-    text_field("Group","groupname",16);
+    text_field("Project","project",16);
     system_chooser();
     date_fields();
 
-    $orders=array("jobs","cpuhours","users");
+    $orders=array("jobs","cpuhours","users","groups");
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
     textfield("limit","Max shown","10",4);

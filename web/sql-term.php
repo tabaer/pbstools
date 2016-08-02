@@ -1,6 +1,5 @@
 <?php
 # Copyright 2006 Ohio Supercomputer Center
-# Copyright 2011 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -27,9 +26,9 @@ if ( isset($_POST['sql']) )
 	die ($db->getMessage());
       }
     $result = db_query($db,stripslashes($_POST['sql']));
-    if ( PEAR::isError($result) )
+    if ( DB::isError($db) )
       {
-        echo "<PRE>".$result->getMessage()."</PRE>\n";
+	die ($db->getMessage());
       }
     else
       {

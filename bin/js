@@ -19,7 +19,33 @@ use DBI;
 # my system name in DB
 $system=`hostname`;
 
-# DB defaults
+# figure out pbs server name (we need it later)
+if ( ! defined($ENV{"PBS_HOME"}) )
+{
+    die "\$PBS_HOME undefined!";
+} 
+$pbsspooldir=$ENV{"PBS_HOME"};
+open(SERVERNAME,"<$pbsspooldir/server_name");
+$pbsserver=<SERVERNAME>;
+close(SERVERNAME);
+chop($pbsserver);
+# hack for sloppy admins who don't put the full hostname
+# in $PBS_HOME/server_name
+# ***WARNING*** you may have to comment out the following code if
+# the servername doesn't resolve for whatever reason
+if ( $pbsserver =~ /:/ )
+  {
+    ($host,$port) = split(/:/,$pbsserver);
+    @server=gethostbyname($server);
+    $pbsserver=$server[0].":".$port;
+  }
+else
+  {
+    @server=gethostbyname($pbsserver);
+    $pbsserver=$server[0];
+    $host=$server[0];
+  }
+
 $dbhost="localhost";
 $dbuser="pbsacct";
 $dbpasswd="pbsRroxor";
@@ -70,7 +96,6 @@ $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
 foreach $jobid ( @ARGV )
   {
     # job script query
-    $jobid =~ s/-[0-9]+.*//;
     $query = "SELECT script FROM Jobs WHERE system=\'".$system."\' AND jobid LIKE \'".$jobid.".\%\';";
     #print STDERR $query."\n";
     $sth = $dbh->prepare($query) or die "Could not prepare query:  ".$dbh::errstr;

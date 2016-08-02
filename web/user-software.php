@@ -1,6 +1,6 @@
 <?php
 # Copyright 2007, 2008 Ohio Supercomputer Center
-# Copyright 2009, 2010, 2011, 2014 University of Tennessee
+# Copyright 2009 University of Tennessee
 # Revision info:
 # $HeadURL$
 # $Revision$
@@ -17,57 +17,82 @@ if (isset($_GET['system']))
     $_POST = $_GET;
   }
 
+# list of software packages
+$packages=software_list();
+
+# regular expressions for different software packages
+$pkgmatch=software_match_list();
+
 $title = "Software usage by user ";
 if ( isset($_POST['username']) )
   {
     $title .= $_POST['username'];
-    if ( isset($_POST['system']) )
+  }
+if ( isset($_POST['system']) )
+  {
+    $title .= " on ".$_POST['system'];
+    if ( isset($_POST['start_date']) && isset($_POST['end_date']) &&
+	 $_POST['start_date']==$_POST['end_date'] && 
+	 $_POST['start_date']!="" )
       {
-	$title .= " on ".$_POST['system'];
-	$verb = title_verb($_POST['datelogic']);
-	if ( isset($_POST['start_date']) && isset($_POST['end_date']) &&
-	     $_POST['start_date']==$_POST['end_date'] && 
-	     $_POST['start_date']!="" )
-	  {
-	    $title .= " ".$verb." on ".$_POST['start_date'];
-	  }
-	else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && 
-		  $_POST['start_date']!=$_POST['end_date'] && 
-		  $_POST['start_date']!="" &&  $_POST['end_date']!="" )
-	  {
-	    $title .= " ".$verb." between ".$_POST['start_date']." and ".$_POST['end_date'];
-	  }
-	else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
-	  {
-	    $title .= " ".$verb." after ".$_POST['start_date'];
-	  }
-	else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
-	  {
-	    $title .= " ".$verb." before ".$_POST['end_date'];
-	  }
+	$title .= " on ".$_POST['start_date'];
+      }
+    else if ( isset($_POST['start_date']) && isset($_POST['end_date']) && $_POST['start_date']!=$_POST['end_date'] && 
+	      $_POST['start_date']!="" &&  $_POST['end_date']!="" )
+      {
+	$title .= " from ".$_POST['start_date']." to ".$_POST['end_date'];
+      }
+    else if ( isset($_POST['start_date']) && $_POST['start_date']!="" )
+      {
+	$title .= " after ".$_POST['start_date'];
+      }
+    else if ( isset($_POST['end_date']) && $_POST['end_date']!="" )
+      {
+	$title .= " before ".$_POST['end_date'];
       }
   }
 page_header($title);
 
-# connect to DB
-$db = db_connect();
 
 if ( isset($_POST['system']) )
   {
+    $db = db_connect();
+
     # software usage
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH><TH>accounts</TH></TR>\n";
+    echo "<TR><TH>package</TH><TH>jobs</TH><TH>cpuhours</TH><TH>accounts</TH></TR>\n";
     ob_flush();
     flush();
     
-    $sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE sw_app IS NOT NULL AND system LIKE '".$_POST['system']."' AND username LIKE '".$_POST['username']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
+    $first=1;
+    $sql = "";
+    foreach ( $packages as $pkg )
+      {
+	if ( $first==1 )
+	  {
+	    $first=0;
+	  }
+	else
+	  {
+	    $sql .= "UNION\n";
+	  }
+	$sql .= "SELECT '".$pkg."', COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE system LIKE '".$_POST['system']."' AND username LIKE '".$_POST['username']."' AND ( ";
+	if ( isset($pkgmatch[$pkg]) )
+	  {
+	    $sql .= $pkgmatch[$pkg];
+	  }
+	else
+	  {
+	    $sql .= "script LIKE '%".$pkg."%' OR software LIKE '%".$package."%'";
+	  }
+	$sql .= " ) AND ( ".dateselect("start",$_POST['start_date'],$_POST['end_date'])." )";
+	$sql .= "\n";
+      }
+    $sql .= " ORDER BY ".$_POST['order']." DESC";
+    $sql .= " LIMIT ".$_POST['limit'];
     
     #echo "<PRE>\n".$sql."</PRE>\n";
     $result = db_query($db,$sql);
-    if ( PEAR::isError($result) )
-      {
-        echo "<PRE>".$result->getMessage()."</PRE>\n";
-      }
     while ($result->fetchInto($row))
       {
 	$rkeys=array_keys($row);
@@ -82,26 +107,20 @@ if ( isset($_POST['system']) )
 	flush();
       }
     echo "</TABLE>\n";
-    if ( isset($_POST['csv']) )
-      {
-	$csvresult = db_query($db,$sql);
-	$columns = array("package","jobs","cpuhours","charges","accounts");
-	result_as_csv($csvresult,$columns,$_POST['system']."-".$_POST['username']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
-      }
     if ( isset($_POST['xls']) )
       {
 	$xlsresult = db_query($db,$sql);
-	$columns = array("package","jobs","cpuhours","charges","accounts");
+	$columns = array("package","jobs","cpuhours","accounts");
 	result_as_xls($xlsresult,$columns,$_POST['system']."-".$_POST['username']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
       }
     if ( isset($_POST['ods']) )
       {
 	$odsresult = db_query($db,$sql);
-	$columns = array("package","jobs","cpuhours","charges","accounts");
+	$columns = array("package","jobs","cpuhours","accounts");
 	result_as_ods($odsresult,$columns,$_POST['system']."-".$_POST['username']."-software_usage-".$_POST['start_date']."-".$_POST['end_date']);
       }
 
-    page_timer();
+    db_disconnect($db);
     bookmarkable_url();
   }
 else
@@ -112,16 +131,15 @@ else
     system_chooser();
     date_fields();
 
-    $orders=array("jobs","cpuhours","charges","accounts");
+    $orders=array("jobs","cpuhours","accounts");
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
-    checkbox("Generate CSV file","csv");
+    textfield("limit","Max shown","10",4);
     checkbox("Generate Excel file","xls");
     checkbox("Generate ODF file","ods");
 
     end_form();
   }
 
-db_disconnect($db);
 page_footer();
 ?>
