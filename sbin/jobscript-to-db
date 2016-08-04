@@ -57,7 +57,7 @@ $pbsserver =~ s/,.*$//;
 if ( $pbsserver =~ /:/ )
   {
     ($host,$port) = split(/:/,$pbsserver);
-    @server=gethostbyname($server);
+    @server=gethostbyname($host);
     $pbsserver=$server[0].":".$port;
   }
 else
