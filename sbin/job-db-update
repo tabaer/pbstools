@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # job-db-update -- Insert job records into a MySQL DB
-# Copyright 2006, 2007 Ohio Supercomputer Center
+# Copyright 2006, 2007, 2016 Ohio Supercomputer Center
 # Copyright 2008, 2009, 2010 University of Tennessee
 #
 # License:  GNU GPL v2; see ../COPYING for details.
@@ -143,17 +143,17 @@ while ( defined($ARGV[0]) )
 	    # next easiest way:  parse the node request string
 	    elsif ( defined($resource{"Resource_List.nodes"}) )
 	      {
-		$pstring = $resource{"Resource_List.nodes"};
-		@node_plus_ppn = split(/\+/, $pstring);
-		foreach $node_plus_ppn (@node_plus_ppn)
-		  {
-		    ($nodes,$ppnstring) = split(/\:/, $node_plus_ppn);
-		    $processors_per = substr($ppnstring,4);
-		    if ( $nodes < 1 ) { $nodes = 1; }
-		    if ( $processors_per < 1 ) { $processors_per = 1; }
-		    $processors += $nodes * $processors_per;
-		    $nodect += $nodes;
-		  }
+	    	$pstring = $resource{"Resource_List.nodes"};
+	    	@node_plus_ppn = split(/\+/, $pstring);
+	    	foreach $node_plus_ppn (@node_plus_ppn)
+	    	  {
+	    	    ($nodes,$ppnstring) = split(/\:/, $node_plus_ppn);
+	    	    $processors_per = substr($ppnstring,4);
+	    	    if ( $nodes < 1 ) { $nodes = 1; }
+	    	    if ( $processors_per < 1 ) { $processors_per = 1; }
+	    	    $processors += $nodes * $processors_per;
+	    	    $nodect += $nodes;
+	    	  }
 	      }
 	    # hardest way:  parse exec_host
 	    elsif ( defined($resource{"exec_host"}) )
@@ -164,7 +164,7 @@ while ( defined($ARGV[0]) )
 		  {
 		    ($thisnode,$theseprocs) = split(/\//,$exechost);
 		    @found = grep($thisnode,@nodes);
-		    if ( $#found>0 )
+		    if ( $#found<0 )
 		      {
 			push(@nodes,$thisnode);
 		      }
@@ -180,7 +180,14 @@ while ( defined($ARGV[0]) )
 			  }
 		      }
 		  }
-		$nodect = $#nodes+1;
+		if ( defined($resource{"Resource_List.nodect"}) )
+		  {
+		    $nodect = $resource{"Resource_List.nodect"};
+		  }
+		else
+		  {
+		    $nodect = $#nodes+1;
+		  }
 	      }
 	    $ncpus=&max($resource{"Resource_List.ncpus"},
 			$resource{"resources_used.mppssp"}+4*$resource{"resources_used.mppe"});
@@ -232,15 +239,12 @@ while ( defined($ARGV[0]) )
 		    $uhead.=",nproc = \'".$nprocs."\'";
 		    $ihead.=",nproc";
 		    $itail.=",\'$nprocs\'";
-<<<<<<< HEAD
-=======
 		  }
 		if ( $nodect>0 )
 		  {
-		    $uhead.=",nodect = \'$nodect.\'";
+		    $uhead.=",nodect = \'$nodect\'";
 		    $ihead.=",nodect";
 		    $itail.=",\'$nodect\'";
->>>>>>> 9387e95127070f91922caa00aa59d2bcb1785e0d
 		  }
 		if ( defined($resource{"Resource_List.nodes"}) )
 		  {
@@ -343,9 +347,10 @@ while ( defined($ARGV[0]) )
 		    $ihead.=",mem_req";
 		    $itail.=",\'".$resource{"Resource_List.mem"}."\'";
 		  }
-		if ( defined($resource{"resources_used.mem"}) )
+		if ( defined($resource{"resources_used.mem"}) &&
+		     defined($mem) )
 		  {
-		    $uhead.=",mem_kb = \'".$resource{"resources_used.mem"}."\'";
+		    $uhead.=",mem_kb = \'$mem\'";
 		    $ihead.=",mem_kb";
 		    $itail.=",\'$mem\'";
 		  }
@@ -355,9 +360,10 @@ while ( defined($ARGV[0]) )
 		    $ihead.=",vmem_req";
 		    $itail.=",\'".$resource{"Resource_List.vmem"}."\'";
 		  }
-		if ( defined($resource{"resources_used.vmem"}) )
+		if ( defined($resource{"resources_used.vmem"}) &&
+		     defined($vmem) )
 		  {
-		    $uhead.=",vmem_kb = \'".$resource{"resources_used.vmem"}."\'";
+		    $uhead.=",vmem_kb = \'$vmem\'";
 		    $ihead.=",vmem_kb";
 		    $itail.=",\'$vmem\'";
 		  }
@@ -411,21 +417,21 @@ while ( defined($ARGV[0]) )
 	      }
 	    if ( &keyval_exists("jobid",$job,$dbtable,$dbh)>0 )
 	      {
-		# This jobid already exists in the table,
-		# so do an UPDATE
-		$query = $update;
+	    	# This jobid already exists in the table,
+	    	# so do an UPDATE
+	    	$query = $update;
 	      }
 	    else
 	      {
-		# This jobid does *NOT* already exist in the table,
-		# so do an INSERT
-		$query = $insert;
+	    	# This jobid does *NOT* already exist in the table,
+	    	# so do an INSERT
+	    	$query = $insert;
 	      }
             #print "$query\n";
 	    if ( $query ne "" )
               {
 	    	if ( ! $dbh->do($query) )
-		  { 
+	    	  { 
 	    	    if ( $query eq $insert && $update ne "" )
 	    	      {
 	    		# INSERT failed, which can happen due to a race
@@ -436,8 +442,8 @@ while ( defined($ARGV[0]) )
 	    	    else
 	    	      {
 	    	        warn "$0:  query failed -- ".$dbh::errstr."\n".$query;
-		      }
-		  }
+	    	      }
+	    	  }
 	      }
 	  }
       }
