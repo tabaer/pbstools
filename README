@@ -1,11 +1,7 @@
 PBS Tools
 
 Website:  http://www.osc.edu/~troy/pbstools/
-<<<<<<< HEAD
-SVN repo:  http://svn.osc.edu/repos/pbstools/
-=======
 Git repo:  https://github.com/tabaer/pbstools
->>>>>>> 9387e95127070f91922caa00aa59d2bcb1785e0d
 
 PBS Tools is a collection of utilities that have been developed at
 OSC, NICS, and elsewhere to aid in the administration and management
@@ -133,7 +129,7 @@ them to Troy Baer <troy@osc.edu>.
 
 Copyright:
 ----------
-PBS Tools are copyright 2005-2015 Ohio Supercomputer Center and/or
+PBS Tools are copyright 2005-2016 Supercomputer Center and/or
 copyright 2008-2015 University of Tennessee, and are licensed under
 the terms of the GNU GPL v2.
 
