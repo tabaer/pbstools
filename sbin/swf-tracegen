@@ -11,7 +11,11 @@
 # This program generates workload traces from an accounting database.
 #
 # Trace format:  http://www.cs.huji.ac.il/labs/parallel/workload/swf.html
+<<<<<<< HEAD
 # DB schema:     http://svn.osc.edu/repos/pbstools/trunk/etc/create-tables.sql
+=======
+# DB schema:    https://github.com/tabaer/pbstools/blob/master/etc/create-tables.sql
+>>>>>>> 9387e95127070f91922caa00aa59d2bcb1785e0d
 #
 # Usage:  swf-tracegen system startdate enddate
 # dates should be in SQL format (YYYY-MM-DD)

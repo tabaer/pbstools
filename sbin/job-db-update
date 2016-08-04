@@ -130,16 +130,57 @@ while ( defined($ARGV[0]) )
 	if ( $type eq "S" || $type eq "E" )
 	  {
 	    ($jobid,$junk)=split(/\./,$job);
-	    $pstring = $resource{"Resource_List.nodes"};
-	    @node_plus_ppn = split(/\+/, $pstring);
 	    $processors = 0;
-	    foreach $node_plus_ppn (@node_plus_ppn)
+	    $nodect = 0;
+	    # easiest way to determine processors and nodect:
+	    # it's already calculated for us
+	    if ( defined($resource{"total_execution_slots"}) && 
+		 defined($resource{"unique_node_count"}) )
 	      {
-		($nodes,$ppnstring) = split(/\:/, $node_plus_ppn);
-		$processors_per = substr($ppnstring,4);
-		if ( $nodes < 1 ) { $nodes = 1; }
-		if ( $processors_per < 1 ) { $processors_per = 1; }
-		$processors += $nodes * $processors_per;
+		$processors = $resource{"total_execution_slots"};
+		$nodect  =$resource{"unique_node_count"};
+	      }
+	    # next easiest way:  parse the node request string
+	    elsif ( defined($resource{"Resource_List.nodes"}) )
+	      {
+		$pstring = $resource{"Resource_List.nodes"};
+		@node_plus_ppn = split(/\+/, $pstring);
+		foreach $node_plus_ppn (@node_plus_ppn)
+		  {
+		    ($nodes,$ppnstring) = split(/\:/, $node_plus_ppn);
+		    $processors_per = substr($ppnstring,4);
+		    if ( $nodes < 1 ) { $nodes = 1; }
+		    if ( $processors_per < 1 ) { $processors_per = 1; }
+		    $processors += $nodes * $processors_per;
+		    $nodect += $nodes;
+		  }
+	      }
+	    # hardest way:  parse exec_host
+	    elsif ( defined($resource{"exec_host"}) )
+	      {
+		@nodes = ();
+		@exechosts = split(/\+/,$resource{"exec_host"});
+		foreach $exechost (@exechosts)
+		  {
+		    ($thisnode,$theseprocs) = split(/\//,$exechost);
+		    @found = grep($thisnode,@nodes);
+		    if ( $#found>0 )
+		      {
+			push(@nodes,$thisnode);
+		      }
+		    foreach $procrange (split(/\,/,$theseprocs))
+		      {
+			if ( $procrange =~ /^([0-9]+)\-([0-9]+)$/ )
+			  {
+			    $processors += ($2-$1+1);
+			  }
+			else
+			  {
+			    $processors++;
+			  }
+		      }
+		  }
+		$nodect = $#nodes+1;
 	      }
 	    $ncpus=&max($resource{"Resource_List.ncpus"},
 			$resource{"resources_used.mppssp"}+4*$resource{"resources_used.mppe"});
@@ -191,6 +232,15 @@ while ( defined($ARGV[0]) )
 		    $uhead.=",nproc = \'".$nprocs."\'";
 		    $ihead.=",nproc";
 		    $itail.=",\'$nprocs\'";
+<<<<<<< HEAD
+=======
+		  }
+		if ( $nodect>0 )
+		  {
+		    $uhead.=",nodect = \'$nodect.\'";
+		    $ihead.=",nodect";
+		    $itail.=",\'$nodect\'";
+>>>>>>> 9387e95127070f91922caa00aa59d2bcb1785e0d
 		  }
 		if ( defined($resource{"Resource_List.nodes"}) )
 		  {
