@@ -115,6 +115,7 @@ function sys_list()
   return array("opt",
 	       "oak",
 	       "ruby",
+	       "owens",
 	       "bmibucki",
 	       "bmiowens",
 	       "oak-gpu",
@@ -397,6 +398,17 @@ function charges($db,$system,$start_date,$end_date,$datelogic="during")
       $retval  = "CASE queue";
       $retval .= " WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
       $retval .= " ELSE 0.1*20*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= " END";
+    }
+  else if ( $system=="owens" )
+    {
+      $retval  = "CASE queue";
+      $retval .= " WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= " WHEN 'parallel' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= " WHEN 'largeparallel' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= " WHEN 'dedicated' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= " WHEN 'hugemem' THEN 0.1*48*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= " ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
       $retval .= " END";
     }
   else if ( $system=="bmibucki" | $system=="bmiowens" | $system=="quick" )
