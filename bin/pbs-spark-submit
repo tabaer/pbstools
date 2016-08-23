@@ -88,6 +88,11 @@ class ExecLauncher(Launcher):
                 cpus = int(os.environ["PBS_NP"])
             except e,Exception:
                 pass
+        elif ( cpus==0 and "PBS_NUM_PPN" in os.environ.keys() ):
+            try:
+                cpus = int(os.environ["PBS_NUM_PPN"])
+            except e,Exception:
+                pass
         if ( cpus>0 ):
             os.environ["SPARK_WORKER_CORES"] = str(cpus)
             env["SPARK_WORKER_CORES"] = str(cpus)
