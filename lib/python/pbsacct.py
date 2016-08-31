@@ -8,17 +8,25 @@
 #
 # License:  GNU GPL v2, see ../COPYING for details.
 
+import datetime
 import gzip
 import os
 import re
 import sys
 
 class jobinfo:
-    def __init__(self,jobid,resources):
+    def __init__(self,jobid,state,resources):
         self.jobid = jobid
+        self.state = state
         self.resources = {}
         for key in resources.keys():
             self.resources[key] = resources[key]
+
+    def get_state(self):
+        return self.state
+
+    def set_state(self,state):
+        self.state = state
 
     def get_resources(self):
         return self.resources
@@ -47,6 +55,9 @@ class jobinfo:
         else:
             raise ValueError("Resource \""+key+"\" not supported for addition")
 
+    def jobid(self):
+        return self.jobid
+
     def numeric_jobid(self):
         """
         Returns the numeric job id (i.e. without the hostname, if any)
@@ -55,6 +66,60 @@ class jobinfo:
         Output is of the form: 6072125
         """
         return int(self.jobid.split(".")[0])
+
+    def name(self):
+        if ( "jobname" in self.resources.keys() ):
+            return self.resources["jobname"]
+        else:
+            return None
+
+    def queue(self):
+        if ( "queue" in self.resources.keys() ):
+            return self.resources("queue")
+        else:
+            return None
+
+    def user(self):
+        if ( "user" in self.resources.keys() ):
+            return self.resources("user")
+        else:
+            return None
+
+    def group(self):
+        if ( "group" in self.resources.keys() ):
+            return self.resources("group")
+        else:
+            return None
+
+    def account(self):
+        if ( "account" in self.resources.keys() ):
+            return self.resources("account")
+        else:
+            return None
+
+    def qtime(self):
+        if ( "qtime" in self.resources.keys() ):
+            return datetime.datetime.fromtimestamp(int(self.resources["qtime"]))
+        else:
+            raise RuntimeError("Job has no qtime set")
+
+    def etime(self):
+        if ( "etime" in self.resources.keys() ):
+            return datetime.datetime.fromtimestamp(int(self.resources["etime"]))
+        else:
+            raise RuntimeError("Job has no etime set")
+
+    def start(self):
+        if ( "start" in self.resources.keys() ):
+            return datetime.datetime.fromtimestamp(int(self.resources["start"]))
+        else:
+            raise RuntimeError("Job has no start time set")
+
+    def end(self):
+        if ( "end" in self.resources.keys() ):
+            return datetime.datetime.fromtimestamp(int(self.resources["end"]))
+        else:
+            raise RuntimeError("Job has no end time set")
 
     def nodes_used(self):
         nodes = []
@@ -143,6 +208,36 @@ class jobinfo:
         else:
             return 0
 
+    def walltime_used_sec(self):
+        if ( "resources_used.walltime" in self.resources.keys() ):
+            return time_to_sec(self.resources["resources_used.walltime"])
+        else:
+            return 0
+
+    def walltime_limit_sec(self):
+        if ( "Resource_List.walltime" in self.resources.keys() ):
+            return time_to_sec(self.resources["Resource_List.walltime"])
+        else:
+            return 0
+    
+    def cput_used_sec(self):
+        if ( "resources_used.cput" in self.resources.keys() ):
+            return time_to_sec(self.resources["resources_used.cput"])
+        else:
+            return 0
+
+    def cput_limit_sec(self):
+        if ( "Resource_List.cput" in self.resources.keys() ):
+            return time_to_sec(self.resources["Resource_List.cput"])
+        else:
+            return 0
+
+    def exit_status(self):
+        if ( "Exit_status" in self.resources.keys() ):
+            return self.resources["Exit_status"]
+        else:
+            return None
+
 
 def raw_data_from_file(filename):
     """
@@ -204,14 +299,14 @@ def data_from_file(filename):
         jobid = record[0]
         record_type = record[2]
         resources = record[3]
-        if ( record_type in ["S","E"] ):
-            if ( jobid not in output.keys() ):
-                output[jobid] = jobinfo(jobid,resources)
-            # may need an extra case here for jobs with multiple S and E
-            # records (e.g. preemption)
-            else:
-                for key in resources.keys():
-                    output[jobid].set_resource(key,resources[key])
+        if ( jobid not in output.keys() ):
+            output[jobid] = jobinfo(jobid,record_type,resources)
+        # may need an extra case here for jobs with multiple S and E
+        # records (e.g. preemption)
+        else:
+            output[jobid].set_state(record_type)
+            for key in resources.keys():
+                output[jobid].set_resource(key,resources[key])
     return output
 
 
