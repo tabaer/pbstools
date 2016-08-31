@@ -132,44 +132,16 @@ class jobinfo:
             return 0
 
     def mem_limit_kb(self):
-        number = 0
-        multiplier = 1
-        numbytes = 1
         if ( "Resource_List.mem" in self.resources.keys() ):
-            match = re.match("^(\d+)([TtGgMmKk])([BbWw])$",self.resources["Resource_list.mem"])
-            if ( match is not None and len(match.groups())==3 ):
-                number = int(match.group(1))
-                factor = match.group(2)
-                if ( factor in ["T","t"] ):
-                    multiplier = 1024*1024*1024
-                elif ( factor in ["G","g"] ):
-                    multiplier = 1024*1024
-                elif ( factor in ["M","m"] ):
-                    multiplier = 1024
-                units = match.group(3)
-                if ( units in ["W","w"] ):
-                    numbytes = 8
-        return number*multiplier*numbytes
+            return mem_to_kb(self.resources["Resource_List.mem"])
+        else:
+            return 0
 
     def vmem_limit_kb(self):
-        number = 0
-        multiplier = 1
-        numbytes = 1
-        if ( "Resource_list.vmem" in self.resources.keys() ):
-            match = re.match("^(\d+)([TtGgMmKk])([BbWw])$",self.resources["Resource_List.vmem"])
-            if ( match is not None and len(match.groups())==3 ):
-                number = int(match.group(1))
-                factor = match.group(2)
-                if ( factor in ["T","t"] ):
-                    multiplier = 1024*1024*1024
-                elif ( factor in ["G","g"] ):
-                    multiplier = 1024*1024
-                elif ( factor in ["M","m"] ):
-                    multiplier = 1024
-                units = match.group(3)
-                if ( units in ["W","w"] ):
-                    numbytes = 8
-        return number*multiplier*numbytes
+        if ( "Resource_List.vmem" in self.resources.keys() ):
+            return mem_to_kb(self.resources["Resource_List.vmem"])
+        else:
+            return 0
 
 
 def raw_data_from_file(filename):
@@ -275,6 +247,27 @@ def sec_to_time(seconds):
     minutes = (seconds-3600*hours)/60
     sec = seconds-(3600*hours+60*minutes)
     return "%d:%02d:%02d" % (hours,minutes,sec)
+
+
+def mem_to_kb(memstr):
+    match = re.match("^(\d+)([TtGgMmKk])([BbWw])$",memstr)
+    if ( match is not None and len(match.groups())==3 ):
+        number = int(match.group(1))
+        multiplier = 1
+        numbytes = 1
+        factor = match.group(2)
+        if ( factor in ["T","t"] ):
+            multiplier = 1024*1024*1024
+        elif ( factor in ["G","g"] ):
+            multiplier = 1024*1024
+        elif ( factor in ["M","m"] ):
+            multiplier = 1024
+        units = match.group(3)
+        if ( units in ["W","w"] ):
+            numbytes = 8
+        return number*multiplier*numbytes    
+    else:
+        raise ValueError("Invalid memory expression \""+memstr+"\"")
 
 
 if __name__ == "__main__":
