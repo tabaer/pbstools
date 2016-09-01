@@ -15,12 +15,23 @@ import re
 import sys
 
 class jobinfo:
-    def __init__(self,jobid,state,resources):
+    def __init__(self,jobid,update_time,state,resources):
         self._jobid = jobid
+        self._updatetimefmt = "%m/%d/%Y %H:%M:%S"
+        self._updatetime = datetime.datetime.strptime(update_time,self._updatetimefmt)
         self._state = state
         self._resources = {}
         for key in resources.keys():
             self._resources[key] = resources[key]
+
+    def get_update_time(self):
+        return self._updatetime
+
+    def get_update_time_ts(self):
+        return int(self._updatetime.strftime("%s"))
+
+    def set_update_time(self,update_time):
+        self._updatetime = datetime.datetime.strptime(update_time,self._updatetimefmt)
 
     def get_state(self):
         return self._state
@@ -101,25 +112,49 @@ class jobinfo:
         if ( "qtime" in self._resources.keys() ):
             return datetime.datetime.fromtimestamp(int(self._resources["qtime"]))
         else:
-            raise RuntimeError("Job has no qtime set")
+            raise RuntimeError("Job "+self._jobid+" has no qtime set")
 
     def etime(self):
         if ( "etime" in self._resources.keys() ):
             return datetime.datetime.fromtimestamp(int(self._resources["etime"]))
         else:
-            raise RuntimeError("Job has no etime set")
+            raise RuntimeError("Job "+self._jobid+" has no etime set")
 
     def start(self):
         if ( "start" in self._resources.keys() ):
             return datetime.datetime.fromtimestamp(int(self._resources["start"]))
         else:
-            raise RuntimeError("Job has no start time set")
+            raise RuntimeError("Job "+self._jobid+" has no start time set")
 
     def end(self):
         if ( "end" in self._resources.keys() ):
             return datetime.datetime.fromtimestamp(int(self._resources["end"]))
         else:
-            raise RuntimeError("Job has no end time set")
+            raise RuntimeError("Job "+self._jobid+" has no end time set")
+
+    def qtime_ts(self):
+        if ( "qtime" in self._resources.keys() ):
+            return int(self._resources["qtime"])
+        else:
+            return 0
+
+    def etime_ts(self):
+        if ( "etime" in self._resources.keys() ):
+            return int(self._resources["etime"])
+        else:
+            return 0
+
+    def start_ts(self):
+        if ( "start" in self._resources.keys() ):
+            return int(self._resources["start"])
+        else:
+            return 0
+
+    def end_ts(self):
+        if ( "end" in self._resources.keys() ):
+            return int(self._resources["end"])
+        else:
+            return 0
 
     def nodes_used(self):
         nodes = []
@@ -314,13 +349,15 @@ def jobs_from_file(filename):
     output = {}
     for record in raw_data_from_file(filename):
         jobid = record[0]
+        update_time = record[1]
         record_type = record[2]
         resources = record[3]
         if ( jobid not in output.keys() ):
-            output[jobid] = jobinfo(jobid,record_type,resources)
+            output[jobid] = jobinfo(jobid,update_time,record_type,resources)
         # may need an extra case here for jobs with multiple S and E
         # records (e.g. preemption)
         else:
+            output[jobid].set_update_time(update_time)
             output[jobid].set_state(record_type)
             for key in resources.keys():
                 output[jobid].set_resource(key,resources[key])
