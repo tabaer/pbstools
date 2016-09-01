@@ -147,8 +147,8 @@ class jobinfo:
             processors = int(self.resources["total_execution_slots"])
         elif ( "Resource_List.nodes" in self.resources.keys() ):
             # Compute the nodes requested and the processors per node
-            for nodes in self.resources["Resource_List.nodes"].split("+"):
-                nodes_and_ppn = self.resources["Resource_List.nodes"].split(":")
+            for nodelist in self.resources["Resource_List.nodes"].split("+"):
+                nodes_and_ppn = nodelist.split(":")
                 try:
                     nodes = int(nodes_and_ppn[0])
                 except:
