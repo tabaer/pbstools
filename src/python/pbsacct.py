@@ -168,7 +168,11 @@ class jobinfo:
         ncpus = 0
         if ( "Resource_List.ncpus" in self._resources.keys() ):
             ncpus = max(ncpus,int(self._resources["Resource_List.ncpus"]))
-        if ( "resources_used.mppssp" in self._resources.keys() or 
+        if ( "resources_used.ncpus" in self._resources.keys() ):
+            ncpus = max(ncpus,int(self._resources["resources_used.ncpus"]))
+        if ( "Resource_List.mppssp" in self._resources.keys() or 
+             "resources_used.mppssp" in self._resources.keys() or 
+             "Resource_List.mppe" in self._resources.keys() or
              "resources_used.mppe" in self._resources.keys() ):
             # Cray SV1/X1 specific code
             # These systems could gang together 4 individual processors (SSPs)
