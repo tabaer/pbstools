@@ -99,6 +99,14 @@ reaver is a tool to find (and optionally clean up) processes on a PBS host
 which have not been allocated jobs on that host.
 
 
+%package -n pbsacct-python
+Summary:  pbsacct Python library
+Group:  System Environment/Base
+Requires:  python
+%description pbsacct-python
+pbsacct.py is a module for parsing and processing PBS accounting log files.
+
+
 %package -n pbsacct-collector
 Summary:  pbsacct Data Collector
 Group:  System Environment/Base
@@ -197,6 +205,11 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %files reaver
 %{_sbindir}/reaver
 %doc %{_mandir}/man8/reaver.8.gz
+
+%files pbsacct-python
+%{python_sitelib}/pbsacct/__init__.py
+%{python_sitelib}/pbsacct/__init__.pyc
+%{python_sitelib}/pbsacct/__init__.pyo
 
 %files -n  pbsacct-collector
 %{_sbindir}/job-db-update

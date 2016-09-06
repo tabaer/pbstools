@@ -76,13 +76,16 @@ pbs-spark-submit:
 	install -d $(PREFIX)/share/man/man1	
 	install -m 0644 doc/man1/pbs-spark-submit.1 $(PREFIX)/share/man/man1
 
-admintools: reaver
+admintools: reaver pbsacct-python
 
 reaver:
 	install -d $(PREFIX)/sbin
 	install -m 0750 sbin/reaver $(PREFIX)/sbin
 	install -d $(PREFIX)/share/man/man8
 	install -m 0644 doc/man8/reaver.8 $(PREFIX)/share/man/man8
+
+pbsacct-python:
+	cd src/python && python setup.py install
 
 mpitools: parallel-command-processor pbsdcp-scatter
 
