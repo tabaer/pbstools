@@ -76,7 +76,11 @@ class jobinfo:
         Input is of the form: 6072125.oak-batch.osc.edu
         Output is of the form: 6072125
         """
-        return int(self._jobid.split(".")[0])
+        if ( '[' in self._jobid ):
+            # this is an array job (###[#]), so return the "master" jobid
+            return int((self._jobid.split(".")[0])[0:self._jobid.index('[')])
+        else:
+            return int(self._jobid.split(".")[0])
 
     def name(self):
         if ( "jobname" in self._resources.keys() ):
