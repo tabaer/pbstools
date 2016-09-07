@@ -6,4 +6,11 @@ dagsub:
   it happens to check while the completed job is in the 'E' state
   (which is typically only a few seconds).
 
+dbtools:
+* The scripts have usernames and passwords hard-coded in them rather than
+  using a config file.
 
+packaging
+* The MPI tools (parallel-command-processor, pbsdcp-scatter, and
+  jobarray-to-pcp) are not currently listed in the spec file because
+  they require special compilation against an MPI library.
