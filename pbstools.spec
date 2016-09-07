@@ -1,7 +1,10 @@
+%{!?ver: %global ver 3.1}
+%{!?rel: %global rel 1}
+
 Summary: Tools for the PBS family of batch systems (OpenPBS, PBS Pro, TORQUE)
 Name: pbstools
-Version: 3.1
-Release: 1%{?dist}
+Version: %{ver}
+Release: %{rel}%{?dist}
 License: GPLv2
 Group: System Environment/Base
 Vendor:  Ohio Supercomputer Center
@@ -79,6 +82,12 @@ job-vm-launch launches a virtual machine instance within a TORQUE job
 using KVM.  It should be installed on compute nodes running pbs_mom
 and libvirtd/qemu-kvm.
 
+%package jobarray-to-pcp
+Summary:  PBStools Job Array to PCP
+Group:  System Environment/Base
+Requires:  python
+%description jobarray-to-pcp
+Run the equivalent of a TORQUE job array using parallel-command-processor.
 
 %package pbs-spark-submit
 Summary:  PBStools Spark Launcher
@@ -152,7 +161,7 @@ OpenPBS, PBS Pro, or TORQUE.
 
 
 %install
-make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct CFGPREFIX=%{buildroot}/%{_sysconfdir} install dbtools
+make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct CFGPREFIX=%{buildroot}/%{_sysconfdir} ROOT=%{buildroot} install dbtools
 
 
 %files
@@ -200,6 +209,10 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %{_bindir}/job-vm-launch
 %doc %{_mandir}/man1/job-vm-launch.1.gz
 
+%files jobarray-to-pcp
+%{_bindir}/jobarray-to-pcp
+%doc %{_mandir}/man1/jobarray-to-pcp.1.gz
+
 %files pbs-spark-submit
 %{_bindir}/pbs-spark-submit
 %doc %{_mandir}/man1/pbs-spark-submit.1.gz
@@ -209,8 +222,10 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %doc %{_mandir}/man8/reaver.8.gz
 
 %files -n pbsacct-python
+%{python_sitelib}/pbsacct-*
 %{python_sitelib}/pbsacct/__init__.py
 %{python_sitelib}/pbsacct/__init__.pyc
+%{python_sitelib}/pbsacct/__init__.pyo
 
 %files -n pbsacct-collector
 %{_sbindir}/job-db-update

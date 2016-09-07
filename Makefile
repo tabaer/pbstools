@@ -1,3 +1,6 @@
+VERSION = 3.1
+RELEASE = 1
+ROOT = /
 PREFIX    = /usr/local
 WEBPREFIX = /var/www/html/pbsacct
 CFGPREFIX = $(PREFIX)/etc
@@ -5,6 +8,7 @@ DBSERVER  = localhost
 DBADMIN   = root
 MPICC = mpicc
 MPILIBS = 
+PKGDIR = $(shell pwd)/pkg
 
 default:
 	@echo "Run \"make install\" or \"make install-all\" to install pbstools"
@@ -13,7 +17,7 @@ install: usertools admintools
 
 install-all: usertools admintools mpitools statstools dbtools
 
-usertools: ja pbsdcp qexec supermover dmsub dagsub job-vm-launch pbs-spark-submit
+usertools: ja pbsdcp qexec supermover dmsub dagsub job-vm-launch pbs-spark-submit jobarray-to-pcp
 
 ja:
 	install -d $(PREFIX)/bin
@@ -70,6 +74,12 @@ job-vm-launch:
 	install -d $(PREFIX)/share/man/man1	
 	install -m 0644 doc/man1/job-vm-launch.1 $(PREFIX)/share/man/man1
 
+jobarray-to-pcp:
+	install -d $(PREFIX)/bin
+	install -m 0755 bin/jobarray-to-pcp $(PREFIX)/bin
+	install -d $(PREFIX)/share/man/man1
+	install -m 0644 doc/man1/jobarray-to-pcp.1 $(PREFIX)/share/man/man1
+
 pbs-spark-submit:
 	install -d $(PREFIX)/bin
 	install -m 0755 bin/pbs-spark-submit $(PREFIX)/bin
@@ -85,7 +95,7 @@ reaver:
 	install -m 0644 doc/man8/reaver.8 $(PREFIX)/share/man/man8
 
 pbsacct-python:
-	cd src/python && python setup.py install --single-version-externally-managed --root=/
+	cd src/python && python setup.py install --single-version-externally-managed --root=$(ROOT)
 
 mpitools: parallel-command-processor pbsdcp-scatter
 
@@ -159,3 +169,18 @@ deprecatedtools:
 	install -m 0750 deprecated/sbin/showscript.pbs-server $(PREFIX)/sbin
 	install -d $(PREFIX)/share/man/man8
 	install -m 0644 deprecated/doc/man/man8/dezombify.8 $(PREFIX)/share/man/man8
+
+package:
+	mkdir -p $(PKGDIR)
+	git ls-files | tar -c --transform 's,^,pbstools-$(VERSION)/,' -T - | gzip > $(PKGDIR)/pbstools-$(VERSION).tar.gz
+
+rpm: package
+	rpmbuild --define "_topdir $(PKGDIR)" \
+	--define "_builddir %{_topdir}" \
+	--define "_rpmdir %{_topdir}" \
+	--define "_srcrpmdir %{_topdir}" \
+	--define "_specdir %{_topdir}" \
+	--define "_sourcedir %{_topdir}" \
+	--define "ver $(VERSION)" \
+	--define "rel $(RELEASE)" \
+	-ba pbstools.spec
