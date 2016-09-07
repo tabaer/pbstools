@@ -103,6 +103,7 @@ which have not been allocated jobs on that host.
 Summary:  pbsacct Python library
 Group:  System Environment/Base
 Requires:  python
+BuildRequires:  python-setuptools
 %description pbsacct-python
 pbsacct.py is a module for parsing and processing PBS accounting log files.
 
@@ -133,6 +134,7 @@ Requires: mysql-server
 %description -n pbsacct-db
 pbsacct-db is the database backend for the pbsacct workload analysis
 system.  It should be installed on a database server running MySQL.
+
 
 %package -n pbsacct-jobscript-watcher
 Summary:  pbsacct Job Script Capture Service
@@ -206,12 +208,11 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %{_sbindir}/reaver
 %doc %{_mandir}/man8/reaver.8.gz
 
-%files pbsacct-python
+%files -n pbsacct-python
 %{python_sitelib}/pbsacct/__init__.py
 %{python_sitelib}/pbsacct/__init__.pyc
-%{python_sitelib}/pbsacct/__init__.pyo
 
-%files -n  pbsacct-collector
+%files -n pbsacct-collector
 %{_sbindir}/job-db-update
 %{_sbindir}/fixup-nodect
 %{_sbindir}/jobscript-to-db

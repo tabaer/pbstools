@@ -85,7 +85,7 @@ reaver:
 	install -m 0644 doc/man8/reaver.8 $(PREFIX)/share/man/man8
 
 pbsacct-python:
-	cd src/python && python setup.py install
+	cd src/python && python setup.py install --single-version-externally-managed --root=/
 
 mpitools: parallel-command-processor pbsdcp-scatter
 
