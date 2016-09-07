@@ -104,7 +104,7 @@ Summary:  pbsacct Python library
 Group:  System Environment/Base
 Requires:  python
 BuildRequires:  python-setuptools
-%description pbsacct-python
+%description -n pbsacct-python
 pbsacct.py is a module for parsing and processing PBS accounting log files.
 
 
