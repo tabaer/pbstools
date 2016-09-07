@@ -105,10 +105,6 @@ parallel-command-processor:
 	install -d $(PREFIX)/share/man/man1
 	install -m 0644 doc/man1/parallel-command-processor.1 $(PREFIX)/share/man/man1
 
-jobarray-to-pcp:
-	install -d $(PREFIX)/bin
-	install -m 0755 sbin/jobarray-to-pcp $(PREFIX)/bin
-
 pbsdcp-scatter:
 	install -d $(PREFIX)/bin
 	cd src/pbsdcp-scatter ; make MPICC=$(MPICC)
