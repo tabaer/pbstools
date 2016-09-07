@@ -87,13 +87,17 @@ reaver:
 pbsacct-python:
 	cd src/python && python setup.py install --single-version-externally-managed --root=/
 
-mpitools: parallel-command-processor pbsdcp-scatter
+mpitools: parallel-command-processor pbsdcp-scatter jobarray-to-pcp
 
 parallel-command-processor:
 	install -d $(PREFIX)/bin
 	$(MPICC) src/parallel-command-processor.c -o $(PREFIX)/bin/parallel-command-processor $(MPILIBS)
 	install -d $(PREFIX)/share/man/man1
 	install -m 0644 doc/man1/parallel-command-processor.1 $(PREFIX)/share/man/man1
+
+jobarray-to-pcp:
+	install -d $(PREFIX)/bin
+	install -m 0755 sbin/jobarray-to-pcp $(PREFIX)/bin
 
 pbsdcp-scatter:
 	install -d $(PREFIX)/bin
@@ -122,6 +126,7 @@ pbsacct-collector:
 	install -m 0750 sbin/fixup-nodect $(PREFIX)/sbin
 	install -m 0750 sbin/jobscript-to-db $(PREFIX)/sbin
 	install -m 0750 sbin/spool-jobscripts $(PREFIX)/sbin
+	install -m 0750 sbin/sw_app-index $(PREFIX)/sbin
 
 pbsacct-php:
 	install -d $(WEBPREFIX)

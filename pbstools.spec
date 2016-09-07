@@ -217,6 +217,7 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %{_sbindir}/fixup-nodect
 %{_sbindir}/jobscript-to-db
 %{_sbindir}/spool-jobscripts
+%{_sbindir}/sw_app-index
 
 %files -n pbsacct-php
 %dir /var/www/html/pbsacct
