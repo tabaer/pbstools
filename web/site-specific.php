@@ -1026,9 +1026,7 @@ function software_list($db = NULL)
     {
       # if we do have access to the DB, query out all the known packages
       $list = array();
-      # do the sort and filter out null here rather than in the DB
-      #$sql = "SELECT DISTINCT(sw_app) FROM Jobs";
-      $sql = "SELECT sw_app FROM Jobs GROUP BY sw_app";
+      $sql = "SELECT package FROM Software";
       #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
 
       $result = db_query($db,$sql);
