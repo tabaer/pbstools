@@ -233,6 +233,7 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %{_sbindir}/jobscript-to-db
 %{_sbindir}/spool-jobscripts
 %{_sbindir}/sw_app-index
+%{_sbindir}/sw_app-cache
 
 %files -n pbsacct-php
 %dir /var/www/html/pbsacct

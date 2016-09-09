@@ -133,6 +133,7 @@ pbsacct-collector:
 	install -m 0750 sbin/jobscript-to-db $(PREFIX)/sbin
 	install -m 0750 sbin/spool-jobscripts $(PREFIX)/sbin
 	install -m 0750 sbin/sw_app-index $(PREFIX)/sbin
+	install -m 0750 sbin/sw_app-cache $(PREFIX)/sbin
 
 pbsacct-php:
 	install -d $(WEBPREFIX)
