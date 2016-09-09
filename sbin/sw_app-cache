@@ -1,0 +1,111 @@
+#!/usr/bin/python
+import getopt
+import MySQLdb
+import os
+import sys
+
+def usage():
+    sys.exit(-1)
+
+#
+# Main program starts here
+#
+dbhost = "localhost"
+dbuser = "pbsacct"
+dbpasswd = "pbsRroxor"
+dbname = "pbsacct"
+jobstable = "Jobs"
+cachetable = "Software"
+hostname = None
+start_date = None
+end_date = None
+
+# command line processing
+try:
+    opts, args = getopt.getopt(sys.argv[1:],
+                               "E:S:c:d:h:j:p:s:u:",
+                               [])
+except getopt.GetoptError, err:
+    sys.stderr.write(str(err)+"\n")
+    usage()
+for opt in opts:
+    if ( opt[0]=="-E" ):
+        end_date = opt[1]
+    elif ( opt[0]=="-S" ):
+        start_date = opt[1]
+    elif ( opt[0]=="-c" ):
+        cachetable = opt[1]
+    elif ( opt[0]=="-d" ):
+        dbname = opt[1]
+    elif ( opt[0]=="-h" ):
+        hostname = opt[1]
+    elif ( opt[0]=="-j" ):
+        jobstable = opt[1]
+    elif ( opt[0]=="-p" ):
+        dbpasswd = opt[1]
+    elif ( opt[0]=="-s" ):
+        dbhost = opt[1]
+    elif ( opt[0]=="-u" ):
+        dbuser = opt[1]
+
+# connect to DB
+db = MySQLdb.connect(host=dbhost,db=dbname,user=dbuser,passwd=dbpasswd)
+cursor = db.cursor()
+
+packages_in_jobs = []
+select = "SELECT DISTINCT(sw_app) AS package FROM "+jobstable+" WHERE sw_app IS NOT NULL"
+if ( hostname is not None ):
+    select += " AND system='"+hostname+"'"
+if ( start_date is not None ):
+    select += " AND submit_date>='"+start_date+"'"
+if ( end_date is not None ):
+    select += " AND submit_date<='"+end_date+"'"
+try:
+    cursor.execute(select)
+    for row in cursor.fetchall():
+        packages_in_jobs.append(row[0])
+except KeyboardInterrupt:
+    raise
+except MySQLdb.Error, e:
+    sys.stderr.write("Error %d: %s\n" % (e.args[0],e.args[1]))
+    sys.exit(1)
+except Error, e:
+    sys.stderr.write("Unknown error in package select from "+jobstable+":  "+str(e)+"\n")
+    sys.exit(2)
+
+packages_in_cache = []
+select = "SELECT package FROM "+cachetable
+try:
+    cursor.execute(select)
+    for row in cursor.fetchall():
+        packages_in_cache.append(row[0])
+except KeyboardInterrupt:
+    raise
+except MySQLdb.Error, e:
+    sys.stderr.write("Error %d: %s\n" % (e.args[0],e.args[1]))
+    sys.exit(1)
+except Error, e:
+    sys.stderr.write("Unknown error in package select from "+cachetable+":  "+str(e)+"\n")
+    sys.exit(2)
+
+for pkg in packages_in_jobs:
+    if ( pkg not in packages_in_cache ):
+        # use the IGNORE keyword here in case there are more than one of these
+        # hitting the DB at once
+        insert = "INSERT IGNORE INTO "+cachetable+" SET package='"+pkg+"'"
+        print insert
+        try:
+            cursor.execute(insert)
+            db.commit()
+        except KeyboardInterrupt:
+            raise
+        except MySQLdb.Error, e:
+            if db:
+                db.rollback()
+            sys.stderr.write("Error %d: %s\n" % (e.args[0],e.args[1]))
+            sys.exit(1)
+        except Error, e:
+            sys.stderr.write("Unknown error in insert of "+pkg+" into "+cachetable+":  "+str(e)+"\n")
+            sys.exit(2)
+    
+db.close()
