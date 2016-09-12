@@ -507,5 +507,7 @@ if ( len(child_args)>0 ):
         cmdline += " --driver-class-path "+driver_class_path
     if ( exec_mem is not None ):
         cmdline += " --executor-memory "+exec_mem
+    for key in properties.keys():
+        cmdline += " --conf \""+str(key)+"="+str(properties[key])+"\""
     cmdline += " "+" ".join(child_args)
     os.system(cmdline)
