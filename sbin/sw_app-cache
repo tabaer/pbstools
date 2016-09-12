@@ -93,7 +93,7 @@ for pkg in packages_in_jobs:
         # use the IGNORE keyword here in case there are more than one of these
         # hitting the DB at once
         insert = "INSERT IGNORE INTO "+cachetable+" SET package='"+pkg+"'"
-        print insert
+        #print insert
         try:
             cursor.execute(insert)
             db.commit()
