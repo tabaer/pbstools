@@ -234,7 +234,7 @@ def usage():
     sys.stderr.write("\t--log4j-properties <propsfile> or -l <propsfile>\n\t\tRead log4j properties from <propsfile>.\n")
     sys.stderr.write("\t--work-dir <workdir> or -d <workdir>\n\t\tUse <workdir> as Spark program's working directory.\n")
     sys.stderr.write("\t--memory <memlimit> or -m <memlimit>\n\t\tSet per-worker memory limit.\n")
-    sys.stderr.write("\t--tpn <N> or -t <N>\n\t\tLaunch <N> tasks per node instead of the default from the job.\n")
+    sys.stderr.write("\t--tpn <N> or -t <N>\n\t\tLaunch <N> worker tasks per node instead of the default from the job.\n")
     sys.stderr.write("\t--pausetime <N> or -p <N>\n\t\tPause <N> seconds between startup stages (default 5).\n")
     sys.stderr.write("\t--conf <key>=<value> or -D <key>=<value>\n\t\tSet the Java property <key> to <value>.\n")
     sys.stderr.write("\t--properties-file <propfile> or -P <propfile>\n\t\tRead Java properties from <propfile>.\n")
@@ -250,6 +250,7 @@ def usage():
     sys.stderr.write("\t--driver-java-options <opts>\n\t\tExtra Java options to pass to the driver.\n")
     sys.stderr.write("\t--driver-library-path <libpath>\n\t\tExtra library path entries to pass to the driver.\n")
     sys.stderr.write("\t--driver-class-path <classpth>\n\t\tExtra class path entries to pass to the driver. Note\n\t\tthat jars added with --jars are automatically included\n\t\tin the classpath.\n")
+    sys.stderr.write("\t--executor-cores <cores>\n\t\t# cores per executor (e.g. 1; default is all available).\n")
     sys.stderr.write("\t--executor-memory <mem>\n\t\tMemory per executor (e.g. 1000M, 2G; default is 1G).\n")
     sys.stderr.write("\n")
     sys.stderr.write("Run \"man pbs-spark-submit\" for more details.\n")
@@ -274,6 +275,7 @@ driver_mem = None
 driver_java_opts = None
 driver_lib_path = None
 driver_class_path = None
+exec_cores = None
 exec_mem = None
 classname = None
 name = None
@@ -335,6 +337,7 @@ try:
                                       "driver-java-options=",
                                       "driver-library-path",
                                       "driver-class-path=",
+                                      "executor-cores=",
                                       "executor-memory=",
                                       "conf=",
                                       "class=",
@@ -417,6 +420,8 @@ for opt in opts:
         driver_lib_path = opt[1]
     elif ( opt[0]=="--driver-class-path" ):
         driver_class_path = opt[1]
+    elif ( opt[0]=="--executor-cores" ):
+        exec_cores = opt[1]
     elif ( opt[0]=="--executor-memory" ):
         exec_mem = opt[1]
 
@@ -505,6 +510,8 @@ if ( len(child_args)>0 ):
         cmdline += " --driver-library-path "+driver_lib_path
     if ( driver_class_path is not None ):
         cmdline += " --driver-class-path "+driver_class_path
+    if ( exec_cores is not None ):
+        cmdline += " --executor-cores "+exec_cores
     if ( exec_mem is not None ):
         cmdline += " --executor-memory "+exec_mem
     for key in properties.keys():

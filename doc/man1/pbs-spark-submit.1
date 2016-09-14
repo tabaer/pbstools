@@ -154,6 +154,9 @@ Extra library path entries to pass to the driver.
 .B --driver-class-path <classpath>
 Extra class path entries to pass to the driver. Note that jars added with --jars are automatically included in the classpath.
 .TP
+.B --executor-cores <cores>
+Number of cores per executor (e.g. 1, 2, 12; default is all available).
+.TP
 .B --executor-memory <mem>
 Memory per executor (e.g. 1000M, 2G; default is 1G).
 
