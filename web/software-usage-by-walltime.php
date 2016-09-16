@@ -83,6 +83,8 @@ if ( isset($_POST['system']) )
 		echo "</TR>\n";
 	      }
 	    echo "</TABLE>\n";
+            ob_flush();
+            flush();
 	  }
       }
     page_timer();

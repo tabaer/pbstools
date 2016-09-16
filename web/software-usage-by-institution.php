@@ -103,6 +103,8 @@ if ( isset($_POST['system']) )
 		flush();
 	      }
 	    echo "</TABLE>\n";
+            ob_flush();
+            flush();
 	  }
       }
     page_timer();
