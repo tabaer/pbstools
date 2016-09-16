@@ -148,7 +148,7 @@ if ( isset($_POST['system']) )
     $sql = "SELECT jobid";
     foreach ($keys as $key)
       {
-	if ( isset($_POST[$key]) && $key!='jobid' && $key!='start_date' && $key!='end_date' )
+	if ( isset($_POST[$key]) && $key!='jobid' && $key!='start_date' && $key!='end_date' && $key!='datelogic' )
 	  {
 	    $sql .= ",".$key;
 	  }
@@ -168,7 +168,7 @@ if ( isset($_POST['system']) )
     echo "<TR><TH>jobid</TH>";
     foreach ($keys as $key)
       {
-	if ( $key!='start_date' && $key!='end_date' )
+	if ( $key!='start_date' && $key!='end_date' && $key!='datelogic' )
 	  {
 	    echo "<TH>".$key."</TH>";
 	    $col[$ncols]=$key;
