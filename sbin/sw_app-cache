@@ -57,9 +57,9 @@ select = "SELECT DISTINCT(sw_app) AS package FROM "+jobstable+" WHERE sw_app IS 
 if ( hostname is not None ):
     select += " AND system='"+hostname+"'"
 if ( start_date is not None ):
-    select += " AND submit_date>='"+start_date+"'"
+    select += " AND start_date>='"+start_date+"'"
 if ( end_date is not None ):
-    select += " AND submit_date<='"+end_date+"'"
+    select += " AND start_date<='"+end_date+"'"
 try:
     cursor.execute(select)
     for row in cursor.fetchall():
