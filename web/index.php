@@ -5,6 +5,7 @@
 # $Revision$
 # $Date$
 require_once 'page-layout.php';
+require_once 'site-specific.php';
 
 page_header("");
 page_footer();

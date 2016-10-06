@@ -8,6 +8,7 @@
 require_once 'dbutils.php';
 require_once 'page-layout.php';
 require_once 'metrics.php';
+require_once 'site-specific.php';
 require_once 'phplib/Excel/Workbook.php';
 require_once 'phplib/Excel/Worksheet.php';
 require_once 'phplib/Excel/Format.php';

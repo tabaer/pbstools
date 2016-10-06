@@ -1,5 +1,5 @@
 <?php
-# Copyright 2006 Ohio Supercomputer Center
+# Copyright 2006, 2016 Ohio Supercomputer Center
 # Copyright 2008, 2009, 2010, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL$
@@ -7,6 +7,7 @@
 # $Date$
 require_once 'page-layout.php';
 require_once 'dbutils.php';
+require_once 'site-specific.php';
 
 # accept get queries too for handy command-line usage:  suck all the
 # parameters into _POST.
@@ -47,7 +48,7 @@ if ( isset($_POST['error_time']) )
       {
 	if ( isset($_POST[$key]) && $key!='jobid' && $key!='error_time' && $key!='program' ) { $sql = $sql.",".$key; }
       }
-    $sql = $sql." FROM Jobs WHERE script LIKE '%".$_POST['program']."%' AND system LIKE '".$_POST['system']."' AND FROM_UNIXTIME(start_ts) <= '".$_POST['error_time']."' AND FROM_UNIXTIME(end_ts) >= '".$_POST['error_time']."' ORDER BY end_ts-UNIX_TIMESTAMP('".$_POST['error_time']."') LIMIT 1;";
+    $sql = $sql." FROM Jobs WHERE script LIKE '%".$_POST['program']."%' AND ( ".sysselect($_POST['system'])." ) AND FROM_UNIXTIME(start_ts) <= '".$_POST['error_time']."' AND FROM_UNIXTIME(end_ts) >= '".$_POST['error_time']."' ORDER BY end_ts-UNIX_TIMESTAMP('".$_POST['error_time']."') LIMIT 1;";
     #echo "<PRE>".$sql,"</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )

@@ -1,5 +1,5 @@
 <?php
-# Copyright 2007, 2008 Ohio Supercomputer Center
+# Copyright 2007, 2008, 2016 Ohio Supercomputer Center
 # Copyright 2009, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL$
@@ -8,6 +8,7 @@
 require_once 'dbutils.php';
 require_once 'page-layout.php';
 require_once 'metrics.php';
+require_once 'site-specific.php';
 
 # accept get queries too for handy command-line usage:  suck all the
 # parameters into _POST.
@@ -49,15 +50,15 @@ $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
     $db = db_connect();
-    $sql = "SELECT username, groupname, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges FROM Jobs WHERE system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
-#    echo "<PRE>".$sql."</PRE>\n";
+    $sql = "SELECT username, groupname, account, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, groupname, account ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
+    #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
       {
         echo "<PRE>".$result->getMessage()."</PRE>\n";
       }
     echo "<TABLE border=\"1\">\n";
-    echo "<TR><TH>user</TH><TH>group</TH><TH>job count</TH><TH>CPU-hours</TH></TR>\n";
+    echo "<TR><TH>user</TH><TH>group</TH><TH>account</TH><TH>job count</TH><TH>CPU-hours</TH><TH>charges</TH></TR>\n";
     while ($result->fetchInto($row))
       {
 	echo "<TR>";
@@ -79,7 +80,7 @@ else
   {
     begin_form("active-users.php");
 
-    system_chooser();
+    virtual_system_chooser();
     date_fields();
 
     $choices=array("cpuhours","charges","jobs");

@@ -1,5 +1,5 @@
 <?php
-# Copyright 2006 Ohio Supercomputer Center
+# Copyright 2006, 2016 Ohio Supercomputer Center
 # Copyright 2009, 2010, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL$
@@ -7,6 +7,7 @@
 # $Date$
 require_once 'page-layout.php';
 require_once 'dbutils.php';
+require_once 'site-specific.php';
 
 # accept get queries too for handy command-line usage:  suck all the
 # parameters into _POST.
@@ -47,7 +48,8 @@ if ( isset($_POST['jobid']) )
       {
 	if ( isset($_POST[$key]) && $key!='jobid' ) { $sql = $sql.",".$key; }
       }
-    $sql = $sql." FROM Jobs WHERE jobid LIKE '".$_POST['jobid'].".%' AND system LIKE '".$_POST['system']."';";
+    $sql = $sql." FROM Jobs WHERE jobid LIKE '".$_POST['jobid'].".%' AND ( ".sysselect($_POST['system'])." );";
+    #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
       {

@@ -1,5 +1,5 @@
 <?php
-# Copyright 2006, 2007, 2008 Ohio Supercomputer Center
+# Copyright 2006, 2007, 2008, 2016 Ohio Supercomputer Center
 # Copyright 2009, 2010, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL$
@@ -8,6 +8,7 @@
 require_once 'dbutils.php';
 require_once 'page-layout.php';
 require_once 'metrics.php';
+require_once 'site-specific.php';
 
 # accept get queries too for handy command-line usage:  suck all the
 # parameters into _POST.
@@ -58,7 +59,7 @@ if ( isset($_POST['node']) )
 	    $sql .= ",".$key;
 	  }
       }
-    $sql .= " FROM Jobs WHERE hostlist REGEXP '".$_POST['node']."' AND system LIKE '".$_POST['system']."' AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
+    $sql .= " FROM Jobs WHERE hostlist REGEXP '".$_POST['node']."' AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
 #    echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )

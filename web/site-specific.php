@@ -161,7 +161,9 @@ function sysselect($system)
   if ( $system=='xt4-all' ) return "system = 'kraken' OR system = 'athena'";
   if ( $system=='keeneland' ) return "system = 'kid' OR system = 'kfs' OR system = 'kids'";
   if ( $system=='beacon-all' ) return "system = 'beacon' OR system = 'beacon2' OR system = 'bcndev'";
+  if ( $system=='oak' ) return "system = 'oak'";
   if ( $system=='oak-gpu' ) return "system = 'oak' AND hostlist REGEXP '^n0(28[19]|29[0-9]|3[01][0-9]|320|64[1-9]|65[0-9]|660)' ";
+  if ( $system=='ruby' ) return "system = 'ruby'";
   if ( $system=='ruby-gpu' ) return "system = 'ruby' AND hostlist REGEXP '^r02(0[1-9]|1[0-9]|20)' ";
   if ( $system=='ruby-mic' ) return "system = 'ruby' AND hostlist REGEXP '^r0(2(2[1-9]|3[0-9]|40)|50[1-5])' ";
   return "system LIKE '".$system."'";
