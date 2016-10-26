@@ -1,10 +1,10 @@
 CREATE DATABASE pbsacct;
 USE pbsacct;
 CREATE TABLE Jobs (
-  jobid        VARCHAR(32) PRIMARY KEY,
-  system       VARCHAR(8),
-  username     VARCHAR(9),
-  groupname    VARCHAR(9),
+  jobid        VARCHAR(64) PRIMARY KEY,
+  system       VARCHAR(32),
+  username     VARCHAR(32),
+  groupname    VARCHAR(32),
   account      VARCHAR(32),
   submithost   VARCHAR(32),
   jobname      TINYTEXT,
