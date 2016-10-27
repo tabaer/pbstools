@@ -45,6 +45,17 @@ EOH
 }
 else
 {
+    # Site-specific settings
+    # shared file systems don't require any cleverness to deal with
+    $sharedfs = "^/(fs|gpfs|lustre|pvfs|home|[a-z])/";
+    # $dsh is only used in gather mode
+    $dsh = "/usr/bin/pdsh";
+    # set $mpiexec and/or $scatter "" to disable pbsdcp-scatter
+    $mpiexec = "/usr/local/hydra/3.2/bin/mpiexec";
+    $scatter = "/usr/local/bin/pbsdcp-scatter";
+    # $rcp is a fallback in case pbsdcp-scatter is disabled
+    $rcp = "/usr/bin/rcp";
+
     # Rewrite the target name if it's a relative path
     $target=pop(@ARGV);
     if ( $target =~ m:^[^/]: )
@@ -72,45 +83,58 @@ else
     if ( $gather==1 )
       {
 	$pwd=`pwd`;
-	chop($pwd);
+	chomp($pwd);
 	# keep the exec'ed local shell from trying to expand wildcards
 	foreach $arg ( @ARGV )
 	  {
 	    $arg =~ s/([\[\]\{\}\(\)\*\?\ ])/\\$1/g;
 	    push(@NEWARGV,$arg);
 	  }
-	exec("all -pj cd $pwd \\; cp @NEWARGV $target\n");
+	exec("$dsh cd $pwd \\; cp @NEWARGV $target\n");
       }
     else # scatter -- default
       {
-	$sharedfs = "^/(gpfs|lustre|pvfs|home|[a-z])/";
-	if ( -s $ENV{'PBS_NODEFILE'} && !($target =~ $sharedfs) )
+	# if the target is a known shared file system, just use cp
+	if ( $target =~ $sharedfs )
 	  {
-	    open(NODES,"uniq ".$ENV{'PBS_NODEFILE'}." |");
-	    @node=<NODES>;
-	    chop(@node);
-	    if ( $#node>0 )
+	    exec("cp @ARGV $target");
+	  }
+	else
+	  {
+	    # use pbsdcp-scatter if available
+	    if ( length($mpiexec)>0 && length($scatter)>0 )
 	      {
-		for ( $i=0 ; $i<=$#node; $i++ )
+		exec("$mpiexec -ppn 1 $scatter @ARGV $target");
+	      }
+	    # if pbsdcp-scatter is not available but there's a node file, use rcp
+	    elsif ( defined($ENV{'PBS_NODEFILE'}) && -s $ENV{'PBS_NODEFILE'} )
+	      {
+		open(NODES,"uniq ".$ENV{'PBS_NODEFILE'}." |");
+		@node=<NODES>;
+		chop(@node);
+		if ( $#node>0 )
 		  {
+		    for ( $i=0 ; $i<=$#node; $i++ )
+		      {
 			if ( ($pid[$i]=fork)==0 )
 			  {
-			    exec("rcp @ARGV $node[$i]:$target\n");
+			    exec("$rcp @ARGV $node[$i]:$target\n");
 			  }
+		      }
+		    for ( $i=0 ; $i<=$#node; $i++ )
+		      {
+			waitpid($pid[$i],0);
+		      }
 		  }
-		for ( $i=0 ; $i<=$#node; $i++ )
+		else
 		  {
-		    waitpid($pid[$i],0);
+		    exec("cp @ARGV $target");
 		  }
 	      }
 	    else
 	      {
 		exec("cp @ARGV $target");
 	      }
-	  }
-	else
-	  {
-	    exec("cp @ARGV $target");
 	  }
       }
 }
