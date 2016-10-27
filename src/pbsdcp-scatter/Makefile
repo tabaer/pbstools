@@ -1,15 +1,16 @@
 MPICC=mpicc
+CFLAGS=
 
 build: pbsdcp-scatter 
 
 pbsdcp-scatter: pbsdcp-scatter.c misc.o  fileattr.o
-	$(MPICC) -o pbsdcp-scatter pbsdcp-scatter.c misc.o fileattr.o
+	$(MPICC) $(CFLAGS) -o pbsdcp-scatter pbsdcp-scatter.c misc.o fileattr.o
 
 misc.o: misc.c fileattr.h fileattr.o
-	$(MPICC) -c misc.c
+	$(MPICC) $(CFLAGS) -c misc.c
 
 fileattr.o: fileattr.c fileattr.h
-	$(MPICC) -c fileattr.c
+	$(MPICC) $(CFLAGS) -c fileattr.c
 
 fileattr.h : 
 
