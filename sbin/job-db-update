@@ -317,9 +317,17 @@ while ( defined($ARGV[0]) )
 		  }
 		if ( defined($resource{"resources_used.cput"}) )
 		  {
-		    $uhead.=",cput = \'".$resource{"resources_used.cput"}."\'";
 		    $ihead.=",cput";
-		    $itail.=",\'".$resource{"resources_used.cput"}."\'";
+		    if ( $resource{"resources_used.walltime"} =~ /^\d+$/ ) 
+		      {
+                        $uhead.=",walltime = SEC_TO_TIME(".$resource{"resources_used.walltime"}.")";
+		        $itail.=",SEC_TO_TIME(".$resource{"resources_used.walltime"}.")";
+                      }
+		    else
+		      {
+			$uhead.=",cput = \'".$resource{"resources_used.cput"}."\'";
+			$itail.=",\'".$resource{"resources_used.cput"}."\'";
+		      }
 		  }
 		if ( defined($resource{"Resource_List.walltime"}) )
 		  {
