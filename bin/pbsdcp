@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 #
 # pbsdcp -- Distributed copy command for the PBS environment
-# Copyright 2006 Ohio Supercomputer Center
+# Copyright 2006, 2016 Ohio Supercomputer Center
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
@@ -61,7 +61,7 @@ else
     if ( $target =~ m:^[^/]: )
     {
         $pwd = `pwd`;
-        chop($pwd);
+        chomp($pwd);
         $newtarget = $pwd . "/" . $target;
         $target = $newtarget;
     }
@@ -102,7 +102,8 @@ else
 	else
 	  {
 	    # use pbsdcp-scatter if available
-	    if ( length($mpiexec)>0 && length($scatter)>0 )
+	    if ( length($mpiexec)>0 && length($scatter)>0 &&
+		-e $mpiexec && -e $scatter )
 	      {
 		exec("$mpiexec -ppn 1 $scatter @ARGV $target");
 	      }
@@ -111,7 +112,7 @@ else
 	      {
 		open(NODES,"uniq ".$ENV{'PBS_NODEFILE'}." |");
 		@node=<NODES>;
-		chop(@node);
+		chomp(@node);
 		if ( $#node>0 )
 		  {
 		    for ( $i=0 ; $i<=$#node; $i++ )
