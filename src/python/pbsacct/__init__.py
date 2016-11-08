@@ -311,17 +311,16 @@ def raw_data_from_file(filename):
         else:
             acct_data = open(filename)
     except IOError as e:
-        print "ERROR: Failed to read PBS accounting log %s" %filename
+        print("ERROR: Failed to read PBS accounting log %s" % (filename))
         return None
     output = []
     for line in acct_data:
         
         # Get the fields from the log entry
         try:
-            time, record_type, jobid, resources = line.split(";")
+            time, record_type, jobid, resources = line.split(";",3)
         except ValueError:
-            print("ERROR: Invalid number of fields (requires 4). Unable to \
-                    parse entry: %s" %line.split(";"))
+            print("ERROR:  Invalid number of fields (requires 4).  Unable to parse entry: %s" % (str(line.split(";",3))))
             continue
         
         # Create a dict for the various resources
@@ -407,7 +406,6 @@ def mem_to_kb(memstr):
     if ( match is not None and len(match.groups())==3 ):
         number = int(match.group(1))
         multiplier = 1
-        numbytes = 1
         factor = match.group(2)
         if ( factor in ["T","t"] ):
             multiplier = 1024*1024*1024
@@ -418,11 +416,19 @@ def mem_to_kb(memstr):
         units = match.group(3)
         if ( units in ["W","w"] ):
             numbytes = 8
-        return number*multiplier*numbytes    
+        return number*multiplier*numbytes
+    elif ( re.match("^(\d+)([BbWw])$",memstr) ):
+        match = re.match("^(\d+)([BbWw])$",memstr)
+        number = int(match.group(1))
+        numbytes = 1
+        units = match.group(3)
+        if ( units in ["W","w"] ):
+            numbytes = 8
+        return number*numbytes/1024
     else:
         raise ValueError("Invalid memory expression \""+memstr+"\"")
 
 
 if __name__ == "__main__":
     import os
-    print str(data_from_file(os.path.expanduser("~amaharry/acct-data/20160310")))
+    print str(jobs_from_file(os.path.expanduser("~amaharry/acct-data/20160310")))
