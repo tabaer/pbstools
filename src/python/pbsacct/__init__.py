@@ -422,7 +422,7 @@ def mem_to_kb(memstr):
         match = re.match("^(\d+)([BbWw])$",memstr)
         number = int(match.group(1))
         numbytes = 1
-        units = match.group(3)
+        units = match.group(2)
         if ( units in ["W","w"] ):
             numbytes = 8
         return number*numbytes/1024
