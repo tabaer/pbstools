@@ -406,6 +406,7 @@ def mem_to_kb(memstr):
     if ( match is not None and len(match.groups())==3 ):
         number = int(match.group(1))
         multiplier = 1
+        numbytes = 1
         factor = match.group(2)
         if ( factor in ["T","t"] ):
             multiplier = 1024*1024*1024
