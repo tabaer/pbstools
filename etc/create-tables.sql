@@ -20,6 +20,8 @@ CREATE TABLE Jobs (
   qos          TINYTEXT,
   submit_ts    INT,
   submit_date  DATE,
+  eligible_ts  INT,
+  eligible_date DATE,
   start_ts     INT,
   start_date   DATE,
   end_ts       INT,
@@ -50,6 +52,7 @@ CREATE INDEX group_jobs ON Jobs (groupname);
 CREATE INDEX account_jobs ON Jobs (account);
 CREATE INDEX queue_jobs ON Jobs (queue(16));
 CREATE INDEX submit_jobs ON Jobs (submit_date);
+CREATE INDEX eligible_jobs ON Jobs (eligible_date);
 CREATE INDEX start_jobs ON Jobs (start_date);
 CREATE INDEX end_jobs ON Jobs (end_date);
 CREATE INDEX start_end_jobs ON Jobs (start_date,end_date);
