@@ -291,6 +291,15 @@ while ( defined($ARGV[0]) )
 		    $ihead.=",submit_date";
 		    $itail.=",DATE(FROM_UNIXTIME(\'".$resource{"ctime"}."\'))";
 		  }
+		if ( defined($resource{"etime"}) )
+		  {
+		    $uhead.=",eligible_ts = \'".$resource{"etime"}."\'";
+		    $uhead.=",eligible_date = DATE(FROM_UNIXTIME(\'".$resource{"etime"}."\'))";
+		    $ihead.=",eligible_ts";
+		    $itail.=",\'".$resource{"etime"}."\'";
+		    $ihead.=",eligible_date";
+		    $itail.=",DATE(FROM_UNIXTIME(\'".$resource{"etime"}."\'))";
+		  }
 		if ( defined($resource{"start"}) )
 		  {
 		    $uhead.=",start_ts = \'".$resource{"start"}."\'";
