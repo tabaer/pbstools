@@ -1,4 +1,4 @@
-%{!?ver: %global ver 3.1}
+%{!?ver: %global ver 3.2}
 %{!?rel: %global rel 1}
 
 Summary: Tools for the PBS family of batch systems (OpenPBS, PBS Pro, TORQUE)
