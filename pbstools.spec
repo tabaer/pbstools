@@ -13,6 +13,7 @@ Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Prefix: /usr
+Prefix: /var/www/html/pbsacct
 %description
 Several utilities that have been developed at OSC, NICS, and elsewhere
 to aid in the administration and management of PBS variants (including
