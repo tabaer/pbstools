@@ -1,4 +1,4 @@
-%{!?ver: %global ver 3.2}
+%{!?ver: %global ver 3.3}
 %{!?rel: %global rel 1}
 
 Summary: Tools for the PBS family of batch systems (OpenPBS, PBS Pro, TORQUE)
@@ -131,11 +131,28 @@ pbs_server instance for OpenPBS, PBS Pro, or TORQUE.
 %package -n pbsacct-php
 Summary: pbsacct Web Front End
 Group:  System Environment/Base
-Requires: httpd,php,php-pear-Spreadsheet-Excel-Writer
+Requires: httpd,php
+Requires: php-pear-DB
+Requires: php-mysql
+Requires: pbsacct-php-excel
+Requires: pbsacct-php-ods
 %description -n pbsacct-php
 pbsacct-php is the web front end for the pbsacct workload analysis
 system.  It should be installed on a web server host.
 
+%package -n pbsacct-php-excel
+Summary: pbsacct-php-excel
+Group:  System Environment/Base
+Requires: php
+%description -n pbsacct-php-excel
+External PHP Excel library for pbsacct-php
+
+%package -n pbsacct-php-ods
+Summary: pbsacct-php-ods
+Group:  System Environment/Base
+Requires: php
+%description -n pbsacct-php-ods
+External PHP ods library for pbsacct-php
 
 %package -n pbsacct-db
 Summary:  pbsacct Database Backend
@@ -241,6 +258,14 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %config /var/www/html/pbsacct/default.css
 %config /var/www/html/pbsacct/db.cfg
 /var/www/html/pbsacct/*.php
+/var/www/html/pbsacct/*.js
+
+%files -n pbsacct-php-excel
+/var/www/html/pbsacct/phplib/Excel
+
+%files -n pbsacct-php-ods
+/var/www/html/pbsacct/phplib/ods.php
+/var/www/html/pbsacct/phplib/ODS
 
 %files -n pbsacct-db
 %dir %{_sysconfdir}/pbsacct

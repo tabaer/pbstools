@@ -6,9 +6,9 @@
 # $Revision$
 # $Date$
 require_once 'dbutils.php';
-require_once 'phplib/jpgraph/jpgraph.php';
-require_once 'phplib/jpgraph/jpgraph_bar.php';
-require_once 'phplib/jpgraph/jpgraph_error.php';
+#require_once 'phplib/jpgraph/jpgraph.php';
+#require_once 'phplib/jpgraph/jpgraph_bar.php';
+#require_once 'phplib/jpgraph/jpgraph_error.php';
 require_once 'phplib/Excel/Workbook.php';
 require_once 'phplib/Excel/Worksheet.php';
 require_once 'phplib/Excel/Format.php';
