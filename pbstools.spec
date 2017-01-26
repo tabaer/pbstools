@@ -211,12 +211,12 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 
 %files -n supermover
 %{_bindir}/supermover
-%config /%{_sysconfdir}/supermover.cfg
+%config(noreplace) /%{_sysconfdir}/supermover.cfg
 %doc %{_mandir}/man1/supermover.1.gz
 
 %files dmsub
 %{_bindir}/dmsub
-%config /%{_sysconfdir}/dmsub.cfg
+%config(noreplace) /%{_sysconfdir}/dmsub.cfg
 %doc %{_mandir}/man1/dmsub.1.gz
 
 %files dagsub
@@ -255,8 +255,8 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 
 %files -n pbsacct-php
 %dir /var/www/html/pbsacct
-%config /var/www/html/pbsacct/default.css
-%config /var/www/html/pbsacct/db.cfg
+%config(noreplace) /var/www/html/pbsacct/default.css
+%config(noreplace) /var/www/html/pbsacct/db.cfg
 /var/www/html/pbsacct/*.php
 /var/www/html/pbsacct/*.js
 
