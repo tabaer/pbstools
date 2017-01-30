@@ -330,7 +330,7 @@ try:
                                       "tasks-per-node=",
                                       "worker-on-mother-superior",
                                       "no-worker-on-mother-superior",
-                                      "master-interface",
+                                      "master-interface=",
                                       "properties-file",
                                       "pause-time",
                                       "driver-memory=",
