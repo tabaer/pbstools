@@ -1,4 +1,4 @@
-VERSION = 3.1
+VERSION = 3.3
 RELEASE = 1
 ROOT = /
 PREFIX    = /usr/local
@@ -137,10 +137,12 @@ pbsacct-collector:
 
 pbsacct-php:
 	install -d $(WEBPREFIX)
-	install -m 0640 web/default.css $(WEBPREFIX)
-	install -m 0640 web/db.cfg $(WEBPREFIX)
+	install -m 0644 web/default.css $(WEBPREFIX)
+	install -m 0644 web/db.cfg $(WEBPREFIX)
 	sed -i 's/localhost/$(DBSERVER)/' $(WEBPREFIX)/db.cfg
-	install -m 0640 web/*.php $(WEBPREFIX)
+	install -m 0644 web/*.php $(WEBPREFIX)
+	install -m 0644 web/*.js $(WEBPREFIX)
+	cp -R web/phplib $(WEBPREFIX)/
 
 pbsacct-db:
 	install -d $(CFGPREFIX)/pbsacct
