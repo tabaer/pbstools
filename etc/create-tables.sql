@@ -57,6 +57,7 @@ CREATE INDEX start_jobs ON Jobs (start_date);
 CREATE INDEX end_jobs ON Jobs (end_date);
 CREATE INDEX start_end_jobs ON Jobs (start_date,end_date);
 CREATE INDEX system_start_jobs ON Jobs (system,start_date);
+CREATE INDEX system_eligible_jobs ON Jobs (system,eligible_date);
 CREATE INDEX system_end_jobs ON Jobs (system,end_date);
 CREATE INDEX system_start_end_jobs ON Jobs (system,start_date,end_date);
 CREATE INDEX sw_app_jobs ON Jobs (sw_app(32));
@@ -71,7 +72,7 @@ GRANT SELECT ON Software TO 'webapp'@'localhost';
 GRANT SELECT ON Software TO 'cmdline'@'localhost';
 CREATE TABLE Config (
   row_number   SERIAL PRIMARY KEY,
-  system       VARCHAR(8),
+  system       VARCHAR(32),
   nproc        INT UNSIGNED DEFAULT 0,
   start        DATE DEFAULT NULL,
   end          DATE DEFAULT NULL
