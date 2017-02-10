@@ -222,15 +222,15 @@ function bounded_walltime($start_date,$end_date,$datelogic="during")
     {
       return "walltime";
     }
-  elseif ( isset($start_date) && isset($end_date) )
+  elseif ( isset($start_date) && isset($end_date) && $start_date!='' && $end_date!='' )
     {
-      return "CASE  WHEN ( start_date>='".$start_date."' AND end_date<='".$end_date."' ) THEN walltime   WHEN ( start_date<='".$start_date."' AND end_date<='".$end_date."' ) THEN ADDTIME(walltime,TIMEDIFF(FROM_UNIXTIME(start_ts),'".$start_date." 00:00:00'))   WHEN ( start_date>='".$start_date."' AND end_date>='".$end_date."' ) THEN ADDTIME(walltime,TIMEDIFF('".$end_date." 23:59:59',FROM_UNIXTIME(end_ts)))   ELSE '00:00:00' END";
+      return "CASE  WHEN ( end_ts<start_ts) THEN '00:00:00'  WHEN ( start_date>='".$start_date."' AND end_date<='".$end_date."' ) THEN walltime   WHEN ( start_date<='".$start_date."' AND end_date<='".$end_date."' ) THEN ADDTIME(walltime,TIMEDIFF(FROM_UNIXTIME(start_ts),'".$start_date." 00:00:00'))   WHEN ( start_date>='".$start_date."' AND end_date>='".$end_date."' ) THEN ADDTIME(walltime,TIMEDIFF('".$end_date." 23:59:59',FROM_UNIXTIME(end_ts)))   ELSE '00:00:00' END";
     }
-  elseif ( isset($start_date) )
+  elseif ( isset($start_date) && $start_date!='' )
     {
       return "CASE  WHEN start_date<'".$start_date."' THEN ADDTIME(walltime,TIMEDIFF(FROM_UNIXTIME(start_ts),'".$start_date." 00:00:00'))   ELSE walltime END";
     }
-  elseif ( isset($end_date) )
+  elseif ( isset($end_date) && $end_date!='' )
     {
       return "CASE  WHEN end_date>'".$end_date."' THEN  ADDTIME(walltime,TIMEDIFF('".$end_date." 23:59:59',FROM_UNIXTIME(end_ts)))  ELSE walltime END";
     }
