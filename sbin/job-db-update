@@ -329,7 +329,7 @@ while ( defined($ARGV[0]) )
 		    $ihead.=",cput,cput_sec";
 		    if ( $resource{"resources_used.cput"} =~ /^\d+$/ ) 
 		      {
-                        $uhead.=",cput = SEC_TO_TIME(".$resource{"resources_used.cput"}."),cput_sec = ".$resource{"resources_used.cput"};
+			$uhead.=",cput = SEC_TO_TIME(".$resource{"resources_used.cput"}."),cput_sec = ".$resource{"resources_used.cput"};
 		        $itail.=",SEC_TO_TIME(".$resource{"resources_used.cput"}."),".$resource{"resources_used.cput"};
                       }
 		    else
