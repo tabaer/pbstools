@@ -395,7 +395,7 @@ for opt in opts:
             for key in props.keys():
                 properties[key] = props[key]
     elif ( opt[0]=="--pause-time" or opt[0]=="-p" ):
-        pausetime = opt[1]
+        pausetime = int(opt[1])
     elif ( opt[0]=="--class" ):
         classname = opt[1]
     elif ( opt[0]=="--name" ):
@@ -444,9 +444,12 @@ if ( workdir is not None and not os.path.exists(workdir) ):
     os.mkdir(workdir)
 
 # **ASSUMPTION**:  master runs on mother superior node
-os.environ["SPARK_MASTER_IP"] = platform.node()
-if ( iface is not None ):
+if ( iface is None ):
+    os.environ["SPARK_MASTER_IP"] = platform.node()
+    os.environ["SPARK_MASTER_HOST"] = platform.node()
+else:
     os.environ["SPARK_MASTER_IP"] = get_ip_address(iface)
+    os.environ["SPARK_MASTER_HOST"] = get_ip_address(iface)
 if ( not ( "SPARK_MASTER_PORT" in os.environ.keys() ) ):
     os.environ["SPARK_MASTER_PORT"] = "7077"
 os.environ["SPARK_MASTER"] = "spark://"+os.environ["SPARK_MASTER_IP"]+":"+str(os.environ["SPARK_MASTER_PORT"])
