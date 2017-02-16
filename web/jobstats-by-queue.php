@@ -36,16 +36,10 @@ if ( isset($_POST['system']) )
   }
 page_header($title);
 
-echo "<FORM method=\"POST\" action=\"jobstats.php\">\n";
-echo "System:  <SELECT name=\"system\" size=\"1\">\n";
-echo "<OPTION value=\"%\">Any\n";
-foreach (sys_list() as $host)
-{
-  echo "<OPTION>".$host."\n";
-}
-echo "</SELECT><BR>\n";
-echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
-echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
+begin_form("jobstats.php");
+
+virtual_system_chooser();
+date_fields();
 
 // by queue
 jobstats_input_header();
