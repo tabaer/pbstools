@@ -68,10 +68,10 @@ if ( isset($_POST['groupname']) )
       }
     echo "<TABLE border=\"1\">\n";
     $col[0]="jobid";
-    $col[1]="username";
-    $col[2]="groupname";
+    $col[1]="groupname";
+    $col[2]="username";
     $ncols=3;
-    echo "<TR><TH>jobid</TH><TH>username</TH><TH>groupname</TH>";
+    echo "<TR><TH>jobid</TH><TH>groupname</TH><TH>username</TH>";
     foreach ($keys as $key)
       {
 	if ( $key!='jobid' && $key!='username' && $key!='groupname' && $key!='start_date' && $key!='end_date' && $key!='datelogic' )
