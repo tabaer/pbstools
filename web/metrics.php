@@ -320,9 +320,9 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic=
       $query .= xaxis_column($xaxis,$system).",";
     }
    $query .= "COUNT(jobid) AS jobs";
-   if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
+   if ( columns($metric,$system,$db,$start_date,$end_date,$datelogic)!="" )
      {
-       $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
+       $query .= ",".columns($metric,$system,$db,$start_date,$end_date,$datelogic);
      }
    $query .= " FROM Jobs WHERE (".sysselect($system).") AND (".
      dateselect($datelogic,$start_date,$end_date).")";
@@ -1052,7 +1052,6 @@ function jobstats_input_metric($name,$fn)
 
 function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$datelogic="during",$limit_access=false)
 {
-  
   if (    isset($_POST[$fn.'_graph'])
        || isset($_POST[$fn.'_table'])
        || isset($_POST[$fn.'_csv']) 
