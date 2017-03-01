@@ -40,7 +40,7 @@ function xaxis_column($x,$system)
     }
   elseif ( $x=="qtime" )
     {
-      return "SEC_TO_TIME(start_ts-submit_ts) AS qtime";
+      return "CASE WHEN eligible_ts>submit_ts THEN SEC_TO_TIME(start_ts-eligible_ts) ELSE SEC_TO_TIME(start_ts-submit_ts) END AS qtime";
     }
   elseif ( $x=="walltime" || $x=="walltime_req" )
     {
@@ -225,7 +225,7 @@ function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
   if ( $metric=='cpuhours' ) return "SUM(".cpuhours($db,$system,$start_date,$end_date,$datelogic).") AS cpuhours";
   if ( $metric=='nodehours' ) return "SUM(".nodehours($db,$system,$start_date,$end_date,$datelogic).") AS nodehours";
   if ( $metric=='charges' ) return "SUM(".charges($db,$system,$start_date,$end_date,$datelogic).") AS charges";
-  if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(start_ts-submit_ts)) AS 'MIN(qtime)', SEC_TO_TIME(MAX(start_ts-submit_ts)) AS 'MAX(qtime)', SEC_TO_TIME(AVG(start_ts-submit_ts)) AS 'AVG(qtime)' ,SEC_TO_TIME(STDDEV(start_ts-submit_ts))  AS 'STDDEV(qtime)'";
+  if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)) AS 'MIN(qtime)', SEC_TO_TIME(MAX(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)) AS 'MAX(qtime)', SEC_TO_TIME(AVG(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)) AS 'AVG(qtime)', SEC_TO_TIME(STDDEV(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END))  AS 'STDDEV(qtime)'";
   if ( $metric=='mem_kb' ) return "MIN(mem_kb), MAX(mem_kb), AVG(mem_kb), STDDEV(mem_kb)";
   if ( $metric=='vmem_kb' ) return "MIN(vmem_kb), MAX(vmem_kb), AVG(vmem_kb), STDDEV(vmem_kb)";
   if ( $metric=='walltime' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(walltime))) AS 'MIN(walltime)', SEC_TO_TIME(MAX(TIME_TO_SEC(walltime))) AS 'MAX(walltime)', SEC_TO_TIME(AVG(TIME_TO_SEC(walltime))) AS 'AVG(walltime)', SEC_TO_TIME(STDDEV(TIME_TO_SEC(walltime))) AS 'STDDEV(walltime)'";
@@ -234,9 +234,9 @@ function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
   if ( $metric=='walltime_acc' ) return "MIN(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MIN(walltime_acc)',MAX(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MAX(walltime_acc)',AVG(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'AVG(walltime_acc)',STDDEV(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'STDDEV(walltime_acc)'";
   if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), MAX(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), AVG(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), STDDEV(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic)."))";
   if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups";
-  if ( $metric=='backlog' ) return cpuhours($db,$system,$start_date,$end_date,$datelogic)." AS cpuhours, SUM(start_ts-submit_ts)/3600.0 AS 'SUM(qtime)'";
+  if ( $metric=='backlog' ) return cpuhours($db,$system,$start_date,$end_date,$datelogic)." AS cpuhours, SUM(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/3600.0 AS 'SUM(qtime)'";
 #  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
-  if ( $metric=='xfactor' ) return "MIN(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MIN(xfactor)', MAX(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'MAX(xfactor)', AVG(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'AVG(xfactor)', STDDEV(1+(start_ts-submit_ts)/TIME_TO_SEC(walltime)) AS 'STDDEV(xfactor)'";
+  if ( $metric=='xfactor' ) return "MIN(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'MIN(xfactor)', MAX(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'MAX(xfactor)', AVG(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'AVG(xfactor)', STDDEV(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'STDDEV(xfactor)'";
   if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS users";
   if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS groups";
   if ( $metric=='accounts' ) return "COUNT(DISTINCT(account)) AS accounts";
