@@ -27,7 +27,7 @@ if ( isset($_POST['jobid']) )
 page_header($title);
 
 $props=array("username","groupname","account","jobname","nproc","mppe","mppssp",
-	     "nodes","feature","gres","queue","qos","submit_ts","start_ts","end_ts",
+	     "nodes","feature","gattr","gres","queue","qos","submit_ts","eligible_ts","start_ts","end_ts",
 	     "cput_req","cput","walltime_req","walltime","mem_req","mem_kb",
 	     "vmem_req","vmem_kb","energy","software","submithost","hostlist",
              "exit_status","script","sw_app");
@@ -64,7 +64,7 @@ if ( isset($_POST['jobid']) )
 	      {
 		$data[$key]=array_shift($row);
 		echo "<TR><TD width=\"10%\"><PRE>".$key."</PRE></TD><TD width=\"90%\"><PRE>";
-		if ( $key=="submit_ts" || $key=="start_ts" || $key=="end_ts" )
+		if ( $key=="submit_ts" || $key=="eligible_ts" || $key=="start_ts" || $key=="end_ts" )
 		  {
 		    echo date("Y-m-d H:i:s",$data[$key]);
 		  }

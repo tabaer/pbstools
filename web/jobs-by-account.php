@@ -90,7 +90,7 @@ if ( isset($_POST['account']) )
 	foreach ($rkeys as $key)
 	  {
 	    $data[$key]=array_shift($row);
-	    if ( $col[$key]=="submit_ts" || $col[$key]=="start_ts" || $col[$key]=="end_ts")
+	    if ( $col[$key]=="submit_ts" || $col[$key]=="eligible_ts" || $col[$key]=="start_ts" || $col[$key]=="end_ts")
 	      {
 		echo "<TD><PRE>".date("Y-m-d H:i:s",$data[$key])."</PRE></TD>\n";
 	      }
@@ -116,7 +116,7 @@ else
     date_fields();
 
     $props=array("jobname","nproc","mppe","mppssp",
-		 "nodes","feature","gres","queue","qos","submit_ts","start_ts","end_ts",
+		 "nodes","feature","gattr","gres","queue","qos","submit_ts","eligible_ts","start_ts","end_ts",
 		 "cput_req","cput","walltime_req","walltime","mem_req","mem_kb",
 		 "vmem_req","vmem_kb","energy","software","submithost","hostlist",
 		 "exit_status","script","sw_app");
