@@ -169,7 +169,7 @@ function date_fields()
 {
   echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
   echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
-  pulldown("datelogic","Date Logic",array("submit","start","end","during"),"start");
+  pulldown("datelogic","Date Logic",array("submit","eligible","start","end","during"),"start");
   echo "</SELECT><BR>\n";
 }
 
@@ -190,6 +190,10 @@ function title_verb($datelogic)
   else if ( $datelogic=="submit" )
     {
       return "submitted";
+    }
+  else if ( $datelogic=="eligible" )
+    {
+      return "eligible to run";
     }
   else
     {
