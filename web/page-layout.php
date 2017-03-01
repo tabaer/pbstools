@@ -193,7 +193,7 @@ function title_verb($datelogic)
     }
   else if ( $datelogic=="eligible" )
     {
-      return "eligible to run";
+      return "becoming eligible to run";
     }
   else
     {

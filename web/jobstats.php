@@ -17,10 +17,10 @@ if (isset($_GET['system']))
     $_POST = $_GET;
   }
 
-$title = "Job statistics";
+$title = "Statistics";
 if ( isset($_POST['system']) )
   {
-    $title .= " for ".$_POST['system'];
+    $title .= " for ".$_POST['system']. " jobs";
     $verb = title_verb($_POST['datelogic']);
     if ( isset($_POST['start_date']) && isset($_POST['end_date']) &&
 	 $_POST['start_date']==$_POST['end_date'] && 
