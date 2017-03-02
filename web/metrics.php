@@ -20,19 +20,40 @@ function xaxis($fn)
   return preg_replace('/^.*_vs_/','',$fn);
 }
 
-function xaxis_column($x,$system)
+function xaxis_column($x,$system,$datelogic="during")
 {
   if ( $x=="quarter" )
     {
-      return "CONCAT(DATE_FORMAT(start_date,'%Yq'),QUARTER(start_date)) AS quarter";
+      if ( $datelogic=="during" )
+	{
+	  return "CONCAT(DATE_FORMAT(start_date,'%Yq'),QUARTER(start_date)) AS quarter";
+	}
+      else
+	{
+	  return "CONCAT(DATE_FORMAT(".$datelogic."_date,'%Yq'),QUARTER(".$datelogic."_date)) AS quarter";
+	}
     }
   elseif ( $x=="month" )
     {
-      return "DATE_FORMAT(start_date,'%Y/%m') AS month";
+      if ( $datelogic=="during" )
+	{
+	  return "DATE_FORMAT(start_date,'%Y/%m') AS month";
+	}
+      else
+	{
+	  return "DATE_FORMAT(".$datelogic."_date,'%Y/%m') AS month";
+	}
     }
   elseif ( $x=="week" )
     {
-      return "DATE_FORMAT(start_date,'%Y-wk%v') AS week";
+      if ( $datelogic=="during" )
+	{
+	  return "DATE_FORMAT(start_date,'%Y-wk%v') AS week";
+	}
+      else
+	{
+	  return "DATE_FORMAT(".$datelogic."_date,'%Y-wk%v') AS week";
+	}
     }
   elseif ( $x=="institution" )
     {
@@ -317,7 +338,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic=
   $query = "SELECT ";
    if ( $xaxis!="" )
     { 
-      $query .= xaxis_column($xaxis,$system).",";
+      $query .= xaxis_column($xaxis,$system,$datelogic).",";
     }
    $query .= "COUNT(jobid) AS jobs";
    if ( columns($metric,$system,$db,$start_date,$end_date,$datelogic)!="" )
@@ -340,7 +361,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic=
 	 }
 #       else
 #	 {
-#	   $query .= " AND (".xaxis_column($xaxis,$system)." IS NOT NULL)";
+#	   $query .= " AND (".xaxis_column($xaxis,$system,$datelogic)." IS NOT NULL)";
 #	 }
        if ( clause($xaxis,$metric)!="" )
 	 {
@@ -374,7 +395,7 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic=
 
 function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic="during",$limit_access=false)
 {
-  $query = "SELECT ".xaxis_column($xaxis,$system).",COUNT(jobid) AS jobs";
+  $query = "SELECT ".xaxis_column($xaxis,$system,$datelogic).",COUNT(jobid) AS jobs";
   if ( columns($metric,$system,$db,$start_date,$end_date)!="" )
     {
       $query .= ",".columns($metric,$system,$db,$start_date,$end_date);
