@@ -171,7 +171,8 @@ function dateselect($action,$start_date,$end_date)
   else if ( isset($start_date) && isset($end_date) &&
 	    $start_date!="" && $end_date!="" )
     {
-      return $action."_date BETWEEN '".$start_date."' AND '".$end_date."'";
+      #return $action."_date BETWEEN '".$start_date."' AND '".$end_date."'";
+      return $action."_date>='".$start_date."' AND ".$action."_date<='".$end_date."'";
     }
   else if ( isset($start_date) && $start_date!="" )
     {
