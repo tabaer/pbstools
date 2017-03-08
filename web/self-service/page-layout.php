@@ -67,7 +67,7 @@ function text_field($label,$field,$width)
 
 function hidden_field($field,$value)
 {
-  echo "<INPUT type=\"hidden\" name=\"".$field."\" size=\"".$value."\">\n";
+  echo "<INPUT type=\"hidden\" name=\"".$field."\" value=\"".$value."\">\n";
 }
 
 function checkbox($label,$name,$checked=NULL)
@@ -128,6 +128,35 @@ function date_fields()
 {
   echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
   echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
+  pulldown("datelogic","Date Logic",array("submit","eligible","start","end","during"),"start");
+}
+
+function title_verb($datelogic)
+{
+  if ( $datelogic=="during" )
+    {
+      return "running";
+    }
+  else if ( $datelogic=="end" )
+    {
+      return "ending";
+    }
+  else if ( $datelogic=="start" )
+    {
+      return "starting";
+    }
+  else if ( $datelogic=="submit" )
+    {
+      return "submitted";
+    }
+  else if ( $datelogic=="eligible" )
+    {
+      return "becoming eligible to run";
+    }
+  else
+    {
+      return "existing";
+    }
 }
 
 function pulldown($name,$label,$choices,$default)
