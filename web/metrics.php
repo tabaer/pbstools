@@ -1113,6 +1113,8 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$dat
 	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
+  ob_flush();
+  flush();
 }
 
 function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_date,$datelogic,$limit_access=false)
@@ -1157,6 +1159,8 @@ function jobstats_output_bucketed_metric($name,$fn,$db,$system,$start_date,$end_
 	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
+  ob_flush();
+  flush();
 }
 
 
@@ -1188,5 +1192,7 @@ function jobstats_summary($db,$system,$start_date,$end_date,$datelogic="during")
   $ngroups=$counts[2];
   echo $nusers." distinct users, ".$ngroups." distinct groups";
   echo "</B></P>\n";
+  ob_flush();
+  flush();
 }
 ?>
