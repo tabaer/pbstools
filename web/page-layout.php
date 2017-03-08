@@ -108,7 +108,7 @@ function text_field($label,$field,$width)
 
 function hidden_field($field,$value)
 {
-  echo "<INPUT type=\"hidden\" name=\"".$field."\" size=\"".$value."\">\n";
+  echo "<INPUT type=\"hidden\" name=\"".$field."\" value=\"".$value."\">\n";
 }
 
 function checkbox($label,$name,$checked=NULL)
