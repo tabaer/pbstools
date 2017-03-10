@@ -388,29 +388,47 @@ function charges($db,$system,$start_date,$end_date,$datelogic="during")
     }
   else if ( $system=="oak" | $system=="oak-gpu" )
     {
-      $retval  = "CASE queue";
-      $retval .= " WHEN 'serial' THEN 0.05*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " WHEN 'parallel' THEN 0.05*12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " WHEN 'hugemem' THEN 0.05*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " ELSE 0.05*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
+      $retval  = " CASE";
+      $retval .= " WHEN end_date<='2016-10-19' THEN";
+      $retval .= "  CASE queue";
+      $retval .= "  WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'parallel' THEN 0.1*12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
+      $retval .= "  END";
+      $retval .= " ELSE";
+      $retval .= "  CASE queue";
+      $retval .= "  WHEN 'serial' THEN 0.05*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'parallel' THEN 0.05*12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'hugemem' THEN 0.05*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  ELSE 0.05*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
+      $retval .= "  END";
       $retval .= " END";
     }
   else if ( $system=="ruby" | $system=="ruby-gpu" | $system=="ruby-mic" )
     {
-      $retval  = "CASE queue";
-      $retval .= " WHEN 'hugemem' THEN 0.05*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " ELSE 0.05*20*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval  = " CASE";
+      $retval .= " WHEN end_date<='2016-10-19' THEN";
+      $retval .= "  CASE";
+      $retval .= "  WHEN queue='hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  ELSE 0.1*20*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  END";
+      $retval .= " ELSE";
+      $retval .= "  CASE";
+      $retval .= "  WHEN queue='hugemem' THEN 0.05*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  ELSE 0.05*20*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  END";
       $retval .= " END";
     }
   else if ( $system=="owens" )
     {
-      $retval  = "CASE queue";
-      $retval .= " WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " WHEN 'parallel' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " WHEN 'largeparallel' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " WHEN 'dedicated' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " WHEN 'hugemem' THEN 0.1*48*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= " ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
+      $retval  = " CASE queue";
+      $retval .= "  WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'parallel' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'largeparallel' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'dedicated' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'hugemem' THEN 0.1*48*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
       $retval .= " END";
     }
   else if ( $system=="bmibucki" | $system=="bmiowens" | $system=="quick" )
@@ -451,9 +469,9 @@ function institution_match()
 # bucket sizes
 function bucket_maxs($xaxis)
 {
-#  if ( $xaxis=='nproc' ) return array("1","4","8","16","32","64","128","256","512","1024");
-  if ( $xaxis=='nproc' ) return array("512","2048","8192","16384","32768","65536");
-  if ( $xaxis=='nproc_norm' ) return array("0.01","0.10","0.25","0.5","0.75");
+  if ( $xaxis=='nproc' ) return array("1","4","12","20","28","32","48","128","512","2048","8192","16384");
+#  if ( $xaxis=='nproc' ) return array("512","2048","8192","16384","32768","65536");
+  if ( $xaxis=='nproc_norm' ) return array("0.01","0.10","0.25","0.5","0.75","0.9");
   if ( $xaxis=='walltime' ) return array("1:00:00","4:00:00","8:00:00","12:00:00","16:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
   if ( $xaxis=='walltime_req' ) return array("1:00:00","4:00:00","8:00:00","12:00:00","16:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
   if ( $xaxis=='qtime' ) return array("1:00:00","4:00:00","8:00:00","12:00:00","16:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
