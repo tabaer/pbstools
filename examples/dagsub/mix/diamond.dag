@@ -1,5 +1,5 @@
 # diamond.dag
-JOB Aa A.pbs DIR "/nics/a/home/ytlu/dagsub/examples/simple"
+JOB Aa A.pbs
 JOB Bb B.pbs 
 JOB Cc C.pbs 
 JOB Dd D.pbs 
