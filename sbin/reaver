@@ -205,11 +205,11 @@ if ( $safelist ne "" )
 my @pids=();
 if ( $long_ps_mode )
   {
-    open(PS,"ps -w -A -o pid,%cpu,%mem,state,uid,user,lstart,command |");
+    open(PS,"ps -w -A -o pid,%cpu,%mem,state,uid,user:24,lstart,command |");
   }
 else
   {
-    open(PS,"ps -A -o pid,state,uid,user,command |");
+    open(PS,"ps -A -o pid,state,uid,user:24,command |");
   }
 # snarf the 1st line
 <PS>;
