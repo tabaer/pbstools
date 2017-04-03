@@ -312,7 +312,7 @@ def raw_data_from_file(filename):
             acct_data = open(filename)
     except IOError as e:
         print("ERROR: Failed to read PBS accounting log %s" % (filename))
-        return None
+        return []
     output = []
     for line in acct_data:
         
@@ -343,19 +343,19 @@ def raw_data_from_file(filename):
     return output
 
 
-def jobs_from_file(filename):
+def records_to_jobs(rawdata):
     """
-    Parses a file containing multiple PBS accounting log entries.  Returns
+    Processes an array containing multiple PBS accounting log entries.  Returns
     a hash of lightly postprocessed data (i.e. one entry per jobid rather
     than one per record).
     """
     output = {}
-    for record in raw_data_from_file(filename):
+    for record in rawdata:
         jobid = record[0]
         update_time = record[1]
         record_type = record[2]
         resources = record[3]
-        if ( jobid not in output.keys() ):
+        if ( not output.has_key(jobid) ):
             output[jobid] = jobinfo(jobid,update_time,record_type,resources)
         # may need an extra case here for jobs with multiple S and E
         # records (e.g. preemption)
@@ -365,6 +365,29 @@ def jobs_from_file(filename):
             for key in resources.keys():
                 output[jobid].set_resource(key,resources[key])
     return output
+
+
+def jobs_from_file(filename):
+    """
+    Parses a file containing multiple PBS accounting log entries.  Returns
+    a hash of lightly postprocessed data (i.e. one entry per jobid rather
+    than one per record).
+    """
+    return records_to_jobs(raw_data_from_file(filename))
+
+
+def jobs_from_files(filelist):
+    """
+    Parses a list of files containing multiple PBS accounting log entries.
+    Returns a hash of lightly postprocessed data (i.e. one entry per jobid
+    rather than one per record).
+    """
+    rawdata = []
+    for filename in filelist:
+        if ( os.path.exists(filename) ):
+            for record in pbsacct.raw_data_from_file(filename):
+                rawdata.append(record)
+    return records_to_jobs(rawdata)
 
 
 def time_to_sec(timestr):
@@ -432,4 +455,4 @@ def mem_to_kb(memstr):
 
 if __name__ == "__main__":
     import os
-    print str(jobs_from_file(os.path.expanduser("~amaharry/acct-data/20160310")))
+    print str(jobs_from_file("/users/sysp/amaharry/acct-data/20160310"))
