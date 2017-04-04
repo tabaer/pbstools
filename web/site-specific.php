@@ -120,7 +120,9 @@ function sys_list()
 	       "bmiowens",
 	       "oak-gpu",
 	       "ruby-gpu",
-	       "ruby-mic");
+	       "ruby-mic",
+	       "owens-gpu",
+	       "owens-hugemem");
 }
 
 # system selector
@@ -166,6 +168,8 @@ function sysselect($system)
   if ( $system=='ruby' ) return "system = 'ruby'";
   if ( $system=='ruby-gpu' ) return "system = 'ruby' AND hostlist REGEXP '^r02(0[1-9]|1[0-9]|20)' ";
   if ( $system=='ruby-mic' ) return "system = 'ruby' AND hostlist REGEXP '^r0(2(2[1-9]|3[0-9]|40)|50[1-5])' ";
+  if ( $system=='owens-gpu' ) return "system = 'owens' AND hostlist REGEXP 'o0(649|6[5-9][0-9]|7[0-9][0-9]|80[0-8])'";
+  if ( $system=='owens-hugemem' ) return "system = 'owens' AND hostlist REGEXP 'o08(09|1[0-9]|2[0-4])'";
   return "system LIKE '".$system."'";
 }
 
@@ -420,7 +424,7 @@ function charges($db,$system,$start_date,$end_date,$datelogic="during")
       $retval .= "  END";
       $retval .= " END";
     }
-  else if ( $system=="owens" )
+  else if ( $system=="owens" | $system=="owens-gpu" | $system=="owens-hugemem" )
     {
       $retval  = " CASE queue";
       $retval .= "  WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
