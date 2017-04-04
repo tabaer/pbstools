@@ -73,12 +73,14 @@ sub software_list()
 	    "bgw",
 	    "bicg_solver",
 	    "bigdft",
+	    "bismark",
 	    "blat",
 	    "bolztran",
 	    "boots",
             "bowtie",
 	    "brams-opt",
 	    "bugget",
+	    "bwa",
 	    "cactus",
             "cafemol",
 	    "calc1",
@@ -129,6 +131,8 @@ sub software_list()
 	    "csurfs",
 	    "cube",
 	    "cudac",
+	    "cufflinks",
+	    "cutadapt",
 	    "cvm",
 	    "da_update_bc",
 	    "dalexec",
@@ -163,6 +167,7 @@ sub software_list()
 	    "eden",
 	    "eigen.x",
 	    "elk",
+	    "emotif",
 	    "energyplus",
 	    "enkf",
 	    "ens4dvar",
@@ -260,6 +265,7 @@ sub software_list()
 	    "hy3s",
             "ice",
 	    "idl",
+	    "iedg_mix",
 	    "ifs",
 	    "imb",
             "imc",
@@ -282,6 +288,7 @@ sub software_list()
 	    "les_mpi",
 	    "les_spike",
 	    "lesmpi",
+	    "letkf",
 	    "lfm",
 	    "lisflood",
 	    "liso",
@@ -311,6 +318,7 @@ sub software_list()
             "meamzilla",
 	    "measurements",
 	    "meep",
+	    "meme",
 	    "meta",
             "metgrid",
 	    "mfc",
@@ -341,6 +349,7 @@ sub software_list()
 	    "mrobb6dipzz",
 	    "msa",
 	    "mtrsassi",
+	    "multturb",
 	    "music",
             "mustem",
 	    "mykim9dgt",
@@ -405,6 +414,7 @@ sub software_list()
 	    "phits",
 	    "phonon",
             "phraider",
+	    "phylotoast",
 	    "pic-star",
             "picard",
             "picrun",
@@ -412,6 +422,7 @@ sub software_list()
 	    "pkdgrav",
 	    "pluto",
 	    "pmcl3d",
+	    "podke3D",
 	    "polarpigs",
 	    "polly",
 	    "polmc",
@@ -472,6 +483,7 @@ sub software_list()
 	    "sauron",
 	    "scalapack",
             "scattering",
+	    "schrodinger",
 	    "sddt",
 	    "seissol",
 	    "sfeles",
@@ -510,6 +522,7 @@ sub software_list()
 	    "swift",
 	    "tacoma",
 	    "tantalus",
+	    "tapsim",
 	    "tbms",
 	    "tdcc2d",
 	    "tdse",
@@ -529,6 +542,7 @@ sub software_list()
 	    "ttmmdmpi",
 	    "turbo",
 	    "turbomole",
+	    "turbsim",
 	    "two_phase",
 	    "ukh2d",
 	    "upc",
@@ -599,6 +613,7 @@ sub software_match_list()
   $pkgmatch{'boltztran'} = "(script LIKE '%boltzpar%')";
   $pkgmatch{'boots'} = "( script LIKE '%boots%' AND NOT ( script LIKE '%bootstrap%' ) )";
   $pkgmatch{'cbl'} = "( script LIKE '% cbl%' OR script LIKE '%pcbl%' OR script LIKE '%biolib%' )";
+  $pkgmatch{'cdo'} = "( script LIKE '%cdo%' AND NOT ( script LIKE '%cdock%' ) )";
   $pkgmatch{'charles'} = "script like '%charles.exe%'";
   $pkgmatch{'chemshell'} = "script LIKE '%chemsh%'";
   $pkgmatch{'chg'} = "script LIKE '%/chg %'";
@@ -682,6 +697,7 @@ sub software_match_list()
   $pkgmatch{'scattering'} = "script LIKE '%/scattering %'";
   $pkgmatch{'simu_pow'} = "( script LIKE '%simu_pow%' OR script LIKE '%simu_thres%' )";
   $pkgmatch{'spark'} = "script LIKE '%spark-submit%'";
+  $pkgmatch{'sratoolkit'} = "( script LIKE '%sratoolkit%' OR script LIKE '%fastq-dump%' )";
   $pkgmatch{'star'} = "( script LIKE '%/STAR --runMode%' OR script LIKE '%\nSTAR --runMode%' )";
   $pkgmatch{'tbms'} = "( script LIKE '%tbms%dvm%' OR script LIKE '%distr%dvm%' OR script LIKE '%jac%dvm%' OR script LIKE '%mt%dvm%' )";
   $pkgmatch{'track'} = "script LIKE '%TRACKdir%'";
@@ -702,6 +718,8 @@ sub software_match_list()
   $pkgmatch{'agk'} = "( script LIKE '%agk%' AND NOT ( ".$pkgmatch{'hsi'}." ) AND NOT ( ".$pkgmatch{'mhd_1'}." ) )";
   $pkgmatch{'amber'} = "( ( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' OR script LIKE '%SingleJob%' OR script LIKE '%MINJob%' OR script LIKE '%run_md_mpi.csh%' ) AND NOT ( ".$pkgmatch{'cctm'}." ) AND NOT ( ".$pkgmatch{'cvm'}." ) AND NOT ( ".$pkgmatch{'idl'}." ) AND NOT ( ".$pkgmatch{'qmc'}." ) AND NOT ( ".$pkgmatch{'sigma'}." ) AND NOT ( ".$pkgmatch{'tantalus'}." ) AND NOT ( ".$pkgmatch{'tfe'}." ) )";
   $pkgmatch{'arps'} = "( script LIKE '%arps%' AND NOT ( ".$pkgmatch{'adf'}." ) AND NOT ( ".$pkgmatch{'hsi'}." ) AND NOT ( ".$pkgmatch{'matlab'}." ) )";
+  $pkgmatch{'bam'} = "( script LIKE '%bam%' AND NOT ( ".$pkgmatch{'bismark'}." ) AND NOT ( ".$pkgmatch{'cufflinks'}." ) AND NOT ( ".$pkgmatch{'samtools'}." ) )";
+  $pkgmatch{'bismark'} = "( script LIKE '%bismark%' AND NOT ( ".$pkgmatch{'samtools'}." ) )";
   $pkgmatch{'bugget'} = "( script LIKE '%bugget%' AND NOT ( ".$pkgmatch{'halo'}." ) AND NOT ( ".$pkgmatch{'simpleio'}." ) )";
   $pkgmatch{'cactus'} = "( script LIKE '%cactus%' AND NOT ( ".$pkgmatch{'cdo'}." ) AND NOT ( ".$pkgmatch{'simfactory'}." ) )";
   $pkgmatch{'cam'} = "( script LIKE '%cam%' AND NOT ( ".$pkgmatch{'amber'}." ) AND NOT ( ".$pkgmatch{'grads'}." ) AND NOT ( ".$pkgmatch{'hsi'}." ) )";
@@ -717,7 +735,7 @@ sub software_match_list()
   $pkgmatch{'gdl'} = "( script LIKE '%gdl%' AND NOT ( ".$pkgmatch{'rotbouss'}." ) )";
   $pkgmatch{'grib'} = "( script LIKE '%grib%' AND NOT ( ".$pkgmatch{'cdo'}." ) AND NOT ( ".$pkgmatch{'mm5'}." ) AND NOT ( ".$pkgmatch{'sgf'}." ) AND NOT ( ".$pkgmatch{'sigma'}." ) )";
   $pkgmatch{'gromacs'} = "( ( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' ) AND NOT ( ".$pkgmatch{'amber'}." ) AND NOT ( ".$pkgmatch{'cpmd'}." ) AND NOT ( ".$pkgmatch{'sigma'}." ) AND NOT ( ".$pkgmatch{'tantalus'}." ) )";
-  $pkgmatch{'gtc'} = "( ( script LIKE '%gtc%' OR script LIKE '%gts%' ) AND NOT ( ".$pkgmatch{'cctm'}." ) AND NOT ( ".$pkgmatch{'pmcl3d'}." ) )";
+  $pkgmatch{'gtc'} = "( ( script LIKE '%gtc%' OR script LIKE '%gts%' ) AND NOT ( ".$pkgmatch{'cctm'}." ) AND NOT ( ".$pkgmatch{'cutadapt'}." ) AND NOT ( ".$pkgmatch{'pmcl3d'}." ) )";
   $pkgmatch{'halo'} = "( script LIKE '%halo%' AND NOT ( ".$pkgmatch{'enzo'}." ) AND NOT ( ".$pkgmatch{'gadget'}." ) AND NOT ( ".$pkgmatch{'hsi'}." ) AND NOT ( ".$pkgmatch{'simpleio'}." ) AND NOT ( ".$pkgmatch{'yt'}." ) )";
   $pkgmatch{'hfb'} = "( script LIKE '%hfb%' AND NOT ( ".$pkgmatch{'vbc'}." ) )";
   $pkgmatch{'hfodd'} = "( script LIKE '%hfodd%' AND NOT ( ".$pkgmatch{'cdo'}." ) )";
