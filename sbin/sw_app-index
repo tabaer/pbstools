@@ -659,7 +659,7 @@ sub software_match_list()
   $pkgmatch{'lammps'} = "( script LIKE '%lammps%' OR script LIKE '% lmp_%' OR script LIKE '%/lmp_%' )";
   $pkgmatch{'liso'} = "script LIKE '%/liso %'";
   $pkgmatch{'lsdyna'} = "( script LIKE '%lsdyna%' OR script LIKE '%ls-dyna%' OR script LIKE '%mpp-dyna%' OR script LIKE '%mpp971%' OR ( software IS NOT NULL AND software LIKE '%lsdyna%' ) )";
-  $pkgmatch{'lsp'} = "( script LIKE '%/lsp.%' OR script LIKE '%/lsp %' )";
+  $pkgmatch{'lsp'} = "( script LIKE '%/lsp.%' OR script LIKE '%/lsp_%' OR script LIKE '%/lsp %' )";
   $pkgmatch{'madness'} = "( script LIKE '%m-a-d-n-e-s-s%' OR script LIKE '%slda%' )";
   $pkgmatch{'md_xx'} = "script LIKE '%md.xx%'";
   $pkgmatch{'meta'} = "( script LIKE '%anti.meta%' OR script LIKE '%para.meta%' OR script LIKE '%xray.meta%' )";
