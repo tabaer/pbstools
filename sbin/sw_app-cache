@@ -48,12 +48,17 @@ for opt in opts:
     elif ( opt[0]=="-u" ):
         dbuser = opt[1]
 
+# work around index selection brain damage in older versions of MySQL
+use_index = "USE INDEX (sw_app_jobs)"
+if ( start_date is not None or end_date is not None ):
+    use_index = "USE INDEX (system_start_jobs)"
+
 # connect to DB
 db = MySQLdb.connect(host=dbhost,db=dbname,user=dbuser,passwd=dbpasswd)
 cursor = db.cursor()
 
 packages_in_jobs = []
-select = "SELECT DISTINCT(sw_app) AS package FROM "+jobstable+" WHERE sw_app IS NOT NULL"
+select = "SELECT DISTINCT(sw_app) AS package FROM "+jobstable+" "+use_index+" WHERE sw_app IS NOT NULL"
 if ( hostname is not None ):
     select += " AND system='"+hostname+"'"
 if ( start_date is not None ):
