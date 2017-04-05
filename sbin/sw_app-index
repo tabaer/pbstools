@@ -877,6 +877,13 @@ while ( $ARGV[0] =~ /^-.*/ )
     shift(@ARGV);
    }
 
+# work around index selection brain damage in older versions of MySQL
+my $use_index = "USE INDEX (sw_app_jobs)";
+if ( defined($start_date) || defined($end_date) )
+  {
+    $use_index = "USE INDEX (system_start_jobs)";
+  }
+
 # connect to DB
 my $dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
 my $dbh = DBI->connect($dsn,$dbuser,$dbpasswd) || die "$0:  unable to connect to DB!\n";
@@ -899,11 +906,11 @@ if ( $domultimatch==0 )
 	my $sql;
 	if ( $syntaxcheck==0 )
 	  {
-	    $sql = "UPDATE Jobs SET sw_app='".$pkg."'";
+	    $sql = "UPDATE Jobs ".$use_index." SET sw_app='".$pkg."'";
 	  }
 	else
 	  {
-	    $sql = "SELECT COUNT(jobid) FROM Jobs";
+	    $sql = "SELECT COUNT(jobid) FROM Jobs ".$use_index;
 	  }
 	$sql .= " WHERE system='".$hostname."' AND script IS NOT NULL AND ( ".$pkgmatch{$pkg}." )";
 	if ( $fullreindex==0 )
@@ -936,7 +943,7 @@ else
 	    if ( $pkg1 ne $pkg2 && !defined($done{$pkg1}{$pkg2}) )
 	      {
 		#print "$pkg1:$pkg2\n";
-		my $sql = "SELECT '".$pkg1."' AS pkg1, '".$pkg2."' AS pkg2, COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours FROM Jobs WHERE system='".$hostname."' AND ( ( sw_app='".$pkg1."' AND ( ".$pkgmatch{$pkg2}." ) ) OR ( sw_app='".$pkg2."' AND ( ".$pkgmatch{$pkg1}." ) ) )";
+		my $sql = "SELECT '".$pkg1."' AS pkg1, '".$pkg2."' AS pkg2, COUNT(jobid) AS jobs, SUM(nproc*TIME_TO_SEC(walltime))/3600.0 AS cpuhours FROM Jobs ".$use_index." WHERE system='".$hostname."' AND ( ( sw_app='".$pkg1."' AND ( ".$pkgmatch{$pkg2}." ) ) OR ( sw_app='".$pkg2."' AND ( ".$pkgmatch{$pkg1}." ) ) )";
 		if ( defined($start_date) )
 		  {
 		    #$sql .= " AND ( submit_date>='".$start_date."' OR start_date>='".$start_date."' )";
