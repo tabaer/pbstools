@@ -59,9 +59,20 @@ page_header($title);
 $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
+    # older versions of MySQL are stupid about picking indices, so help it out
+    # where possible
+    if ( $_POST['datelogic']=='during' )
+      {
+        $use_index = "USE INDEX (system_start_end_jobs)";
+      }
+    else
+      {
+        $use_index = "USE INDEX (system_".$_POST['datelogic']."_jobs)";
+      }
+
     # system summary table
     echo "<H3>System Summary</H3>\n";
-    $sql = "SELECT system, COUNT(jobid) AS jobs, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE script IS NOT NULL AND sw_app is NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY jobs DESC";
+    $sql = "SELECT system, COUNT(jobid) AS jobs, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs ".$use_index." WHERE script IS NOT NULL AND sw_app is NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY jobs DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -89,7 +100,7 @@ if ( isset($_POST['system']) )
 
     # account summary table
     echo "<H3>Account Summary</H3>\n";
-    $sql = "SELECT account, system, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges FROM Jobs WHERE script IS NOT NULL AND sw_app IS NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account, system ORDER BY cpuhours DESC";
+    $sql = "SELECT account, system, COUNT(DISTINCT(username)) AS users, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges FROM Jobs ".$use_index." WHERE script IS NOT NULL AND sw_app IS NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account, system ORDER BY cpuhours DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -117,7 +128,7 @@ if ( isset($_POST['system']) )
 
     # user summary table
     echo "<H3>User Summary</H3>\n";
-    $sql = "SELECT DISTINCT(username) AS username, groupname, account, system, COUNT(jobid) AS jobs FROM Jobs WHERE script IS NOT NULL AND sw_app IS NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, account, system ORDER BY jobs DESC";
+    $sql = "SELECT DISTINCT(username) AS username, groupname, account, system, COUNT(jobid) AS jobs FROM Jobs ".$use_index." WHERE script IS NOT NULL AND sw_app IS NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY username, account, system ORDER BY jobs DESC";
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -153,7 +164,7 @@ if ( isset($_POST['system']) )
 	    $sql .= ",".$key;
 	  }
       }
-    $sql .= " FROM Jobs WHERE ( ";
+    $sql .= " FROM Jobs ".$use_index." WHERE ( ";
     $sql .= "script IS NOT NULL AND sw_app IS NULL";
     $sql .= " ) AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) ORDER BY start_ts;";
     #echo "<PRE>".$sql."</PRE>\n";
