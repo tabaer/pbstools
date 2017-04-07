@@ -332,7 +332,7 @@ def raw_data_from_file(filename):
                 value = match.group(2)
                 if key in []:
                     value = int(value)
-                if key in ["qtime", "start", "end"]:
+                if key in ["qtime", "etime", "start", "end"]:
                     value = float(value)
                 resources_dict[key] = value
         
@@ -341,6 +341,24 @@ def raw_data_from_file(filename):
         #break
     acct_data.close()
     return output
+
+
+def raw_data_from_files(filelist):
+    """
+    Parses a list of files containing multiple PBS accounting log entries.
+    Returns a list of tuples containing the following information:
+
+    (jobid, time, record_type, resources)
+
+    Resources are returned in a dictionary containing entries for each 
+    resource name and corresponding value
+    """
+    rawdata = []
+    for filename in filelist:
+        if ( os.path.exists(filename) ):
+            for record in raw_data_from_file(filename):
+                rawdata.append(record)
+    return rawdata
 
 
 def records_to_jobs(rawdata):
@@ -373,7 +391,7 @@ def jobs_from_file(filename):
     a hash of lightly postprocessed data (i.e. one entry per jobid rather
     than one per record).
     """
-    return records_to_jobs(raw_data_from_file(filename))
+    return jobs_from_files([filename])
 
 
 def jobs_from_files(filelist):
@@ -382,12 +400,7 @@ def jobs_from_files(filelist):
     Returns a hash of lightly postprocessed data (i.e. one entry per jobid
     rather than one per record).
     """
-    rawdata = []
-    for filename in filelist:
-        if ( os.path.exists(filename) ):
-            for record in pbsacct.raw_data_from_file(filename):
-                rawdata.append(record)
-    return records_to_jobs(rawdata)
+    return records_to_jobs(raw_data_from_files(filelist))
 
 
 def time_to_sec(timestr):
