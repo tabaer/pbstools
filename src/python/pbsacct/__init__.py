@@ -24,6 +24,55 @@ class jobinfo:
         for key in resources.keys():
             self._resources[key] = resources[key]
 
+    def __repr__(self):
+        output  = "jobid %s {\n" % self.jobid()
+        output += "\tlast_state = %s\n" % self.get_state()
+        output += "\tlast_update_time = %s (%d)\n" % (str(self.get_update_time()),self.get_update_time_ts())
+        output += "\tjobname = %s\n" % self.name()
+        output += "\tqueue = %s\n" % self.queue()
+        output += "\tuser = %s\n" % self.user()
+        output += "\tgroup = %s\n" % self.group()
+        output += "\taccount = %s\n" % self.account()
+        if ( self.qtime_ts()>0 ):
+            output += "\tqtime = %s (%d)\n" % (str(self.qtime()),self.qtime_ts())
+        if ( self.etime_ts()>0 ):
+            output += "\tetime = %s (%d)\n" % (str(self.etime()),self.etime_ts())
+        if ( self.start_ts()>0 ):
+            output += "\tstart = %s (%d)\n" % (str(self.start()),self.start_ts())
+        if ( self.end_ts()>0 ):
+            output += "\tend = %s (%d)\n" % (str(self.end()),self.end_ts())
+        output += "\tnproc = %d\n" % self.num_processors()
+        if ( self.nodes() is not None ):
+            output += "\tnodes = %s\n" % self.nodes()
+            output += "\tnodect = %d\n" % self.num_nodes()
+            output += "\tnodes_used = %s\n" % str(self.nodes_used())
+        if ( self.feature() is not None ):
+            output += "\tfeature = %s\n" % self.feature()
+        if ( self.gattr() is not None ):
+            output += "\tgattr = %s\n" % self.gattr()
+        if ( self.gres() is not None ):
+            output += "\tgres = %s\n" % self.gres()
+        if ( self.software() is not None ):
+            output += "\tsoftware = %s\n" % self.software()
+        if ( self.other() is not None ):
+            output += "\tother = %s\n" % self.other()
+        if ( self.mem_used_kb()>0 ):
+            output += "\tmem_used (kb) = %d\n" % self.mem_used_kb()
+            output += "\tmem_limit (kb) = %d\n" % self.mem_limit_kb()
+        if ( self.vmem_used_kb()>0 ):
+            output += "\tvmem_used (kb) = %d\n" % self.vmem_used_kb()
+            output += "\tvmem_limit (kb) = %d\n" % self.vmem_limit_kb()
+        if ( self.walltime_used_sec()>0 ):
+            output += "\twalltime_used = %s (%d)\n" % (sec_to_time(self.walltime_used_sec()),self.walltime_used_sec())
+            output += "\twalltime_limit = %s (%d)\n" % (sec_to_time(self.walltime_limit_sec()),self.walltime_limit_sec())
+        if ( self.cput_used_sec()>0 ):
+            output += "\tcput_used = %s (%d)\n" % (sec_to_time(self.cput_used_sec()),self.cput_used_sec())
+            output += "\tcput_limit = %s (%d)\n" % (sec_to_time(self.cput_limit_sec()),self.cput_limit_sec())
+        if ( self.exit_status() is not None ):
+            output += "\texit_status = %d\n" % self.exit_status()
+        output += "}"
+        return output
+
     def get_update_time(self):
         return self._updatetime
 
@@ -53,6 +102,9 @@ class jobinfo:
 
     def set_resource(self,key,value):
         self._resources[key] = value
+
+    def has_resource(self,key):
+        return self._resources.has_key(key)
 
     def add_to_resource(self,key,value):
         supported_time_resources = ["resources_used.cput","resources_used.walltime"]
@@ -145,6 +197,9 @@ class jobinfo:
         else:
             return 0
 
+    def nodes(self):
+        return self.get_resource("Resource_List.nodes")
+
     def nodes_used(self):
         nodes = []
         if ( self._resources.has_key("exec_host") ):
@@ -217,6 +272,21 @@ class jobinfo:
         # Return the larger of the two computed values
         return max(processors,ncpus)
 
+    def feature(self):
+        return self.get_resource("Resource_List.feature")
+
+    def gattr(self):
+        return self.get_resource("Resource_List.gattr")
+
+    def gres(self):
+        return self.get_resource("Resource_List.gres")
+
+    def software(self):
+        return self.get_resource("Resource_List.software")
+
+    def other(self):
+        return self.get_resource("Resource_List.other")
+
     def mem_used_kb(self):
         """ Return the amount of memory (in kb) used by the job """
         if ( self._resources.has_key("resources_used.mem") ):
@@ -226,7 +296,7 @@ class jobinfo:
 
     def vmem_used_kb(self):
         """ Return the amount of virtual memory (in kb) used by the job """
-        if ( self._resources.has_key("resources_used.vmem"):
+        if ( self._resources.has_key("resources_used.vmem") ):
             return int(re.sub("kb$", "", self._resources["resources_used.vmem"]))
         else:
             return 0
@@ -275,7 +345,7 @@ class jobinfo:
 
     def exit_status(self):
         if ( self._resources.has_key("Exit_status") ):
-            return self._resources["Exit_status"]
+            return int(self._resources["Exit_status"])
         else:
             return None
 
