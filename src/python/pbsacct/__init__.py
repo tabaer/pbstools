@@ -97,7 +97,7 @@ class jobinfo:
         return self._resources.keys()
 
     def get_resource(self,key):
-        if ( self._resources.has_key(key) ):
+        if ( self.has_resource(key) ):
             return self._resources[key]
         else:
             return None
@@ -111,7 +111,7 @@ class jobinfo:
     def add_to_resource(self,key,value):
         supported_time_resources = ["resources_used.cput","resources_used.walltime"]
         if ( key in supported_time_resources and 
-             not self._resources.has_key(key) ):
+             not self.has_resource(key) ):
             self._resources[key] = value
         elif ( key in supported_time_resources ):
             oldval = time_to_sec(self._resources[key])
@@ -152,50 +152,50 @@ class jobinfo:
         return self.get_resource("account")
 
     def qtime(self):
-        if ( self._resources.has_key("qtime") ):
-            return datetime.datetime.fromtimestamp(int(self._resources["qtime"]))
+        if ( self.has_resource("qtime") ):
+            return datetime.datetime.fromtimestamp(int(self.get_resource("qtime")))
         else:
             raise RuntimeError("Job "+self._jobid+" has no qtime set")
 
     def etime(self):
-        if ( self._resources.has_key("etime") ):
-            return datetime.datetime.fromtimestamp(int(self._resources["etime"]))
+        if ( self.has_resource("etime") ):
+            return datetime.datetime.fromtimestamp(int(self.get_resource("etime")))
         else:
             raise RuntimeError("Job "+self._jobid+" has no etime set")
 
     def start(self):
-        if ( self._resources.has_key("start") ):
-            return datetime.datetime.fromtimestamp(int(self._resources["start"]))
+        if ( self.has_resource("start") ):
+            return datetime.datetime.fromtimestamp(int(self.get_resource("start")))
         else:
             raise RuntimeError("Job "+self._jobid+" has no start time set")
 
     def end(self):
-        if ( self._resources.has_key("end") ):
-            return datetime.datetime.fromtimestamp(int(self._resources["end"]))
+        if ( self.has_resource("end") ):
+            return datetime.datetime.fromtimestamp(int(self.get_resource("end")))
         else:
             raise RuntimeError("Job "+self._jobid+" has no end time set")
 
     def qtime_ts(self):
-        if ( self._resources.has_key("qtime") ):
-            return int(self._resources["qtime"])
+        if ( self.has_resource("qtime") ):
+            return int(self.get_resource("qtime"))
         else:
             return 0
 
     def etime_ts(self):
-        if ( self._resources.has_key("etime") ):
-            return int(self._resources["etime"])
+        if ( self.has_resource("etime") ):
+            return int(self.get_resource("etime"))
         else:
             return 0
 
     def start_ts(self):
-        if ( self._resources.has_key("start") ):
-            return int(self._resources["start"])
+        if ( self.has_resource("start") ):
+            return int(self.get_resource("start"))
         else:
             return 0
 
     def end_ts(self):
-        if ( self._resources.has_key("end") ):
-            return int(self._resources["end"])
+        if ( self.has_resource("end") ):
+            return int(self.get_resource("end"))
         else:
             return 0
 
@@ -204,8 +204,8 @@ class jobinfo:
 
     def nodes_used(self):
         nodes = []
-        if ( self._resources.has_key("exec_host") ):
-            for node_and_procs in self._resources["exec_host"].split("+"):
+        if ( self.has_resource("exec_host") ):
+            for node_and_procs in self.get_resource("exec_host").split("+"):
                 (node,procs) = node_and_procs.split("/")
                 if ( node not in nodes ):
                     nodes.append(node)
@@ -213,9 +213,9 @@ class jobinfo:
 
     def num_nodes(self):
         nnodes = 0
-        if ( self._resources.has_key("unique_node_count")):
+        if ( self.has_resource("unique_node_count")):
             # Added in TORQUE 4.2.9
-            nnodes = int(self._resources["unique_node_count"])
+            nnodes = int(self.get_resource("unique_node_count"))
         else:
             nnodes = len(self.nodes_used())
         return nnodes
@@ -223,12 +223,12 @@ class jobinfo:
     def num_processors(self):
         """ Returns the total number of processors the job requires """
         processors = 0
-        if ( self._resources.has_key("total_execution_slots") ):
+        if ( self.has_resource("total_execution_slots") ):
             # Added in TORQUE 4.2.9
-            processors = int(self._resources["total_execution_slots"])
-        elif ( self._resources.has_key("Resource_List.nodes") ):
+            processors = int(self.get_resource("total_execution_slots"))
+        elif ( self.has_resource("Resource_List.nodes") ):
             # Compute the nodes requested and the processors per node
-            for nodelist in self._resources["Resource_List.nodes"].split("+"):
+            for nodelist in self.get_resource("Resource_List.nodes").split("+"):
                 nodes_and_ppn = nodelist.split(":")
                 try:
                     nodes = int(nodes_and_ppn[0])
@@ -247,30 +247,30 @@ class jobinfo:
                 processors = processors + nodes*ppn
             return processors
         ncpus = 0
-        if ( self._resources.has_key("Resource_List.ncpus") ):
-            ncpus = max(ncpus,int(self._resources["Resource_List.ncpus"]))
-        if ( self._resources.has_key("resources_used.ncpus") ):
-            ncpus = max(ncpus,int(self._resources["resources_used.ncpus"]))
-        if ( self._resources.has_key("Resource_List.mppssp") or 
-             self._resources.has_key("resources_used.mppssp") or 
-             self._resources.has_key("Resource_List.mppe") or
-             self._resources.has_key("resources_used.mppe") ):
+        if ( self.has_resource("Resource_List.ncpus") ):
+            ncpus = max(ncpus,int(self.get_resource("Resource_List.ncpus")))
+        if ( self.has_resource("resources_used.ncpus") ):
+            ncpus = max(ncpus,int(self.get_resource("resources_used.ncpus")))
+        if ( self.has_resource("Resource_List.mppssp") or 
+             self.has_resource("resources_used.mppssp") or 
+             self.has_resource("Resource_List.mppe") or
+             self.has_resource("resources_used.mppe") ):
             # Cray SV1/X1 specific code
             # These systems could gang together 4 individual processors (SSPs)
             # in a virtual processor (MSPs).
             # This is admittedly rather weird and only of historical interest.
             ssps = 0
-            if ( self._resources.has_key("Resource_List.mppssp") ):
-                ssps = ssps + int(self._resources["Resource_List.mppssp"])
-            elif ( self._resources.has_key("resources_used.mppssp") ):
-                ssps = ssps + int(self._resources["resources_used.mppssp"])
-            if ( self._resources.has_key("Resource_List.mppe") ):
-                ssps = ssps + 4*int(self._resources["Resource_List.mppe"])
-            elif ( self._resources.has_key("resources_used.mppe") ):
-                ssps = ssps + 4*int(self._resources["resources_used.mppe"])
+            if ( self.has_resource("Resource_List.mppssp") ):
+                ssps = ssps + int(self.get_resource("Resource_List.mppssp"))
+            elif ( self.has_resource("resources_used.mppssp") ):
+                ssps = ssps + int(self.get_resource("resources_used.mppssp"))
+            if ( self.has_resource("Resource_List.mppe") ):
+                ssps = ssps + 4*int(self.get_resource("Resource_List.mppe"))
+            elif ( self.has_resource("resources_used.mppe") ):
+                ssps = ssps + 4*int(self.get_resource("resources_used.mppe"))
             ncpus = max(ncpus,ssps)
-        if ( self._resources.has_key("Resource_List.size") ):
-            ncpus = max(ncpus,int(self._resources["Resource_List.size"]))
+        if ( self.has_resource("Resource_List.size") ):
+            ncpus = max(ncpus,int(self.get_resource("Resource_List.size")))
         # Return the larger of the two computed values
         return max(processors,ncpus)
 
@@ -315,63 +315,63 @@ class jobinfo:
 
     def mem_used_kb(self):
         """ Return the amount of memory (in kb) used by the job """
-        if ( self._resources.has_key("resources_used.mem") ):
+        if ( self.has_resource("resources_used.mem") ):
             return int(re.sub("kb$", "", self._resources["resources_used.mem"]))
         else:
             return 0
 
     def vmem_used_kb(self):
         """ Return the amount of virtual memory (in kb) used by the job """
-        if ( self._resources.has_key("resources_used.vmem") ):
-            return int(re.sub("kb$", "", self._resources["resources_used.vmem"]))
+        if ( self.has_resource("resources_used.vmem") ):
+            return int(re.sub("kb$", "", self.get_resource("resources_used.vmem")))
         else:
             return 0
 
     def mem_limit_kb(self):
-        if ( self._resources.has_key("Resource_List.mem") ):
-            return mem_to_kb(self._resources["Resource_List.mem"])
+        if ( self.has_resource("Resource_List.mem") ):
+            return mem_to_kb(self.get_resource("Resource_List.mem"))
         else:
             return 0
 
     def vmem_limit_kb(self):
-        if ( self._resources.has_key("Resource_List.vmem") ):
-            return mem_to_kb(self._resources["Resource_List.vmem"])
+        if ( self.has_resource("Resource_List.vmem") ):
+            return mem_to_kb(self.get_resource("Resource_List.vmem"))
         else:
             return 0
 
     def walltime_used_sec(self):
-        if ( self._resources.has_key("resources_used.walltime") ):
-            return time_to_sec(self._resources["resources_used.walltime"])
+        if ( self.has_resource("resources_used.walltime") ):
+            return time_to_sec(self.get_resource("resources_used.walltime"))
         else:
             return 0
 
     def walltime_limit_sec(self):
-        if ( self._resources.has_key("Resource_List.walltime") ):
-            return time_to_sec(self._resources["Resource_List.walltime"])
+        if ( self.has_resource("Resource_List.walltime") ):
+            return time_to_sec(self.get_resource("Resource_List.walltime"))
         else:
             return 0
     
     def cput_used_sec(self):
-        if ( self._resources.has_key("resources_used.cput") ):
-            return time_to_sec(self._resources["resources_used.cput"])
+        if ( self.has_resource("resources_used.cput") ):
+            return time_to_sec(self.get_resource("resources_used.cput"))
         else:
             return 0
 
     def cput_limit_sec(self):
-        if ( self._resources.has_key("Resource_List.cput") ):
-            return time_to_sec(self._resources["Resource_List.cput"])
+        if ( self.has_resource("Resource_List.cput") ):
+            return time_to_sec(self.get_resource("Resource_List.cput"))
         else:
             return 0
 
     def energy_used(self):
-        if ( self._resources.has_key("resources_used.energy_used") ):
-            return int(self._resources["resources_used.energy_used"])
+        if ( self.has_resource("resources_used.energy_used") ):
+            return int(self.get_resource("resources_used.energy_used"))
         else:
             return 0
 
     def exit_status(self):
-        if ( self._resources.has_key("Exit_status") ):
-            return int(self._resources["Exit_status"])
+        if ( self.has_resource("Exit_status") ):
+            return int(self.get_resource("Exit_status"))
         else:
             return None
 
@@ -548,5 +548,5 @@ def mem_to_kb(memstr):
 
 
 if __name__ == "__main__":
-    import os
-    print str(jobs_from_file("/users/sysp/amaharry/acct-data/20160310"))
+    import glob
+    print str(jobs_from_files(glob.glob("/users/sysp/amaharry/acct-data/201603*")))
