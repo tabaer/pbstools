@@ -2,7 +2,7 @@
 # This module provides functions for parsing PBS accounting logs for use by 
 # various scripts
 #
-# Copyright 2016 Ohio Supercomputer Center
+# Copyright 2016, 2017 Ohio Supercomputer Center
 # Authors:  Aaron Maharry
 #           Troy Baer <troy@osc.edu>
 #
@@ -46,6 +46,8 @@ class jobinfo:
             output += "\tnodes = %s\n" % self.nodes()
             output += "\tnodect = %d\n" % self.num_nodes()
             output += "\tnodes_used = %s\n" % str(self.nodes_used())
+        if ( self.num_gpus()>0 ):
+            output += "\tngpus = %d\n" % self.num_gpus()
         if ( self.feature() is not None ):
             output += "\tfeature = %s\n" % self.feature()
         if ( self.gattr() is not None ):
@@ -271,6 +273,30 @@ class jobinfo:
             ncpus = max(ncpus,int(self._resources["Resource_List.size"]))
         # Return the larger of the two computed values
         return max(processors,ncpus)
+
+    def num_gpus(self):
+        ngpus = 0
+        # sadly, there doesn't appear to be a more elegant way to do this
+        if ( self.nodes() is not None and "gpus=" in self.nodes() ):
+            # Compute the nodes requested and the processors per node
+            for nodelist in self.nodes().split("+"):
+                nodes_and_props = nodelist.split(":")
+                try:
+                    nodes = int(nodes_and_ppn[0])
+                except:
+                    # Handles malformed log values
+                    nodes = 1
+                gpn = 0
+                if ( len(nodes_and_props)>=2 ):
+                    for nodeprop in nodes_and_props[1:]:
+                        if ( re.match("^gpus=(\d+)$", nodeprop) ):
+                            gpn = int(re.search("^gpus=(\d+)$", nodeprop).group(1))
+                nodes = max(1,nodes)
+                gpn = max(0,gpn)
+                ngpus = ngpus + nodes*gpn 
+        elif ( self.gres() is not None and "gpus:" in self.gres() ):
+            ngpus = int(re.search("gpus:(\d+)",self.gres()).group(1))
+        return ngpus
 
     def feature(self):
         return self.get_resource("Resource_List.feature")
