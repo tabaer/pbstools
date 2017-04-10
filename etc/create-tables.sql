@@ -13,6 +13,7 @@ CREATE TABLE Jobs (
   mppssp       INT UNSIGNED,
   nodes        TEXT,
   nodect       INT UNSIGNED DEFAULT 0,
+  ngpus        INT UNSIGNED DEFAULT 0,
   feature      TINYTEXT,
   gattr        TINYTEXT,
   gres         TINYTEXT,
