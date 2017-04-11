@@ -423,9 +423,9 @@ def raw_data_from_file(filename):
             if match:
                 key = match.group(1)
                 value = match.group(2)
-                if key in []:
-                    value = int(value)
                 if key in ["qtime", "etime", "start", "end"]:
+                    value = int(value)
+                if key in []:
                     value = float(value)
                 resources_dict[key] = value
         
