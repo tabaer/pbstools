@@ -327,6 +327,18 @@ class jobinfo:
         else:
             return 0
 
+    def mem_limit(self):
+        if ( self.has_resource("Resource_List.mem") ):
+            return self.get_resource("Resource_List.mem")
+        else:
+            return None
+
+    def vmem_limit(self):
+        if ( self.has_resource("Resource_List.vmem") ):
+            return self.get_resource("Resource_List.vmem")
+        else:
+            return None
+
     def mem_limit_kb(self):
         if ( self.has_resource("Resource_List.mem") ):
             return mem_to_kb(self.get_resource("Resource_List.mem"))
