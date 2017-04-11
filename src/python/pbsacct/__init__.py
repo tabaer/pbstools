@@ -33,6 +33,8 @@ class jobinfo:
         output += "\tuser = %s\n" % self.user()
         output += "\tgroup = %s\n" % self.group()
         output += "\taccount = %s\n" % self.account()
+        if ( self.ctime_ts()>0 ):
+            output += "\tctime = %s (%d)\n" % (str(self.ctime()),self.ctime_ts())
         if ( self.qtime_ts()>0 ):
             output += "\tqtime = %s (%d)\n" % (str(self.qtime()),self.qtime_ts())
         if ( self.etime_ts()>0 ):
@@ -151,6 +153,12 @@ class jobinfo:
     def account(self):
         return self.get_resource("account")
 
+    def ctime(self):
+        if ( self.has_resource("ctime") ):
+            return datetime.datetime.fromtimestamp(int(self.get_resource("ctime")))
+        else:
+            raise RuntimeError("Job "+self._jobid+" has no ctime set")
+
     def qtime(self):
         if ( self.has_resource("qtime") ):
             return datetime.datetime.fromtimestamp(int(self.get_resource("qtime")))
@@ -174,6 +182,12 @@ class jobinfo:
             return datetime.datetime.fromtimestamp(int(self.get_resource("end")))
         else:
             raise RuntimeError("Job "+self._jobid+" has no end time set")
+
+    def ctime_ts(self):
+        if ( self.has_resource("ctime") ):
+            return int(self.get_resource("ctime"))
+        else:
+            return 0
 
     def qtime_ts(self):
         if ( self.has_resource("qtime") ):
@@ -423,7 +437,7 @@ def raw_data_from_file(filename):
             if match:
                 key = match.group(1)
                 value = match.group(2)
-                if key in ["qtime", "etime", "start", "end"]:
+                if key in ["ctime", "qtime", "etime", "start", "end"]:
                     value = int(value)
                 if key in []:
                     value = float(value)
