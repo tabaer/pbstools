@@ -547,6 +547,134 @@ def mem_to_kb(memstr):
         raise ValueError("Invalid memory expression \""+memstr+"\"")
 
 
+class pbsacctDB:
+    def __init__(self, host=None, dbtype="mysql",
+                 db="pbsacct", dbuser=None, dbpasswd=None,
+                 jobs_table="Jobs", config_table="Config",
+                 sw_table="Software"):
+        self.setServerName(host)
+        self.setType(dbtype)
+        self.setName(db)
+        self.setUser(dbuser)
+        self.setPassword(dbpasswd)
+        self.setJobsTable(jobs_table)
+        self.setConfigTable(config_table)
+        self.setSoftwareTable(sw_table)
+        self._dbhandle = None
+
+    def setServerName(self, dbhost):
+        self._dbhost = dbhost
+
+    def getServerName(self):
+        return self._dbhost
+
+    def setType(self, dbtype):
+        supported_dbs = ["mysql","pgsql"]
+        if ( dbtype in supported_dbs ):
+            self._dbtype = dbtype
+        else:
+            raise RuntimeError("Requested unimplemented database type \"%s\"" % dbtype)
+
+    def getType(self):
+        return self._dbtype
+
+    def setName(self, dbname):
+        self._dbname = dbname
+
+    def getName(self):
+        return self._dbname
+
+    def setUser(self, dbuser):
+        self._dbuser = dbuser
+
+    def getUser(self):
+        return self._dbuser
+
+    def setPassword(self, dbpasswd):
+        self._dbpasswd = dbpasswd
+
+    def setJobsTable(self, jobs_table):
+        self._jobstable = jobs_table
+
+    def getJobsTable(self):
+        return self._jobstable
+
+    def setConfigTable(self, config_table):
+        self._cfgtable = config_table
+
+    def getConfigTable(self):
+        return self._cfgtable
+        
+    def setSoftwareTable(self, sw_table):
+        self._swtable = sw_table
+
+    def getSoftwareTable(self):
+        return self._swtable
+        
+    def readConfigFile(self, cfgfilename):
+        if ( not os.path.exists(cfgfilename) ):
+            raise IOError("%s does not exist" % cfgfilename)
+        cfgfile = open(cfgfilename)
+        for line in cfgfile.readlines():
+            if ( not line.startswith("#") and not re.match('^\s*$',line) ):
+                try:
+                    (keyword,value) = line.rstrip('\n').split("=")
+                    if ( keyword=="dbhost" ):
+                        self.setServerName(value)
+                    elif ( keyword=="dbtype" ):
+                        self.setType(value)
+                    elif ( keyword=="dbname" ):
+                        self.setName(value)
+                    elif ( keyword=="dbuser" ):
+                        self.setUser(value)
+                    elif ( keyword=="dbpasswd" ):
+                        self.setPassword(value)
+                    elif ( keyword=="jobstable" ):
+                        self.setJobsTable(value)
+                    elif ( keyword=="configtable" ):
+                        self.setConfigTable(value)
+                    elif ( keyword=="softwaretable" ):
+                        self.setSoftwareTable(value)
+                    else:
+                        raise RuntimeError("Unknown keyword \"%s\"" % keyword)
+                except Exception as e:
+                    sys.stderr.write(str(e))
+                    pass
+
+    def connect(self):
+        if ( self._dbhandle is not None ):
+            return self._dbhandle
+        if ( self.getType()=="mysql" ):
+            import MySQLdb
+            self._dbhandle = MySQLdb.connect(host=self._dbhost,
+                                             db=self._dbname,
+                                             user=self._dbuser,
+                                             passwd=self._dbpasswd)
+            return self._dbhandle
+        elif ( self.getType()=="pgsql" ):
+            import psycopg2
+            self._dbhandle = psycopg2.connect(host=self._dbhost,
+                                              db=self._dbname,
+                                              user=self._dbuser,
+                                              passwd=self._dbpasswd)
+            return self._dbhandle
+        else:
+            raise RuntimeError("Unimplemented database type \"%s\"" % self.getType())
+
+    def close(self):
+        self.connect().close()
+        self._dbhandle = None
+
+    def commit(self):
+        self.connect().commit()
+
+    def cursor(self):
+        return self.connect().cursor()
+
+    def rollback(self):
+        self.connect().rollback()
+
+
 if __name__ == "__main__":
     import glob
     print str(jobs_from_files(glob.glob("/users/sysp/amaharry/acct-data/201603*")))
