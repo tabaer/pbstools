@@ -24,6 +24,31 @@ class jobinfo:
         for key in resources.keys():
             self._resources[key] = resources[key]
 
+    def __eq__(self,other):
+        if ( not isinstance(other,jobinfo) ):
+            return False
+        if ( self.jobid()!=other.jobid() or
+             self.get_state()!=other.get_state() or
+             self.get_update_time()!=other.get_update_time() ):
+            return False
+        ignore_rsrcs = ["qtime",
+                        "Resource_List.other",
+                        "resources_used.energy_used",
+                        "session",
+                        "total_execution_slots",
+                        "unique_node_count"]
+        for key in list(set(self.resource_keys()) | set(other.resource_keys())):
+            if ( key not in ignore_rsrcs ):
+                if ( not self.has_resource(key) or 
+                     not other.has_resource(key) ):
+                    return False
+                elif ( key in ["resources_used.cput","resources_used.walltime"] and
+                       time_to_sec(self.get_resource(key))!=time_to_sec(other.get_resource(key)) ):
+                    return False
+                elif ( self.get_resource(key)!=other.get_resource(key) ):
+                    return False
+        return True
+
     def __repr__(self):
         output  = "jobid %s {\n" % self.jobid()
         output += "\tlast_state = %s\n" % self.get_state()
@@ -152,6 +177,18 @@ class jobinfo:
 
     def account(self):
         return self.get_resource("account")
+
+    def owner(self):
+        return self.get_resource("owner")
+
+    def submithost(self):
+        owner = self.owner()
+        if ( owner is None or 
+             '@' not in owner or
+             len(owner.split('@'))>2 ):
+            return None
+        else:
+            return owner.split('@',1)[1]
 
     def ctime(self):
         if ( self.has_resource("ctime") ):
@@ -321,11 +358,14 @@ class jobinfo:
     def gres(self):
         return self.get_resource("Resource_List.gres")
 
-    def software(self):
-        return self.get_resource("Resource_List.software")
-
     def other(self):
         return self.get_resource("Resource_List.other")
+
+    def qos(self):
+        return self.get_resource("Resource_List.qos")
+
+    def software(self):
+        return self.get_resource("Resource_List.software")
 
     def mem_used_kb(self):
         """ Return the amount of memory (in kb) used by the job """
@@ -514,6 +554,10 @@ def time_to_sec(timestr):
     """
     Convert string time into seconds.
     """
+    if ( timestr is None ):
+        return 0
+    elif ( isinstance(timestr,int) ):
+        return timestr
     if ( not re.match("[\d:]+",timestr) ):
         raise ValueError("Malformed time \""+timestr+"\"")
     sec = 0
@@ -538,10 +582,12 @@ def time_to_sec(timestr):
 
 
 def sec_to_time(seconds):
-    hours = seconds/3600
-    minutes = (seconds-3600*hours)/60
-    sec = seconds-(3600*hours+60*minutes)
-    return "%d:%02d:%02d" % (hours,minutes,sec)
+    if ( isinstance(seconds,str) ):
+        return seconds
+    hours = int(seconds/3600)
+    minutes = int(seconds-3600*hours)/60
+    sec = int(seconds-(3600*hours+60*minutes))
+    return "%02d:%02d:%02d" % (hours,minutes,sec)
 
 
 def mem_to_kb(memstr):
@@ -587,6 +633,7 @@ class pbsacctDB:
         self.setConfigTable(config_table)
         self.setSoftwareTable(sw_table)
         self._dbhandle = None
+        self._cursor = None
 
     def setServerName(self, dbhost):
         self._dbhost = dbhost
@@ -690,15 +737,358 @@ class pbsacctDB:
     def close(self):
         self.connect().close()
         self._dbhandle = None
+        self._cursor = None
 
     def commit(self):
         self.connect().commit()
 
     def cursor(self):
-        return self.connect().cursor()
+        if ( self._cursor is None ):
+            self._cursor = self.connect().cursor()
+        return self._cursor
 
     def rollback(self):
         self.connect().rollback()
+
+    def job_exists(self,jobid):
+        sql = "SELECT jobid FROM %s WHERE jobid='%s'" % (self.getJobsTable(),jobid)
+        self.cursor().execute(sql)
+        results = self.cursor().fetchall()
+        if ( len(results)==0 ):
+            return False
+        elif ( len(results)==1 ):
+            return True
+        else:
+            raise RuntimeError("More than one result for jobid %s (should not be possible)" % jobid)
+
+    def _job_set_fields(self,job,system=None,oldjob=None):
+        if ( not isinstance(job,jobinfo) ):
+            raise TypeError("\"job\" object is of wrong type:  %s" % str(job))            
+        if ( oldjob is not None and not isinstance(oldjob,jobinfo) ):
+            raise TypeError("\"oldjob\" object is of wrong type:  %s" % str(oldjob))            
+        fields_to_set = []
+        if ( oldjob is None ):
+             fields_to_set.append("jobid='%s" % job.jobid())
+        if ( system is not None ):
+             fields_to_set.append("system='%s'" % system)
+        if ( job.user() is not None and
+             ( oldjob is None or job.user()!=oldjob.user() ) ):
+             fields_to_set.append("username='%s'" % job.user())
+        if ( job.group() is not None and
+             ( oldjob is None or job.group()!=oldjob.group() ) ):
+             fields_to_set.append("groupname='%s'" % job.group())
+        if ( job.submithost() is not None and
+             ( oldjob is None or job.submithost()!=oldjob.submithost() ) ):
+             fields_to_set.append("submithost='%s'" % job.submithost())
+        if ( job.name() is not None and
+             ( oldjob is None or job.name()!=oldjob.name() ) ):
+             fields_to_set.append("name='%s'" % job.name())
+        if ( job.num_processors()>0 and
+             ( oldjob is None or job.num_processors()!=oldjob.num_processors()) ):
+             fields_to_set.append("nproc='%d'" % job.num_processors())
+        if ( job.num_nodes()>0 and
+             ( oldjob is None or job.num_nodes()!=oldjob.num_nodes()) ):
+             fields_to_set.append("nodect='%d'" % job.num_nodes())
+        if ( job.nodes() is not None and
+             ( oldjob is None or job.nodes()!=oldjob.nodes() ) ):
+             fields_to_set.append("nodes='%s'" % job.nodes())
+        if ( job.feature() is not None and
+             ( oldjob is None or job.feature()!=oldjob.feature() ) ):
+             fields_to_set.append("feature='%s'" % job.feature())
+        if ( job.gattr() is not None and
+             ( oldjob is None or job.gattr()!=oldjob.gattr() ) ):
+             fields_to_set.append("gattr='%s'" % job.gattr())
+        if ( job.gres() is not None and
+             ( oldjob is None or job.gres()!=oldjob.gres() ) ):
+             fields_to_set.append("gres='%s'" % job.gres())        
+        if ( job.queue() is not None  and
+             ( oldjob is None or job.queue()!=oldjob.queue() ) ):
+             fields_to_set.append("queue='%s'" % job.queue())
+        if ( job.qos() is not None  and
+             ( oldjob is None or job.qos()!=oldjob.qos() ) ):
+             fields_to_set.append("qos='%s'" % job.qos())
+        if ( job.qtime_ts()>0 and
+              ( oldjob is None or job.qtime_ts()!=oldjob.qtime_ts() ) ):
+             fields_to_set.append("submit_ts='%d'" % job.qtime_ts())
+             fields_to_set.append("submit_date=DATE(FROM_UNIXTIME('%d'))" % job.qtime_ts())
+        if ( job.etime_ts()>0 and
+              ( oldjob is None or job.etime_ts()!=oldjob.etime_ts() ) ):
+             fields_to_set.append("eligible_ts='%d'" % job.etime_ts())
+             fields_to_set.append("eligible_date=DATE(FROM_UNIXTIME('%d'))" % job.etime_ts())
+        if ( job.start_ts()>0 and
+              ( oldjob is None or job.start_ts()!=oldjob.start_ts() ) ):
+             fields_to_set.append("start_ts='%d'" % job.start_ts())
+             fields_to_set.append("start_date=DATE(FROM_UNIXTIME('%d'))" % job.start_ts())
+        if ( job.end_ts()>0 and
+              ( oldjob is None or job.end_ts()!=oldjob.end_ts() ) ):
+             fields_to_set.append("end_ts='%d'" % job.end_ts())
+             fields_to_set.append("end_date=DATE(FROM_UNIXTIME('%d'))" % job.end_ts())
+        if ( job.cput_limit_sec()>0 and
+             ( oldjob is None or job.cput_limit_sec()!=oldjob.cput_limit_sec() ) ):
+             fields_to_set.append("cput_req='%s'" % sec_to_time(job.cput_limit_sec()))
+             fields_to_set.append("cput_req_sec='%d'" % job.cput_limit_sec())
+        if ( job.cput_used_sec()>0 and
+             ( oldjob is None or job.cput_used_sec()!=oldjob.cput_used_sec() ) ):
+             fields_to_set.append("cput='%s'" % sec_to_time(job.cput_used_sec()))
+             fields_to_set.append("cput_sec='%d'" % job.cput_used_sec())
+        if ( job.walltime_limit_sec()>0 and
+             ( oldjob is None or job.walltime_limit_sec()!=oldjob.walltime_limit_sec() ) ):
+             fields_to_set.append("walltime_req='%s'" % sec_to_time(job.walltime_limit_sec()))
+             fields_to_set.append("walltime_req_sec='%d'" % job.walltime_limit_sec())
+        if ( job.walltime_used_sec()>0 and
+             ( oldjob is None or job.walltime_used_sec()!=oldjob.walltime_used_sec() ) ):
+             fields_to_set.append("walltime='%s'" % sec_to_time(job.walltime_used_sec()))
+             fields_to_set.append("walltime_sec='%d'" % job.walltime_used_sec())
+        if ( job.mem_limit() is not None and
+             ( oldjob is None or job.mem_limit()!=oldjob.mem_limit()) ):
+             fields_to_set.append("mem_req='%s'" % job.mem_limit())
+        if ( job.mem_used_kb()>0 and
+             ( oldjob is None or job.mem_used_kb()!=oldjob.mem_used_kb()) ):
+             fields_to_set.append("mem_kb='%d'" % job.mem_used_kb())
+        if ( job.vmem_limit() is not None and
+             ( oldjob is None or job.vmem_limit()!=oldjob.vmem_limit()) ):
+             fields_to_set.append("vmem_req='%s'" % job.vmem_limit())
+        if ( job.vmem_used_kb()>0 and
+             ( oldjob is None or job.vmem_used_kb()!=oldjob.vmem_used_kb()) ):
+             fields_to_set.append("vmem_kb='%d'" % job.vmem_used_kb())
+        if ( ( job.has_resource("Resource_List.mppe") or job.has_resource("resources_used.mppe") ) and
+             ( oldjob is None or 
+               ( job.get_resource("Resource_List.mppe")!=oldjob.get_resource("Resource_List.mppe") or
+                 job.get_resource("resources_used.mppe")!=oldjob.get_resource("resources_used.mppe") ) ) ):
+             fields_to_set.append("mppe='%d'" % max(int(job.get_resource("Resource_List.mppe")),int(job.get_resource("resources_used.mppe"))))
+        if ( ( job.has_resource("Resource_List.mppssp") or job.has_resource("resources_used.mppssp") ) and
+             ( oldjob is None or 
+               ( job.get_resource("Resource_List.mppssp")!=oldjob.get_resource("Resource_List.mppssp") or
+                 job.get_resource("resources_used.mppssp")!=oldjob.get_resource("resources_used.mppssp") ) ) ):
+             fields_to_set.append("mppssp='%d'" % max(int(job.get_resource("Resource_List.mppssp")),int(job.get_resource("resources_used.mppssp"))))
+        if ( job.has_resource("exec_host") and
+             ( oldjob is None or job.get_resource("exec_host")!=oldjob.get_resource("exec_host") ) ):
+             fields_to_set.append("hostlist='%s'" % job.get_resource("exec_host"))
+        if ( job.exit_status() is not None and
+             ( oldjob is None or job.get_resource("Exit_status")!=oldjob.get_resource("Exit_status") ) ):
+             fields_to_set.append("exit_status='%d'" % int(job.get_resource("Exit_status")))
+        if ( job.software() is not None and
+             ( oldjob is None or job.software()!=oldjob.software() ) ):
+             fields_to_set.append("software='%s'" % job.software())
+        if ( job.account() is not None and
+             ( oldjob is None or job.account()!=oldjob.account() ) ):
+             fields_to_set.append("account='%s'" % job.account())
+        if ( len(fields_to_set)>0 ):
+            return ", ".join(fields_to_set)
+        else:
+            return None
+
+    def insert_job(self,job,system=None,check_existance=True,noop=True):
+        if ( not isinstance(job,jobinfo) ):
+            raise TypeError("\"job\" object is of wrong type:  %s" % str(job))
+        if ( check_existance and self.job_exists(job.jobid()) ):
+            raise RuntimeError("Job %s already exists in database, cannot insert" % job.jobid())
+        delta = self._job_set_fields(job,system)
+        if ( delta is not None ):
+            sql = "INSERT INTO %s SET %s" % (self.getJobsTable(),delta)
+            if ( noop ):
+                sys.stderr.write("%s\n" % sql)
+            else:
+                self.cursor().execute(sql)
+
+    def update_job(self,job,system=None,check_existance=True,noop=True):
+        if ( not isinstance(job,jobinfo) ):
+            raise TypeError("\"job\" object is of wrong type:  %s" % str(job))
+        if ( check_existance and not self.job_exists(job.jobid()) ):
+            raise RuntimeError("Job %s does not exist in database, cannot update" % job.jobid())
+        oldjob = self.get_job(job.jobid())
+        if ( job!=oldjob ):
+            delta = self._job_set_fields(job,system,oldjob)
+            if ( delta is not None ):
+                sql = "UPDATE %s SET %s WHERE jobid='%s'" % (self.getJobsTable(),delta,job.jobid())
+                if ( noop ):
+                    sys.stderr.write("%s\n" % sql)
+                else:
+                    self.cursor().execute(sql)
+
+    def insert_or_update_job(self,job,system=None,noop=True):
+        if ( not isinstance(job,jobinfo) ):
+            raise TypeError("\"job\" object is of wrong type:  %s" % str(job))
+        if ( self.job_exists(job.jobid()) ):
+            self.update_job(job,system,check_existance=False,noop=noop)
+        else:
+            self.insert_job(job,system,check_existance=False,noop=noop)
+
+    def get_job(self,jobid,noop=False):
+        if ( self.job_exists(jobid) ):
+            sql = "SELECT * FROM %s WHERE jobid='%s'" % (self.getJobsTable(),jobid)
+            if ( noop ):
+                sys.stderr.write("%s\n" % sql)
+                return None
+            else:
+                self.cursor().execute(sql)
+                results = self.cursor().fetchall()
+                if ( len(results)==0 ):
+                    return None
+                elif ( len(results)==1 ):
+                    columns = []
+                    for desc in self.cursor().description:
+                        columns.append(desc[0])
+                    resources = {}
+                    result = list(results[0])
+                    for i in range(len(result)):
+                        if ( columns[i] in ["account","jobname","queue"] and
+                             result[i] is not None ):
+                            resources[columns[i]] = str(result[i])
+                        elif ( columns[i]=="username" and
+                               result[i] is not None ):
+                            resources["user"] = str(result[i])
+                        elif ( columns[i]=="groupname" and
+                               result[i] is not None ):
+                            resources["group"] = str(result[i])
+                        elif ( columns[i]=="submithost" and
+                               result[i] is not None ):
+                            if ( resources.has_key("user") ):
+                                resources["owner"] = resources["user"]+"@"+str(result[i])
+                        elif ( columns[i]=="submit_ts" and
+                               result[i]>0 ):
+                            resources["ctime"] = str(result[i])
+                            resources["qtime"] = str(result[i])
+                        elif ( columns[i]=="eligible_ts" and
+                               result[i]>0 ):
+                            resources["etime"] = str(result[i])
+                        elif ( columns[i]=="start_ts" and
+                               result[i]>0 ):
+                            resources["start"] = str(result[i])
+                        elif ( columns[i]=="end_ts" and
+                               result[i]>0 ):
+                            resources["end"] = str(result[i])
+                        elif ( columns[i]=="hostlist" and
+                               result[i] is not None ):
+                            resources["exec_host"] = str(result[i])
+                        elif ( columns[i]=="exit_status" and
+                               result[i] is not None ):
+                            resources["Exit_status"] = str(result[i])
+                        elif ( columns[i]=="cput_req" ):
+                            if ( isinstance(result[i],datetime.timedelta) ):
+                                if ( result[i].days>0 and result[i].seconds>0 ):
+                                    resources["Resource_List.cput"] = sec_to_time(24*3600*result[i].days+result[i].seconds)
+                                else:
+                                    resources["Resource_List.cput"] = None
+                            elif ( isinstance(result[i],int) ):
+                                if ( result[i]>0 ):
+                                    resources["Resource_List.cput"] = sec_to_time(result[i])
+                                else:
+                                    resources["Resource_List.cput"] = None
+                            else:
+                                resources["Resource_List.cput"] = str(result[i])
+                        elif ( columns[i]=="cput_req_sec" ):
+                            if ( not resources.has_key("Resource_List.cput") or
+                                 ( resources.has_key("Resource_List.cput") and
+                                   result[i] is not None and
+                                   int(result[i])>time_to_sec(resources["Resource_List.cput"]) ) ):
+                                resources["Resource_List.cput"] = sec_to_time(result[i])
+                        elif ( columns[i]=="feature" and
+                               result[i] is not None ):
+                            resources["Resource_List.feature"] = str(result[i])
+                        elif ( columns[i]=="gattr" and
+                               result[i] is not None ):
+                            resources["Resource_List.gattr"] = str(result[i])
+                        elif ( columns[i]=="gres" and
+                               result[i] is not None ):
+                            resources["Resource_List.gres"] = str(result[i])
+                        elif ( columns[i]=="gres" and
+                               result[i] is not None ):
+                            resources["Resource_List.gres"] = str(result[i])
+                        elif ( columns[i]=="mem_req" and
+                               result[i] is not None ):
+                            resources["Resource_List.mem"] = str(result[i])
+                        elif ( columns[i]=="mppe" and
+                               result[i] is not None ):
+                            resources["Resource_List.mppe"] = str(result[i])
+                            resources["resources_used.mppe"] = str(result[i])
+                        elif ( columns[i]=="mppssp" and
+                               result[i] is not None ):
+                            resources["Resource_List.mppssp"] = str(result[i])
+                            resources["resources_used.mppssp"] = str(result[i])
+                        elif ( columns[i]=="nodes" and
+                               result[i] is not None ):
+                            resources["Resource_List.nodes"] = str(result[i])
+                            resources["Resource_List.neednodes"] = str(result[i])
+                        elif ( columns[i]=="nodect" and
+                               result[i]>0 ):
+                            resources["Resource_List.nodect"] = str(result[i])
+                            resources["unique_node_count"] = str(result[i])
+                        elif ( columns[i]=="qos" and
+                               result[i] is not None ):
+                            resources["Resource_List.qos"] = str(result[i])
+                        elif ( columns[i]=="vmem_req" and
+                               result[i] is not None ):
+                            resources["Resource_List.vmem"] = str(result[i])
+                        elif ( columns[i]=="walltime_req" ):
+                            if ( not resources.has_key("Resource_List.walltime") ):
+                                if ( isinstance(result[i],datetime.timedelta) ):
+                                    resources["Resource_List.walltime"] = sec_to_time(24*3600*result[i].days+result[i].seconds)
+                                elif ( isinstance(result[i],int) ):
+                                    resources["Resource_List.walltime"] = sec_to_time(result[i])
+                                else:
+                                    resources["Resource_List.walltime"] = str(result[i])
+                        elif ( columns[i]=="walltime_req_sec" ):
+                            if ( not resources.has_key("Resource_List.walltime") or
+                                 ( resources.has_key("Resource_List.walltime") and
+                                   result[i] is not None and
+                                   int(result[i])>time_to_sec(resources["Resource_List.walltime"]) ) ):
+                                resources["Resource_List.walltime"] = sec_to_time(result[i])
+
+                        elif ( columns[i]=="cput" ):
+                            if ( not resources.has_key("resources_used.cput") ):
+                                if ( isinstance(result[i],datetime.timedelta) ):
+                                    resources["resources_used.cput"] = sec_to_time(24*3600*result[i].days+result[i].seconds)
+                                elif ( isinstance(result[i],int) ):
+                                    resources["resources_used.cput"] = sec_to_time(result[i])
+                                else:
+                                    resources["resources_used.cput"] = str(result[i])
+                        elif ( columns[i]=="cput_sec" ):
+                            if ( not resources.has_key("resources_used.cput") or
+                                 ( resources.has_key("resources_used.cput") and
+                                   result[i] is not None and
+                                   int(result[i])>time_to_sec(resources["resources_used.cput"]) ) ):
+                                resources["resources_used.cput"] = sec_to_time(result[i])
+                        elif ( columns[i]=="energy" ):
+                            resources["resources_used.energy_used"] = str(result[i])
+                        elif ( columns[i]=="mem_kb" and
+                               result[i] is not None ):
+                            resources["resources_used.mem"] = str(result[i])+"kb"
+                        elif ( columns[i]=="vmem_kb" and
+                               result[i] is not None ):
+                            resources["resources_used.vmem"] = str(result[i])+"kb"                        
+                        elif ( columns[i]=="walltime" ):
+                            if ( not resources.has_key("resources_used.walltime") ):
+                                if ( isinstance(result[i],datetime.timedelta) ):
+                                    resources["resources_used.walltime"] = sec_to_time(24*3600*result[i].days+result[i].seconds)
+                                elif ( isinstance(result[i],int) ):
+                                    resources["resources_used.walltime"] = sec_to_time(result[i])
+                                else:
+                                    resources["resources_used.walltime"] = str(result[i])
+                        elif ( columns[i]=="walltime_sec" ):
+                            if ( not resources.has_key("resources_used.walltime") or
+                                 ( resources.has_key("resources_used.walltime") and
+                                   result[i] is not None and
+                                   int(result[i])>time_to_sec(resources["resources_used.walltime"]) ) ):
+                                resources["resources_used.walltime"] = sec_to_time(result[i])
+                        elif ( columns[i]=="nproc" ):
+                            resources["total_execution_slots"] = str(result[i])
+                    if ( resources.has_key("ctime") ):
+                        updatetime = int(resources["ctime"])
+                    else:
+                        updatetime = 0
+                    state = "Q"
+                    if ( resources.has_key("start") ):
+                        if ( int(resources["start"])>updatetime ):
+                            updatetime = resources["start"]
+                        state = "S"
+                    if ( resources.has_key("end") ):
+                        if ( int(resources["end"])>updatetime ):
+                            updatetime = int(resources["end"])
+                        state = "E"
+                    return jobinfo(jobid,datetime.datetime.fromtimestamp(float(updatetime)).strftime("%m/%d/%Y %H:%M:%S"),state,resources)
+                else:
+                    raise RuntimeError("More than one result for jobid %s (should not be possible)" % jobid)        
 
 
 if __name__ == "__main__":
