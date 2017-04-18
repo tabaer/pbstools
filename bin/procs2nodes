@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# procs2nodes -- Convert processor count to nodes=N:ppn=M[+...] syntax
+# Copyright 2017 Ohio Supercomputer Center
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+#
+if [ $# -lt 2 ]
+then
+   echo "Usage:  procs2nodes num_procs ppn" >&2
+   exit -1
+fi
+procs=$1
+ppn=$2
+nodes=$(($procs / $ppn))
+mod=$(($procs % $ppn))
+if [ $mod -eq 0 ]
+then
+    printf "%d:ppn=%d\n" $nodes $ppn
+else
+    printf "%d:ppn=%d+1:ppn=%d\n" $nodes $ppn $mod
+fi
+
