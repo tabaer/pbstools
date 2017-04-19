@@ -15,7 +15,7 @@ import re
 import sys
 
 class jobinfo:
-    def __init__(self,jobid,update_time,state,resources):
+    def __init__(self,jobid,update_time,state,resources,system=None):
         self._jobid = jobid
         self._updatetimefmt = "%m/%d/%Y %H:%M:%S"
         self._updatetime = datetime.datetime.strptime(update_time,self._updatetimefmt)
@@ -23,6 +23,8 @@ class jobinfo:
         self._resources = {}
         for key in resources.keys():
             self._resources[key] = resources[key]
+        if ( not self._resources.has_key("system") ):
+            self._resources["system"] = system
 
     def __eq__(self,other):
         if ( not isinstance(other,jobinfo) ):
@@ -34,7 +36,9 @@ class jobinfo:
         ignore_rsrcs = ["qtime",
                         "Resource_List.other",
                         "resources_used.energy_used",
+                        "script",
                         "session",
+                        "system",
                         "total_execution_slots",
                         "unique_node_count"]
         for key in list(set(self.resource_keys()) | set(other.resource_keys())):
@@ -162,6 +166,9 @@ class jobinfo:
             return int((self._jobid.split(".")[0])[0:self._jobid.index('[')])
         else:
             return int(self._jobid.split(".")[0])
+
+    def system(self):
+        return self.get_resource("system")
 
     def name(self):
         return self.get_resource("jobname")
@@ -508,7 +515,7 @@ def raw_data_from_files(filelist):
     return rawdata
 
 
-def records_to_jobs(rawdata):
+def records_to_jobs(rawdata,system=None):
     """
     Processes an array containing multiple PBS accounting log entries.  Returns
     a hash of lightly postprocessed data (i.e. one entry per jobid rather
@@ -521,7 +528,7 @@ def records_to_jobs(rawdata):
         record_type = record[2]
         resources = record[3]
         if ( not output.has_key(jobid) ):
-            output[jobid] = jobinfo(jobid,update_time,record_type,resources)
+            output[jobid] = jobinfo(jobid,update_time,record_type,resources,system)
         # may need an extra case here for jobs with multiple S and E
         # records (e.g. preemption)
         else:
@@ -532,22 +539,22 @@ def records_to_jobs(rawdata):
     return output
 
 
-def jobs_from_file(filename):
+def jobs_from_file(filename,system=None):
     """
     Parses a file containing multiple PBS accounting log entries.  Returns
     a hash of lightly postprocessed data (i.e. one entry per jobid rather
     than one per record).
     """
-    return jobs_from_files([filename])
+    return jobs_from_files([filename],system)
 
 
-def jobs_from_files(filelist):
+def jobs_from_files(filelist,system=None):
     """
     Parses a list of files containing multiple PBS accounting log entries.
     Returns a hash of lightly postprocessed data (i.e. one entry per jobid
     rather than one per record).
     """
-    return records_to_jobs(raw_data_from_files(filelist))
+    return records_to_jobs(raw_data_from_files(filelist),system)
 
 
 def time_to_sec(timestr):
@@ -623,7 +630,7 @@ class pbsacctDB:
     def __init__(self, host=None, dbtype="mysql",
                  db="pbsacct", dbuser=None, dbpasswd=None,
                  jobs_table="Jobs", config_table="Config",
-                 sw_table="Software"):
+                 sw_table="Software",system=None):
         self.setServerName(host)
         self.setType(dbtype)
         self.setName(db)
@@ -632,6 +639,7 @@ class pbsacctDB:
         self.setJobsTable(jobs_table)
         self.setConfigTable(config_table)
         self.setSoftwareTable(sw_table)
+        self.setSystem(system)
         self._dbhandle = None
         self._cursor = None
 
@@ -683,6 +691,12 @@ class pbsacctDB:
 
     def getSoftwareTable(self):
         return self._swtable
+
+    def setSystem(self, system):
+        self._system = system
+
+    def getSystem(self):
+        return self._system
         
     def readConfigFile(self, cfgfilename):
         if ( not os.path.exists(cfgfilename) ):
@@ -708,6 +722,8 @@ class pbsacctDB:
                         self.setConfigTable(value)
                     elif ( keyword=="softwaretable" ):
                         self.setSoftwareTable(value)
+                    elif ( keyword=="system" ):
+                        self.setSystem(value)
                     else:
                         raise RuntimeError("Unknown keyword \"%s\"" % keyword)
                 except Exception as e:
@@ -769,7 +785,8 @@ class pbsacctDB:
         fields_to_set = []
         if ( oldjob is None ):
              fields_to_set.append("jobid='%s" % job.jobid())
-        if ( system is not None ):
+        if ( system is not None and 
+             ( oldjob is None or job.system()!=oldjob.system() ) ):
              fields_to_set.append("system='%s'" % system)
         if ( job.user() is not None and
              ( oldjob is None or job.user()!=oldjob.user() ) ):
@@ -932,7 +949,7 @@ class pbsacctDB:
                     resources = {}
                     result = list(results[0])
                     for i in range(len(result)):
-                        if ( columns[i] in ["account","jobname","queue"] and
+                        if ( columns[i] in ["account","jobname","queue","system"] and
                              result[i] is not None ):
                             resources[columns[i]] = str(result[i])
                         elif ( columns[i]=="username" and
@@ -1073,6 +1090,8 @@ class pbsacctDB:
                                 resources["resources_used.walltime"] = sec_to_time(result[i])
                         elif ( columns[i]=="nproc" ):
                             resources["total_execution_slots"] = str(result[i])
+                        elif ( columns[i]=="script" and result[i] is not None ):
+                            resources["script"] = str(result[i])
                     if ( resources.has_key("ctime") ):
                         updatetime = int(resources["ctime"])
                     else:
