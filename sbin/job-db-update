@@ -1,0 +1,142 @@
+#!/usr/bin/python
+#
+# job-db-update -- Insert job records into a MySQL DB
+# Python rewrite
+# Copyright 2017 Ohio Supercomputer Center
+#
+# Derived from original Perl code:
+# Copyright 2006, 2007, 2016 Ohio Supercomputer Center
+# Copyright 2008, 2009, 2010 University of Tennessee
+#
+# License:  GNU GPL v2; see ../COPYING for details.
+#
+# Usage:  job-db-update [-h system] [-s dbhost] [-D dbtype]
+#                       [-d dbname] [-u dbuser] [-p dbpasswd]
+#                       [-t jobstable] [-C config_table] [-w sw_table]
+#                       [-c cfgfile]
+#                       acctfile [...acctfiles...]
+#
+# Can be run with no acct files listed to check DB connectivity
+
+import getopt
+import os
+import pbsacct
+import re
+import sys
+
+def usage():
+    sys.stderr.write("Usage:\tjob-db-update\t[-h system] [-s dbhost] [-D dbtype]\n")
+    sys.stderr.write("\t\t\t[-d dbname] [-u dbuser] [-p dbpasswd] [-q]\n")
+    sys.stderr.write("\t\t\t[-t jobstable] [-C config_table] [-w sw_table]\n")
+    sys.stderr.write("\t\t\t[-c cfgfile]\n")
+    sys.stderr.write("\t\t\tacctfile [...acctfiles...]\n")
+    sys.exit(0)
+
+
+#
+# Main program starts here
+#
+dbhost = "localhost"
+dbname = "pbsacct"
+dbuser = "pbsacct"
+dbpasswd = "pbsRroxor"
+system = None
+cfgfile = "/etc/pbsacctdb.cfg"
+query = False
+noop = True
+
+db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
+if ( not os.environ.has_key("PBSTOOLS_DIR") ):
+    os.environ["PBSTOOLS_DIR"] = "/usr/local"
+cfgfile = os.environ["PBSTOOLS_DIR"]+"/etc/pbsacctdb.cfg"
+if ( os.path.exists(cfgfile) ):
+    db.readConfigFile(cfgfile)
+
+# command line processing
+try:
+    opts, filelist = getopt.getopt(sys.argv[1:],
+                                   "C:D:Tc:d:h:p:qs:t:u:w:",
+                                   [])
+except getopt.GetoptError, err:
+    sys.stderr.write(str(err)+"\n")
+    usage()
+for opt in opts:
+    if ( opt[0]=="-C" ):
+        db.setConfigTable(opt[1])
+    elif ( opt[0]=="-D" ):
+        db.setType(opt[1])
+    elif ( opt[0]=="-T" ):
+        noop = True
+    elif ( opt[0]=="-c" ):
+        db.readConfigFile(opt[1])
+    elif ( opt[0]=="-d" ):
+        db.setName(opt[1])
+    elif ( opt[0]=="-h" ):
+        db.setSystem(opt[1])
+    elif ( opt[0]=="-p" ):
+        db.setPassword(opt[1])
+    elif ( opt[0]=="-q" ):
+        query = True
+    elif ( opt[0]=="-s" ):
+        db.setServerName(opt[1])
+    elif ( opt[0]=="-t" ):
+        db.setJobsTable(opt[1])
+    elif ( opt[0]=="-u" ):
+        db.setUser(opt[1])
+    elif ( opt[0]=="-w" ):
+        db.setSoftwareTable(opt[1])
+
+if ( system is None and db.getSystem() is not None ):
+    system = db.getSystem()
+
+dbconn = db.connect()
+cursor = dbconn.cursor()
+
+# ingest job data from accounting logs
+if ( len(filelist)>0 ):
+    jobs = pbsacct.jobs_from_files(filelist,system)
+    
+    for jobid in sorted(jobs,key=lambda jobid:jobs[jobid].end_ts):
+        if ( jobs[jobid].get_state()=="E" ):
+            if ( query ):
+                dbjob = None
+                if ( db.job_exists(jobid) ):
+                    dbjob = db.get_job(jobid)
+                if ( dbjob is None ):
+                    sys.stderr.write("Jobid %s does not exist in DB\n" % jobid)
+                elif ( dbjob!=jobs[jobid] ):
+                    if ( jobid!=dbjob.jobid() ):
+                        sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, "jobid", str(dbjob.jobid(), str(jobid))))
+                    if ( jobs[jobid].user()!=dbjob.user() ):
+                        sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, "user", str(dbjob.user()), str(jobs[jobid].user())))
+                    if ( jobs[jobid].group()!=dbjob.group() ):
+                        sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, "group", str(dbjob.group()), str(jobs[jobid].group())))
+                    if ( jobs[jobid].account()!=dbjob.account() ):
+                        sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, "account", str(dbjob.account()), str(jobs[jobid].account())))
+                    if ( jobs[jobid].queue()!=dbjob.queue() ):
+                        sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, "queue", str(dbjob.queue()), str(jobs[jobid].queue())))
+                    for column in list( set(jobs[jobid].get_resource_keys()) | set(dbjob.get_resource_keys()) ):
+                        dbvalue = dbjob.get_resource(column)
+                        logvalue = jobs[jobid].get_resource(column)
+                        ignorecolumns = ["qtime",
+                                         "Resource_List.pmem",
+                                         "resources_used.energy_used",
+                                         "session",
+                                         "total_execution_slots",
+                                         "unique_node_count"]
+                        if ( column not in ignorecolumns ):
+                            if ( str(dbvalue)!=str(logvalue) ):
+                                if ( column in ["ctime","etime","start","end"] and ( dbvalue is not None and dbvalue!=0 ) and ( logvalue is not None or logvalue!=0 ) ):
+                                    sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s, difference=%d\n" % (jobid, column, str(dbvalue), str(logvalue), int(dbvalue)-int(logvalue)))
+                                # resources_used.cput is weird because sometimes it's reported in hh:mm:ss format and sometimes
+                                # it's just in seconds, depending on which version of TORQUE you're using.
+                                elif ( column=="resources_used.cput" and dbvalue is not None and logvalue is not None and pbsacct.time_to_sec(dbvalue)==int(logvalue) ):
+                                    next
+                                elif ( column=="resources_used.cput" and dbvalue is not None and logvalue is not None and pbsacct.time_to_sec(dbvalue)!=int(logvalue) ):
+                                    sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, column, str(dbvalue), pbsacct.sec_to_time(int(logvalue))))
+                                elif ( ( dbvalue is not None and dbvalue!=0 ) and ( logvalue is not None and logvalue!=0 ) ):
+                                    sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, column, str(dbvalue), str(logvalue)))
+            else:
+                db.insert_or_update_job(jobs[jobid],system=system,noop=noop)
+
+dbconn.close()
