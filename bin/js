@@ -1,0 +1,93 @@
+#!/usr/bin/python
+#
+# js -- Retrieve a job script from the pbsacct DB.
+# Python rewrite
+# Copyright 2017 Ohio Supercomputer Center
+#
+# Derived from original Perl code:
+# Copyright 2009 University of Tennessee
+#
+
+import getopt
+import os
+import pbsacct
+import re
+import sys
+
+def usage():
+    sys.stderr.write("Usage:\tjs\t[-h system] [-s dbhost] [-D dbtype]\n")
+    sys.stderr.write("\t\t[-d dbname] [-u dbuser] [-p dbpasswd]\n")
+    sys.stderr.write("\t\t[-t jobstable] [-c cfgfile]\n")
+    sys.exit(0)
+
+
+#
+# Main program starts here
+#
+dbhost = "localhost"
+dbname = "pbsacct"
+dbuser = "pbsacct"
+dbpasswd = "pbsRroxor"
+system = None
+query = False
+noop = True
+
+db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
+if ( not os.environ.has_key("PBSTOOLS_DIR") ):
+    os.environ["PBSTOOLS_DIR"] = "/usr/local"
+cfgfile = os.environ["PBSTOOLS_DIR"]+"/etc/pbsacctdb.cfg"
+if ( os.path.exists(cfgfile) ):
+    db.readConfigFile(cfgfile)
+
+# command line processing
+try:
+    opts, args = getopt.getopt(sys.argv[1:],
+                                   "D:c:d:h:p:qs:t:u:w:",
+                                   [])
+except getopt.GetoptError, err:
+    sys.stderr.write(str(err)+"\n")
+    usage()
+for opt in opts:
+    if ( opt[0]=="-D" ):
+        db.setType(opt[1])
+    elif ( opt[0]=="-c" ):
+        db.readConfigFile(opt[1])
+    elif ( opt[0]=="-d" ):
+        db.setName(opt[1])
+    elif ( opt[0]=="-h" ):
+        db.setSystem(opt[1])
+    elif ( opt[0]=="-p" ):
+        db.setPassword(opt[1])
+    elif ( opt[0]=="-s" ):
+        db.setServerName(opt[1])
+    elif ( opt[0]=="-t" ):
+        db.setJobsTable(opt[1])
+    elif ( opt[0]=="-u" ):
+        db.setUser(opt[1])
+
+if ( system is None and db.getSystem() is not None ):
+    system = db.getSystem()
+else:
+    system = "%"
+
+dbconn = db.connect()
+cursor = dbconn.cursor()
+
+for jobid in args:
+    if ( "." in jobid ):
+        jobid  = jobid.split(".",1)[0]
+    sql = "SELECT script FROM %s WHERE system LIKE '%s' AND jobid LIKE '%s.%%'" % (db.getJobsTable(),system,jobid)
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    if ( len(results)>0 ):
+        for result in results:
+            if ( result[0] is not None ):
+                #sys.stdout.write("script for jobid %s\n---------------------------------\n" % jobid)
+                sys.stdout.write(str(result[0]))
+                #sys.stdout.write("\n---------------------------------\n")
+            else:
+                sys.stderr.write("No script found for jobid %s\n" % jobid)
+    else:
+        sys.stderr.write("No script found for jobid %s\n" % jobid)
+
+dbconn.close()
