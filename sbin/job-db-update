@@ -43,7 +43,7 @@ dbpasswd = "pbsRroxor"
 system = None
 cfgfile = "/etc/pbsacctdb.cfg"
 query = False
-noop = True
+noop = False
 
 db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
 if ( not os.environ.has_key("PBSTOOLS_DIR") ):
