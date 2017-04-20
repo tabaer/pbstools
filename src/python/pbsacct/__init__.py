@@ -895,7 +895,7 @@ class pbsacctDB:
         else:
             return None
 
-    def insert_job(self,job,system=None,check_existance=True,noop=True):
+    def insert_job(self,job,system=None,check_existance=True,noop=False):
         if ( not isinstance(job,jobinfo) ):
             raise TypeError("\"job\" object is of wrong type:  %s" % str(job))
         if ( check_existance and self.job_exists(job.jobid()) ):
@@ -908,7 +908,7 @@ class pbsacctDB:
             else:
                 self.cursor().execute(sql)
 
-    def update_job(self,job,system=None,check_existance=True,noop=True):
+    def update_job(self,job,system=None,check_existance=True,noop=False):
         if ( not isinstance(job,jobinfo) ):
             raise TypeError("\"job\" object is of wrong type:  %s" % str(job))
         if ( check_existance and not self.job_exists(job.jobid()) ):
@@ -923,7 +923,7 @@ class pbsacctDB:
                 else:
                     self.cursor().execute(sql)
 
-    def insert_or_update_job(self,job,system=None,noop=True):
+    def insert_or_update_job(self,job,system=None,noop=False):
         if ( not isinstance(job,jobinfo) ):
             raise TypeError("\"job\" object is of wrong type:  %s" % str(job))
         if ( self.job_exists(job.jobid()) ):
