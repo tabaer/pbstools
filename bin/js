@@ -29,7 +29,6 @@ dbname = "pbsacct"
 dbuser = "pbsacct"
 dbpasswd = "pbsRroxor"
 system = None
-query = False
 
 db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
 if ( not os.environ.has_key("PBSTOOLS_DIR") ):
@@ -41,7 +40,7 @@ if ( os.path.exists(cfgfile) ):
 # command line processing
 try:
     opts, args = getopt.getopt(sys.argv[1:],
-                                   "D:c:d:h:p:qs:t:u:w:",
+                                   "D:c:d:h:p:s:t:u:w:",
                                    [])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
