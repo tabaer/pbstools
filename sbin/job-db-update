@@ -44,6 +44,7 @@ system = None
 cfgfile = "/etc/pbsacctdb.cfg"
 query = False
 noop = False
+append_to_jobid_in_db = None
 
 db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
 if ( not os.environ.has_key("PBSTOOLS_DIR") ):
@@ -55,7 +56,7 @@ if ( os.path.exists(cfgfile) ):
 # command line processing
 try:
     opts, filelist = getopt.getopt(sys.argv[1:],
-                                   "C:D:Tc:d:h:p:qs:t:u:w:",
+                                   "C:D:Ta:c:d:h:p:qs:t:u:w:",
                                    [])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
@@ -67,6 +68,8 @@ for opt in opts:
         db.setType(opt[1])
     elif ( opt[0]=="-T" ):
         noop = True
+    elif ( opt[0]=="-a" ):
+        append_to_jobid_in_db = opt[1]
     elif ( opt[0]=="-c" ):
         db.readConfigFile(opt[1])
     elif ( opt[0]=="-d" ):
@@ -100,8 +103,8 @@ if ( len(filelist)>0 ):
         if ( jobs[jobid].get_state()=="E" ):
             if ( query ):
                 dbjob = None
-                if ( db.job_exists(jobid) ):
-                    dbjob = db.get_job(jobid)
+                if ( db.job_exists(jobid,append_to_jobid=append_to_jobid_in_db) ):
+                    dbjob = db.get_job(jobid,append_to_jobid=append_to_jobid_in_db)
                 if ( dbjob is None ):
                     sys.stderr.write("Jobid %s does not exist in DB\n" % jobid)
                 elif ( dbjob!=jobs[jobid] ):
@@ -137,6 +140,6 @@ if ( len(filelist)>0 ):
                                 elif ( ( dbvalue is not None and dbvalue!=0 ) and ( logvalue is not None and logvalue!=0 ) ):
                                     sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, column, str(dbvalue), str(logvalue)))
             else:
-                db.insert_or_update_job(jobs[jobid],system=system,noop=noop)
+                db.insert_or_update_job(jobs[jobid],system=system,noop=noop,append_to_jobid=append_to_jobid_in_db)
 
 dbconn.close()
