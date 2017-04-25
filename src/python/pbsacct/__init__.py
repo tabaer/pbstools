@@ -21,6 +21,9 @@ class jobinfo:
         self._updatetime = datetime.datetime.strptime(update_time,self._updatetimefmt)
         self._state = state
         self._resources = {}
+        self._nproc = 0
+        self._nnodes = 0
+        self._ngpus = 0
         for key in resources.keys():
             self._resources[key] = resources[key]
         if ( not self._resources.has_key("system") ):
@@ -270,16 +273,21 @@ class jobinfo:
         return nodes
 
     def num_nodes(self):
+        if ( self._nnodes>0 ):
+            return self._nnodes>0
         nnodes = 0
         if ( self.has_resource("unique_node_count")):
             # Added in TORQUE 4.2.9
             nnodes = int(self.get_resource("unique_node_count"))
         else:
             nnodes = len(self.nodes_used())
-        return nnodes
+        self._nnodes = nnodes
+        return self._nnodes
 
     def num_processors(self):
         """ Returns the total number of processors the job requires """
+        if ( self._nproc>0 ):
+            return self._nproc
         processors = 0
         if ( self.has_resource("total_execution_slots") ):
             # Added in TORQUE 4.2.9
@@ -303,7 +311,8 @@ class jobinfo:
                 nodes = max(1,nodes)
                 ppn = max(1,ppn)
                 processors = processors + nodes*ppn
-            return processors
+            self._nproc = processors
+            return self._nproc
         ncpus = 0
         if ( self.has_resource("Resource_List.ncpus") ):
             ncpus = max(ncpus,int(self.get_resource("Resource_List.ncpus")))
@@ -330,9 +339,12 @@ class jobinfo:
         if ( self.has_resource("Resource_List.size") ):
             ncpus = max(ncpus,int(self.get_resource("Resource_List.size")))
         # Return the larger of the two computed values
-        return max(processors,ncpus)
+        self._nproc = max(processors,ncpus)
+        return self._nproc
 
     def num_gpus(self):
+        if ( self._ngpus>0 ):
+            return self._ngpus
         ngpus = 0
         # sadly, there doesn't appear to be a more elegant way to do this
         if ( self.nodes() is not None and "gpus=" in self.nodes() ):
@@ -354,7 +366,8 @@ class jobinfo:
                 ngpus = ngpus + nodes*gpn 
         elif ( self.gres() is not None and "gpus:" in self.gres() ):
             ngpus = int(re.search("gpus:(\d+)",self.gres()).group(1))
-        return ngpus
+        self._ngpus = ngpus
+        return self._ngpus
 
     def feature(self):
         return self.get_resource("Resource_List.feature")
@@ -766,8 +779,11 @@ class pbsacctDB:
     def rollback(self):
         self.connect().rollback()
 
-    def job_exists(self,jobid):
-        sql = "SELECT jobid FROM %s WHERE jobid='%s'" % (self.getJobsTable(),jobid)
+    def job_exists(self,jobid,append_to_jobid=None):
+        myjobid = jobid
+        if ( append_to_jobid is not None ):
+            myjobid = jobid+append_to_jobid
+        sql = "SELECT jobid FROM %s WHERE jobid='%s'" % (self.getJobsTable(),myjobid)
         self.cursor().execute(sql)
         results = self.cursor().fetchall()
         if ( len(results)==0 ):
@@ -777,14 +793,17 @@ class pbsacctDB:
         else:
             raise RuntimeError("More than one result for jobid %s (should not be possible)" % jobid)
 
-    def _job_set_fields(self,job,system=None,oldjob=None):
+    def _job_set_fields(self,job,system=None,oldjob=None,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
             raise TypeError("\"job\" object is of wrong type:  %s" % str(job))            
         if ( oldjob is not None and not isinstance(oldjob,jobinfo) ):
             raise TypeError("\"oldjob\" object is of wrong type:  %s" % str(oldjob))            
+        myjobid = job.jobid()
+        if ( append_to_jobid is not None ):
+            myjobid = job.jobid()+append_to_jobid
         fields_to_set = []
         if ( oldjob is None ):
-             fields_to_set.append("jobid='%s" % job.jobid())
+             fields_to_set.append("jobid='%s'" % myjobid)
         if ( system is not None and 
              ( oldjob is None or job.system()!=oldjob.system() ) ):
              fields_to_set.append("system='%s'" % system)
@@ -809,6 +828,9 @@ class pbsacctDB:
         if ( job.nodes() is not None and
              ( oldjob is None or job.nodes()!=oldjob.nodes() ) ):
              fields_to_set.append("nodes='%s'" % job.nodes())
+        if ( job.num_gpus()>0 and
+             ( oldjob is None or job.num_gpus()!=oldjob.num_gpus()) ):
+             fields_to_set.append("ngpus='%d'" % job.num_gpus())
         if ( job.feature() is not None and
              ( oldjob is None or job.feature()!=oldjob.feature() ) ):
              fields_to_set.append("feature='%s'" % job.feature())
@@ -895,12 +917,12 @@ class pbsacctDB:
         else:
             return None
 
-    def insert_job(self,job,system=None,check_existance=True,noop=False):
+    def insert_job(self,job,system=None,check_existance=True,noop=False,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
             raise TypeError("\"job\" object is of wrong type:  %s" % str(job))
-        if ( check_existance and self.job_exists(job.jobid()) ):
+        if ( check_existance and self.job_exists(job.jobid(),append_to_jobid=append_to_jobid) ):
             raise RuntimeError("Job %s already exists in database, cannot insert" % job.jobid())
-        delta = self._job_set_fields(job,system)
+        delta = self._job_set_fields(job,system,append_to_jobid=append_to_jobid)
         if ( delta is not None ):
             sql = "INSERT INTO %s SET %s" % (self.getJobsTable(),delta)
             if ( noop ):
@@ -908,32 +930,38 @@ class pbsacctDB:
             else:
                 self.cursor().execute(sql)
 
-    def update_job(self,job,system=None,check_existance=True,noop=False):
+    def update_job(self,job,system=None,check_existance=True,noop=False,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
             raise TypeError("\"job\" object is of wrong type:  %s" % str(job))
-        if ( check_existance and not self.job_exists(job.jobid()) ):
+        if ( check_existance and not self.job_exists(job.jobid(),append_to_jobid=append_to_jobid) ):
             raise RuntimeError("Job %s does not exist in database, cannot update" % job.jobid())
-        oldjob = self.get_job(job.jobid())
+        myjobid = job.jobid()
+        if ( append_to_jobid is not None ):
+            myjobid = job.jobid()+append_to_jobid
+        oldjob = self.get_job(job.jobid(),append_to_jobid=append_to_jobid)
         if ( job!=oldjob ):
-            delta = self._job_set_fields(job,system,oldjob)
+            delta = self._job_set_fields(job,system,oldjob,append_to_jobid=append_to_jobid)
             if ( delta is not None ):
-                sql = "UPDATE %s SET %s WHERE jobid='%s'" % (self.getJobsTable(),delta,job.jobid())
+                sql = "UPDATE %s SET %s WHERE jobid='%s'" % (self.getJobsTable(),delta,myjobid)
                 if ( noop ):
                     sys.stderr.write("%s\n" % sql)
                 else:
                     self.cursor().execute(sql)
 
-    def insert_or_update_job(self,job,system=None,noop=False):
+    def insert_or_update_job(self,job,system=None,noop=False,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
             raise TypeError("\"job\" object is of wrong type:  %s" % str(job))
-        if ( self.job_exists(job.jobid()) ):
-            self.update_job(job,system,check_existance=False,noop=noop)
+        if ( self.job_exists(job.jobid(),append_to_jobid=append_to_jobid) ):
+            self.update_job(job,system,check_existance=False,noop=noop,append_to_jobid=append_to_jobid)
         else:
-            self.insert_job(job,system,check_existance=False,noop=noop)
+            self.insert_job(job,system,check_existance=False,noop=noop,append_to_jobid=append_to_jobid)
 
-    def get_job(self,jobid,noop=False):
-        if ( self.job_exists(jobid) ):
-            sql = "SELECT * FROM %s WHERE jobid='%s'" % (self.getJobsTable(),jobid)
+    def get_job(self,jobid,noop=False,append_to_jobid=None):
+        myjobid = jobid
+        if ( append_to_jobid is not None ):
+            myjobid = jobid+append_to_jobid
+        if ( self.job_exists(myjobid) ):
+            sql = "SELECT * FROM %s WHERE jobid='%s'" % (self.getJobsTable(),myjobid)
             if ( noop ):
                 sys.stderr.write("%s\n" % sql)
                 return None
@@ -947,6 +975,7 @@ class pbsacctDB:
                     for desc in self.cursor().description:
                         columns.append(desc[0])
                     resources = {}
+                    ngpus = 0
                     result = list(results[0])
                     for i in range(len(result)):
                         if ( columns[i] in ["account","jobname","queue","system"] and
@@ -1090,6 +1119,8 @@ class pbsacctDB:
                                 resources["resources_used.walltime"] = sec_to_time(result[i])
                         elif ( columns[i]=="nproc" ):
                             resources["total_execution_slots"] = str(result[i])
+                        elif ( columns[i]=="ngpus" ):
+                            resources["ngpus"] = int(result[i])
                         elif ( columns[i]=="script" and result[i] is not None ):
                             resources["script"] = str(result[i])
                     if ( resources.has_key("ctime") ):
@@ -1105,7 +1136,10 @@ class pbsacctDB:
                         if ( int(resources["end"])>updatetime ):
                             updatetime = int(resources["end"])
                         state = "E"
-                    return jobinfo(jobid,datetime.datetime.fromtimestamp(float(updatetime)).strftime("%m/%d/%Y %H:%M:%S"),state,resources)
+                    job = jobinfo(myjobid,datetime.datetime.fromtimestamp(float(updatetime)).strftime("%m/%d/%Y %H:%M:%S"),state,resources)
+                    if ( resources["ngpus"]>0 ):
+                        job._ngpus = resources["ngpus"]
+                    return job
                 else:
                     raise RuntimeError("More than one result for jobid %s (should not be possible)" % jobid)        
 
