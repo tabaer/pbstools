@@ -8,6 +8,7 @@
 #
 # License:  GNU GPL v2, see ../COPYING for details.
 
+import copy
 import datetime
 import gzip
 import os
@@ -492,81 +493,81 @@ class jobinfoTestCase(unittest.TestCase):
                                 'exec_host': 'node01/1+node02/2',
                                 'exit_status': '0'})
     def test_numeric_jobid(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.numeric_jobid(),123456)
     def test_user(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.user(),"foo")
     def test_group(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.group(),"bar")
     def test_account(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.account(),None)
-        j2 = self.testjob
+        j2 = copy.copy(self.testjob)
         j2.set_resource("account","fnord")
         self.assertEqual(j1.account(),"fnord")
     def test_submithost(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.submithost(),"login1.fakehost.lan")
     def test_queue(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.queue(),"batch")
     def test_nodes_used(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.nodes_used(),['node01','node02'])
     def test_num_nodes(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.num_nodes(),2)
     def test_num_processors(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.num_processors(),8)
-        j2 = self.testjob
+        j2 = copy.copy(self.testjob)
         j2.set_resource('Resource_List.nodes','2:ppn=4+4:ppn=1')
         self.assertEqual(j2.num_processors(),12)
     def test_num_gpus(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.num_gpus(),0)
-        j2 = self.testjob
+        j2 = copy.copy(self.testjob)
         j2.set_resource('Resource_List.nodes','2:ppn=4:gpus=2')
         self.assertEqual(j2.num_gpus(),4)
-        j3 = self.testjob
+        j3 = copy.copy(self.testjob)
         j3.set_resource('Resource_List.nodes','2:ppn=4:gpus=2+4:ppn=1:gpus=1')
         self.assertEqual(j3.num_gpus(),8)
     def test_mem_limit_kb(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.mem_limit_kb(),1024*1024)        
     def test_mem_used_kb(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.mem_used_kb(),1024)        
     def test_vmem_limit_kb(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.vmem_limit_kb(),1024*1024)        
     def test_vmem_used_kb(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.vmem_used_kb(),2048)
     def test_cput_limit_sec(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.cput_limit_sec(),7200)
     def test_cput_used_sec(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.cput_used_sec(),2)
     def test_walltime_limit_sec(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.walltime_limit_sec(),3600)
     def test_walltime_limit_sec(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.walltime_used_sec(),1)
     def test_software(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.software(),None)
-        j2 = self.testjob
+        j2 = copy.copy(self.testjob)
         j2.set_resource('Resource_List.software','abaqus+2')
         self.assertEqual(j2.software(),"abaqus+2")
     def test_system(self):
-        j1 = self.testjob
+        j1 = copy.copy(self.testjob)
         self.assertEqual(j1.system(),None)
-        j2 = self.testjob
+        j2 = copy.copy(self.testjob)
         j2.set_resource('system','fakehost')
         self.assertEqual(j2.system(),"fakehost")
 
