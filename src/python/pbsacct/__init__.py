@@ -557,6 +557,12 @@ class jobinfoTestCase(unittest.TestCase):
         j2 = self.testjob
         j2.set_resource('Resource_List.software','abaqus+2')
         self.assertEqual(j2.software(),"abaqus+2")
+    def test_system(self):
+        j1 = self.testjob
+        self.assertEqual(j1.system(),None)
+        j2 = self.testjob
+        j2.set_resource('system','fakehost')
+        self.assertEqual(j2.system(),"fakehost")
 
 
 def raw_data_from_file(filename):
