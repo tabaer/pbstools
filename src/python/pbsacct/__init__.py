@@ -472,12 +472,14 @@ class jobinfoTestCase(unittest.TestCase):
                      'E',
                      {'user': 'foo',
                       'group': 'bar',
+                      'owner':  'foo@login1.fakehost.lan',
                       'jobname': 'job',
                       'ctime': '1234567890',
                       'qtime': '1234567890',
                       'etime': '1234567890',
                       'start': '1234567890',
                       'end': '1234567890',
+                      'queue': 'batch',
                       'Resource_List.nodes': '2:ppn=4',
                       'Resource_List.cput': '2:00:00',
                       'Resource_List.walltime': '1:00:00',
@@ -492,6 +494,24 @@ class jobinfoTestCase(unittest.TestCase):
     def test_numeric_jobid(self):
         j1 = self.j1
         self.assertEqual(j1.numeric_jobid(),123456)
+    def test_user(self):
+        j1 = self.j1
+        self.assertEqual(j1.user(),"foo")
+    def test_group(self):
+        j1 = self.j1
+        self.assertEqual(j1.group(),"bar")
+    def test_account(self):
+        j1 = self.j1
+        self.assertEqual(j1.account(),None)
+        j2 = j1
+        j2.set_resource("account","fnord")
+        self.assertEqual(j1.account(),"fnord")
+    def test_submithost(self):
+        j1 = self.j1
+        self.assertEqual(j1.submithost(),"login1.fakehost.lan")
+    def test_queue(self):
+        j1 = self.j1
+        self.assertEqual(j1.queue(),"batch")
     def test_nodes_used(self):
         j1 = self.j1
         self.assertEqual(j1.nodes_used(),['node01','node02'])
@@ -531,6 +551,12 @@ class jobinfoTestCase(unittest.TestCase):
     def test_walltime_limit_sec(self):
         j1 = self.j1
         self.assertEqual(j1.walltime_used_sec(),1)
+    def test_software(self):
+        j1 = self.j1
+        self.assertEqual(j1.software(),None)
+        j2 = j1
+        j2.set_resource('Resource_List.software','abaqus+2')
+        self.assertEqual(j2.software(),"abaqus+2")
 
 
 def raw_data_from_file(filename):
