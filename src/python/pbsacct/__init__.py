@@ -712,7 +712,10 @@ def mem_to_kb(memstr):
 
 class pbsacctTestCase(unittest.TestCase):
     # def test_raw_data_from_file(self):
+    # def test_raw_data_from_files(self):
+    # def test_records_to_jobs
     # def test_jobs_from_file(self):
+    # def test_jobs_from_files(self):
     def test_mem_to_kb(self):
         self.assertEqual(mem_to_kb('1000kb'),1000)
         self.assertEqual(mem_to_kb('1000mb'),1000*1024)
