@@ -784,7 +784,7 @@ class pbsacctDB:
     def __init__(self, host=None, dbtype="mysql",
                  db="pbsacct", dbuser=None, dbpasswd=None,
                  jobs_table="Jobs", config_table="Config",
-                 sw_table="Software",system=None):
+                 sw_table="Software",system=None,sqlitefile=None):
         self.setServerName(host)
         self.setType(dbtype)
         self.setName(db)
@@ -794,6 +794,7 @@ class pbsacctDB:
         self.setConfigTable(config_table)
         self.setSoftwareTable(sw_table)
         self.setSystem(system)
+        self._sqlitefile = sqlitefile
         self._dbhandle = None
         self._cursor = None
 
@@ -804,7 +805,7 @@ class pbsacctDB:
         return self._dbhost
 
     def setType(self, dbtype):
-        supported_dbs = ["mysql","pgsql"]
+        supported_dbs = ["mysql","pgsql","sqlite"]
         if ( dbtype in supported_dbs ):
             self._dbtype = dbtype
         else:
@@ -851,6 +852,12 @@ class pbsacctDB:
 
     def getSystem(self):
         return self._system
+
+    def setSQLiteFile(self,filename):
+        self._sqlitefile = filename
+
+    def getSQLiteFile(self):
+        return self._sqlitefile
         
     def readConfigFile(self, cfgfilename):
         if ( not os.path.exists(cfgfilename) ):
@@ -874,6 +881,8 @@ class pbsacctDB:
                         self.setJobsTable(value)
                     elif ( keyword=="configtable" ):
                         self.setConfigTable(value)
+                    elif ( keyword=="sqlitefile" ):
+                        self.setSQLiteFile(value)
                     elif ( keyword=="softwaretable" ):
                         self.setSoftwareTable(value)
                     elif ( keyword=="system" ):
@@ -901,6 +910,11 @@ class pbsacctDB:
                                               user=self._dbuser,
                                               passwd=self._dbpasswd)
             return self._dbhandle
+        elif ( self.getType()=="sqlite" ):
+            import sqlite3
+            if ( self.getSQLiteFile() is None ):
+                raise RuntimeException("No SQLite database file specified")
+            self._dbhandle = sqlite3.connect(self.getSQLiteFile())
         else:
             raise RuntimeError("Unimplemented database type \"%s\"" % self.getType())
 
