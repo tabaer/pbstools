@@ -13,6 +13,7 @@ import gzip
 import os
 import re
 import sys
+import unittest
 
 class jobinfo:
     def __init__(self,jobid,update_time,state,resources,system=None):
@@ -462,6 +463,76 @@ class jobinfo:
             return None
 
 
+class jobinfoTestCase(unittest.TestCase):
+    def __init__(self,methodName='runTest'):
+        super(jobinfoTestCase,self).__init__(methodName)
+        # don't replicate our fake test job in every test method
+        self.j1 = jobinfo('123456.fakehost.lan',
+                     '02/13/2009 18:31:30',
+                     'E',
+                     {'user': 'foo',
+                      'group': 'bar',
+                      'jobname': 'job',
+                      'ctime': '1234567890',
+                      'qtime': '1234567890',
+                      'etime': '1234567890',
+                      'start': '1234567890',
+                      'end': '1234567890',
+                      'Resource_List.nodes': '2:ppn=4',
+                      'Resource_List.cput': '2:00:00',
+                      'Resource_List.walltime': '1:00:00',
+                      'Resource_List.mem': '1GB',
+                      'Resource_List.vmem': '1GB',
+                      'resources_used.cput': '00:00:02',
+                      'resources_used.walltime': '00:00:01',
+                      'resources_used.mem':  '1024kb',
+                      'resources_used.vmem':  '2048kb',
+                      'exec_host': 'node01/1+node02/2',
+                      'exit_status': '0'})
+    def test_numeric_jobid(self):
+        j1 = self.j1
+        self.assertEqual(j1.numeric_jobid(),123456)
+    def test_nodes_used(self):
+        j1 = self.j1
+        self.assertEqual(j1.nodes_used(),['node01','node02'])
+    def test_num_nodes(self):
+        j1 = self.j1
+        self.assertEqual(j1.num_nodes(),2)
+    def test_num_processors(self):
+        j1 = self.j1
+        self.assertEqual(j1.num_processors(),8)
+    def test_num_gpus(self):
+        j1 = self.j1
+        self.assertEqual(j1.num_gpus(),0)
+        j2 = j1
+        j2.set_resource('Resource_List.nodes','2:ppn=1:gpus=2')
+        self.assertEqual(j2.num_gpus(),4)
+    def test_mem_limit_kb(self):
+        j1 = self.j1
+        self.assertEqual(j1.mem_limit_kb(),1024*1024)        
+    def test_mem_used_kb(self):
+        j1 = self.j1
+        self.assertEqual(j1.mem_used_kb(),1024)        
+    def test_vmem_limit_kb(self):
+        j1 = self.j1
+        self.assertEqual(j1.vmem_limit_kb(),1024*1024)        
+    def test_vmem_used_kb(self):
+        j1 = self.j1
+        self.assertEqual(j1.vmem_used_kb(),2048)
+    def test_cput_limit_sec(self):
+        j1 = self.j1
+        self.assertEqual(j1.cput_limit_sec(),7200)
+    def test_cput_used_sec(self):
+        j1 = self.j1
+        self.assertEqual(j1.cput_used_sec(),2)
+    def test_walltime_limit_sec(self):
+        j1 = self.j1
+        self.assertEqual(j1.walltime_limit_sec(),3600)
+    def test_walltime_limit_sec(self):
+        j1 = self.j1
+        self.assertEqual(j1.walltime_used_sec(),1)
+
+
 def raw_data_from_file(filename):
     """
     Parses a file containing multiple PBS accounting log entries. Returns a list
@@ -637,6 +708,34 @@ def mem_to_kb(memstr):
         return number*numbytes/1024
     else:
         raise ValueError("Invalid memory expression \""+memstr+"\"")
+
+
+class pbsacctTestCase(unittest.TestCase):
+    # def test_raw_data_from_file(self):
+    # def test_jobs_from_file(self):
+    def test_mem_to_kb(self):
+        self.assertEqual(mem_to_kb('1000kb'),1000)
+        self.assertEqual(mem_to_kb('1000mb'),1000*1024)
+        self.assertEqual(mem_to_kb('1000gb'),1000*1024*1024)
+        self.assertEqual(mem_to_kb('1000kw'),8*1000)
+        self.assertEqual(mem_to_kb('1000mw'),8*1000*1024)
+        self.assertEqual(mem_to_kb('1000gw'),8*1000*1024*1024)
+    def test_sec_to_time(self):
+        self.assertEqual(sec_to_time(1),'00:00:01')
+        self.assertEqual(sec_to_time(60),'00:01:00')
+        self.assertEqual(sec_to_time(3600),'01:00:00')
+        self.assertEqual(sec_to_time(2*3600),'02:00:00')
+        self.assertEqual(sec_to_time(10*3600),'10:00:00')
+        self.assertEqual(sec_to_time(24*3600),'24:00:00')
+        self.assertEqual(sec_to_time(7*24*3600),'168:00:00')
+    def test_time_to_sec(self):
+        self.assertEqual(1,time_to_sec('00:00:01'))
+        self.assertEqual(60,time_to_sec('00:01:00'))
+        self.assertEqual(3600,time_to_sec('01:00:00'))
+        self.assertEqual(2*3600,time_to_sec('02:00:00'))
+        self.assertEqual(10*3600,time_to_sec('10:00:00'))
+        self.assertEqual(1*24*3600,time_to_sec('1:00:00:00'))
+        self.assertEqual(7*24*3600,time_to_sec('7:00:00:00'))
 
 
 class pbsacctDB:
@@ -1144,6 +1243,14 @@ class pbsacctDB:
                     raise RuntimeError("More than one result for jobid %s (should not be possible)" % jobid)        
 
 
+# class pbsacctDBTestCase(unittest.TestCase):
+#     def test_readConfigFile(self):
+#     def test_job_exists(self):
+#     def test_insert_or_update_job(self):
+#     def test_get_job(self):
+
+
 if __name__ == "__main__":
-    import glob
-    print str(jobs_from_files(glob.glob("/users/sysp/amaharry/acct-data/201603*")))
+    unittest.main()
+    #import glob
+    #print str(jobs_from_files(glob.glob("/users/sysp/amaharry/acct-data/201603*")))
