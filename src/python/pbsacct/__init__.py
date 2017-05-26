@@ -353,7 +353,7 @@ class jobinfo:
             for nodelist in self.nodes().split("+"):
                 nodes_and_props = nodelist.split(":")
                 try:
-                    nodes = int(nodes_and_ppn[0])
+                    nodes = int(nodes_and_props[0])
                 except:
                     # Handles malformed log values
                     nodes = 1
@@ -364,7 +364,7 @@ class jobinfo:
                             gpn = int(re.search("^gpus=(\d+)$", nodeprop).group(1))
                 nodes = max(1,nodes)
                 gpn = max(0,gpn)
-                ngpus = ngpus + nodes*gpn 
+                ngpus = ngpus + nodes*gpn
         elif ( self.gres() is not None and "gpus:" in self.gres() ):
             ngpus = int(re.search("gpus:(\d+)",self.gres()).group(1))
         self._ngpus = ngpus
