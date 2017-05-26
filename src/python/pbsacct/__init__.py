@@ -521,12 +521,18 @@ class jobinfoTestCase(unittest.TestCase):
     def test_num_processors(self):
         j1 = self.testjob
         self.assertEqual(j1.num_processors(),8)
+        j2 = self.testjob
+        j2.set_resource('Resource_List.nodes','2:ppn=4+4:ppn=1')
+        self.assertEqual(j2.num_processors(),12)
     def test_num_gpus(self):
         j1 = self.testjob
         self.assertEqual(j1.num_gpus(),0)
         j2 = self.testjob
         j2.set_resource('Resource_List.nodes','2:ppn=4:gpus=2')
         self.assertEqual(j2.num_gpus(),4)
+        j3 = self.testjob
+        j3.set_resource('Resource_List.nodes','2:ppn=4:gpus=2+4:ppn=1:gpus=1')
+        self.assertEqual(j3.num_gpus(),8)
     def test_mem_limit_kb(self):
         j1 = self.testjob
         self.assertEqual(j1.mem_limit_kb(),1024*1024)        
