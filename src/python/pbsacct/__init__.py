@@ -467,94 +467,94 @@ class jobinfoTestCase(unittest.TestCase):
     def __init__(self,methodName='runTest'):
         super(jobinfoTestCase,self).__init__(methodName)
         # don't replicate our fake test job in every test method
-        self.j1 = jobinfo('123456.fakehost.lan',
-                     '02/13/2009 18:31:30',
-                     'E',
-                     {'user': 'foo',
-                      'group': 'bar',
-                      'owner':  'foo@login1.fakehost.lan',
-                      'jobname': 'job',
-                      'ctime': '1234567890',
-                      'qtime': '1234567890',
-                      'etime': '1234567890',
-                      'start': '1234567890',
-                      'end': '1234567890',
-                      'queue': 'batch',
-                      'Resource_List.nodes': '2:ppn=4',
-                      'Resource_List.cput': '2:00:00',
-                      'Resource_List.walltime': '1:00:00',
-                      'Resource_List.mem': '1GB',
-                      'Resource_List.vmem': '1GB',
-                      'resources_used.cput': '00:00:02',
-                      'resources_used.walltime': '00:00:01',
-                      'resources_used.mem':  '1024kb',
-                      'resources_used.vmem':  '2048kb',
-                      'exec_host': 'node01/1+node02/2',
-                      'exit_status': '0'})
+        self.testjob = jobinfo('123456.fakehost.lan',
+                               '02/13/2009 18:31:30',
+                               'E',
+                               {'user': 'foo',
+                                'group': 'bar',
+                                'owner':  'foo@login1.fakehost.lan',
+                                'jobname': 'job',
+                                'ctime': '1234567890',
+                                'qtime': '1234567890',
+                                'etime': '1234567890',
+                                'start': '1234567890',
+                                'end': '1234567890',
+                                'queue': 'batch',
+                                'Resource_List.nodes': '2:ppn=4',
+                                'Resource_List.cput': '2:00:00',
+                                'Resource_List.walltime': '1:00:00',
+                                'Resource_List.mem': '1GB',
+                                'Resource_List.vmem': '1GB',
+                                'resources_used.cput': '00:00:02',
+                                'resources_used.walltime': '00:00:01',
+                                'resources_used.mem':  '1024kb',
+                                'resources_used.vmem':  '2048kb',
+                                'exec_host': 'node01/1+node02/2',
+                                'exit_status': '0'})
     def test_numeric_jobid(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.numeric_jobid(),123456)
     def test_user(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.user(),"foo")
     def test_group(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.group(),"bar")
     def test_account(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.account(),None)
-        j2 = j1
+        j2 = self.testjob
         j2.set_resource("account","fnord")
         self.assertEqual(j1.account(),"fnord")
     def test_submithost(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.submithost(),"login1.fakehost.lan")
     def test_queue(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.queue(),"batch")
     def test_nodes_used(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.nodes_used(),['node01','node02'])
     def test_num_nodes(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.num_nodes(),2)
     def test_num_processors(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.num_processors(),8)
     def test_num_gpus(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.num_gpus(),0)
-        j2 = j1
-        j2.set_resource('Resource_List.nodes','2:ppn=1:gpus=2')
+        j2 = self.testjob
+        j2.set_resource('Resource_List.nodes','2:ppn=4:gpus=2')
         self.assertEqual(j2.num_gpus(),4)
     def test_mem_limit_kb(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.mem_limit_kb(),1024*1024)        
     def test_mem_used_kb(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.mem_used_kb(),1024)        
     def test_vmem_limit_kb(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.vmem_limit_kb(),1024*1024)        
     def test_vmem_used_kb(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.vmem_used_kb(),2048)
     def test_cput_limit_sec(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.cput_limit_sec(),7200)
     def test_cput_used_sec(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.cput_used_sec(),2)
     def test_walltime_limit_sec(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.walltime_limit_sec(),3600)
     def test_walltime_limit_sec(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.walltime_used_sec(),1)
     def test_software(self):
-        j1 = self.j1
+        j1 = self.testjob
         self.assertEqual(j1.software(),None)
-        j2 = j1
+        j2 = self.testjob
         j2.set_resource('Resource_List.software','abaqus+2')
         self.assertEqual(j2.software(),"abaqus+2")
 
