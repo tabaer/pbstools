@@ -920,13 +920,13 @@ class pbsacctDB:
         elif ( self.getType()=="sqlite2" ):
             import pysqlite2.dbapi2 as sqlite
             if ( self.getSQLiteFile() is None ):
-                raise RuntimeException("No SQLite database file specified")
+                raise RuntimeError("No SQLite database file specified")
             self._dbhandle = sqlite.connect(self.getSQLiteFile())
             return self._dbhandle
         elif ( self.getType()=="sqlite3" ):
             import sqlite3 as sqlite
             if ( self.getSQLiteFile() is None ):
-                raise RuntimeException("No SQLite database file specified")
+                raise RuntimeError("No SQLite database file specified")
             self._dbhandle = sqlite.connect(self.getSQLiteFile())
             return self._dbhandle
         else:
@@ -967,10 +967,10 @@ class pbsacctDB:
             return "DATE(FROM_UNIXTIME('%d'))" % ts
         elif ( self.getType() in ["pgsql"] ):
             return "DATE(TIMESTAMP 'epoch' + %d * INTERVAL '1 second')" % ts
-        elif ( self.getType in ["sqlite2","sqlite3"] ):
+        elif ( self.getType() in ["sqlite2","sqlite3"] ):
             return "DATE('%d','UNIXEPOCH')" % ts
         else:
-            raise RuntimeException("Unable to determine ts->date conversion for database type \"%s\"" % self.getType())
+            raise RuntimeError("Unable to determine ts->date conversion for database type \"%s\"" % self.getType())
 
     def _job_set_fields(self,job,system=None,oldjob=None,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
@@ -1112,6 +1112,7 @@ class pbsacctDB:
                 sys.stderr.write("%s\n" % sql)
             else:
                 self.cursor().execute(sql)
+                self.commit()
 
     def update_job(self,job,system=None,check_existance=True,noop=False,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
@@ -1127,12 +1128,13 @@ class pbsacctDB:
             if ( delta is not None ):
                 deltalist = []
                 for key in sorted(delta.keys()):
-                    deltalist.append("%s=%s",key,delta[key])
+                    deltalist.append("%s=%s" % (key,delta[key]))
                 sql = "UPDATE %s SET %s WHERE jobid='%s'" % (self.getJobsTable(),", ".join(deltalist),myjobid)
                 if ( noop ):
                     sys.stderr.write("%s\n" % sql)
                 else:
                     self.cursor().execute(sql)
+                    self.commit()
 
     def insert_or_update_job(self,job,system=None,noop=False,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
@@ -1307,6 +1309,8 @@ class pbsacctDB:
                             resources["total_execution_slots"] = str(result[i])
                         elif ( columns[i]=="ngpus" ):
                             resources["ngpus"] = int(result[i])
+                        elif ( columns[i]=="software" and result[i] is not None ):
+                            resources["Resource_List.software"] = str(result[i])
                         elif ( columns[i]=="script" and result[i] is not None ):
                             resources["script"] = str(result[i])
                     if ( resources.has_key("ctime") ):
