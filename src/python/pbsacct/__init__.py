@@ -46,7 +46,7 @@ class jobinfo:
                         "system",
                         "total_execution_slots",
                         "unique_node_count"]
-        for key in list(set(self.resource_keys()) | set(other.resource_keys())):
+        for key in list(set(self.get_resource_keys()) | set(other.get_resource_keys())):
             if ( key not in ignore_rsrcs ):
                 if ( not self.has_resource(key) or 
                      not other.has_resource(key) ):
@@ -492,82 +492,89 @@ class jobinfoTestCase(unittest.TestCase):
                                 'resources_used.vmem':  '2048kb',
                                 'exec_host': 'node01/1+node02/2',
                                 'exit_status': '0'})
+    def test_eq(self):
+        j1 = copy.deepcopy(self.testjob)
+        j2 = copy.deepcopy(self.testjob)
+        self.assertEqual(j1==j2,True)
+        j3 = copy.deepcopy(j1)
+        j3.set_resource("exit_status","-1")
+        self.assertEqual(j1==j3,False)
     def test_numeric_jobid(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.numeric_jobid(),123456)
     def test_user(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.user(),"foo")
     def test_group(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.group(),"bar")
     def test_account(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.account(),None)
-        j2 = copy.copy(self.testjob)
+        j2 = copy.deepcopy(self.testjob)
         j2.set_resource("account","fnord")
-        self.assertEqual(j1.account(),"fnord")
+        self.assertEqual(j2.account(),"fnord")
     def test_submithost(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.submithost(),"login1.fakehost.lan")
     def test_queue(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.queue(),"batch")
     def test_nodes_used(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.nodes_used(),['node01','node02'])
     def test_num_nodes(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.num_nodes(),2)
     def test_num_processors(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.num_processors(),8)
-        j2 = copy.copy(self.testjob)
+        j2 = copy.deepcopy(self.testjob)
         j2.set_resource('Resource_List.nodes','2:ppn=4+4:ppn=1')
         self.assertEqual(j2.num_processors(),12)
     def test_num_gpus(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.num_gpus(),0)
-        j2 = copy.copy(self.testjob)
+        j2 = copy.deepcopy(self.testjob)
         j2.set_resource('Resource_List.nodes','2:ppn=4:gpus=2')
         self.assertEqual(j2.num_gpus(),4)
-        j3 = copy.copy(self.testjob)
+        j3 = copy.deepcopy(self.testjob)
         j3.set_resource('Resource_List.nodes','2:ppn=4:gpus=2+4:ppn=1:gpus=1')
         self.assertEqual(j3.num_gpus(),8)
     def test_mem_limit_kb(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.mem_limit_kb(),1024*1024)        
     def test_mem_used_kb(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.mem_used_kb(),1024)        
     def test_vmem_limit_kb(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.vmem_limit_kb(),1024*1024)        
     def test_vmem_used_kb(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.vmem_used_kb(),2048)
     def test_cput_limit_sec(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.cput_limit_sec(),7200)
     def test_cput_used_sec(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.cput_used_sec(),2)
     def test_walltime_limit_sec(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.walltime_limit_sec(),3600)
     def test_walltime_limit_sec(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.walltime_used_sec(),1)
     def test_software(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.software(),None)
-        j2 = copy.copy(self.testjob)
+        j2 = copy.deepcopy(self.testjob)
         j2.set_resource('Resource_List.software','abaqus+2')
         self.assertEqual(j2.software(),"abaqus+2")
     def test_system(self):
-        j1 = copy.copy(self.testjob)
+        j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.system(),None)
-        j2 = copy.copy(self.testjob)
+        j2 = copy.deepcopy(self.testjob)
         j2.set_resource('system','fakehost')
         self.assertEqual(j2.system(),"fakehost")
 
@@ -805,7 +812,7 @@ class pbsacctDB:
         return self._dbhost
 
     def setType(self, dbtype):
-        supported_dbs = ["mysql","pgsql","sqlite"]
+        supported_dbs = ["mysql","pgsql","sqlite2","sqlite3"]
         if ( dbtype in supported_dbs ):
             self._dbtype = dbtype
         else:
@@ -910,11 +917,18 @@ class pbsacctDB:
                                               user=self._dbuser,
                                               passwd=self._dbpasswd)
             return self._dbhandle
-        elif ( self.getType()=="sqlite" ):
-            import sqlite3
+        elif ( self.getType()=="sqlite2" ):
+            import pysqlite2.dbapi2 as sqlite
             if ( self.getSQLiteFile() is None ):
                 raise RuntimeException("No SQLite database file specified")
-            self._dbhandle = sqlite3.connect(self.getSQLiteFile())
+            self._dbhandle = sqlite.connect(self.getSQLiteFile())
+            return self._dbhandle
+        elif ( self.getType()=="sqlite3" ):
+            import sqlite3 as sqlite
+            if ( self.getSQLiteFile() is None ):
+                raise RuntimeException("No SQLite database file specified")
+            self._dbhandle = sqlite.connect(self.getSQLiteFile())
+            return self._dbhandle
         else:
             raise RuntimeError("Unimplemented database type \"%s\"" % self.getType())
 
@@ -948,6 +962,16 @@ class pbsacctDB:
         else:
             raise RuntimeError("More than one result for jobid %s (should not be possible)" % jobid)
 
+    def _timestamp_to_date(self,ts):
+        if ( self.getType() in ["mysql"] ):
+            return "DATE(FROM_UNIXTIME('%d'))" % ts
+        elif ( self.getType() in ["pgsql"] ):
+            return "DATE(TIMESTAMP 'epoch' + %d * INTERVAL '1 second')" % ts
+        elif ( self.getType in ["sqlite2","sqlite3"] ):
+            return "DATE('%d','UNIXEPOCH')" % ts
+        else:
+            raise RuntimeException("Unable to determine ts->date conversion for database type \"%s\"" % self.getType())
+
     def _job_set_fields(self,job,system=None,oldjob=None,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
             raise TypeError("\"job\" object is of wrong type:  %s" % str(job))            
@@ -956,119 +980,119 @@ class pbsacctDB:
         myjobid = job.jobid()
         if ( append_to_jobid is not None ):
             myjobid = job.jobid()+append_to_jobid
-        fields_to_set = []
+        fields_to_set = {}
         if ( oldjob is None ):
-             fields_to_set.append("jobid='%s'" % myjobid)
+             fields_to_set["jobid"] = "'%s'" % myjobid
         if ( system is not None and 
              ( oldjob is None or job.system()!=oldjob.system() ) ):
-             fields_to_set.append("system='%s'" % system)
+             fields_to_set["system"] = "'%s'" % system
         if ( job.user() is not None and
              ( oldjob is None or job.user()!=oldjob.user() ) ):
-             fields_to_set.append("username='%s'" % job.user())
+             fields_to_set["username"] = "'%s'" % job.user()
         if ( job.group() is not None and
              ( oldjob is None or job.group()!=oldjob.group() ) ):
-             fields_to_set.append("groupname='%s'" % job.group())
+             fields_to_set["groupname"] = "'%s'" % job.group()
         if ( job.submithost() is not None and
              ( oldjob is None or job.submithost()!=oldjob.submithost() ) ):
-             fields_to_set.append("submithost='%s'" % job.submithost())
+             fields_to_set["submithost"] = "'%s'" % job.submithost()
         if ( job.name() is not None and
              ( oldjob is None or job.name()!=oldjob.name() ) ):
-             fields_to_set.append("name='%s'" % job.name())
+             fields_to_set["jobname"] = "'%s'" % job.name()
         if ( job.num_processors()>0 and
              ( oldjob is None or job.num_processors()!=oldjob.num_processors()) ):
-             fields_to_set.append("nproc='%d'" % job.num_processors())
+             fields_to_set["nproc"] = "'%d'" % job.num_processors()
         if ( job.num_nodes()>0 and
              ( oldjob is None or job.num_nodes()!=oldjob.num_nodes()) ):
-             fields_to_set.append("nodect='%d'" % job.num_nodes())
+             fields_to_set["nodect"] = "'%d'" % job.num_nodes()
         if ( job.nodes() is not None and
              ( oldjob is None or job.nodes()!=oldjob.nodes() ) ):
-             fields_to_set.append("nodes='%s'" % job.nodes())
+             fields_to_set["nodes"] = "'%s'" % job.nodes()
         if ( job.num_gpus()>0 and
              ( oldjob is None or job.num_gpus()!=oldjob.num_gpus()) ):
-             fields_to_set.append("ngpus='%d'" % job.num_gpus())
+             fields_to_set["ngpus"] = "'%d'" % job.num_gpus()
         if ( job.feature() is not None and
              ( oldjob is None or job.feature()!=oldjob.feature() ) ):
-             fields_to_set.append("feature='%s'" % job.feature())
+             fields_to_set["feature"] = "'%s'" % job.feature()
         if ( job.gattr() is not None and
              ( oldjob is None or job.gattr()!=oldjob.gattr() ) ):
-             fields_to_set.append("gattr='%s'" % job.gattr())
+             fields_to_set["gattr"] = "'%s'" % job.gattr()
         if ( job.gres() is not None and
              ( oldjob is None or job.gres()!=oldjob.gres() ) ):
-             fields_to_set.append("gres='%s'" % job.gres())        
+             fields_to_set["gres"] = "'%s'" % job.gres()
         if ( job.queue() is not None  and
              ( oldjob is None or job.queue()!=oldjob.queue() ) ):
-             fields_to_set.append("queue='%s'" % job.queue())
+             fields_to_set["queue"] = "'%s'" % job.queue()
         if ( job.qos() is not None  and
              ( oldjob is None or job.qos()!=oldjob.qos() ) ):
-             fields_to_set.append("qos='%s'" % job.qos())
+             fields_to_set["qos"] = "'%s'" % job.qos()
         if ( job.qtime_ts()>0 and
               ( oldjob is None or job.qtime_ts()!=oldjob.qtime_ts() ) ):
-             fields_to_set.append("submit_ts='%d'" % job.qtime_ts())
-             fields_to_set.append("submit_date=DATE(FROM_UNIXTIME('%d'))" % job.qtime_ts())
+             fields_to_set["submit_ts"] = "'%d'" % job.qtime_ts()
+             fields_to_set["submit_date"] = self._timestamp_to_date(job.qtime_ts())
         if ( job.etime_ts()>0 and
               ( oldjob is None or job.etime_ts()!=oldjob.etime_ts() ) ):
-             fields_to_set.append("eligible_ts='%d'" % job.etime_ts())
-             fields_to_set.append("eligible_date=DATE(FROM_UNIXTIME('%d'))" % job.etime_ts())
+             fields_to_set["eligible_ts"] = "'%d'" % job.etime_ts()
+             fields_to_set["eligible_date"] = self._timestamp_to_date(job.etime_ts())
         if ( job.start_ts()>0 and
               ( oldjob is None or job.start_ts()!=oldjob.start_ts() ) ):
-             fields_to_set.append("start_ts='%d'" % job.start_ts())
-             fields_to_set.append("start_date=DATE(FROM_UNIXTIME('%d'))" % job.start_ts())
+             fields_to_set["start_ts"] = "'%d'" % job.start_ts()
+             fields_to_set["start_date"] = self._timestamp_to_date(job.start_ts())
         if ( job.end_ts()>0 and
               ( oldjob is None or job.end_ts()!=oldjob.end_ts() ) ):
-             fields_to_set.append("end_ts='%d'" % job.end_ts())
-             fields_to_set.append("end_date=DATE(FROM_UNIXTIME('%d'))" % job.end_ts())
+             fields_to_set["end_ts"] = "'%d'" % job.end_ts()
+             fields_to_set["end_date"] = self._timestamp_to_date(job.end_ts())
         if ( job.cput_limit_sec()>0 and
              ( oldjob is None or job.cput_limit_sec()!=oldjob.cput_limit_sec() ) ):
-             fields_to_set.append("cput_req='%s'" % sec_to_time(job.cput_limit_sec()))
-             fields_to_set.append("cput_req_sec='%d'" % job.cput_limit_sec())
+             fields_to_set["cput_req"] = "'%s'" % sec_to_time(job.cput_limit_sec())
+             fields_to_set["cput_req_sec"] = "'%d'" % job.cput_limit_sec()
         if ( job.cput_used_sec()>0 and
              ( oldjob is None or job.cput_used_sec()!=oldjob.cput_used_sec() ) ):
-             fields_to_set.append("cput='%s'" % sec_to_time(job.cput_used_sec()))
-             fields_to_set.append("cput_sec='%d'" % job.cput_used_sec())
+             fields_to_set["cput"] = "'%s'" % sec_to_time(job.cput_used_sec())
+             fields_to_set["cput_sec"] = "'%d'" % job.cput_used_sec()
         if ( job.walltime_limit_sec()>0 and
              ( oldjob is None or job.walltime_limit_sec()!=oldjob.walltime_limit_sec() ) ):
-             fields_to_set.append("walltime_req='%s'" % sec_to_time(job.walltime_limit_sec()))
-             fields_to_set.append("walltime_req_sec='%d'" % job.walltime_limit_sec())
+             fields_to_set["walltime_req"] = "'%s'" % sec_to_time(job.walltime_limit_sec())
+             fields_to_set["walltime_req_sec"] = "'%d'" % job.walltime_limit_sec()
         if ( job.walltime_used_sec()>0 and
              ( oldjob is None or job.walltime_used_sec()!=oldjob.walltime_used_sec() ) ):
-             fields_to_set.append("walltime='%s'" % sec_to_time(job.walltime_used_sec()))
-             fields_to_set.append("walltime_sec='%d'" % job.walltime_used_sec())
+             fields_to_set["walltime"] = "'%s'" % sec_to_time(job.walltime_used_sec())
+             fields_to_set["walltime_sec"] = "'%d'" % job.walltime_used_sec()
         if ( job.mem_limit() is not None and
              ( oldjob is None or job.mem_limit()!=oldjob.mem_limit()) ):
-             fields_to_set.append("mem_req='%s'" % job.mem_limit())
+             fields_to_set["mem_req"] = "'%s'" % job.mem_limit()
         if ( job.mem_used_kb()>0 and
              ( oldjob is None or job.mem_used_kb()!=oldjob.mem_used_kb()) ):
-             fields_to_set.append("mem_kb='%d'" % job.mem_used_kb())
+             fields_to_set["mem_kb"] = "'%d'" % job.mem_used_kb()
         if ( job.vmem_limit() is not None and
              ( oldjob is None or job.vmem_limit()!=oldjob.vmem_limit()) ):
-             fields_to_set.append("vmem_req='%s'" % job.vmem_limit())
+             fields_to_set["vmem_req"] = "'%s'" % job.vmem_limit()
         if ( job.vmem_used_kb()>0 and
              ( oldjob is None or job.vmem_used_kb()!=oldjob.vmem_used_kb()) ):
-             fields_to_set.append("vmem_kb='%d'" % job.vmem_used_kb())
+             fields_to_set["vmem_kb"] = "'%d'" % job.vmem_used_kb()
         if ( ( job.has_resource("Resource_List.mppe") or job.has_resource("resources_used.mppe") ) and
              ( oldjob is None or 
                ( job.get_resource("Resource_List.mppe")!=oldjob.get_resource("Resource_List.mppe") or
                  job.get_resource("resources_used.mppe")!=oldjob.get_resource("resources_used.mppe") ) ) ):
-             fields_to_set.append("mppe='%d'" % max(int(job.get_resource("Resource_List.mppe")),int(job.get_resource("resources_used.mppe"))))
+             fields_to_set["mppe"] = "'%d'" % max(int(job.get_resource("Resource_List.mppe")),int(job.get_resource("resources_used.mppe")))
         if ( ( job.has_resource("Resource_List.mppssp") or job.has_resource("resources_used.mppssp") ) and
              ( oldjob is None or 
                ( job.get_resource("Resource_List.mppssp")!=oldjob.get_resource("Resource_List.mppssp") or
                  job.get_resource("resources_used.mppssp")!=oldjob.get_resource("resources_used.mppssp") ) ) ):
-             fields_to_set.append("mppssp='%d'" % max(int(job.get_resource("Resource_List.mppssp")),int(job.get_resource("resources_used.mppssp"))))
+             fields_to_set["mppssp"] = "'%d'" % max(int(job.get_resource("Resource_List.mppssp")),int(job.get_resource("resources_used.mppssp")))
         if ( job.has_resource("exec_host") and
              ( oldjob is None or job.get_resource("exec_host")!=oldjob.get_resource("exec_host") ) ):
-             fields_to_set.append("hostlist='%s'" % job.get_resource("exec_host"))
+             fields_to_set["hostlist"] = "'%s'" % job.get_resource("exec_host")
         if ( job.exit_status() is not None and
              ( oldjob is None or job.get_resource("Exit_status")!=oldjob.get_resource("Exit_status") ) ):
-             fields_to_set.append("exit_status='%d'" % int(job.get_resource("Exit_status")))
+             fields_to_set["exit_status"] = "'%d'" % int(job.get_resource("Exit_status"))
         if ( job.software() is not None and
              ( oldjob is None or job.software()!=oldjob.software() ) ):
-             fields_to_set.append("software='%s'" % job.software())
+             fields_to_set["software"] = "'%s'" % job.software()
         if ( job.account() is not None and
              ( oldjob is None or job.account()!=oldjob.account() ) ):
-             fields_to_set.append("account='%s'" % job.account())
+             fields_to_set["account"] = "'%s'" % job.account()
         if ( len(fields_to_set)>0 ):
-            return ", ".join(fields_to_set)
+            return fields_to_set
         else:
             return None
 
@@ -1079,7 +1103,11 @@ class pbsacctDB:
             raise RuntimeError("Job %s already exists in database, cannot insert" % job.jobid())
         delta = self._job_set_fields(job,system,append_to_jobid=append_to_jobid)
         if ( delta is not None ):
-            sql = "INSERT INTO %s SET %s" % (self.getJobsTable(),delta)
+            deltakeys = sorted(delta.keys())
+            deltavalues = []
+            for key in deltakeys:
+                deltavalues.append(delta[key])
+            sql = "INSERT INTO %s ( %s ) VALUES ( %s )" % (self.getJobsTable(),",".join(deltakeys),",".join(deltavalues))
             if ( noop ):
                 sys.stderr.write("%s\n" % sql)
             else:
@@ -1097,7 +1125,10 @@ class pbsacctDB:
         if ( job!=oldjob ):
             delta = self._job_set_fields(job,system,oldjob,append_to_jobid=append_to_jobid)
             if ( delta is not None ):
-                sql = "UPDATE %s SET %s WHERE jobid='%s'" % (self.getJobsTable(),delta,myjobid)
+                deltalist = []
+                for key in sorted(delta.keys()):
+                    deltalist.append("%s=%s",key,delta[key])
+                sql = "UPDATE %s SET %s WHERE jobid='%s'" % (self.getJobsTable(),", ".join(deltalist),myjobid)
                 if ( noop ):
                     sys.stderr.write("%s\n" % sql)
                 else:
