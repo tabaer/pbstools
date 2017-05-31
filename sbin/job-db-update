@@ -131,11 +131,16 @@ if ( len(filelist)>0 ):
                             if ( str(dbvalue)!=str(logvalue) ):
                                 if ( column in ["ctime","etime","start","end"] and ( dbvalue is not None and dbvalue!=0 ) and ( logvalue is not None or logvalue!=0 ) ):
                                     sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s, difference=%d\n" % (jobid, column, str(dbvalue), str(logvalue), int(dbvalue)-int(logvalue)))
-                                # resources_used.cput is weird because sometimes it's reported in hh:mm:ss format and sometimes
-                                # it's just in seconds, depending on which version of TORQUE you're using.
+                                # resources_used.cput and resources_used.walltime are weird because sometimes
+                                # they're reported in hh:mm:ss format and sometimes they're just in seconds,
+                                # depending on which version of TORQUE you're using.
                                 elif ( column=="resources_used.cput" and dbvalue is not None and logvalue is not None and pbsacct.time_to_sec(dbvalue)==int(logvalue) ):
                                     next
                                 elif ( column=="resources_used.cput" and dbvalue is not None and logvalue is not None and pbsacct.time_to_sec(dbvalue)!=int(logvalue) ):
+                                    sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, column, str(dbvalue), pbsacct.sec_to_time(int(logvalue))))
+                                elif ( column=="resources_used.walltime" and dbvalue is not None and logvalue is not None and pbsacct.time_to_sec(dbvalue)==int(logvalue) ):
+                                    next
+                                elif ( column=="resources_used.walltime" and dbvalue is not None and logvalue is not None and pbsacct.time_to_sec(dbvalue)!=int(logvalue) ):
                                     sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, column, str(dbvalue), pbsacct.sec_to_time(int(logvalue))))
                                 elif ( ( dbvalue is not None and dbvalue!=0 ) and ( logvalue is not None and logvalue!=0 ) ):
                                     sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, column, str(dbvalue), str(logvalue)))
