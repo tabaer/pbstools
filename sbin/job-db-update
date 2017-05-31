@@ -100,7 +100,13 @@ if ( len(filelist)>0 ):
     jobs = pbsacct.jobs_from_files(filelist,system)
     
     for jobid in sorted(jobs,key=lambda jobid:jobs[jobid].end_ts):
-        if ( jobs[jobid].get_state()=="E" ):
+        # in some versions of TORQUE, jobs that are deleted before they start
+        # will be reported as in the E state with an end time (when it was
+        # qdel'ed) but no start time, so just checking for the E state is not
+        # enough to avoid false positives here
+        if ( jobs[jobid].get_state()=="E" and
+             jobs[jobid].start_ts()>0 and
+             jobs[jobid].end_ts()>=jobs[jobid].start_ts() ):
             if ( query ):
                 dbjob = None
                 if ( db.job_exists(jobid,append_to_jobid=append_to_jobid_in_db) ):
