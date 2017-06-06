@@ -23,6 +23,7 @@ use DBI;
 sub software_list()
 {
   my @list=(
+	    "3d_nurbs_nonlinear",
 	    "3dcavity",
 	    "3dh",
             "3n_bound",
@@ -35,6 +36,7 @@ sub software_list()
 	    "aces2",
 	    "aces3",
 	    "activeharmony",
+	    "adapterremoval",
 	    "adcprep",
 	    "adda",
 	    "adf",
@@ -61,6 +63,7 @@ sub software_list()
             "atat",
 	    "athena",
 	    "atmc",
+	    "augustus",
 	    "ausam",
 	    "autogrid4",
 	    "autodock",
@@ -73,6 +76,7 @@ sub software_list()
 	    "bgw",
 	    "bicg_solver",
 	    "bigdft",
+	    "bioperl",
 	    "bismark",
 	    "blat",
 	    "bolztran",
@@ -83,6 +87,7 @@ sub software_list()
 	    "bwa",
 	    "cactus",
             "cafemol",
+	    "caffe",
 	    "calc1",
 	    "calc_group_stats",
 	    "calyx",
@@ -96,6 +101,7 @@ sub software_list()
 	    "cdns",
 	    "cdo",
 	    "cdp",
+	    "centrifuge-1",
 	    "cfd++",
             "cfd_postprocess",
 	    "cfl3d",
@@ -136,6 +142,7 @@ sub software_list()
 	    "cvm",
 	    "da_update_bc",
 	    "dalexec",
+	    "dalton",
 	    "dam",
 	    "darshan",
 	    "dasquad",
@@ -145,6 +152,7 @@ sub software_list()
 	    "delta5d",
 	    "desmond",
 	    "dfdx",
+	    "dftd3",
 	    "dghbc",
             "dgtd",
 	    "dhybrid",
@@ -184,6 +192,7 @@ sub software_list()
 	    "falkon",
             "fastqc",
 	    "fastsimcoal",
+	    "fastx",
 	    "fd3d",
 	    "fdl3di",
 	    "FDTDxx",
@@ -220,6 +229,7 @@ sub software_list()
 	    "genlatmu",
 	    "geosgcm",
 	    "glast",
+	    "gnuplot",
             "gop2pc",
 	    "gpaw",
             "gphocs",
@@ -280,6 +290,7 @@ sub software_list()
 	    "jobgrd",
 	    "josephson",
 	    "jrmc",
+	    "kallisto",
 	    "k2r2",
 	    "ker_filter_par",
 	    "kmeans",
@@ -303,6 +314,7 @@ sub software_list()
 	    "m2md",
 	    "madness",
 	    "maestro",
+	    "magic_square",
             "makethemcross",
 	    "masa",
 	    "mathematica",
@@ -445,9 +457,11 @@ sub software_list()
 	    "qb",
 	    "qchem",
 	    "qmc",
+	    "quartet",
 	    "qrpacc",
 	    "qwalk",
 	    "R",
+	    "RR_xxM",
 	    "r_out",
 	    "radhyd",
 	    "raflesclean",
@@ -457,6 +471,7 @@ sub software_list()
             "real_exe",
 	    "reduce",
 	    "reflect",
+	    "RepeatMasker",
 	    "res",
 	    "rho_pion_corre",
 	    "root",
@@ -520,6 +535,7 @@ sub software_list()
 	    "sweqx",
 	    "swh1b",
 	    "swift",
+	    "THREEDIM_SOL_JET",
 	    "tacoma",
 	    "tantalus",
 	    "tapsim",
@@ -532,12 +548,15 @@ sub software_list()
 	    "tfe",
 	    "thickdisk",
 	    "tmdmpi",
+	    "torch",
 	    "tornado_friction",
 	    "track",
 	    "translate",
 	    "trigger_study_ara",
+	    "trimmomatic",
 	    "trinityrnaseq",
 	    "tristan-mp3d",
+	    "tRNAscan-SE",
 	    "tsc",
 	    "ttmmdmpi",
 	    "turbo",
@@ -609,6 +628,7 @@ sub software_match_list()
   $pkgmatch{'arts'} = "( script LIKE '%arts%' AND script NOT LIKE '%starts%' )";
   $pkgmatch{'ash'} = "( script LIKE '%ash_1%' OR script LIKE '%ash_2%' OR script LIKE '%ash_fd%' )";
   $pkgmatch{'athena'} = "script LIKE '%/athena %'";
+  $pkgmatch{'bioperl'} = "( script LIKE '%bioperl%' OR script LIKE '%phylogenetic_pipe%' )";
   $pkgmatch{'blat'} = "script LIKE '%blat %'";
   $pkgmatch{'boltztran'} = "(script LIKE '%boltzpar%')";
   $pkgmatch{'boots'} = "( script LIKE '%boots%' AND NOT ( script LIKE '%bootstrap%' ) )";
@@ -669,8 +689,7 @@ sub software_match_list()
   $pkgmatch{'mrbayes'} = "( script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%' )";
   $pkgmatch{'msa'} = "script LIKE '%/msa %'";
   $pkgmatch{'nb'} = "script LIKE '%NB/CODES%'";
-  $pkgmatch{'ncbi'} = "( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%blastpgp%' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR
- script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )";
+  $pkgmatch{'ncbi'} = "( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%blastn%' OR script LIKE '%blastpgp%' OR script LIKE '%blastp %' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR script LIKE '%makeblastdb%' OR script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )";
   $pkgmatch{'nga_fb'} = "( script LIKE '%nga_fb%' OR script LIKE '%nga_cfb%' )";
   $pkgmatch{'omega'} = "script LIKE '%omega.exe%'";
   $pkgmatch{'openeye'} = "( script LIKE '%babel3%' OR script LIKE '%checkcff%' OR script LIKE '%chunker%' OR script LIKE '%fred2%' OR script LIKE '%fredPA%' OR script LIKE '%ligand_info%' OR script LIKE '%makefraglib%' OR script LIKE '%makerocsdb%' OR script LIKE '%nam2mol%' OR script LIKE '%omega2%' OR script LIKE '%szybki%' )";
@@ -681,6 +700,7 @@ sub software_match_list()
   $pkgmatch{'pse'} = "( script LIKE '%/PSE\n' OR script LIKE '%/PSE2\n' )";
   $pkgmatch{'psi4'} = "( script LIKE '%/psi4 %' OR script LIKE '%\npsi4%' )";
   $pkgmatch{'pwscf'} = "( script LIKE '%pwscf%' OR script LIKE '%/pw.x %' OR script LIKE '%/ph.x %' )";
+  $pkgmatch{'RR_xxM'} = "( script REGEXP 'RR_[0-9]+(M|end)' )";
   $pkgmatch{'r_out'} = "( script LIKE '%/r.out %' OR script LIKE '%/r.out\n%' )";
   $pkgmatch{'radhyd'} = "( script LIKE '%radhyd%' OR script LIKE '%rhd_hyb%' OR script LIKE '%orion2%' )";
   $pkgmatch{'raflesclean'} = "( script LIKE '%RAFLESCLEAN%' OR script LIKE '%RAFLES_CLEAN%' )";
@@ -689,7 +709,7 @@ sub software_match_list()
   $pkgmatch{'reduce'} = "( script LIKE '%reduce_1%' OR script LIKE '%reduce_eta%' )";
   $pkgmatch{'reflect'} = "script LIKE '%/reflect\n%'";
   $pkgmatch{'root'} = "script LIKE '%\nroot -q%'";
-  $pkgmatch{'rosetta'} = "( script LIKE '%rosetta.%' OR script LIKE '%/rr %' )";
+  $pkgmatch{'rosetta'} = "( script LIKE '%rosetta.%' OR script LIKE '% rosetta %' OR script LIKE '%/rr %' )";
   $pkgmatch{'roth'} = "script LIKE '%/ROTH%'";
   $pkgmatch{'rtp'} = "( script LIKE '%rtp%' AND NOT ( script like '%RestartP%' ) AND NOT ( script LIKE '%addpertpath%' ) )";
   $pkgmatch{'sable'} = "( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )";
@@ -714,8 +734,9 @@ sub software_match_list()
   $pkgmatch{'zNtoM'} = "( script LIKE '%z1to3%' OR script LIKE '%z4to6%' OR script LIKE '%z7to9%' OR script LIKE '%z10to12%' OR script LIKE '%z13to15%' )";
 
 # package matches with dependencies on other package matches
-  $pkgmatch{'R'} = "( ( script LIKE '%\nR %' OR script LIKE '%Rscript %' ) AND NOT ( ".$pkgmatch{'gaussian'}." ) AND NOT ( ".$pkgmatch{'adf'}." ) )";
+  $pkgmatch{'R'} = "( ( script LIKE '%\nR %' OR script LIKE '%Rscript %' OR script LIKE '%RMPI%' ) AND NOT ( ".$pkgmatch{'gaussian'}." ) AND NOT ( ".$pkgmatch{'adf'}." ) )";
   $pkgmatch{'agk'} = "( script LIKE '%agk%' AND NOT ( ".$pkgmatch{'hsi'}." ) AND NOT ( ".$pkgmatch{'mhd_1'}." ) )";
+  $pkgmatch{'ansys'} = "( ( script LIKE '%ansys' OR ( software IS NOT NULL AND software LIKE '%ansys%' ) ) AND NOT ( ".$pkgmatch{'fluent'}." ) )";
   $pkgmatch{'amber'} = "( ( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' OR script LIKE '%SingleJob%' OR script LIKE '%MINJob%' OR script LIKE '%run_md_mpi.csh%' ) AND NOT ( ".$pkgmatch{'cctm'}." ) AND NOT ( ".$pkgmatch{'cvm'}." ) AND NOT ( ".$pkgmatch{'idl'}." ) AND NOT ( ".$pkgmatch{'qmc'}." ) AND NOT ( ".$pkgmatch{'sigma'}." ) AND NOT ( ".$pkgmatch{'tantalus'}." ) AND NOT ( ".$pkgmatch{'tfe'}." ) )";
   $pkgmatch{'arps'} = "( script LIKE '%arps%' AND NOT ( ".$pkgmatch{'adf'}." ) AND NOT ( ".$pkgmatch{'hsi'}." ) AND NOT ( ".$pkgmatch{'matlab'}." ) )";
   $pkgmatch{'bam'} = "( script LIKE '%bam%' AND NOT ( ".$pkgmatch{'bismark'}." ) AND NOT ( ".$pkgmatch{'cufflinks'}." ) AND NOT ( ".$pkgmatch{'samtools'}." ) )";
