@@ -121,7 +121,7 @@ pbsacct.py is a module for parsing and processing PBS accounting log files.
 %package -n pbsacct-collector
 Summary:  pbsacct Data Collector
 Group:  System Environment/Base
-Requires:  python,pbsacct-python
+Requires:  perl,perl-DBD-MySQL,python,pbsacct-python
 %description -n pbsacct-collector
 pbsacct-collector is the data collection core of the pbsacct workload
 analysis system.  It should be installed on the same host as a
@@ -247,7 +247,6 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 
 %files -n pbsacct-collector
 %{_sbindir}/job-db-update
-%{_sbindir}/fixup-nodect
 %{_sbindir}/jobscript-to-db
 %{_sbindir}/spool-jobscripts
 %{_sbindir}/sw_app-index
@@ -269,7 +268,8 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 
 %files -n pbsacct-db
 %dir %{_sysconfdir}/pbsacct
-%{_sysconfdir}/pbsacct/create-tables.sql
+%{_sysconfdir}/pbsacct/create-tables.mysql
+%{_sysconfdir}/pbsacct/create-tables.sqlite
 
 %files -n pbsacct-jobscript-watcher
 %{_sbindir}/jobscript-watcher

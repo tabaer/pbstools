@@ -129,7 +129,6 @@ js:
 pbsacct-collector:
 	install -d $(PREFIX)/sbin
 	install -m 0750 sbin/job-db-update $(PREFIX)/sbin
-	install -m 0750 sbin/fixup-nodect $(PREFIX)/sbin
 	install -m 0750 sbin/jobscript-to-db $(PREFIX)/sbin
 	install -m 0750 sbin/spool-jobscripts $(PREFIX)/sbin
 	install -m 0750 sbin/sw_app-index $(PREFIX)/sbin
