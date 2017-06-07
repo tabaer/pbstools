@@ -121,7 +121,7 @@ pbsacct.py is a module for parsing and processing PBS accounting log files.
 %package -n pbsacct-collector
 Summary:  pbsacct Data Collector
 Group:  System Environment/Base
-Requires:  perl,perl-DBD-MySQL
+Requires:  python,pbsacct-python
 %description -n pbsacct-collector
 pbsacct-collector is the data collection core of the pbsacct workload
 analysis system.  It should be installed on the same host as a
