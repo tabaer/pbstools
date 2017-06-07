@@ -15,7 +15,7 @@ default:
 
 install: usertools admintools
 
-install-all: usertools admintools mpitools statstools dbtools
+install-all: usertools admintools mpitools dbtools
 
 usertools: ja pbsdcp qexec supermover dmsub dagsub job-vm-launch pbs-spark-submit jobarray-to-pcp
 
@@ -110,16 +110,6 @@ pbsdcp-scatter:
 	cd src/pbsdcp-scatter ; make MPICC=$(MPICC)
 	install -m 0755 src/pbsdcp-scatter/pbsdcp-scatter $(PREFIX)/bin
 
-statstools: jobstats find-outlyers
-
-jobstats:
-	install -d $(PREFIX)/sbin
-	install -m 0750 sbin/jobstats $(PREFIX)/sbin
-
-find-outlyers:
-	install -d $(PREFIX)/sbin
-	install -m 0750 sbin/find-outlyers $(PREFIX)/sbin
-
 dbtools: pbsacct-collector pbsacct-php pbsacct-db jobscript-watcher
 
 js:
@@ -168,6 +158,8 @@ deprecatedtools:
 	install -m 0644 deprecated/doc/man/man1/qps.1 $(PREFIX)/share/man/man1
 	install -d $(PREFIX)/sbin
 	install -m 0750 deprecated/sbin/dezombify $(PREFIX)/sbin
+	install -m 0750 deprecated/sbin/find-outlyers $(PREFIX)/sbin
+	install -m 0750 deprecated/sbin/jobstats $(PREFIX)/sbin
 	install -m 0750 deprecated/sbin/qtracejob.pbs-server $(PREFIX)/sbin
 	install -m 0750 deprecated/sbin/showscript.pbs-server $(PREFIX)/sbin
 	install -d $(PREFIX)/share/man/man8
