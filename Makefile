@@ -135,7 +135,9 @@ pbsacct-php:
 
 pbsacct-db:
 	install -d $(CFGPREFIX)/pbsacct
-	install -m 0640 etc/create-tables.sql $(CFGPREFIX)/pbsacct
+	install -m 0640 etc/create-tables.mysql $(CFGPREFIX)/pbsacct
+	install -m 0640 etc/create-tables.sqlite $(CFGPREFIX)/pbsacct
+	install -m 0640 etc/pbsacctdb.cfg $(CFGPREFIX)
 
 dnotify-pbs:
 	ln -s /usr/bin/dnotify $(PREFIX)/bin/dnotify-pbs
