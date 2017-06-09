@@ -246,9 +246,8 @@ for record in rawdata:
         user = userlist[olduser]
     for key in record[3].keys():
         value = record[3][key]
-        if ( key=="user" ):
-            if ( value in userlist ):
-                value = userlist[value]
+        if ( key=="user" and value in userlist ):
+            value = userlist[value]
         if ( key=="group" and value in grouplist ):
             value = grouplist[value]
         if ( key=="account" and value in acctlist ):
