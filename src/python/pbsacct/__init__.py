@@ -463,6 +463,16 @@ class jobinfo:
         else:
             return None
 
+    def write_last_accounting_record(self,fd):
+        """
+        Write a the equivalent of the last accounting record for this job in the "standard" PBS format
+        """
+        datestamp = self.get_update_time().strftime(self._updatetimefmt)
+        state = self.get_state()
+        jobid = self.jobid()
+        resources = self.get_resources()
+        record = (jobid,datestamp,state,resources)
+        write_record_as_accounting_log(record,fd)
 
 class jobinfoTestCase(unittest.TestCase):
     def __init__(self,methodName='runTest'):
@@ -577,6 +587,13 @@ class jobinfoTestCase(unittest.TestCase):
         j2 = copy.deepcopy(self.testjob)
         j2.set_resource('system','fakehost')
         self.assertEqual(j2.system(),"fakehost")
+    def test_write_last_accounting_record(self):
+        import StringIO
+        fd1 = StringIO.StringIO()
+        j1 = copy.deepcopy(self.testjob)
+        j1.write_last_accounting_record(fd1)
+        self.assertEqual(fd1.getvalue(),"02/13/2009 18:31:30;E;123456.fakehost.lan;Resource_List.cput=2:00:00 Resource_List.mem=1GB Resource_List.nodes=2:ppn=4 Resource_List.vmem=1GB Resource_List.walltime=1:00:00 ctime=1234567890 end=1234567890 etime=1234567890 exec_host=node01/1+node02/2 exit_status=0 group=bar jobname=job owner=foo@login1.fakehost.lan qtime=1234567890 queue=batch resources_used.cput=00:00:02 resources_used.mem=1024kb resources_used.vmem=2048kb resources_used.walltime=00:00:01 start=1234567890 system=None user=foo\n")
+        fd1.close()
 
 
 def raw_data_from_file(filename):
@@ -667,6 +684,23 @@ def records_to_jobs(rawdata,system=None):
             for key in resources.keys():
                 output[jobid].set_resource(key,resources[key])
     return output
+
+def write_record_as_accounting_log(record,fd):
+    """
+    Write a raw accounting record in the "standard" PBS format
+    """
+    jobid = record[0]
+    datestamp = record[1]
+    state = record[2]
+    resources = record[3]
+    resourcestring = ""
+    for key in sorted(resources.keys()):
+        if ( resourcestring=="" ):
+            resourcestring = "%s=%s" % (key,resources[key])
+        else:
+            resourcestring += " %s=%s" % (key,resources[key])
+    # format is datestamp;state;jobid;resources_separated_by_whitespace
+    fd.write("%s;%s;%s;%s\n" % (datestamp,state,jobid,resourcestring))
 
 
 def jobs_from_file(filename,system=None):
