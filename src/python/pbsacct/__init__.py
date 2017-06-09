@@ -472,7 +472,7 @@ class jobinfo:
         jobid = self.jobid()
         resources = self.get_resources()
         record = (jobid,datestamp,state,resources)
-        write_record_as_accounting_log(record,fd)
+        write_record_to_accounting_log(record,fd)
 
 class jobinfoTestCase(unittest.TestCase):
     def __init__(self,methodName='runTest'):
@@ -685,7 +685,7 @@ def records_to_jobs(rawdata,system=None):
                 output[jobid].set_resource(key,resources[key])
     return output
 
-def write_record_as_accounting_log(record,fd):
+def write_record_to_accounting_log(record,fd):
     """
     Write a raw accounting record in the "standard" PBS format
     """
