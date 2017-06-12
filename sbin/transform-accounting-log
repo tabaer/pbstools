@@ -165,7 +165,7 @@ if ( deidentify or autorenumber ):
                         newuser = "usr%05d" % nuser
                         userlist[user] = newuser
                         nuser = nuser+1
-        if ( autorenumber and jobiddelta==0 ):
+        if ( autorenumber ):
             njobid = int(re.sub("\[[0-9]*\]","",record[0].split(".")[0]))
             if ( minjobid==-1 or njobid<minjobid ):
                 minjobid = njobid
@@ -252,7 +252,7 @@ for record in rawdata:
             value = grouplist[value]
         if ( key=="account" and value in acctlist ):
             value = acctlist[value]
-        if ( key in ["owner","requestor"] ):
+        if ( key in ["Resource_List.epilogue","Resource_List.prologue","owner","requestor"] ):
             if ( olduser is not None and user is not None and olduser!=user ):
                 value = value.replace(olduser,user)
             if ( hostxform is not None ):
@@ -266,3 +266,4 @@ for record in rawdata:
         newresources[key] = value
     newrecord = (jobid,datestamp,state,newresources)
     pbsacct.write_record_to_accounting_log(newrecord,outfile)
+outfile.close()
