@@ -244,6 +244,7 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %{python_sitelib}/pbsacct/__init__.py
 %{python_sitelib}/pbsacct/__init__.pyc
 %{python_sitelib}/pbsacct/__init__.pyo
+%{_sbindir}/transform-accounting-log
 
 %files -n pbsacct-collector
 %{_sbindir}/job-db-update
