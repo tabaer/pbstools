@@ -3,6 +3,7 @@
 #          using a language compatible with Condor DAGman.
 #
 # Copyright 2009, 2011, 2012, 2013 University of Tennessee
+# Copyright 2017 Ohio Supercomputer Center
 # Authors:  Troy Baer <troy@osc.edu>
 #           Patrick Lu <ylu14@utk.edu>
 #           Nicholas Lineback <nlinebac@utk.edu>
@@ -143,6 +144,42 @@ def unique(s):
             u.append(x)
     return u
 ### end code from Python Cookbook
+
+def job_exists(jobid):
+    """
+    OVERVIEW:   finds if a job is in the queue
+    
+    PARAMETERS: jobid, the job ID to find
+    
+    RETURNS:    True, if job is found
+                False, if job is not found
+    """
+    if ( jobid is not None ):
+        user_name = getpass.getuser()
+        cmd = "qselect -s RHQ -u "+user_name+" | egrep -c "+ jobid
+        p = subprocess.Popen(cmd, shell=True,
+                             stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             close_fds=True)
+        pin = p.stdin
+        perr = p.stderr
+        pout = p.stdout
+        pin.close()
+        stderr = perr.readlines()
+        perr.close()
+        stdout = pout.readlines()
+        pout.close()
+        p.wait()
+        if len(stdout)>0:
+            num_jobid = int(stdout[0])
+        if num_jobid > 0:
+            return True
+        else:
+            return False
+    else:
+        return False
+
 
 class Category(object):
     """
@@ -771,38 +808,88 @@ class JobNode(object):
                 
         return num_in_category
 
-def job_exists(jobid):
+
+class SubDAGNode(JobNode):
     """
-    OVERVIEW:   finds if a job is in the queue
-    
-    PARAMETERS: jobid, the job ID to find
-    
-    RETURNS:    True, if job is found
-                False, if job is not found
+    Extension of JobNode class for "jobs" that are in fact DAGs
+    themselves
     """
-    user_name = getpass.getuser()
-    cmd = "qselect -s RHQ -u "+user_name+" | egrep -c "+ jobid
-    p = subprocess.Popen(cmd, shell=True,
-                         stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE,
-                         close_fds=True)
-    pin = p.stdin
-    perr = p.stderr
-    pout = p.stdout
-    pin.close()
-    stderr = perr.readlines()
-    perr.close()
-    stdout = pout.readlines()
-    pout.close()
-    p.wait()
-    if len(stdout)>0:
-        num_jobid = int(stdout[0])
-    if num_jobid > 0:
-        return True
-    else:
-        return False
-                                                                                                                                     
+    def __init__(self,name,script):
+        super(SubDAGNode,self).__init__(name,script)
+
+    def submit(self,dag,log,categories):
+        """
+        OVERVIEW: Submits job for self with dependencies
+        
+        OUTCOMES: 1) if subDAGis executed successfully,
+                  postsubmission script is run and
+                  child nodes are submitted using self._postsubmit
+                  2) if job submission fails
+                  message is printed to log and program exits
+                
+        MODIFIES: self._submitted
+                  self._jobid
+
+        RETURNS:  self._postsubmit(dag,log,categories)
+        """
+        if ( self.isSubmitted() ):
+            return self.isSubmitted()
+        
+        # do generic pre-submission stuff
+        success = self._presubmit(dag,log,categories)
+        if ( not success ):
+            return success
+
+        # "submit job" by running running sys.argv[0] synchronously 
+        # on the script (actually DAG) file
+        if ( not self.isSubmitted() ):
+            args = [sys.argv[0],"-no_fork"]
+            for arg in sys.argv[1:-1]:
+                if ( arg in ["-force","-no_submit","-v","-verbose"] ):
+                    args.append(arg)
+            args.append(self.script())
+            cmd = " ".join(args)
+            log.write(str(datetime.datetime.now())+":  executing subDAG "+self.name()+"\n")
+            if ( verbose ):
+                 log.write(str(datetime.datetime.now())+":  \""+cmd+"\"\n")
+            exitcode = os.system(cmd)
+            self.setJobId(None)
+            self.setSubmitted(True)      
+            self.setDone(True)
+            self.setExitCode(exitcode)
+            if ( self.exitCode()==0 and verbose ):
+                log.write(str(datetime.datetime.now())+":  subDAG "+self.name()+" has completed\n")
+                log.flush()
+            elif ( verbose ):
+                log.write(str(datetime.datetime.now())+":  subDAG "+self.name()+" has failed\n")
+                log.flush()
+
+        # if nothing failed, do generic post-submission stuff
+        return self._postsubmit(dag,log, categories)
+
+    def jobStatus(self,log):
+        """
+        OVERVIEW: returns the status of the job node.
+                  Writes long messages to log if verbose.
+                  
+        OUTCOMES: returns normally if job is completed, not found, or in progress.
+                  exits program if job has failed
+                  
+        RETURNS: SUCCESS     = 0    job has completed successfully
+                 FAIL        = -1   job has failed
+                 NOT_FOUND   = 1    job is not found, status of job unknown
+                 IN_PROGRESS = 2    job is currently in queue  
+        """
+        if ( not self.isSubmitted() ):
+            return NOT_FOUND
+        elif ( self.isSubmitted() and not self.isDone() ):
+            return IN_PROGRESS
+        elif ( self.exitCode()!=0 ):
+            return FAIL
+        else:
+            return SUCCESS
+            
+
 class DataJobNode(JobNode):
     """
     Extension of JobNode class for jobs that need data movers
@@ -871,7 +958,6 @@ class DataJobNode(JobNode):
                                 log.write(str(datetime.datetime.now())+": job "+self.name()+
                                           " checking for existence of parent job "+jobid+"\n")
                                 log.flush()
-                            #if ( os.system("qstat "+jobid+" 2>/dev/null 1>/dev/null")==0 ):
                             if job_exists(jobid):
                                 if ( verbose ):
                                     log.write(str(datetime.datetime.now())+": job "+self.name()+
@@ -1073,10 +1159,14 @@ class DAG(object):
         # create "lock" file
         open(file+".rescue.lck", 'w').close()
         for line in buffer:
-            if ( (line.startswith("JOB") or line.startswith('DATA')) and
+            if ( ( line.startswith("JOB") or line.startswith('DATA') or line.startswith("SUBDAG") ) and
                  ( 'DONE' not in line ) ):
                 try:
-                    nodename = line.split()[1]
+                    nodename = None
+                    if ( line.startswith("JOB") or line.startswith('DATA') ):
+                        nodename = line.split()[1]
+                    elif ( line.startswith("SUBDAG") ):
+                        nodename = line.split()[2]
                     node = self.getNode(nodename)
                     if ( node is not None ):
                         cond = node.jobStatus(log)
@@ -1088,7 +1178,7 @@ class DAG(object):
                         elif ( cond==NOT_FOUND ):
                             newRescueDAG.write(line)
                         elif ( cond==FAIL ):
-                            node.childrenAreSick(dag)
+                            node.childrenAreSick(self)
                             newRescueDAG.write(line)
                         elif ( cond==IN_PROGRESS ):
                             newRescueDAG.write(line)
@@ -1107,7 +1197,6 @@ class DAG(object):
                 except AttributeError, err:
                     log.write(str(datetime.datetime.now())+": "+str(err)+'\n')
                     log.flush()
-
             else:
                 newRescueDAG.write(line)
         # destroy "lock" file
@@ -1308,7 +1397,6 @@ def main():
                             dotFile = token[1]
                         elif ( token[0]=="JOB" ):
                             node = JobNode(token[1],token[2])
-                            dag.addNode(node)
                             try:
                                 if(token[3] == "DONE"):
                                     node.setDone(True)
@@ -1318,9 +1406,9 @@ def main():
                                         node.setDone(True)
                             except IndexError, err:
                                 pass
+                            dag.addNode(node)
                         elif ( token[0]=="DATA" ):
                             node = DataJobNode(token[1],token[2])
-                            dag.addNode(node)
                             try:
                                 for i in range(3,len(token),2):
                                     if ( token[i]=="DONE" ):
@@ -1333,6 +1421,15 @@ def main():
                                         node.setQueue(token[i+1])
                             except IndexError, err:
                                 pass
+                            dag.addNode(node)
+                        elif ( token[0]=="SUBDAG" ):
+                            node = SubDAGNode(token[2],token[3])
+                            try:
+                                if ( len(token)>4 and token[4]=="DONE" ):
+                                    node.setDone(True)
+                            except IndexError, err:
+                                pass
+                            dag.addNode(node)
                         elif ( token[0]=="PARENT" ):
                             foundchild = False
                             parents = [token[1]]
