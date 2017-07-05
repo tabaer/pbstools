@@ -9,6 +9,6 @@ TODO List
 
 * Move commonly used Perl routines (eg. &resourcelist()) into a Perl module or replace with Python equivalents.
 
-* Implement the rest of the DAG syntax supported by condor_submit_dag in dagsub.
+* Implement the rest of the DAG syntax supported by condor_submit_dag in dagsub (e.g. CONFIG and SUBDAG).
 
 * Better input checking in web forms (e.g. strip extraneous characters from jobids).
