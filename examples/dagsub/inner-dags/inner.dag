@@ -1,0 +1,6 @@
+# Adapted from http://research.cs.wisc.edu/htcondor/manual/v7.6/2_10DAGMan_Applications.html
+JOB X  X.pbs
+JOB Y  Y.pbs
+JOB Z  Z.pbs
+PARENT X CHILD Y
+PARENT Y CHILD Z

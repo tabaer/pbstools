@@ -1,0 +1,7 @@
+# Adapted from http://research.cs.wisc.edu/htcondor/manual/v7.6/2_10DAGMan_Applications.html
+JOB A A.pbs
+SUBDAG EXTERNAL B inner.dag
+JOB C C.pbs
+JOB D D.pbs
+PARENT A CHILD B C
+PARENT B C CHILD D
