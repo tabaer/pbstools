@@ -4,3 +4,8 @@ matrix:
       python: 2.7
       script:
         - python src/python/pbsacct/__init__.py
+    - language: python
+      python: 3.5
+      script:
+        - python src/python/pbsacct/__init__.py
+
