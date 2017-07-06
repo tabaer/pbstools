@@ -28,7 +28,7 @@ class jobinfo:
         self._ngpus = 0
         for key in resources.keys():
             self._resources[key] = resources[key]
-        if ( not self._resources.has_key("system") ):
+        if ( "system" not in self._resources ):
             self._resources["system"] = system
 
     def __eq__(self,other):
@@ -142,7 +142,7 @@ class jobinfo:
         self._resources[key] = value
 
     def has_resource(self,key):
-        return self._resources.has_key(key)
+        return key in self._resources
 
     def add_to_resource(self,key,value):
         supported_time_resources = ["resources_used.cput","resources_used.walltime"]
@@ -588,8 +588,13 @@ class jobinfoTestCase(unittest.TestCase):
         j2.set_resource('system','fakehost')
         self.assertEqual(j2.system(),"fakehost")
     def test_write_last_accounting_record(self):
-        import StringIO
-        fd1 = StringIO.StringIO()
+        # hack to handle class namespace change in python 3.x
+        if ( sys.version_info<(3,0) ):
+             import StringIO
+             fd1 = StringIO.StringIO()
+        else:
+            import io
+            fd1 = io.StringIO()
         j1 = copy.deepcopy(self.testjob)
         j1.write_last_accounting_record(fd1)
         self.assertEqual(fd1.getvalue(),"02/13/2009 18:31:30;E;123456.fakehost.lan;Resource_List.cput=2:00:00 Resource_List.mem=1GB Resource_List.nodes=2:ppn=4 Resource_List.vmem=1GB Resource_List.walltime=1:00:00 ctime=1234567890 end=1234567890 etime=1234567890 exec_host=node01/1+node02/2 exit_status=0 group=bar jobname=job owner=foo@login1.fakehost.lan qtime=1234567890 queue=batch resources_used.cput=00:00:02 resources_used.mem=1024kb resources_used.vmem=2048kb resources_used.walltime=00:00:01 start=1234567890 system=None user=foo\n")
@@ -674,7 +679,7 @@ def records_to_jobs(rawdata,system=None):
         update_time = record[1]
         record_type = record[2]
         resources = record[3]
-        if ( not output.has_key(jobid) ):
+        if ( jobid not in output ):
             output[jobid] = jobinfo(jobid,update_time,record_type,resources,system)
         # may need an extra case here for jobs with multiple S and E
         # records (e.g. preemption)
@@ -1211,7 +1216,7 @@ class pbsacctDB:
                             resources["group"] = str(result[i])
                         elif ( columns[i]=="submithost" and
                                result[i] is not None ):
-                            if ( resources.has_key("user") ):
+                            if ( "user" in resources ):
                                 resources["owner"] = resources["user"]+"@"+str(result[i])
                         elif ( columns[i]=="submit_ts" and
                                result[i]>0 ):
@@ -1246,8 +1251,8 @@ class pbsacctDB:
                             else:
                                 resources["Resource_List.cput"] = str(result[i])
                         elif ( columns[i]=="cput_req_sec" ):
-                            if ( not resources.has_key("Resource_List.cput") or
-                                 ( resources.has_key("Resource_List.cput") and
+                            if ( "Resource_List.cput" not in resources or
+                                 ( "Resource_List.cput" in resources and
                                    result[i] is not None and
                                    int(result[i])>time_to_sec(resources["Resource_List.cput"]) ) ):
                                 resources["Resource_List.cput"] = sec_to_time(result[i])
@@ -1289,7 +1294,7 @@ class pbsacctDB:
                                result[i] is not None ):
                             resources["Resource_List.vmem"] = str(result[i])
                         elif ( columns[i]=="walltime_req" ):
-                            if ( not resources.has_key("Resource_List.walltime") ):
+                            if ( "Resource_List.walltime" not in resources ):
                                 if ( isinstance(result[i],datetime.timedelta) ):
                                     resources["Resource_List.walltime"] = sec_to_time(24*3600*result[i].days+result[i].seconds)
                                 elif ( isinstance(result[i],int) ):
@@ -1297,14 +1302,14 @@ class pbsacctDB:
                                 else:
                                     resources["Resource_List.walltime"] = str(result[i])
                         elif ( columns[i]=="walltime_req_sec" ):
-                            if ( not resources.has_key("Resource_List.walltime") or
-                                 ( resources.has_key("Resource_List.walltime") and
+                            if ( "Resource_List.walltime" not in resources or
+                                 ( "Resource_List.walltime" in resources and
                                    result[i] is not None and
                                    int(result[i])>time_to_sec(resources["Resource_List.walltime"]) ) ):
                                 resources["Resource_List.walltime"] = sec_to_time(result[i])
 
                         elif ( columns[i]=="cput" ):
-                            if ( not resources.has_key("resources_used.cput") ):
+                            if ( "resources_used.cput" not in resources ):
                                 if ( isinstance(result[i],datetime.timedelta) ):
                                     resources["resources_used.cput"] = sec_to_time(24*3600*result[i].days+result[i].seconds)
                                 elif ( isinstance(result[i],int) ):
@@ -1312,8 +1317,8 @@ class pbsacctDB:
                                 else:
                                     resources["resources_used.cput"] = str(result[i])
                         elif ( columns[i]=="cput_sec" ):
-                            if ( not resources.has_key("resources_used.cput") or
-                                 ( resources.has_key("resources_used.cput") and
+                            if ( "resources_used.cput" not in resources or
+                                 ( "resources_used.cput" in resources and
                                    result[i] is not None and
                                    int(result[i])>time_to_sec(resources["resources_used.cput"]) ) ):
                                 resources["resources_used.cput"] = sec_to_time(result[i])
@@ -1326,7 +1331,7 @@ class pbsacctDB:
                                result[i] is not None ):
                             resources["resources_used.vmem"] = str(result[i])+"kb"                        
                         elif ( columns[i]=="walltime" ):
-                            if ( not resources.has_key("resources_used.walltime") ):
+                            if ( "resources_used.walltime" not in resources ):
                                 if ( isinstance(result[i],datetime.timedelta) ):
                                     resources["resources_used.walltime"] = sec_to_time(24*3600*result[i].days+result[i].seconds)
                                 elif ( isinstance(result[i],int) ):
@@ -1334,8 +1339,8 @@ class pbsacctDB:
                                 else:
                                     resources["resources_used.walltime"] = str(result[i])
                         elif ( columns[i]=="walltime_sec" ):
-                            if ( not resources.has_key("resources_used.walltime") or
-                                 ( resources.has_key("resources_used.walltime") and
+                            if ( "resources_used.walltime" not in resources or
+                                 ( "resources_used.walltime" in resources and
                                    result[i] is not None and
                                    int(result[i])>time_to_sec(resources["resources_used.walltime"]) ) ):
                                 resources["resources_used.walltime"] = sec_to_time(result[i])
@@ -1347,16 +1352,16 @@ class pbsacctDB:
                             resources["Resource_List.software"] = str(result[i])
                         elif ( columns[i]=="script" and result[i] is not None ):
                             resources["script"] = str(result[i])
-                    if ( resources.has_key("ctime") ):
+                    if ( "ctime" in resources ):
                         updatetime = int(resources["ctime"])
                     else:
                         updatetime = 0
                     state = "Q"
-                    if ( resources.has_key("start") ):
+                    if ( "start" in resources ):
                         if ( int(resources["start"])>updatetime ):
                             updatetime = resources["start"]
                         state = "S"
-                    if ( resources.has_key("end") ):
+                    if ( "end" in resources ):
                         if ( int(resources["end"])>updatetime ):
                             updatetime = int(resources["end"])
                         state = "E"
