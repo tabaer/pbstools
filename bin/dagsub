@@ -652,6 +652,8 @@ class JobNode(object):
         """
         if ( self.isSubmitted() ):
             return self.isSubmitted()
+        elif ( self.isDone() ):
+            return self.isDone()
 
         # do generic pre-submission stuff
         success = self._presubmit(dag,log,categories)
@@ -759,6 +761,7 @@ class JobNode(object):
                     self.retry(cmd,dag,log)
             
             self.setSubmitted(True)
+
         # if nothing failed, do generic post-submission stuff
         return self._postsubmit(dag,log,categories)
     
@@ -834,6 +837,8 @@ class SubDAGNode(JobNode):
         """
         if ( self.isSubmitted() ):
             return self.isSubmitted()
+        elif ( self.isDone() ):
+            return self.isDone()
         
         # do generic pre-submission stuff
         success = self._presubmit(dag,log,categories)
@@ -929,6 +934,8 @@ class DataJobNode(JobNode):
         
         if ( self.isSubmitted() ):
             return self.isSubmitted()
+        elif ( self.isDone() ):
+            return self.isDone()
         
         # do generic pre-submission stuff
         success = self._presubmit(dag,log,categories)
