@@ -760,9 +760,9 @@ def time_to_sec(timestr):
 def sec_to_time(seconds):
     if ( isinstance(seconds,str) ):
         return seconds
-    hours = int(seconds/3600)
-    minutes = int(seconds-3600*hours)/60
-    sec = int(seconds-(3600*hours+60*minutes))
+    hours = int(round(seconds/3600))
+    minutes = int(round((seconds-3600*hours)/60))
+    sec = int(seconds)-(3600*hours+60*minutes)
     return "%02d:%02d:%02d" % (hours,minutes,sec)
 
 
@@ -810,6 +810,8 @@ class pbsacctTestCase(unittest.TestCase):
         self.assertEqual(mem_to_kb('1000gw'),8*1000*1024*1024)
     def test_sec_to_time(self):
         self.assertEqual(sec_to_time(1),'00:00:01')
+        self.assertEqual(sec_to_time(2),'00:00:02')
+        self.assertEqual(sec_to_time(10),'00:00:10')
         self.assertEqual(sec_to_time(60),'00:01:00')
         self.assertEqual(sec_to_time(3600),'01:00:00')
         self.assertEqual(sec_to_time(2*3600),'02:00:00')
@@ -818,6 +820,8 @@ class pbsacctTestCase(unittest.TestCase):
         self.assertEqual(sec_to_time(7*24*3600),'168:00:00')
     def test_time_to_sec(self):
         self.assertEqual(1,time_to_sec('00:00:01'))
+        self.assertEqual(2,time_to_sec('00:00:02'))
+        self.assertEqual(10,time_to_sec('00:00:10'))
         self.assertEqual(60,time_to_sec('00:01:00'))
         self.assertEqual(3600,time_to_sec('01:00:00'))
         self.assertEqual(2*3600,time_to_sec('02:00:00'))
