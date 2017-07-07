@@ -13,5 +13,6 @@ matrix:
         - sudo apt-get install -qq
         - sudo apt-get install -qq mpich2
       script:
-        - PREFIX=/tmp make mpitools
+        - mkdir /tmp/pbstools
+        - make mpitools PREFIX=/tmp/pbstools
 
