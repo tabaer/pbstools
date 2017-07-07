@@ -25,8 +25,8 @@ matrix:
     - language: c
       before_install:
         - sudo apt-get install -qq
-        - sudo apt-get install -qq openmpi-bin
+        - sudo apt-get install -qq libopenmpi-dev
       script:
         - mkdir /tmp/pbstools-openmpi
-        - make mpitools PREFIX=/tmp/pbstools-openmpi
+        - make mpitools PREFIX=/tmp/pbstools-openmpi MPICC=mpicc.openmpi
 
