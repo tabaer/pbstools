@@ -11,8 +11,22 @@ matrix:
     - language: c
       before_install:
         - sudo apt-get install -qq
+        - sudo apt-get install -qq lam4-dev
+      script:
+        - mkdir /tmp/pbstools-lam
+        - make mpitools PREFIX=/tmp/pbstools-lam
+    - language: c
+      before_install:
+        - sudo apt-get install -qq
         - sudo apt-get install -qq mpich2
       script:
-        - mkdir /tmp/pbstools
-        - make mpitools PREFIX=/tmp/pbstools
+        - mkdir /tmp/pbstools-mpich2
+        - make mpitools PREFIX=/tmp/pbstools-mpich2
+    - language: c
+      before_install:
+        - sudo apt-get install -qq
+        - sudo apt-get install -qq mpich
+      script:
+        - mkdir /tmp/pbstools-mpich
+        - make mpitools PREFIX=/tmp/pbstools-mpich
 
