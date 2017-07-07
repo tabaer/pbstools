@@ -760,10 +760,10 @@ def time_to_sec(timestr):
 def sec_to_time(seconds):
     if ( isinstance(seconds,str) ):
         return seconds
-    hours = int(round(seconds/3600))
-    minutes = int(round((seconds-3600*hours)/60))
-    sec = int(seconds)-(3600*hours+60*minutes)
-    return "%02d:%02d:%02d" % (hours,minutes,sec)
+    # from https://stackoverflow.com/questions/775049/python-time-seconds-to-hms
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    return "%02d:%02d:%02d" % (h,m,s)
 
 
 def mem_to_kb(memstr):
