@@ -8,4 +8,10 @@ matrix:
       python: 3.5
       script:
         - python src/python/pbsacct/__init__.py
+    - language: c
+      before_install:
+        - sudo apt-get install -qq
+        - sudo apt-get install -qq mpich2
+      script:
+        - PREFIX=/tmp make mpitools
 
