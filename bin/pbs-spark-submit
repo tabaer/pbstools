@@ -3,7 +3,7 @@
 # pbs-spark-submit:  Run an Apache Spark "job" (including optionally
 #                    starting the Spark services) inside a PBS job.
 # Copyright 2014, 2015 University of Tennessee
-# Copyright 2015, 2016 Ohio Supercomputer Center
+# Copyright 2015-2017 Ohio Supercomputer Center
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
@@ -242,7 +242,7 @@ def usage():
     sys.stderr.write("\t--name <name>\n\t\tThe name of your application.\n")
     sys.stderr.write("\t--jars <jarlist>\n\t\tComma-separated list of local jars to include on the driver\n\t\tand executor classpaths.\n")
     sys.stderr.write("\t--packages <pkglist>\n\t\tComma-separated list of maven coordinates of jars to include\n\t\ton the driver and executor classpaths. Will search the local\n\t\tmaven repo, then maven central and any additional remote\n\t\trepositories given by --repositories. The format for the\n\t\tcoordinates should be groupId:artifactId:version.\n")
-    sys.stderr.write("\t--exclude-packages <pkhlist>\n\t\tComma-separated list of groupId:artifactId to exclude\n\t\twhile resolving the dependencies provided in --packages\n\t\tto avoid dependency conflicts.\n")
+    sys.stderr.write("\t--exclude-packages <pkglist>\n\t\tComma-separated list of groupId:artifactId to exclude\n\t\twhile resolving the dependencies provided in --packages\n\t\tto avoid dependency conflicts.\n")
     sys.stderr.write("\t--repositories <repolist>\n\t\tComma-separated list of additional remote repositories\n\t\tto search for the maven coordinates given with --packages.\n")
     sys.stderr.write("\t--py-files <filelist>\n\t\tComma-separated list of .zip, .egg, or .py files to place\n\t\ton PYTHONPATH for Python apps.\n")
     sys.stderr.write("\t--files <filelist>\n\t\tComma-separated list of files to be placed in the\n\t\tworking directory of each executor.\n")
@@ -452,8 +452,8 @@ else:
     os.environ["SPARK_MASTER_HOST"] = get_ip_address(iface)
 if ( not ( "SPARK_MASTER_PORT" in os.environ.keys() ) ):
     os.environ["SPARK_MASTER_PORT"] = "7077"
-os.environ["SPARK_MASTER"] = "spark://"+os.environ["SPARK_MASTER_IP"]+":"+str(os.environ["SPARK_MASTER_PORT"])
-#sys.stderr.write("Spark master = "+os.environ["SPARK_MASTER"]+"\n")
+spark_master = "spark://"+os.environ["SPARK_MASTER_IP"]+":"+str(os.environ["SPARK_MASTER_PORT"])
+#sys.stderr.write("Spark master = "+spark_master+"\n")
 
 if ( init_svcs ):
     # stick any properties in the appropriate environment variable
@@ -467,7 +467,8 @@ if ( init_svcs ):
     cmdline = os.environ["SPARK_HOME"]+"/sbin/start-master.sh"
     os.system(cmdline+" &")
     sys.stderr.write(cmdline+"\n")
-    sys.stdout.write("SPARK_MASTER="+os.environ["SPARK_MASTER"]+"\n")
+    sys.stdout.write("SPARK_MASTER_HOST="+os.environ["SPARK_MASTER_HOST"]+"\n")
+    sys.stdout.write("SPARK_MASTER_PORT="+os.environ["SPARK_MASTER_PORT"]+"\n")
     time.sleep(pausetime)
 
     # launch workers
@@ -476,7 +477,7 @@ if ( init_svcs ):
         cmdline += " --memory "+memlimit
     if ( workdir is not None ):
         cmdline += " --work-dir "+workdir
-    cmdline += " "+os.environ["SPARK_MASTER"]
+    cmdline += " "+spark_master
     sys.stderr.write(cmdline+"\n")
     launcher.launch(cmdline,os.environ,tpn=tpn,
                     worker_on_mother_superior=worker_on_mother_superior)
@@ -484,7 +485,7 @@ if ( init_svcs ):
 
 # run the user's Spark "job", if one is given
 if ( len(child_args)>0 ):
-    cmdline = os.environ["SPARK_HOME"]+"/bin/spark-submit --master "+os.environ["SPARK_MASTER"]
+    cmdline = os.environ["SPARK_HOME"]+"/bin/spark-submit --master "+spark_master
     if ( classname is not None ):
         cmdline += " --class "+classname
     if ( name is not None ):
