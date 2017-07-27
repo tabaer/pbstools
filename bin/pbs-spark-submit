@@ -333,12 +333,8 @@ try:
                                       "log-dir=",
                                       "log4j-properties=",
                                       "work-dir=",
-                                      # the following three are deprecated and will eventually be removed
-                                      "tpn=",
-                                      "tasks-per-node=",
-                                      "memory=",
-                                      "wpn=",
                                       "workers-per-node=",
+                                      "wpn=",
                                       "worker-cores=",
                                       "worker-memory=",
                                       "worker-on-mother-superior",
@@ -360,7 +356,11 @@ try:
                                       "exclude-packages=",
                                       "repositories=",
                                       "py-files=",
-                                      "files="])
+                                      "files=",
+                                      # the following three are deprecated and will eventually be removed
+                                      "tasks-per-node=",
+                                      "tpn=",
+                                      "memory="])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -385,7 +385,7 @@ for opt in opts:
         log4j_props = opt[1]
     elif ( opt[0] in ["--work-dir","-d"] ):
         workdir = opt[1]
-    elif ( opt[0] in ["--wpn","--workers-per-node","-t","--tasks-per-node","--tpn"] ):
+    elif ( opt[0] in ["--workers-per-node","--wpn","-t","--tasks-per-node","--tpn"] ):
         wpn = int(opt[1])
         if ( opt[0] in ["--tasks-per-node","--tpn"] ):
             warnings.warn("The option %s=%s is deprecated, please use --workers-per-node=%s instead." % (opt[0],opt[1],opt[1]),DeprecationWarning,stacklevel=2)

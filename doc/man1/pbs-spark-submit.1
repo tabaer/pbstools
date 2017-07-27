@@ -101,7 +101,7 @@ the current working directory, unless the environment variable
 is set, in which case that will be used.  The working directory 
 .B MUST be shared across all nodes in the job.
 .TP
-.B --wpn <N> or --workers-per-node <N> or -t <N>
+.B --workers-per-node <N> or --wpn <N> or -t <N>
 Launch <N> workers per node.  The default is 1.  Current Spark best practices
 indicate that more than 1 worker per node is only beneficial with >200 GB of RAM
 per node.
