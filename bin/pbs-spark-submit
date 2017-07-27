@@ -19,6 +19,7 @@ import socket
 import struct
 import sys
 import time
+import warnings
 
 #
 # ways to launch workers
@@ -26,7 +27,7 @@ import time
 class Launcher:
     def launch(self,cmdline,env,propagate_env=False,
                prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
-               tpn=None,worker_on_mother_superior=True):
+               wpn=1,worker_on_mother_superior=True):
         raise NotImplementedError
     def sleep(self):
         sleeptime = 5
@@ -48,7 +49,7 @@ class Launcher:
 class ExecLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
                prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
-               tpn=None,worker_on_mother_superior=True):
+               wpn=1,worker_on_mother_superior=True):
         time.sleep(1)
 
         # sanity check
@@ -112,19 +113,19 @@ class ExecLauncher(Launcher):
 class PBSDSHLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
                prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
-               tpn=None,worker_on_mother_superior=True):
+               wpn=1,worker_on_mother_superior=True):
         time.sleep(1)
         cmd = cmdline
         if ( propagate_env ):
             cmd = self.env_string(env,prop_env_list)+" "+cmdline
-        if ( tpn is None ):
+        if ( wpn is None ):
             os.system("pbsdsh "+cmdline+" &")
         else:
             nodes = nodelist(unique=True)
             for node in nodes:
                 if ( worker_on_mother_superior or
                      not ( node in platform.node() ) ):
-                    for i in range(int(tpn)):
+                    for i in range(int(wpn)):
                         os.system("pbsdsh -h "+node+" "+cmdline+" &")
         self.sleep()
 
@@ -132,10 +133,10 @@ class PBSDSHLauncher(Launcher):
 class SSHLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
                prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
-               tpn=None,worker_on_mother_superior=True):
+               wpn=1,worker_on_mother_superior=True):
         time.sleep(1)
         if ( "PBS_NODEFILE" in os.environ.keys() ):
-            if ( tpn is None ):
+            if ( wpn is None ):
                 nodes = nodelist()
             else:
                 nodes = nodelist(unique=True)
@@ -152,10 +153,10 @@ class SSHLauncher(Launcher):
                         for arg in self.env_list(env,prop_env_list):
                             argv.insert(2,arg)
                     sys.stderr.write(" ".join(argv)+"\n")
-                    if ( tpn is None ):
+                    if ( wpn is None ):
                         nforks = 1
                     else:
-                        nforks = int(tpn)
+                        nforks = int(wpn)
                     for i in range(nforks):
                         child_pid = os.fork()
                         if ( child_pid==0 ):
@@ -234,7 +235,7 @@ def usage():
     sys.stderr.write("\t--log4j-properties <propsfile> or -l <propsfile>\n\t\tRead log4j properties from <propsfile>.\n")
     sys.stderr.write("\t--work-dir <workdir> or -d <workdir>\n\t\tUse <workdir> as Spark program's working directory.\n")
     sys.stderr.write("\t--memory <memlimit> or -m <memlimit>\n\t\tSet per-worker memory limit.\n")
-    sys.stderr.write("\t--tpn <N> or -t <N>\n\t\tLaunch <N> worker tasks per node instead of the default from the job.\n")
+    sys.stderr.write("\t--workers-per-node <n> or --wpn <N> or -t <N>\n\t\tLaunch <N> worker tasks per node instead of the default (1)\n")
     sys.stderr.write("\t--pausetime <N> or -p <N>\n\t\tPause <N> seconds between startup stages (default 5).\n")
     sys.stderr.write("\t--conf <key>=<value> or -D <key>=<value>\n\t\tSet the Java property <key> to <value>.\n")
     sys.stderr.write("\t--properties-file <propfile> or -P <propfile>\n\t\tRead Java properties from <propfile>.\n")
@@ -269,7 +270,7 @@ properties = {}
 pausetime = 5
 launcher = PBSDSHLauncher()
 log4j_props = None
-tpn = None
+wpn = 1
 memlimit = None
 driver_mem = None
 driver_java_opts = None
@@ -326,8 +327,11 @@ try:
                                       "log4j-properties=",
                                       "work-dir=",
                                       "memory=",
+                                      # the following two are deprecated and will eventually be removed
                                       "tpn=",
                                       "tasks-per-node=",
+                                      "wpn=",
+                                      "workers-per-node=",
                                       "worker-on-mother-superior",
                                       "no-worker-on-mother-superior",
                                       "master-interface=",
@@ -352,77 +356,78 @@ except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
 for opt in opts:
-    if ( opt[0]=="--no-init" ):
+    if ( opt[0] in ["--no-init"] ):
         init_svcs = False
-    elif ( opt[0]=="--init" ):
+    elif ( opt[0] in ["--init"] ):
         init_svcs = True
-    elif ( opt[0]=="--help" or opt[0]=="-h" ):
+    elif ( opt[0] in ["--help","-h"] ):
         usage()
-    elif ( opt[0]=="--exec" ):
+    elif ( opt[0] in ["--exec"] ):
         launcher = ExecLauncher()
-    elif ( opt[0]=="--pbsdsh" ):
+    elif ( opt[0] in ["--pbsdsh"] ):
         launcher = PBSDSHLauncher()
-    elif ( opt[0]=="--ssh" ):
+    elif ( opt[0] in ["--ssh"] ):
         launcher = SSHLauncher()
-    elif ( opt[0]=="--conf-dir" or opt[0]=="-C" ):
+    elif ( opt[0] in ["--conf-dir","-C"] ):
         os.environ["SPARK_CONF_DIR"] = opt[1]
-    elif ( opt[0]=="--log-dir" or opt[0]=="-L" ):
+    elif ( opt[0] in ["--log-dir","-L"] ):
         os.environ["SPARK_LOG_DIR"] = opt[1]
-    elif ( opt[0]=="--log4j-properties" or opt[0]=="-l" ):
+    elif ( opt[0] in ["--log4j-properties","-l"] ):
         log4j_props = opt[1]
-    elif ( opt[0]=="--work-dir" or opt[0]=="-d" ):
+    elif ( opt[0] in ["--work-dir","-d"] ):
         workdir = opt[1]
-    elif ( opt[0]=="--memory" or opt[0]=="-m" ):
+    elif ( opt[0] in ["--memory","-m"] ):
         memlimit = opt[1]
-    elif ( opt[0]=="--tpn" or opt[0]=="--tasks-per-node" or
-           opt[0]=="-t" ):
-        tpn = opt[1]
-    elif ( opt[0]=="--worker-on-mother-superior" ):
+    elif ( opt[0] in ["--wpn","--workers-per-node","-t","--tasks-per-node","--tpn"] ):
+        wpn = int(opt[1])
+        if ( opt[0] in ["--tasks-per-node","--tpn"] ):
+            warnings.warn("The option %s=%s is deprecated, please use --workers-per-node=%s instead." % (opt[0],opt[1],opt[1]),DeprecationWarning,stacklevel=2)
+    elif ( opt[0] in ["--worker-on-mother-superior"] ):
         worker_on_mother_superior = True
-    elif ( opt[0]=="--no-worker-on-mother-superior" or opt[0]=="-N" ):
+    elif ( opt[0] in ["--no-worker-on-mother-superior","-N"] ):
         worker_on_mother_superior = False
-    elif ( opt[0]=="--master-interface" or opt[0]=="-M" ):
+    elif ( opt[0] in ["--master-interface","-M"] ):
         iface = opt[1]
-    elif ( opt[0]=="-D" or opt[0]=="--conf" ):
+    elif ( opt[0] in ["--conf","-D"] ):
         keyval = opt[1].split("=",1)
         if ( len(keyval)==2 ):
             properties[keyval[0]] = keyval[1]
         else:
             raise getopt.GetoptError("malformed property \""+opt[1]+"\"")
-    elif ( opt[0]=="--properties-file" or opt[0]=="-P" ):
+    elif ( opt[0] in ["--properties-file","-P"] ):
         if ( os.path.exists(opt[1]) ):
             props = propsFromFile(opt[1])
             for key in props.keys():
                 properties[key] = props[key]
-    elif ( opt[0]=="--pause-time" or opt[0]=="-p" ):
+    elif ( opt[0] in ["--pause-time","-p"] ):
         pausetime = int(opt[1])
-    elif ( opt[0]=="--class" ):
+    elif ( opt[0] in ["--class"] ):
         classname = opt[1]
-    elif ( opt[0]=="--name" ):
+    elif ( opt[0] in ["--name"] ):
         name = opt[1]
-    elif ( opt[0]=="--jars" ):
+    elif ( opt[0] in ["--jars"] ):
         jars = opt[1]
-    elif ( opt[0]=="--packages" ):
+    elif ( opt[0] in ["--packages"] ):
         pkgs = opt[1]
-    elif ( opt[0]=="--exclude-packages" ):
+    elif ( opt[0] in ["--exclude-packages"] ):
         excl_pkgs = opt[1]
-    elif ( opt[0]=="--repositories" ):
+    elif ( opt[0] in ["--repositories"] ):
         repos = opt[1]
-    elif ( opt[0]=="--py-files" ):
+    elif ( opt[0] in ["--py-files"] ):
         pyfiles = opt[1]
-    elif ( opt[0]=="--files" ):
+    elif ( opt[0] in ["--files"] ):
         files = opt[1]
-    elif ( opt[0]=="--driver-memory" ):
+    elif ( opt[0] in ["--driver-memory"] ):
         driver_mem = opt[1]
-    elif ( opt[0]=="--driver-java-options" ):
+    elif ( opt[0] in ["--driver-java-options"] ):
         driver_java_opts = opt[1]
-    elif ( opt[0]=="--driver-library-path" ):
+    elif ( opt[0] in ["--driver-library-path"] ):
         driver_lib_path = opt[1]
-    elif ( opt[0]=="--driver-class-path" ):
+    elif ( opt[0] in ["--driver-class-path"] ):
         driver_class_path = opt[1]
-    elif ( opt[0]=="--executor-cores" ):
+    elif ( opt[0] in ["--executor-cores"] ):
         exec_cores = opt[1]
-    elif ( opt[0]=="--executor-memory" ):
+    elif ( opt[0] in ["--executor-memory"] ):
         exec_mem = opt[1]
 
 # environment sanity checks
@@ -479,7 +484,7 @@ if ( init_svcs ):
         cmdline += " --work-dir "+workdir
     cmdline += " "+spark_master
     sys.stderr.write(cmdline+"\n")
-    launcher.launch(cmdline,os.environ,tpn=tpn,
+    launcher.launch(cmdline,os.environ,wpn=wpn,
                     worker_on_mother_superior=worker_on_mother_superior)
     time.sleep(pausetime)
 
