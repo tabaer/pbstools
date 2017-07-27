@@ -109,6 +109,9 @@ physical memory on the node minus 1 GB.
 Launch <N> workers per node.  The default is 1.  Current Spark best practices
 indicate that more than 1 worker per node is only beneficial with >200 GB of RAM
 per node.
+TP
+.B --worker-cores <N> or -w <N>
+Use <N> cores per worker.  The default is all available.
 .TP
 .B --pausetime <N> or -p <N>
 Pause <N> seconds between startup stages (default 5)
