@@ -27,7 +27,7 @@ import warnings
 class Launcher:
     def launch(self,cmdline,env,propagate_env=False,
                prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
-               wpn=1,worker_cores=None,worker_on_mother_superior=True):
+               wpn=1,worker_on_mother_superior=True):
         raise NotImplementedError
     def sleep(self):
         sleeptime = 5
@@ -48,8 +48,8 @@ class Launcher:
 
 class ExecLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
-               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS","SPARK_WORKER_CORES"],
-               wpn=1,worker_cores=None,worker_on_mother_superior=True):
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
+               wpn=1,worker_on_mother_superior=True):
         time.sleep(1)
 
         # sanity check
@@ -58,50 +58,46 @@ class ExecLauncher(Launcher):
         
         # lots of squick to try to limit the number of cores used on big
         # SMP/NUMA systems that are likely shared with other users
-        if ( worker_cores is None ):
-            cpuset = None
-            cpusetroot = None
-            cpus = 0
-            if ( os.path.exists("/proc/self/cpuset") ):
-                cpusetfile = open("/proc/self/cpuset")
-                cpuset = cpusetfile.read().rstrip("\n")
-                cpusetfile.close()
-            if ( os.path.exists("/dev/cpuset") ):
-                cpusetroot = "/dev/cpuset"
-            elif ( os.path.exists("/sys/fs/cgroup/cpuset") ):
-                cpusetroot = "/sys/fs/cgroup/cpuset"
-            if ( cpusetroot is not None and cpuset is not None ):
-                cpusfile = None
-                if ( os.path.exists(cpusetroot+cpuset+"/cpus") ):
-                    cpusfile = open(cpusetroot+cpuset+"/cpus")
-                elif ( os.path.exists(cpusetroot+cpuset+"/cpuset.cpus") ):
-                    cpusfile = open(cpusetroot+cpuset+"/cpuset.cpus")
-                if ( cpusfile is not None ):
-                    allcpus = cpusfile.read()
-                    cpusfile.close()
-                    for cgroup in allcpus.split(","):
-                        cpurange = cgroup.split("-")
-                        if ( len(cpurange)==1 ):
-                            cpus += 1
-                        elif ( len(cpurange)==2 ):
-                            cpus += int(cpurange[1])-int(cpurange[0])+1
-                if ( cpus==0 and "PBS_NP" in os.environ.keys() ):
-                    try:
-                        cpus = int(os.environ["PBS_NP"])
-                    except e,Exception:
-                        pass
-                elif ( cpus==0 and "PBS_NUM_PPN" in os.environ.keys() ):
-                    try:
-                        cpus = int(os.environ["PBS_NUM_PPN"])
-                    except e,Exception:
-                        pass
-            if ( cpus>0 ):
-                os.environ["SPARK_WORKER_CORES"] = str(cpus)
-                env["SPARK_WORKER_CORES"] = str(cpus)
-            # need to do the equivalent shenanigans for memory at some point...
-        else:
-            os.environ["SPARK_WORKER_CORES"] = str(worker_cores)
-            env["SPARK_WORKER_CORES"] = str(worker_cores)
+        cpuset = None
+        cpusetroot = None
+        cpus = 0
+        if ( os.path.exists("/proc/self/cpuset") ):
+            cpusetfile = open("/proc/self/cpuset")
+            cpuset = cpusetfile.read().rstrip("\n")
+            cpusetfile.close()
+        if ( os.path.exists("/dev/cpuset") ):
+            cpusetroot = "/dev/cpuset"
+        elif ( os.path.exists("/sys/fs/cgroup/cpuset") ):
+            cpusetroot = "/sys/fs/cgroup/cpuset"
+        if ( cpusetroot is not None and cpuset is not None ):
+            cpusfile = None
+            if ( os.path.exists(cpusetroot+cpuset+"/cpus") ):
+                cpusfile = open(cpusetroot+cpuset+"/cpus")
+            elif ( os.path.exists(cpusetroot+cpuset+"/cpuset.cpus") ):
+                cpusfile = open(cpusetroot+cpuset+"/cpuset.cpus")
+            if ( cpusfile is not None ):
+                allcpus = cpusfile.read()
+                cpusfile.close()
+                for cgroup in allcpus.split(","):
+                    cpurange = cgroup.split("-")
+                    if ( len(cpurange)==1 ):
+                        cpus += 1
+                    elif ( len(cpurange)==2 ):
+                        cpus += int(cpurange[1])-int(cpurange[0])+1
+            if ( cpus==0 and "PBS_NP" in os.environ.keys() ):
+                try:
+                    cpus = int(os.environ["PBS_NP"])
+                except e,Exception:
+                    pass
+            elif ( cpus==0 and "PBS_NUM_PPN" in os.environ.keys() ):
+                try:
+                    cpus = int(os.environ["PBS_NUM_PPN"])
+                except e,Exception:
+                    pass
+        if ( cpus>0 ):
+            os.environ["SPARK_WORKER_CORES"] = str(cpus)
+            env["SPARK_WORKER_CORES"] = str(cpus)
+        # need to do the equivalent shenanigans for memory at some point...
         # base functionality
         argv = cmdline.split()
         if ( propagate_env ):
@@ -115,10 +111,9 @@ class ExecLauncher(Launcher):
 
 class PBSDSHLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
-               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS","SPARK_WORKER_CORES"],
-               wpn=1,worker_cores=None,worker_on_mother_superior=True):
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
+               wpn=1,worker_on_mother_superior=True):
         time.sleep(1)
-        os.environ["SPARK_WORKER_CORES"] = str(worker_cores)
         cmd = cmdline
         if ( propagate_env ):
             cmd = self.env_string(env,prop_env_list)+" "+cmdline
@@ -136,10 +131,9 @@ class PBSDSHLauncher(Launcher):
 
 class SSHLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
-               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS","SPARK_WORKER_CORES"],
-               wpn=1,worker_cores=None,worker_on_mother_superior=True):
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
+               wpn=1,worker_on_mother_superior=True):
         time.sleep(1)
-        os.environ["SPARK_WORKER_CORES"] = str(worker_cores)
         if ( "PBS_NODEFILE" in os.environ.keys() ):
             if ( wpn is None ):
                 nodes = nodelist()
@@ -278,7 +272,7 @@ launcher = PBSDSHLauncher()
 log4j_props = None
 wpn = 1
 worker_cores = None
-memlimit = None
+worker_mem = None
 driver_mem = None
 driver_java_opts = None
 driver_lib_path = None
@@ -389,10 +383,10 @@ for opt in opts:
         wpn = int(opt[1])
         if ( opt[0] in ["--tasks-per-node","--tpn"] ):
             warnings.warn("The option %s=%s is deprecated, please use --workers-per-node=%s instead." % (opt[0],opt[1],opt[1]),DeprecationWarning,stacklevel=2)
-    elif ( opt[0] in ["--worker_cores","-w"] ):
+    elif ( opt[0] in ["--worker-cores","-w"] ):
         worker_cores = int(opt[1])
     elif ( opt[0] in ["--worker-memory","-m","--memory"] ):
-        memlimit = opt[1]
+        worker_mem = opt[1]
         if ( opt[0] in ["--memory"] ):
             warnings.warn("The option %s=%s is deprecated, please use --worker-memory=%s instead." % (opt[0],opt[1],opt[1]),DeprecationWarning,stacklevel=2)
     elif ( opt[0] in ["--worker-on-mother-superior"] ):
@@ -491,13 +485,15 @@ if ( init_svcs ):
 
     # launch workers
     cmdline = os.environ["SPARK_HOME"]+"/bin/spark-class org.apache.spark.deploy.worker.Worker"
-    if ( memlimit is not None ):
-        cmdline += " --memory "+memlimit
+    if ( worker_cores is not None ):
+        cmdline += " --cores "+str(worker_cores)
+    if ( worker_mem is not None ):
+        cmdline += " --memory "+worker_mem
     if ( workdir is not None ):
         cmdline += " --work-dir "+workdir
     cmdline += " "+spark_master
     sys.stderr.write(cmdline+"\n")
-    launcher.launch(cmdline,os.environ,wpn=wpn,worker_cores=worker_cores,
+    launcher.launch(cmdline,os.environ,wpn=wpn,
                     worker_on_mother_superior=worker_on_mother_superior)
     time.sleep(pausetime)
 
