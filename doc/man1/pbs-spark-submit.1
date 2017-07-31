@@ -101,15 +101,15 @@ the current working directory, unless the environment variable
 is set, in which case that will be used.  The working directory 
 .B MUST be shared across all nodes in the job.
 .TP
-.B --workers-per-node <N> or --wpn <N> or -t <N>
+.B --workers-per-node <N> or --wpn <N> or -W <N>
 Launch <N> workers per node.  The default is 1.  Current Spark best practices
 indicate that more than 1 worker per node is only beneficial with >200 GB of RAM
 per node.
 TP
-.B --worker-cores <N> or -w <N>
+.B --worker-cores <N> or --wc <N> or -w <N>
 Use <N> cores per worker.  The default is all available.
 .TP
-.B --worker-memory <memlimit> or -m <memlimit>
+.B --worker-memory <memlimit> or --wm <memlimit> or -m <memlimit>
 Set the per-worker memory limit to <memlimit>; defaults to the
 physical memory on the node minus 1 GB.
 .TP

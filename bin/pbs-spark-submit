@@ -233,9 +233,9 @@ def usage():
     sys.stderr.write("\t--log-dir <logdir> or -L <logdir>\n\t\tPlace logs in <logdir>.\n")
     sys.stderr.write("\t--log4j-properties <propsfile> or -l <propsfile>\n\t\tRead log4j properties from <propsfile>.\n")
     sys.stderr.write("\t--work-dir <workdir> or -d <workdir>\n\t\tUse <workdir> as Spark program's working directory.\n")
-    sys.stderr.write("\t--workers-per-node <N> or --wpn <N> or -t <N>\n\t\tLaunch <N> worker tasks per node instead of the default (1).\n")
-    sys.stderr.write("\t--worker-cores <N> or -w <N>\n\t\tUse <N> cores per worker (default all available).\n")
-    sys.stderr.write("\t--worker-memory <memlimit> or -m <memlimit>\n\t\tSet per-worker memory limit.\n")
+    sys.stderr.write("\t--workers-per-node <N> or --wpn <N> or -W <N>\n\t\tLaunch <N> worker tasks per node instead of the default (1).\n")
+    sys.stderr.write("\t--worker-cores <N> or --wc <N> or -w <N>\n\t\tUse <N> cores per worker (default all available).\n")
+    sys.stderr.write("\t--worker-memory <memlimit> or --wm <memlimit> or -m <memlimit>\n\t\tSet per-worker memory limit.\n")
     sys.stderr.write("\t--pausetime <N> or -p <N>\n\t\tPause <N> seconds between startup stages (default 5).\n")
     sys.stderr.write("\t--conf <key>=<value> or -D <key>=<value>\n\t\tSet the Java property <key> to <value>.\n")
     sys.stderr.write("\t--properties-file <propfile> or -P <propfile>\n\t\tRead Java properties from <propfile>.\n")
@@ -316,7 +316,7 @@ elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
 # command line argument handling
 try:
     opts, child_args = getopt.getopt(sys.argv[1:],
-                                     "C:D:d:hL:l:M:m:NP:p:t:w:",
+                                     "C:D:d:hL:l:M:m:NP:p:t:W:w:",
                                      ["help",
                                       "init",
                                       "no-init",
@@ -330,7 +330,9 @@ try:
                                       "workers-per-node=",
                                       "wpn=",
                                       "worker-cores=",
+                                      "wc=",
                                       "worker-memory=",
+                                      "wm=",
                                       "worker-on-mother-superior",
                                       "no-worker-on-mother-superior",
                                       "master-interface=",
@@ -379,13 +381,13 @@ for opt in opts:
         log4j_props = opt[1]
     elif ( opt[0] in ["--work-dir","-d"] ):
         workdir = opt[1]
-    elif ( opt[0] in ["--workers-per-node","--wpn","-t","--tasks-per-node","--tpn"] ):
+    elif ( opt[0] in ["--workers-per-node","--wpn","-W","--tasks-per-node","--tpn","-t"] ):
         wpn = int(opt[1])
-        if ( opt[0] in ["--tasks-per-node","--tpn"] ):
+        if ( opt[0] in ["--tasks-per-node","--tpn","-t"] ):
             warnings.warn("The option %s=%s is deprecated, please use --workers-per-node=%s instead." % (opt[0],opt[1],opt[1]),DeprecationWarning,stacklevel=2)
-    elif ( opt[0] in ["--worker-cores","-w"] ):
+    elif ( opt[0] in ["--worker-cores","--wc","-w"] ):
         worker_cores = int(opt[1])
-    elif ( opt[0] in ["--worker-memory","-m","--memory"] ):
+    elif ( opt[0] in ["--worker-memory","--wm","-m","--memory"] ):
         worker_mem = opt[1]
         if ( opt[0] in ["--memory"] ):
             warnings.warn("The option %s=%s is deprecated, please use --worker-memory=%s instead." % (opt[0],opt[1],opt[1]),DeprecationWarning,stacklevel=2)
