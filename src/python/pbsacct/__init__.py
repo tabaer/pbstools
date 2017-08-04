@@ -624,7 +624,7 @@ def raw_data_from_file(filename):
         
         # Get the fields from the log entry
         try:
-            time, record_type, jobid, resources = line.split(";",3)
+            time, record_type, jobid, resources = line.rstrip('\n').split(";",3)
         except ValueError:
             print("ERROR:  Invalid number of fields (requires 4).  Unable to parse entry: %s" % (str(line.split(";",3))))
             continue
@@ -632,7 +632,7 @@ def raw_data_from_file(filename):
         # Create a dict for the various resources
         resources_dict = dict()
         for resource in resources.split(" "):
-            match = re.match("^([^=]*)=(.*)", resource)
+            match = re.match("^([^=]*)=(.+)", resource)
             if match:
                 key = match.group(1)
                 value = match.group(2)
@@ -641,6 +641,8 @@ def raw_data_from_file(filename):
                 if key in []:
                     value = float(value)
                 resources_dict[key] = value
+            elif ( resource!="" ):
+                sys.stderr.write("WARNING:  filename=%s, jobid=%s:  Malformed resource \"%s\"\n" % (filename,jobid,resource))
         
         # Store the data in the output
         output.append((jobid, time, record_type, resources_dict))
