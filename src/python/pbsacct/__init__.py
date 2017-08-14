@@ -1165,6 +1165,7 @@ class pbsacctDB:
                     self.cursor().execute(sql)
                     self.commit()
                 except Exception as e:
+                    sys.stderr.write("%s\n" % sql)
                     sys.stderr.write(str(e))
 
     def update_job(self,job,system=None,check_existance=True,noop=False,append_to_jobid=None):
@@ -1190,6 +1191,7 @@ class pbsacctDB:
                         self.cursor().execute(sql)
                         self.commit()
                     except Exception as e:
+                        sys.stderr.write("%s\n" % sql)
                         sys.stderr.write(str(e))
 
     def insert_or_update_job(self,job,system=None,noop=False,append_to_jobid=None):

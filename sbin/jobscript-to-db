@@ -104,5 +104,6 @@ for scriptfile in filelist:
                 cursor.execute(sql,(script,system,jobid))
                 dbconn.commit()
             except Exception as e:
+                sys.stderr.write("%s\n" % sql)
                 sys.stderr.write(str(e))
 
