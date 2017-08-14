@@ -28,7 +28,7 @@ def usage():
     sys.stderr.write("Usage:\tjob-db-update\t[-h system] [-s dbhost] [-D dbtype]\n")
     sys.stderr.write("\t\t\t[-d dbname] [-u dbuser] [-p dbpasswd] [-q]\n")
     sys.stderr.write("\t\t\t[-t jobstable] [-C config_table] [-w sw_table]\n")
-    sys.stderr.write("\t\t\t[-c cfgfile]\n")
+    sys.stderr.write("\t\t\t[-c cfgfile] [-A append_to_jobid_in_db]\n")
     sys.stderr.write("\t\t\tacctfile [...acctfiles...]\n")
     sys.exit(0)
 

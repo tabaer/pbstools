@@ -19,9 +19,11 @@ import re
 import sys
 
 def usage():
-    sys.stderr.write("Usage:\tjs\t[-h system] [-s dbhost] [-D dbtype]\n")
-    sys.stderr.write("\t\t[-d dbname] [-u dbuser] [-p dbpasswd]\n")
-    sys.stderr.write("\t\t[-t jobstable] [-c cfgfile]\n")
+    sys.stderr.write("Usage:\tjobscript-to-db\t[-h system] [-s dbhost] [-D dbtype]\n")
+    sys.stderr.write("\t\t\t[-d dbname] [-u dbuser] [-p dbpasswd]\n")
+    sys.stderr.write("\t\t\t[-t jobstable] [-C config_table] [-w sw_table]\n")
+    sys.stderr.write("\t\t\t[-c cfgfile] [-A append_to_jobid_in_db]\n")
+    sys.stderr.write("\t\t\tjobscript [...jobscripts...]\n")
     sys.exit(0)
 
 
