@@ -1,168 +1,111 @@
-#!/usr/bin/perl
+#!/usr/bin/env python
 #
 # jobscript-to-db -- copy newly spooled job scripts into database
+# Python rewrite
+# Copyright 2017 Ohio Supercomputer Center
+#
+# Derived from original Perl code:
 # Copyright 2006 Ohio Supercomputer Center
 #
 # License:  GNU GPL v2; see ../COPYING for details.
-# Revision info:
-# $HeadURL$
-# $Revision$
-# $Date$
 #
 # Not intended to be invoked directly, but rather by spool-jobscripts
 # (which is itself invoked by dnotify or moral equivalent).
-use POSIX;
-use DBI;
 
-sub keyval_exists
-{
-    local($key,$val,$dbtable,$dbh) = @_;
-    local($sth,$n);
+import getopt
+import os
+import pbsacct
+import re
+import sys
 
-    $sth=$dbh->prepare("SELECT ".$key." FROM ".$dbtable." WHERE ".$key." = \'".$val."\';")
-	or die "Could not prepare query:  $dbh->errstr";
-    $n=$sth->execute or die "Could not execute query:  $sth->errstr";
+def usage():
+    sys.stderr.write("Usage:\tjs\t[-h system] [-s dbhost] [-D dbtype]\n")
+    sys.stderr.write("\t\t[-d dbname] [-u dbuser] [-p dbpasswd]\n")
+    sys.stderr.write("\t\t[-t jobstable] [-c cfgfile]\n")
+    sys.exit(0)
 
-    $n;
-}
 
 #
-# Main program begins here
+# Main program starts here
 #
+dbhost = "localhost"
+dbname = "pbsacct"
+dbuser = "pbsacct"
+dbpasswd = "pbsRroxor"
+system = None
+noop = False
+append_to_jobid_in_db = None
 
-# my spool dir
-$spooldir=$ARGV[0];
+db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
+if ( not os.environ.has_key("PBSTOOLS_DIR") ):
+    os.environ["PBSTOOLS_DIR"] = "/usr/local"
+cfgfile = os.environ["PBSTOOLS_DIR"]+"/etc/pbsacctdb.cfg"
+if ( os.path.exists(cfgfile) ):
+    db.readConfigFile(cfgfile)
 
-# my system name in DB
-$system=`hostname`;
+# command line processing
+try:
+    opts, filelist = getopt.getopt(sys.argv[1:],
+                                   "C:D:Ta:c:d:h:p:s:t:u:w:",
+                                   [])
+except getopt.GetoptError, err:
+    sys.stderr.write(str(err)+"\n")
+    usage()
+for opt in opts:
+    if ( opt[0]=="-C" ):
+        db.setConfigTable(opt[1])
+    elif ( opt[0]=="-D" ):
+        db.setType(opt[1])
+    elif ( opt[0]=="-T" ):
+        noop = True
+    elif ( opt[0]=="-a" ):
+        append_to_jobid_in_db = opt[1]
+    elif ( opt[0]=="-c" ):
+        db.readConfigFile(opt[1])
+    elif ( opt[0]=="-d" ):
+        db.setName(opt[1])
+    elif ( opt[0]=="-h" ):
+        db.setSystem(opt[1])
+    elif ( opt[0]=="-p" ):
+        db.setPassword(opt[1])
+    elif ( opt[0]=="-s" ):
+        db.setServerName(opt[1])
+    elif ( opt[0]=="-t" ):
+        db.setJobsTable(opt[1])
+    elif ( opt[0]=="-u" ):
+        db.setUser(opt[1])
+    elif ( opt[0]=="-w" ):
+        db.setSoftwareTable(opt[1])
 
-# figure out pbs server name (we need it later)
-if ( ! defined($ENV{"PBS_HOME"}) )
-{
-    die "\$PBS_HOME undefined!";
-} 
-$pbsspooldir=$ENV{"PBS_HOME"};
-open(SERVERNAME,"<$pbsspooldir/server_name");
-$pbsserver=<SERVERNAME>;
-close(SERVERNAME);
-chop($pbsserver);
-# in HA configurations, server_name contains a comma-separated list of
-# servers with the primary listed first
-# strip off all others
-$pbsserver =~ s/,.*$//;
-# hack for sloppy admins who don't put the full hostname
-# in $PBS_HOME/server_name
-# ***WARNING*** you may have to comment out the following code if
-# the servername doesn't resolve for whatever reason
-if ( $pbsserver =~ /:/ )
-  {
-    ($host,$port) = split(/:/,$pbsserver);
-    @server=gethostbyname($host);
-    $pbsserver=$server[0].":".$port;
-  }
-else
-  {
-    @server=gethostbyname($pbsserver);
-    $pbsserver=$server[0];
-    $host=$server[0];
-  }
+if ( system is None and db.getSystem() is not None ):
+    system = db.getSystem()
+else:
+    system = "%"
 
-$dbhost="localhost";
-$dbuser="pbsacct";
-$dbpasswd="pbsRroxor";
-$dbname="pbsacct";
-$dbtable="Jobs";
+dbconn = db.connect()
+cursor = dbconn.cursor()
 
-$doupdate = 0;
+insert_template = "INSERT INTO %s (script,system,jobid) VALUES (?,?,?);" % db.getJobsTable()
+update_template = "UPDATE %s SET script=? WHERE system LIKE ? and jobid=?;" % db.getJobsTable()
 
-while ( $ARGV[0] =~ /^-.*/ )
-  {
-    if ( $ARGV[0] eq "-d" )
-      {
-	$dbname=$ARGV[1];
-	shift(@ARGV);
-      }
-    elsif ( $ARGV[0] eq "-h" )
-      {
-	$system=$ARGV[1];
-	shift(@ARGV);
-      }
-    elsif ( $ARGV[0] eq "-p" )
-      {
-	$dbpasswd=$ARGV[1];
-	shift(@ARGV);
-      }
-    elsif ( $ARGV[0] eq "-s" )
-      {
-	$dbhost=$ARGV[1];
-	shift(@ARGV);
-      }
-    elsif ( $ARGV[0] eq "-t" )
-      {
-	$dbtable=$ARGV[1];
-	shift(@ARGV);
-      }
-    elsif ( $ARGV[0] eq "-u" )
-      {
-	$dbuser=$ARGV[1];
-	shift(@ARGV);
-      }
-    elsif ( $ARGV[0] eq "-U" )
-      {
-        $doupdate = 1;
-      }
+for scriptfile in filelist:
+    if ( os.path.exists(scriptfile) and os.access(scriptfile,os.R_OK) ):
+        jobid = os.basename(scriptfile).rstrip(".SC")
+        if ( append_to_jobid_in_db is not None ):
+            jobid = jobid+append_to_jobid_in_db
+        scriptfp = open(scriptfile)
+        script = "".join(scriptfp.readlines())
+        scriptfp.close()
+        if ( db.job_exists(jobid,append_to_jobid_in_db) ):
+            sql = update_template
+        else:
+            sql = insert_template
+        if ( noop ):
+            sys.stderr.write("%s (%s,%s,%s)\n" % (sql,script,system,jobid))
+        else:
+            try:
+                cursor.execute(sql,(script,system,jobid))
+                cursor.commit()
+            except Exception as e:
+                sys.stderr.write(str(e))
 
-    shift(@ARGV);
-  }
-
-# connect to DB
-$dsn = "DBI:mysql:database=$dbname;host=$dbhost;";
-$dbh = DBI->connect($dsn,$dbuser,$dbpasswd) ||
-  die "$0:  unable to connect to DB!\n";
-$insertquery="INSERT INTO $dbtable \(jobid,system,script\) VALUES \(?,?,?\);";
-$insert=$dbh->prepare($insertquery) ||
-  die "$0:  unable to prepare query -- ".$insert->errstr;
-$updatequery="UPDATE $dbtable SET script=? WHERE system=? and jobid=?;";
-$update=$dbh->prepare($updatequery) ||
-  die "$0:  unable to prepare query -- ".$update->errstr;
-
-
-foreach $scriptfile (@ARGV)
-{
-    if ( -e $scriptfile && -r $scriptfile )
-    {
-	# figure out the full jobid from the truncated version
-        # in the script name
-	$jobid=$scriptfile;
-	$jobid =~ s/^.*\///;
-	$jobid =~ s/\..*$//;
-	# $jobid should be just digits at this point, otherwise ignore it
-	if ( $jobid =~ /^[0-9]+$/ )
-	{
-	    $jobid .= ".".$pbsserver;
-
-            # suck the script into memory
-            open(SCRIPT,"<$scriptfile");
-            $script_length=read(SCRIPT,$script,(64*1024));
-            close(SCRIPT);
-            # may need to massage script contents...?
-	    
-	    # Check if this jobid key already exists in the DB -- if not,
-	    # insert the script
-	    if ( &keyval_exists("jobid",$jobid,$dbtable,$dbh)==0 )
-	    {
-		# do the DB insert
-		$insert->execute($jobid,$system,$script) || die "problem executing query -- ".$insert->errstr;;
-	    }
-            elsif ( $doupdate==1 )
-            {
-                # do the DB update
-                # note that this is turned off by default
-                $update->execute($script,$system,$jobid) || die "problem executing query -- ".$update->errstr;;
-            }
-	}
-    }
-}
-
-# disconnect from DB
-$dbh->disconnect();
