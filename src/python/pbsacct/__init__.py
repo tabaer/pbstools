@@ -1161,8 +1161,11 @@ class pbsacctDB:
             if ( noop ):
                 sys.stderr.write("%s\n" % sql)
             else:
-                self.cursor().execute(sql)
-                self.commit()
+                try:
+                    self.cursor().execute(sql)
+                    self.commit()
+                except Exception as e:
+                    sys.stderr.write(str(e))
 
     def update_job(self,job,system=None,check_existance=True,noop=False,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
@@ -1183,8 +1186,11 @@ class pbsacctDB:
                 if ( noop ):
                     sys.stderr.write("%s\n" % sql)
                 else:
-                    self.cursor().execute(sql)
-                    self.commit()
+                    try:
+                        self.cursor().execute(sql)
+                        self.commit()
+                    except Exception as e:
+                        sys.stderr.write(str(e))
 
     def insert_or_update_job(self,job,system=None,noop=False,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
