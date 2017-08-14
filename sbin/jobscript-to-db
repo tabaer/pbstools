@@ -85,27 +85,24 @@ else:
 dbconn = db.connect()
 cursor = dbconn.cursor()
 
-insert_template = "INSERT INTO %s (script,system,jobid) VALUES (?,?,?);" % db.getJobsTable()
-update_template = "UPDATE %s SET script=? WHERE system LIKE ? and jobid=?;" % db.getJobsTable()
-
 for scriptfile in filelist:
     if ( os.path.exists(scriptfile) and os.access(scriptfile,os.R_OK) ):
-        jobid = os.basename(scriptfile).rstrip(".SC")
+        jobid = os.path.basename(scriptfile).rstrip(".SC")
         if ( append_to_jobid_in_db is not None ):
             jobid = jobid+append_to_jobid_in_db
         scriptfp = open(scriptfile)
         script = "".join(scriptfp.readlines())
         scriptfp.close()
         if ( db.job_exists(jobid,append_to_jobid_in_db) ):
-            sql = update_template
+            sql = "UPDATE "+db.getJobsTable()+" SET script=%s WHERE system LIKE %s AND jobid=%s;"
         else:
-            sql = insert_template
+            sql = "INSERT INTO "+db.getJobsTable()+" (script,system,jobid) VALUES (%s,%s,%s);"
         if ( noop ):
             sys.stderr.write("%s (%s,%s,%s)\n" % (sql,script,system,jobid))
         else:
             try:
                 cursor.execute(sql,(script,system,jobid))
-                cursor.commit()
+                dbconn.commit()
             except Exception as e:
                 sys.stderr.write(str(e))
 
