@@ -913,12 +913,13 @@ if ( listmode ):
 dbconn = db.connect()
 cursor = dbconn.cursor()
 
-# work around index selection brain damage in older versions of MySQL
 use_index = ""
-if ( db.getType()=="mysql" ):
-    use_index = "USE INDEX (sw_app_jobs)"
-    if ( startdate is not None or enddate is not None ):
-        use_index = "USE INDEX (system_start_jobs)"
+# work around index selection brain damage in older versions of MySQL
+# uncomment this block if these operations seem to take too long
+# if ( db.getType() in ["mysql"] ):
+#     use_index = "USE INDEX (sw_app_jobs)"
+#     if ( startdate is not None or enddate is not None ):
+#         use_index = "USE INDEX (system_start_jobs)"
 
 if ( domultimatch ):
     # do multi-match analysis
