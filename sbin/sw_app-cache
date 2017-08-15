@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import getopt
-import MySQLdb
+import pbsacct
 import os
 import sys
 
@@ -14,16 +14,22 @@ dbhost = "localhost"
 dbuser = "pbsacct"
 dbpasswd = "pbsRroxor"
 dbname = "pbsacct"
-jobstable = "Jobs"
-cachetable = "Software"
 hostname = None
 start_date = None
 end_date = None
+noop = False
+
+db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
+if ( not os.environ.has_key("PBSTOOLS_DIR") ):
+    os.environ["PBSTOOLS_DIR"] = "/usr/local"
+cfgfile = os.environ["PBSTOOLS_DIR"]+"/etc/pbsacctdb.cfg"
+if ( os.path.exists(cfgfile) ):
+    db.readConfigFile(cfgfile)
 
 # command line processing
 try:
     opts, args = getopt.getopt(sys.argv[1:],
-                               "E:S:c:d:h:j:p:s:u:",
+                               "E:S:Tc:d:h:p:s:t:u:w:",
                                [])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
@@ -33,34 +39,41 @@ for opt in opts:
         end_date = opt[1]
     elif ( opt[0]=="-S" ):
         start_date = opt[1]
+    elif ( opt[0]=="-T" ):
+        noop = True
     elif ( opt[0]=="-c" ):
-        cachetable = opt[1]
+        db.readConfigFile(opt[1])
     elif ( opt[0]=="-d" ):
-        dbname = opt[1]
+        db.setName(opt[1])
     elif ( opt[0]=="-h" ):
-        hostname = opt[1]
-    elif ( opt[0]=="-j" ):
-        jobstable = opt[1]
+        db.setSystem(opt[1])
     elif ( opt[0]=="-p" ):
-        dbpasswd = opt[1]
+        db.setPassword(opt[1])
     elif ( opt[0]=="-s" ):
-        dbhost = opt[1]
+        db.setServerName(opt[1])
+    elif ( opt[0]=="-t" ):
+        db.setJobsTable(opt[1])
     elif ( opt[0]=="-u" ):
-        dbuser = opt[1]
+        db.setUser(opt[1])
+    elif ( opt[0]=="-w" ):
+        db.setSoftwareTable(opt[1])
 
+use_index = ""
 # work around index selection brain damage in older versions of MySQL
-use_index = "USE INDEX (sw_app_jobs)"
-if ( start_date is not None or end_date is not None ):
-    use_index = "USE INDEX (system_start_jobs)"
+# uncomment this block if these operations seem to take too long
+# if ( db.getType() in ["mysql"] ):
+#     use_index = "USE INDEX (sw_app_jobs)"
+#     if ( start_date is not None or end_date is not None ):
+#         use_index = "USE INDEX (system_start_jobs)"
 
 # connect to DB
-db = MySQLdb.connect(host=dbhost,db=dbname,user=dbuser,passwd=dbpasswd)
-cursor = db.cursor()
+dbconn = db.connect()
+cursor = dbconn.cursor()
 
 packages_in_jobs = []
-select = "SELECT DISTINCT(sw_app) AS package FROM "+jobstable+" "+use_index+" WHERE sw_app IS NOT NULL"
-if ( hostname is not None ):
-    select += " AND system='"+hostname+"'"
+select = "SELECT DISTINCT(sw_app) AS package FROM "+db.getJobsTable()+" "+use_index+" WHERE sw_app IS NOT NULL"
+if ( db.getSystem() is not None ):
+    select += " AND system='"+db.getSystem()+"'"
 if ( start_date is not None ):
     select += " AND start_date>='"+start_date+"'"
 if ( end_date is not None ):
@@ -71,15 +84,14 @@ try:
         packages_in_jobs.append(row[0])
 except KeyboardInterrupt:
     raise
-except MySQLdb.Error, e:
-    sys.stderr.write("Error %d: %s\n" % (e.args[0],e.args[1]))
-    sys.exit(1)
 except Error, e:
-    sys.stderr.write("Unknown error in package select from "+jobstable+":  "+str(e)+"\n")
+    sys.stderr.write("Error in package select from "+db.getJobsTable()+":  "+str(e)+"\n")
     sys.exit(2)
+if ( noop ):
+    sys.stderr.write("Packages in jobs:  [%s]\n\n" % ",".join(packages_in_jobs))
 
 packages_in_cache = []
-select = "SELECT package FROM "+cachetable
+select = "SELECT package FROM "+db.getSoftwareTable()
 try:
     cursor.execute(select)
     for row in cursor.fetchall():
@@ -90,27 +102,28 @@ except MySQLdb.Error, e:
     sys.stderr.write("Error %d: %s\n" % (e.args[0],e.args[1]))
     sys.exit(1)
 except Error, e:
-    sys.stderr.write("Unknown error in package select from "+cachetable+":  "+str(e)+"\n")
+    sys.stderr.write("Unknown error in package select from "+db.getSoftwareTable()+":  "+str(e)+"\n")
     sys.exit(2)
+if ( noop ):
+    sys.stderr.write("Packages in cache:  [%s]\n\n" % ",".join(packages_in_cache))
 
 for pkg in packages_in_jobs:
     if ( pkg not in packages_in_cache ):
         # use the IGNORE keyword here in case there are more than one of these
         # hitting the DB at once
-        insert = "INSERT IGNORE INTO "+cachetable+" SET package='"+pkg+"'"
-        #print insert
-        try:
-            cursor.execute(insert)
-            db.commit()
-        except KeyboardInterrupt:
-            raise
-        except MySQLdb.Error, e:
-            if db:
-                db.rollback()
-            sys.stderr.write("Error %d: %s\n" % (e.args[0],e.args[1]))
-            sys.exit(1)
-        except Error, e:
-            sys.stderr.write("Unknown error in insert of "+pkg+" into "+cachetable+":  "+str(e)+"\n")
-            sys.exit(2)
+        insert = "INSERT IGNORE INTO "+db.getSoftwareTable()+" SET package='"+pkg+"'"
+        if ( noop ):
+            sys.stderr.write("%s\n" % insert)
+        else:
+            try:
+                cursor.execute(insert)
+                dbconn.commit()
+            except KeyboardInterrupt:
+                raise
+            except Error, e:
+                if dbconn:
+                    dbconn.rollback()
+                sys.stderr.write("Error in insert of "+pkg+" into "+db.getSoftwareTable()+":  "+str(e)+"\n")
+                sys.exit(2)
     
 db.close()
