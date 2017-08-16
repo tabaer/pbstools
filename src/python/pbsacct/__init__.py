@@ -345,8 +345,6 @@ class jobinfo:
         return self._nproc
 
     def num_gpus(self):
-        if ( self._ngpus>0 ):
-            return self._ngpus
         ngpus = 0
         # sadly, there doesn't appear to be a more elegant way to do this
         if ( self.nodes() is not None and "gpus=" in self.nodes() ):
@@ -368,8 +366,7 @@ class jobinfo:
                 ngpus = ngpus + nodes*gpn
         elif ( self.gres() is not None and "gpus:" in self.gres() ):
             ngpus = int(re.search("gpus:(\d+)",self.gres()).group(1))
-        self._ngpus = ngpus
-        return self._ngpus
+        return ngpus
 
     def feature(self):
         return self.get_resource("Resource_List.feature")
@@ -1052,8 +1049,10 @@ class pbsacctDB:
         if ( job.nodes() is not None and
              ( oldjob is None or job.nodes()!=oldjob.nodes() ) ):
              fields_to_set["nodes"] = "'%s'" % job.nodes()
-        if ( job.num_gpus()>0 and
-             ( oldjob is None or job.num_gpus()!=oldjob.num_gpus()) ):
+        # This is a bit hackish, but otherwise ngpus never gets set in the DB for some reason
+        #if ( job.num_gpus()>0 and
+        #     ( oldjob is None or job.num_gpus()!=oldjob.num_gpus()) ):
+        if ( job.num_gpus()>0 ):
              fields_to_set["ngpus"] = "'%d'" % job.num_gpus()
         if ( job.feature() is not None and
              ( oldjob is None or job.feature()!=oldjob.feature() ) ):
@@ -1385,8 +1384,6 @@ class pbsacctDB:
                             updatetime = int(resources["end"])
                         state = "E"
                     job = jobinfo(myjobid,datetime.datetime.fromtimestamp(float(updatetime)).strftime("%m/%d/%Y %H:%M:%S"),state,resources)
-                    if ( resources["ngpus"]>0 ):
-                        job._ngpus = resources["ngpus"]
                     return job
                 else:
                     raise RuntimeError("More than one result for jobid %s (should not be possible)" % jobid)        
