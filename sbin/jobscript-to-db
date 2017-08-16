@@ -95,7 +95,7 @@ for scriptfile in filelist:
         scriptfp = open(scriptfile)
         script = "".join(scriptfp.readlines())
         scriptfp.close()
-        if ( db.job_exists(jobid,append_to_jobid_in_db) ):
+        if ( db.job_exists(jobid) ):
             sql = "UPDATE "+db.getJobsTable()+" SET script=%s WHERE system LIKE %s AND jobid=%s;"
         else:
             sql = "INSERT INTO "+db.getJobsTable()+" (script,system,jobid) VALUES (%s,%s,%s);"
