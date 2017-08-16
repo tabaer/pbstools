@@ -18,6 +18,7 @@ hostname = None
 start_date = None
 end_date = None
 noop = False
+indexhack = False
 
 db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
 if ( not os.environ.has_key("PBSTOOLS_DIR") ):
@@ -29,7 +30,7 @@ if ( os.path.exists(cfgfile) ):
 # command line processing
 try:
     opts, args = getopt.getopt(sys.argv[1:],
-                               "E:S:Tc:d:h:p:s:t:u:w:",
+                               "E:IS:Tc:d:h:p:s:t:u:w:",
                                [])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
@@ -37,6 +38,8 @@ except getopt.GetoptError, err:
 for opt in opts:
     if ( opt[0]=="-E" ):
         end_date = opt[1]
+    elif ( opt[0]=="-I" ):
+        indexhack = True
     elif ( opt[0]=="-S" ):
         start_date = opt[1]
     elif ( opt[0]=="-T" ):
@@ -59,12 +62,10 @@ for opt in opts:
         db.setSoftwareTable(opt[1])
 
 use_index = ""
-# work around index selection brain damage in older versions of MySQL
-# uncomment this block if these operations seem to take too long
-# if ( db.getType() in ["mysql"] ):
-#     use_index = "USE INDEX (sw_app_jobs)"
-#     if ( start_date is not None or end_date is not None ):
-#         use_index = "USE INDEX (system_start_jobs)"
+if ( indexhack ):
+    use_index = "USE INDEX (sw_app_jobs)"
+    if ( start_date is not None or end_date is not None ):
+        use_index = "USE INDEX (system_start_jobs)"
 
 # connect to DB
 dbconn = db.connect()

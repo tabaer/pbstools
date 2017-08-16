@@ -835,6 +835,7 @@ append_to_jobid_in_db = None
 startdate = None
 enddate = None
 singlepkg = None
+indexhack = False
 
 db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
 if ( not os.environ.has_key("PBSTOOLS_DIR") ):
@@ -846,7 +847,7 @@ if ( os.path.exists(cfgfile) ):
 # command line processing
 try:
     opts, filelist = getopt.getopt(sys.argv[1:],
-                                   "C:D:E:FHLMTP:S::a:c:d:h:p:s:t:u:w:",
+                                   "C:D:E:FHILMTP:S::a:c:d:h:p:s:t:u:w:",
                                    ["help"])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
@@ -862,6 +863,8 @@ for opt in opts:
         fullreindex = True
     elif ( opt[0] in ["-H","--help"] ):
         usage()
+    elif ( opt[0] in ["-I"] ):
+        indexhack = True
     elif ( opt[0]=="-L" ):
         listmode = True
     elif ( opt[0]=="-M" ):
@@ -914,12 +917,10 @@ dbconn = db.connect()
 cursor = dbconn.cursor()
 
 use_index = ""
-# work around index selection brain damage in older versions of MySQL
-# uncomment this block if these operations seem to take too long
-# if ( db.getType() in ["mysql"] ):
-#     use_index = "USE INDEX (sw_app_jobs)"
-#     if ( startdate is not None or enddate is not None ):
-#         use_index = "USE INDEX (system_start_jobs)"
+if ( indexhack ):
+    use_index = "USE INDEX (sw_app_jobs)"
+    if ( startdate is not None or enddate is not None ):
+        use_index = "USE INDEX (system_start_jobs)"
 
 if ( domultimatch ):
     # do multi-match analysis
