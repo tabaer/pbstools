@@ -98,8 +98,7 @@ if ( len(destfiles)>0 ):
             args.append(destfile)
         if ( noop ):
             sys.stderr.write(" ".join(args))
-        else:
-            os.execvp(cmd,args)
+        os.execvp(cmd,args)
         sys.exit(0)
 
 sys.exit(0)
