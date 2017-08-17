@@ -532,7 +532,7 @@ class jobinfoTestCase(unittest.TestCase):
         j2.set_resource("Resource_List.nodes","4:ppn=28")
         j2.set_resource("Resource_List.neednodes","4:ppn=28")
         j2.set_resource("exec_host","o0799/0-27+o0797/0-27+o0786/0-27+o0795/0-27")
-        self.assertEqual(j2.num_nodes(),"4")
+        self.assertEqual(j2.num_nodes(),4)
         j3 = copy.deepcopy(self.testjob)
         j3.set_resource("Resource_List.nodes","3:ppn=28")
         j3.set_resource("Resource_List.neednodes","3:ppn=28")
