@@ -1150,11 +1150,11 @@ class pbsacctDB:
         if ( job.account() is not None and
              ( oldjob is None or job.account()!=oldjob.account() ) ):
              fields_to_set["account"] = "'%s'" % job.account()
-        # work around MySQL time field limitation -- cannot handle times >= 840:00:00
+        # work around MySQL time field limitation -- cannot handle times >= 839:00:00
         if ( self.getType()=="mysql" ):
             for timefield in ["cput","cput_req","walltime","walltime_req"]:
-                if ( timefield in fields_to_set and time_to_sec(fields_to_set[timefield].strip("'"))>=840*3600 ):
-                    fields_to_set[timefield] = "'839:59:59'"
+                if ( timefield in fields_to_set and time_to_sec(fields_to_set[timefield].strip("'"))>=839*3600 ):
+                    fields_to_set[timefield] = "'838:59:59'"
         if ( len(fields_to_set)>0 ):
             return fields_to_set
         else:
