@@ -549,6 +549,11 @@ class jobinfoTestCase(unittest.TestCase):
         j2 = copy.deepcopy(self.testjob)
         j2.set_resource('Resource_List.nodes','2:ppn=4+4:ppn=1')
         self.assertEqual(j2.num_processors(),12)
+        j3 = copy.deepcopy(self.testjob)
+        j3.set_resource("Resource_List.nodes","3:ppn=28")
+        j3.set_resource("Resource_List.neednodes","3:ppn=28")
+        j3.set_resource("total_execution_slots","84")
+        self.assertEqual(j3.num_processors(),84)
     def test_num_gpus(self):
         j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.num_gpus(),0)
