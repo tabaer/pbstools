@@ -275,21 +275,18 @@ class jobinfo:
         return nodes
 
     def num_nodes(self):
-        if ( self._nnodes>0 ):
-            return self._nnodes>0
         nnodes = 0
         if ( self.has_resource("unique_node_count")):
             # Added in TORQUE 4.2.9
             nnodes = int(self.get_resource("unique_node_count"))
+        elif ( self.has_resource("Resource_List.nodect")):
+            nnodes = int(self.get_resource("Resource_List.nodect"))
         else:
             nnodes = len(self.nodes_used())
-        self._nnodes = nnodes
-        return self._nnodes
+        return nnodes
 
     def num_processors(self):
         """ Returns the total number of processors the job requires """
-        if ( self._nproc>0 ):
-            return self._nproc
         processors = 0
         if ( self.has_resource("total_execution_slots") ):
             # Added in TORQUE 4.2.9
@@ -313,8 +310,7 @@ class jobinfo:
                 nodes = max(1,nodes)
                 ppn = max(1,ppn)
                 processors = processors + nodes*ppn
-            self._nproc = processors
-            return self._nproc
+            return processors
         ncpus = 0
         if ( self.has_resource("Resource_List.ncpus") ):
             ncpus = max(ncpus,int(self.get_resource("Resource_List.ncpus")))
@@ -341,8 +337,7 @@ class jobinfo:
         if ( self.has_resource("Resource_List.size") ):
             ncpus = max(ncpus,int(self.get_resource("Resource_List.size")))
         # Return the larger of the two computed values
-        self._nproc = max(processors,ncpus)
-        return self._nproc
+        return max(processors,ncpus)
 
     def num_gpus(self):
         ngpus = 0
@@ -533,6 +528,21 @@ class jobinfoTestCase(unittest.TestCase):
     def test_num_nodes(self):
         j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.num_nodes(),2)
+        j2 = copy.deepcopy(self.testjob)
+        j2.set_resource("Resource_List.nodes","4:ppn=28")
+        j2.set_resource("Resource_List.neednodes","4:ppn=28")
+        j2.set_resource("exec_host","o0799/0-27+o0797/0-27+o0786/0-27+o0795/0-27")
+        self.assertEqual(j2.num_nodes(),"4")
+        j3 = copy.deepcopy(self.testjob)
+        j3.set_resource("Resource_List.nodes","3:ppn=28")
+        j3.set_resource("Resource_List.neednodes","3:ppn=28")
+        j3.set_resource("Resource_List.nodect","3")
+        self.assertEqual(j3.num_nodes(),3)
+        j4 = copy.deepcopy(self.testjob)
+        j4.set_resource("Resource_List.nodes","2:ppn=28")
+        j4.set_resource("Resource_List.neednodes","2:ppn=28")
+        j4.set_resource("unique_node_count","2")
+        self.assertEqual(j4.num_nodes(),2)
     def test_num_processors(self):
         j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.num_processors(),8)
