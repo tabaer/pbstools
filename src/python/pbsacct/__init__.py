@@ -609,8 +609,8 @@ class jobinfoTestCase(unittest.TestCase):
     def test_write_last_accounting_record(self):
         # hack to handle class namespace change in python 3.x
         if ( sys.version_info<(3,0) ):
-             import StringIO
-             fd1 = StringIO.StringIO()
+            import StringIO
+            fd1 = StringIO.StringIO()
         else:
             import io
             fd1 = io.StringIO()
