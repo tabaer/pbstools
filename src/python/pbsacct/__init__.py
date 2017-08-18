@@ -421,7 +421,10 @@ class jobinfo:
 
     def walltime_used_sec(self):
         if ( self.has_resource("resources_used.walltime") ):
-            return time_to_sec(self.get_resource("resources_used.walltime"))
+            if ( time_to_sec(self.get_resource("resources_used.walltime"))>=0 ):
+                return time_to_sec(self.get_resource("resources_used.walltime"))
+            else:
+                return self.end_ts()-self.start_ts()
         else:
             return 0
 
@@ -584,9 +587,13 @@ class jobinfoTestCase(unittest.TestCase):
     def test_walltime_limit_sec(self):
         j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.walltime_limit_sec(),3600)
-    def test_walltime_limit_sec(self):
+    def test_walltime_used_sec(self):
         j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.walltime_used_sec(),1)
+        # bogus time value, should use end-start (in this case 0)
+        j2 = copy.deepcopy(self.testjob)
+        j2.set_resource("resources_used.walltime","-342359:-42:-21")
+        self.assertEqual(j2.walltime_used_sec(),0)
     def test_software(self):
         j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.software(),None)
@@ -748,7 +755,7 @@ def time_to_sec(timestr):
         return 0
     elif ( isinstance(timestr,int) ):
         return timestr
-    if ( not re.match("[\d:]+",timestr) ):
+    if ( not re.match("[\d\-:]+",timestr) ):
         raise ValueError("Malformed time \""+timestr+"\"")
     sec = 0
     elt = timestr.split(":")
@@ -842,6 +849,7 @@ class pbsacctTestCase(unittest.TestCase):
         self.assertEqual(10*3600,time_to_sec('10:00:00'))
         self.assertEqual(1*24*3600,time_to_sec('1:00:00:00'))
         self.assertEqual(7*24*3600,time_to_sec('7:00:00:00'))
+        self.assertEqual(-1232494941,time_to_sec('-342359:-42:-21'))
 
 
 class pbsacctDB:
@@ -1116,6 +1124,11 @@ class pbsacctDB:
              ( oldjob is None or job.walltime_used_sec()!=oldjob.walltime_used_sec() ) ):
              fields_to_set["walltime"] = "'%s'" % sec_to_time(job.walltime_used_sec())
              fields_to_set["walltime_sec"] = "'%d'" % job.walltime_used_sec()
+        elif ( job.walltime_used_sec()<0 and
+             ( oldjob is None or job.walltime_used_sec()!=oldjob.walltime_used_sec() ) ):
+             delta = int(job.end_ts())-int(job.start_ts())
+             fields_to_set["walltime"] = "'%s'" % sec_to_time(delta)
+             fields_to_set["walltime_sec"] = "'%d'" % delta
         if ( job.mem_limit() is not None and
              ( oldjob is None or job.mem_limit()!=oldjob.mem_limit()) ):
              fields_to_set["mem_req"] = "'%s'" % job.mem_limit()
