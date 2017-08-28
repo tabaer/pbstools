@@ -26,6 +26,7 @@ import os
 import pbsacct
 import re
 import sys
+import pyspark
 
 def usage():
     sys.stderr.write("Usage:\t%s\t[-h system] [-s dbhost] [-D dbtype]\n" % os.path.basename(sys.argv[0]))
