@@ -104,7 +104,7 @@ if ( len(filelist)>0 ):
         # will be reported as in the E state with an end time (when it was
         # qdel'ed) but no start time, so just checking for the E state is not
         # enough to avoid false positives here
-        if ( jobs[jobid].get_state()=="E" and
+        if ( jobs[jobid].get_state() in ["S","E"] and
              jobs[jobid].start_ts()>0 and
              jobs[jobid].end_ts()>=jobs[jobid].start_ts() ):
             if ( query ):
