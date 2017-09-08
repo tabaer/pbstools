@@ -670,7 +670,7 @@ def software_match_list():
     pkgmatch['fsweep'] = "( script LIKE '%fsweep.exe%' OR script LIKE '%fsweep2.exe%' )"
     pkgmatch['gabe'] = "script LIKE '%./gabe %'"
     pkgmatch['gamess'] = "( script LIKE '%gamess%' OR script LIKE '%rungms%' OR script LIKE '%rungmx%' )"
-    pkgmatch['gaussian'] = "( script LIKE '%g98%' OR script LIKE '%g03%' OR script LIKE '%g09%' )"
+    pkgmatch['gaussian'] = "( script LIKE '%module load gaussian%' )"
     pkgmatch['gc'] = "script LIKE '%kland_gc%'"
     pkgmatch['gemc_x'] = "script LIKE '%gemc.x%'"
     pkgmatch['glast'] = "( script LIKE '%glast%' OR script LIKE '%gp run%' )"
