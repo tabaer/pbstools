@@ -576,6 +576,7 @@ def software_list():
         "tristan-mp3d",
         "tRNAscan-SE",
         "tsc",
+        "tsutil",
         "ttmmdmpi",
         "turbo",
         "turbomole",
@@ -670,7 +671,6 @@ def software_match_list():
     pkgmatch['fsweep'] = "( script LIKE '%fsweep.exe%' OR script LIKE '%fsweep2.exe%' )"
     pkgmatch['gabe'] = "script LIKE '%./gabe %'"
     pkgmatch['gamess'] = "( script LIKE '%gamess%' OR script LIKE '%rungms%' OR script LIKE '%rungmx%' )"
-    pkgmatch['gaussian'] = "( script LIKE '%module load gaussian%' )"
     pkgmatch['gc'] = "script LIKE '%kland_gc%'"
     pkgmatch['gemc_x'] = "script LIKE '%gemc.x%'"
     pkgmatch['glast'] = "( script LIKE '%glast%' OR script LIKE '%gp run%' )"
@@ -732,6 +732,7 @@ def software_match_list():
     pkgmatch['sratoolkit'] = "( script LIKE '%sratoolkit%' OR script LIKE '%fastq-dump%' )"
     pkgmatch['star'] = "( script LIKE '%/STAR --runMode%' OR script LIKE '%\nSTAR --runMode%' )"
     pkgmatch['tbms'] = "( script LIKE '%tbms%dvm%' OR script LIKE '%distr%dvm%' OR script LIKE '%jac%dvm%' OR script LIKE '%mt%dvm%' )"
+    pkgmatch['tsutil'] = "script LIKE '%tsutil%'"
     pkgmatch['track'] = "script LIKE '%TRACKdir%'"
     pkgmatch['turbo'] = "script LIKE '%pturbo.x%'"
     pkgmatch['upc'] = "script LIKE '%upcrun%'"
@@ -765,6 +766,7 @@ def software_match_list():
     pkgmatch['f-plane'] = "( script LIKE '%f-plane%' AND NOT ( "+pkgmatch['hsi']+" ) )"
     pkgmatch['foam'] = "( script LIKE '%foam%' AND NOT ( "+pkgmatch['lsdyna']+" ) )"
     pkgmatch['gadget'] = "( script LIKE '%gadget%' AND NOT ( "+pkgmatch['hsi']+" ) )"
+    pkgmatch['gaussian'] = "( script LIKE '%module load gaussian%' OR script LIKE '%g09%' OR script LIKE '%g03%' OR ( script LIKE '%g98%' AND NOT ( ( "+pkgmatch['python']+" ) OR ( "+pkgmatch['raxml']+" ) OR ( "+pkgmatch['samtools']+" ) OR ( "+pkgmatch['tsutil']+" ) OR ( "+pkgmatch['vnc']+" ) OR script LIKE '%config98.WS%' ) ) )"
     pkgmatch['gdl'] = "( script LIKE '%gdl%' AND NOT ( "+pkgmatch['rotbouss']+" ) )"
     pkgmatch['grib'] = "( script LIKE '%grib%' AND NOT ( "+pkgmatch['cdo']+" ) AND NOT ( "+pkgmatch['mm5']+" ) AND NOT ( "+pkgmatch['sgf']+" ) AND NOT ( "+pkgmatch['sigma']+" ) )"
     pkgmatch['gromacs'] = "( ( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' ) AND NOT ( "+pkgmatch['amber']+" ) AND NOT ( "+pkgmatch['cpmd']+" ) AND NOT ( "+pkgmatch['sigma']+" ) AND NOT ( "+pkgmatch['tantalus']+" ) )"
