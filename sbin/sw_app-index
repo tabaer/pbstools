@@ -747,7 +747,6 @@ def software_match_list():
     pkgmatch['zNtoM'] = "( script LIKE '%z1to3%' OR script LIKE '%z4to6%' OR script LIKE '%z7to9%' OR script LIKE '%z10to12%' OR script LIKE '%z13to15%' )"
     
     # package matches with dependencies on other package matches
-    pkgmatch['R'] = "( ( script LIKE '%\nR %' OR script LIKE '%Rscript %' OR script LIKE '%RMPI%' ) AND NOT ( "+pkgmatch['gaussian']+" ) AND NOT ( "+pkgmatch['adf']+" ) )"
     pkgmatch['agk'] = "( script LIKE '%agk%' AND NOT ( "+pkgmatch['hsi']+" ) AND NOT ( "+pkgmatch['mhd_1']+" ) )"
     pkgmatch['ansys'] = "( ( script LIKE '%ansys' OR ( software IS NOT NULL AND software LIKE '%ansys%' ) ) AND NOT ( "+pkgmatch['fluent']+" ) )"
     pkgmatch['amber'] = "( ( script LIKE '%amber%' OR script LIKE '%sander%' OR script LIKE '%pmemd%' OR script LIKE '%sviol%' OR script LIKE '%SingleJob%' OR script LIKE '%MINJob%' OR script LIKE '%run_md_mpi.csh%' ) AND NOT ( "+pkgmatch['cctm']+" ) AND NOT ( "+pkgmatch['cvm']+" ) AND NOT ( "+pkgmatch['idl']+" ) AND NOT ( "+pkgmatch['qmc']+" ) AND NOT ( "+pkgmatch['sigma']+" ) AND NOT ( "+pkgmatch['tantalus']+" ) AND NOT ( "+pkgmatch['tfe']+" ) )"
@@ -766,7 +765,6 @@ def software_match_list():
     pkgmatch['f-plane'] = "( script LIKE '%f-plane%' AND NOT ( "+pkgmatch['hsi']+" ) )"
     pkgmatch['foam'] = "( script LIKE '%foam%' AND NOT ( "+pkgmatch['lsdyna']+" ) )"
     pkgmatch['gadget'] = "( script LIKE '%gadget%' AND NOT ( "+pkgmatch['hsi']+" ) )"
-    pkgmatch['gaussian'] = "( script LIKE '%module load gaussian%' OR script LIKE '%g09%' OR script LIKE '%g03%' OR ( script LIKE '%g98%' AND NOT ( ( "+pkgmatch['python']+" ) OR ( "+pkgmatch['raxml']+" ) OR ( "+pkgmatch['samtools']+" ) OR ( "+pkgmatch['tsutil']+" ) OR ( "+pkgmatch['vnc']+" ) OR script LIKE '%config98.WS%' ) ) )"
     pkgmatch['gdl'] = "( script LIKE '%gdl%' AND NOT ( "+pkgmatch['rotbouss']+" ) )"
     pkgmatch['grib'] = "( script LIKE '%grib%' AND NOT ( "+pkgmatch['cdo']+" ) AND NOT ( "+pkgmatch['mm5']+" ) AND NOT ( "+pkgmatch['sgf']+" ) AND NOT ( "+pkgmatch['sigma']+" ) )"
     pkgmatch['gromacs'] = "( ( script LIKE '%gromacs%' OR script LIKE '%grompp%' OR script LIKE '%mdrun%' OR script LIKE '%rgmx%' ) AND NOT ( "+pkgmatch['amber']+" ) AND NOT ( "+pkgmatch['cpmd']+" ) AND NOT ( "+pkgmatch['sigma']+" ) AND NOT ( "+pkgmatch['tantalus']+" ) )"
@@ -816,6 +814,10 @@ def software_match_list():
     pkgmatch['vmd'] = "( script LIKE '%vmd%' AND NOT ( "+pkgmatch['amber']+" ) AND NOT ( "+pkgmatch['cpmd']+" ) AND NOT ( "+pkgmatch['cvm']+" ) AND NOT ( "+pkgmatch['gromacs']+" ) AND NOT ( "+pkgmatch['hsi']+" ) AND NOT ( "+pkgmatch['hmc']+" ) AND NOT ( "+pkgmatch['namd']+" ) AND NOT ( "+pkgmatch['pop']+" ) )"
     pkgmatch['xgc'] = "( script LIKE '%xgc%' AND NOT ( "+pkgmatch['agk']+" ) AND NOT ( "+pkgmatch['hsi']+" ) )"
     pkgmatch['yt'] = "( script LIKE '%yt%' AND NOT ( script LIKE '%ything%' ) AND NOT ( "+pkgmatch['amber']+" ) AND NOT ( "+pkgmatch['cactus']+" ) AND NOT ( "+pkgmatch['cdo']+" ) AND NOT ( "+pkgmatch['gen.v4']+" ) AND NOT ( "+pkgmatch['grib']+" ) AND NOT ( "+pkgmatch['grmhd']+" ) AND NOT ( "+pkgmatch['hoomd']+" ) AND NOT ( "+pkgmatch['hsi']+" ) AND NOT ( "+pkgmatch['hy3s']+" ) AND NOT ( "+pkgmatch['lammps']+" ) AND NOT ( "+pkgmatch['lfm']+" ) AND NOT ( "+pkgmatch['matlab']+" ) AND NOT ( "+pkgmatch['namd']+" ) AND NOT ( "+pkgmatch['nwchem']+" ) AND NOT ( "+pkgmatch['pop']+" ) AND NOT ( "+pkgmatch['python']+" ) AND NOT ( "+pkgmatch['stata']+" ) AND NOT ( "+pkgmatch['sses']+" ) AND NOT ( "+pkgmatch['sord']+" ) AND NOT ( "+pkgmatch['swift']+" ) AND NOT ( "+pkgmatch['sus']+" ) AND NOT ( "+pkgmatch['vasp']+" ) AND NOT ( "+pkgmatch['vorpal']+" ) )"
+
+    # packages with dependencies on packages that have dependencies...
+    pkgmatch['gaussian'] = "( script LIKE '%module load gaussian%' OR script LIKE '%g09%' OR script LIKE '%g03%' OR ( script LIKE '%g98%' AND NOT ( ( "+pkgmatch['dirac-pilot']+" ) OR ( "+pkgmatch['python']+" ) OR ( "+pkgmatch['raxml']+" ) OR ( "+pkgmatch['samtools']+" ) OR ( "+pkgmatch['tsutil']+" ) OR ( "+pkgmatch['vnc']+" ) OR script LIKE '%config98.WS%' ) ) )"
+    pkgmatch['R'] = "( ( script LIKE '%\nR %' OR script LIKE '%Rscript %' OR script LIKE '%RMPI%' ) AND NOT ( "+pkgmatch['gaussian']+" ) AND NOT ( "+pkgmatch['adf']+" ) )"
 
     return pkgmatch
 
