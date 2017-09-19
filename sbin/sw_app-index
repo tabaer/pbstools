@@ -954,7 +954,7 @@ else:
         else:
             sql = "UPDATE Jobs %s SET sw_app='%s' WHERE script IS NOT NULL" % (use_index,pkg)
         if ( not fullreindex ):
-            sql += " AND sw_app IS NOT NULL"
+            sql += " AND sw_app IS NULL"
         if ( system is not None ):
             sql += " AND system LIKE '%s'" % system
         if ( startdate is not None ):
