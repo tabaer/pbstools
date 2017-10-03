@@ -105,8 +105,7 @@ if ( len(filelist)>0 ):
         # qdel'ed) but no start time, so just checking for the E state is not
         # enough to avoid false positives here
         if ( jobs[jobid].get_state() in ["S","E"] and
-             jobs[jobid].start_ts()>0 and
-             jobs[jobid].end_ts()>=jobs[jobid].start_ts() ):
+             jobs[jobid].start_ts()>0 ):
             if ( query ):
                 dbjob = None
                 if ( db.job_exists(jobid,append_to_jobid=append_to_jobid_in_db) ):
