@@ -116,12 +116,16 @@ function sys_list()
 	       "oak",
 	       "ruby",
 	       "owens",
+	       "quick",
 	       "bmibucki",
 	       "bmiowens",
-	       "oak-gpu",
-	       "ruby-gpu",
+	       "oak-gpu-nodes",
+	       "oak-gpu-reqd",
+	       "ruby-gpu-nodes",
+	       "ruby-gpu-reqd",
 	       "ruby-mic",
-	       "owens-gpu",
+	       "owens-gpu-nodes",
+	       "owens-gpu-reqd",
 	       "owens-hugemem");
 }
 
@@ -164,11 +168,14 @@ function sysselect($system)
   if ( $system=='keeneland' ) return "system = 'kid' OR system = 'kfs' OR system = 'kids'";
   if ( $system=='beacon-all' ) return "system = 'beacon' OR system = 'beacon2' OR system = 'bcndev'";
   if ( $system=='oak' ) return "system = 'oak'";
-  if ( $system=='oak-gpu' ) return "system = 'oak' AND hostlist REGEXP '^n0(28[19]|29[0-9]|3[01][0-9]|320|64[1-9]|65[0-9]|660)' ";
+  if ( $system=='oak-gpu-nodes' ) return "system = 'oak' AND hostlist REGEXP '^n0(28[19]|29[0-9]|3[01][0-9]|320|64[1-9]|65[0-9]|660)'";
+  if ( $system=='oak-gpu-reqd' ) return "system = 'oak' AND ngpus>0";
   if ( $system=='ruby' ) return "system = 'ruby'";
-  if ( $system=='ruby-gpu' ) return "system = 'ruby' AND hostlist REGEXP '^r02(0[1-9]|1[0-9]|20)' ";
-  if ( $system=='ruby-mic' ) return "system = 'ruby' AND hostlist REGEXP '^r0(2(2[1-9]|3[0-9]|40)|50[1-5])' ";
-  if ( $system=='owens-gpu' ) return "system = 'owens' AND hostlist REGEXP 'o0(649|6[5-9][0-9]|7[0-9][0-9]|80[0-8])'";
+  if ( $system=='ruby-gpu-nodes' ) return "system = 'ruby' AND hostlist REGEXP '^r02(0[1-9]|1[0-9]|20)'";
+  if ( $system=='ruby-gpu-reqd' ) return "system = 'ruby' AND ngpus>0";
+  if ( $system=='ruby-mic' ) return "system = 'ruby' AND hostlist REGEXP '^r0(2(2[1-9]|3[0-9]|40)|50[1-5])'";
+  if ( $system=='owens-gpu-nodes' ) return "system = 'owens' AND hostlist REGEXP 'o0(649|6[5-9][0-9]|7[0-9][0-9]|80[0-8])'";
+  if ( $system=='owens-gpu-reqd' ) return "system = 'owens' AND ngpus>0";
   if ( $system=='owens-hugemem' ) return "system = 'owens' AND hostlist REGEXP 'o08(09|1[0-9]|2[0-4])'";
   return "system LIKE '".$system."'";
 }
@@ -220,15 +227,15 @@ function nprocs($system)
   return 0;
 }
 
-function bounded_walltime($start_date,$end_date,$datelogic="during")
+function bounded_walltime_sec($start_date,$end_date,$datelogic="during")
 {
   if ( $datelogic!="during" )
     {
-      return "walltime";
+      return "walltime_sec";
     }
   elseif ( isset($start_date) && isset($end_date) && $start_date!='' && $end_date!='' )
     {
-      return "CASE  WHEN ( end_ts<start_ts) THEN '00:00:00'  WHEN ( start_date>='".$start_date."' AND end_date<='".$end_date."' ) THEN walltime   WHEN ( start_date<='".$start_date."' AND end_date<='".$end_date."' ) THEN ADDTIME(walltime,TIMEDIFF(FROM_UNIXTIME(start_ts),'".$start_date." 00:00:00'))   WHEN ( start_date>='".$start_date."' AND end_date>='".$end_date."' ) THEN ADDTIME(walltime,TIMEDIFF('".$end_date." 23:59:59',FROM_UNIXTIME(end_ts)))   ELSE '00:00:00' END";
+      return "CASE  WHEN ( end_ts<start_ts) THEN '00:00:00'  WHEN ( start_date>='".$start_date."' AND end_date<='".$end_date."' ) THEN walltime  WHEN ( start_date<='".$start_date."' AND end_date<='".$end_date."' ) THEN walltime_sec+TIME_TO_SEC(TIMEDIFF(FROM_UNIXTIME(start_ts),'".$start_date." 00:00:00'))  WHEN ( start_date>='".$start_date."' AND end_date>='".$end_date."' ) THEN walltime_sec+TIME_TO_SEC(TIMEDIFF('".$end_date." 23:59:59',FROM_UNIXTIME(end_ts)))  ELSE '00:00:00' END";
     }
   elseif ( isset($start_date) && $start_date!='' )
     {
@@ -246,7 +253,7 @@ function bounded_walltime($start_date,$end_date,$datelogic="during")
 
 function cpuhours($db,$system,$start_date,$end_date,$datelogic="during")
 {
-  $retval = "nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+  $retval = "nproc*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
   if ( $system=="%" || $system=="keeneland" || $system=="kraken-all" || $system=="xt4-all" )
     {
       	# get list of systems
@@ -278,26 +285,26 @@ function cpuhours($db,$system,$start_date,$end_date,$datelogic="during")
     }
   elseif ( $system=="nautilus" )
     {
-      $retval = "8*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "8*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="kid" || $system=="kids" )
     {
-      $retval = "12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "12*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="bcndev" || $system=="beacon" || $system=="beacon2" || $system=="kfs" )
     {
-      $retval = "16*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "16*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="x1" )
     {
-      $retval = "TIME_TO_SEC(cput)/3600.0";
+      $retval = "cput_sec/3600.0";
     }
   return $retval;
 }
 
 function nodehours($db,$system,$start_date,$end_date,$datelogic="during")
 {
-  $retval = "nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+  $retval = "nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
   if ( $system=="%" || $system=="keeneland" || $system=="kraken-all" || $system=="xt4-all" )
     {
       	# get list of systems
@@ -329,15 +336,15 @@ function nodehours($db,$system,$start_date,$end_date,$datelogic="during")
     }
   else if ( $system=="kraken" || $system=="athena" )
     {
-      $retval = "(nproc/4)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "(nproc/4)*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="krakenpf" )
     {
-      $retval = "(nproc/12)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "(nproc/12)*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="darter" )
     {
-      $retval = "(nproc/16)*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "(nproc/16)*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
     }
   return $retval;
 }
@@ -376,11 +383,11 @@ function charges($db,$system,$start_date,$end_date,$datelogic="during")
     }
   else if ( $system=="bcndev" | $system=="beacon" | $system=="beacon2" )
     {
-      $retval = "nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="kid" | $system=="kids" | $system=="kfs" )
     {
-      $retval = "3*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval = "3*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
     }
   else if ( $system=="darter" )
     {
@@ -390,48 +397,48 @@ function charges($db,$system,$start_date,$end_date,$datelogic="during")
     {
       $retval = "0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
     }
-  else if ( $system=="oak" | $system=="oak-gpu" )
+  else if ( $system=="oak" | $system=="oak-gpu-nodes" | $system=="oak-gpu-nodes" )
     {
       $retval  = " CASE";
       $retval .= " WHEN end_date<='2016-10-19' THEN";
       $retval .= "  CASE queue";
-      $retval .= "  WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= "  WHEN 'parallel' THEN 0.1*12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= "  WHEN 'hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'serial' THEN 0.1*nproc*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'parallel' THEN 0.1*12*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'hugemem' THEN 0.1*32*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
       $retval .= "  ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
       $retval .= "  END";
       $retval .= " ELSE";
       $retval .= "  CASE queue";
-      $retval .= "  WHEN 'serial' THEN 0.05*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= "  WHEN 'parallel' THEN 0.05*12*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= "  WHEN 'hugemem' THEN 0.05*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'serial' THEN 0.05*nproc*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'parallel' THEN 0.05*12*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'hugemem' THEN 0.05*32*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
       $retval .= "  ELSE 0.05*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
       $retval .= "  END";
       $retval .= " END";
     }
-  else if ( $system=="ruby" | $system=="ruby-gpu" | $system=="ruby-mic" )
+  else if ( $system=="ruby" | $system=="ruby-gpu-nodes" | $system=="ruby-gpu-reqd" | $system=="ruby-mic" )
     {
       $retval  = " CASE";
       $retval .= " WHEN end_date<='2016-10-19' THEN";
       $retval .= "  CASE";
-      $retval .= "  WHEN queue='hugemem' THEN 0.1*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= "  ELSE 0.1*20*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN queue='hugemem' THEN 0.1*32*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  ELSE 0.1*20*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
       $retval .= "  END";
       $retval .= " ELSE";
       $retval .= "  CASE";
-      $retval .= "  WHEN queue='hugemem' THEN 0.05*32*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= "  ELSE 0.05*20*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN queue='hugemem' THEN 0.05*32*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  ELSE 0.05*20*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
       $retval .= "  END";
       $retval .= " END";
     }
-  else if ( $system=="owens" | $system=="owens-gpu" | $system=="owens-hugemem" )
+  else if ( $system=="owens" | $system=="owens-gpu-nodes" | $system=="owens-gpu-reqd" | $system=="owens-hugemem" )
     {
       $retval  = " CASE queue";
-      $retval .= "  WHEN 'serial' THEN 0.1*nproc*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= "  WHEN 'parallel' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= "  WHEN 'largeparallel' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= "  WHEN 'dedicated' THEN 0.1*28*nodect*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
-      $retval .= "  WHEN 'hugemem' THEN 0.1*48*TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'serial' THEN 0.1*nproc*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'parallel' THEN 0.1*28*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'largeparallel' THEN 0.1*28*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'dedicated' THEN 0.1*28*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'hugemem' THEN 0.1*48*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
       $retval .= "  ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
       $retval .= " END";
     }
