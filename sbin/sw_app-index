@@ -721,7 +721,7 @@ def software_match_list():
     pkgmatch['reduce'] = "( script LIKE '%reduce_1%' OR script LIKE '%reduce_eta%' )"
     pkgmatch['reflect'] = "script LIKE '%/reflect\n%'"
     pkgmatch['root'] = "script LIKE '%\nroot -q%'"
-    pkgmatch['rosetta'] = "( script LIKE '%rosetta.%' OR script LIKE '% rosetta %' OR script LIKE '%/rr %' )"
+    pkgmatch['rosetta'] = "( script LIKE '%rosetta.%' OR script LIKE '% rosetta %' OR script LIKE '%/rr %' OR script LIKE '%rosetta_scripts%' )"
     pkgmatch['roth'] = "script LIKE '%/ROTH%'"
     pkgmatch['rtp'] = "( script LIKE '%rtp%' AND NOT ( script like '%RestartP%' ) AND NOT ( script LIKE '%addpertpath%' ) )"
     pkgmatch['sable'] = "( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )"
