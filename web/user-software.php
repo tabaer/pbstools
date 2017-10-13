@@ -109,7 +109,7 @@ else
     begin_form("user-software.php");
 
     text_field("User","username",16);
-    system_chooser();
+    virtual_system_chooser();
     date_fields();
 
     $orders=array("jobs","cpuhours","charges","accounts");

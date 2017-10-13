@@ -117,7 +117,7 @@ else
 
     begin_form("software-usage-by-institution.php");
 
-    system_chooser();
+    virtual_system_chooser();
     date_fields();
 
     $orders=array("jobs","cpuhours","charges","users","groups","accounts");

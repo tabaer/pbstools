@@ -55,7 +55,7 @@ if ( isset($_POST['system']) )
 	     $key!='datelogic' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT ".xaxis_column("walltime",$_POST['system'],$_POST['datelogic']).",COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, MIN(TIME_TO_SEC(walltime)) AS hidden FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND username IS NOT NULL AND ( script IS NOT NULL AND ";
+	    $sql = "SELECT ".xaxis_column("walltime",$_POST['system'],$_POST['datelogic']).",COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, MIN(walltime_sec) AS hidden FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND username IS NOT NULL AND ( script IS NOT NULL AND ";
 	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY walltime_bucketed UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, 100000000 AS hidden FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND username IS NOT NULL AND ( ";
 	    $sql .= "sw_app='".$key."'";
@@ -97,7 +97,7 @@ else
 
     begin_form("software-usage-by-walltime.php");
 
-    system_chooser();
+    virtual_system_chooser();
     date_fields();
 
     checkboxes_from_array("Packages",$packages);

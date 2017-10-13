@@ -110,7 +110,7 @@ else
     begin_form("account-software.php");
 
     text_field("Account","account",16);
-    system_chooser();
+    virtual_system_chooser();
     date_fields();
 
     $orders=array("jobs","cpuhours","charges","users");

@@ -110,7 +110,7 @@ else
     begin_form("group-software.php");
 
     text_field("Group","groupname",16);
-    system_chooser();
+    virtual_system_chooser();
     date_fields();
 
     $orders=array("jobs","cpuhours","users");

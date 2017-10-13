@@ -100,7 +100,7 @@ else
 
     begin_form("software-usage.php");
 
-    system_chooser();
+    virtual_system_chooser();
     date_fields();
 
     checkboxes_from_array("Packages",$packages);
