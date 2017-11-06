@@ -1,5 +1,5 @@
 <?php
-# Copyright 2006, 2007, 2008, 2016 Ohio Supercomputer Center
+# Copyright 2006, 2007, 2008, 2016, 2017 Ohio Supercomputer Center
 # Copyright 2009, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL$
@@ -55,7 +55,7 @@ if ( isset($_POST['system']) )
 	     $key!='order' && $key!='datelogic' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT ".institution_match().", COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." )";
+	    $sql = "SELECT ".institution_match().", COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".nodehours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS nodehours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." )";
 	    $sql .= " AND ( ";
 	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY institution";
@@ -67,7 +67,7 @@ if ( isset($_POST['system']) )
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
 	      }
 	    echo "<TABLE border=1>\n";
-	    echo "<TR><TH>institution</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
+	    echo "<TR><TH>institution</TH><TH>jobs</TH><TH>cpuhours</TH><TH>nodehours</TH><TH>charges</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
 	    while ($result->fetchInto($row))
 	      {
 		$rkeys=array_keys($row);
@@ -81,7 +81,7 @@ if ( isset($_POST['system']) )
 		ob_flush();
 		flush();
 	      }
-	    $sql = "SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND username IS NOT NULL AND ( ";
+	    $sql = "SELECT 'TOTAL:',COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".nodehours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS nodehours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND username IS NOT NULL AND ( ";
 	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." )";
 	    $result = db_query($db,$sql);

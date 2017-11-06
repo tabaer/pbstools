@@ -1,5 +1,5 @@
 <?php
-# Copyright 2007, 2008, 2016 Ohio Supercomputer Center
+# Copyright 2007, 2008, 2016, 2017 Ohio Supercomputer Center
 # Copyright 2009, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL$
@@ -55,9 +55,9 @@ if ( isset($_POST['system']) )
 	     $key!='datelogic' )
 	  {
 	    echo "<H3><CODE>".$key."</CODE></H3>\n";
-	    $sql = "SELECT ".xaxis_column("walltime",$_POST['system'],$_POST['datelogic']).",COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, MIN(walltime_sec) AS hidden FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND username IS NOT NULL AND ( script IS NOT NULL AND ";
+	    $sql = "SELECT ".xaxis_column("walltime",$_POST['system'],$_POST['datelogic']).",COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".nodehours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS nodehours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts, MIN(walltime_sec) AS hidden FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND username IS NOT NULL AND ( script IS NOT NULL AND ";
 	    $sql .= "sw_app='".$key."'";
-	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY walltime_bucketed UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, 100000000 AS hidden FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND username IS NOT NULL AND ( ";
+	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY walltime_bucketed UNION SELECT 'TOTAL:' AS walltime,COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".nodehours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS nodehours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts, 100000000 AS hidden FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND username IS NOT NULL AND ( ";
 	    $sql .= "sw_app='".$key."'";
 	    $sql .= " ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) ORDER BY hidden;";
             #echo "<PRE>".htmlspecialchars($sql)."</PRE>";
@@ -67,7 +67,7 @@ if ( isset($_POST['system']) )
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
 	      }
 	    echo "<TABLE border=1>\n";
-	    echo "<TR><TH>walltime</TH><TH>jobs</TH><TH>cpuhours</TH><TH>charges</TH></TR>\n";
+	    echo "<TR><TH>walltime</TH><TH>jobs</TH><TH>cpuhours</TH><TH>nodehours</TH><TH>charges</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
 	    while ($result->fetchInto($row))
 	      {
 		$rkeys=array_keys($row);
