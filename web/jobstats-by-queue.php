@@ -44,7 +44,8 @@ date_fields();
 // by queue
 jobstats_input_header();
 jobstats_input_metric("Job Count vs. Job Class","jobs_vs_queue");
-jobstats_input_metric("CPU Time vs. Job Class","cpuhours_vs_queue");
+jobstats_input_metric("Core Hours vs. Job Class","cpuhours_vs_queue");
+jobstats_input_metric("Node Hours vs. Job Class","nodehours_vs_queue");
 jobstats_input_metric("Charges vs. Job Class","charges_vs_queue");
 jobstats_input_metric("Job Length vs. Job Class","walltime_vs_queue");
 jobstats_input_metric("Queue Time vs. Job Class","qtime_vs_queue");

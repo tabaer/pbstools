@@ -44,7 +44,8 @@ date_fields();
 // by qos
 jobstats_input_header();
 jobstats_input_metric("Job Count vs. QOS","jobs_vs_qos");
-jobstats_input_metric("CPU Time vs. QOS","cpuhours_vs_qos");
+jobstats_input_metric("Core Hours vs. QOS","cpuhours_vs_qos");
+jobstats_input_metric("Node Hours vs. QOS","nodehours_vs_qos");
 jobstats_input_metric("Charges vs. QOS","charges_vs_qos");
 jobstats_input_metric("Job Length vs. QOS","walltime_vs_qos");
 jobstats_input_metric("Queue Time vs. QOS","qtime_vs_qos");
