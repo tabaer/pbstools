@@ -264,7 +264,7 @@ function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
   if ( $metric=='accounts' ) return "COUNT(DISTINCT(account)) AS accounts";
   if ( $metric=='dodmetrics' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS projects,".columns('cpuhours',$system,$db,$start_date,$end_date,$datelogic);
   if ( $metric=='nproc' ) return "MIN(nproc),MAX(nproc),AVG(nproc),STDDEV(nproc)";
-  if ( $metric=='usage' ) return columns('cpuhours',$system,$db,$start_date,$end_date,$datelogic).", ".columns('charges',$system,$db,$start_date,$end_date,$datelogic).", ".columns('usercount',$system,$db,$start_date,$end_date,$datelogic);
+  if ( $metric=='usage' ) return columns('cpuhours',$system,$db,$start_date,$end_date,$datelogic).", ". columns('nodehours',$system,$db,$start_date,$end_date,$datelogic).", ".columns('charges',$system,$db,$start_date,$end_date,$datelogic).", ".columns('usercount',$system,$db,$start_date,$end_date,$datelogic);
   if ( $metric=='pscmetrics' )
     {
       $first = 0;
@@ -308,6 +308,10 @@ function columnnames($metric)
   if ( $metric=='usage' )
     {
       $output = columnnames('cpuhours');
+      foreach (columnnames('nodehours') as $element)
+	{
+	  array_push($output,$element);
+	}
       foreach (columnnames('charges') as $element)
 	{
 	  array_push($output,$element);
