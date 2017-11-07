@@ -1,5 +1,5 @@
 <?php
-# Copyright 2007, 2008, 2016 Ohio Supercomputer Center
+# Copyright 2007, 2008, 2016, 2017 Ohio Supercomputer Center
 # Copyright 2008, 2009, 2011, 2014 University of Tennessee
 # Revision info:
 # $HeadURL$
@@ -50,7 +50,7 @@ $keys = array_keys($_POST);
 if ( isset($_POST['system']) )
   {
     $db = db_connect();
-    $sql = "SELECT account, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
+    $sql = "SELECT account, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".nodehours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS nodehours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY account ORDER BY ".$_POST['order']." DESC LIMIT ".$_POST['limit'];
     #echo "<PRE>".$sql."</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -58,7 +58,7 @@ if ( isset($_POST['system']) )
         echo "<PRE>".$result->getMessage()."</PRE>\n";
       }
     echo "<TABLE border=\"1\">\n";
-    echo "<TR><TH>account</TH><TH>users</TH><TH>groups</TH><TH>job count</TH><TH>CPU-hours</TH><TH>charges</TH></TR>\n";
+    echo "<TR><TH>account</TH><TH>users</TH><TH>groups</TH><TH>job count</TH><TH>CPU-hours</TH><TH>nodehours</TH><TH>charges</TH></TR>\n";
     while ($result->fetchInto($row))
       {
 	echo "<TR>";
@@ -83,7 +83,7 @@ else
     virtual_system_chooser();
     date_fields();
 
-    $choices=array("cpuhours","charges","jobs","users");
+    $choices=array("cpuhours","nodehours","charges","jobs","users");
     $defaultchoice="cpuhours";
     pulldown("order","Order by",$choices,$defaultchoice);
     textfield("limit","Max shown","10",4);
