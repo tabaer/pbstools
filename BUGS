@@ -6,11 +6,11 @@ dagsub:
   it happens to check while the completed job is in the 'E' state
   (which is typically only a few seconds).
 
-dbtools:
-* The scripts have usernames and passwords hard-coded in them rather than
-  using a config file.
+pbsacct-php:
+* Generation of ODF spreadsheet files by the web application is currently
+  broken, and it is not clear why that is the case.
 
-packaging
+packaging:
 * The MPI tools (parallel-command-processor, pbsdcp-scatter, and
   jobarray-to-pcp) are not currently listed in the spec file because
   they require special compilation against an MPI library.
