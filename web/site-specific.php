@@ -302,6 +302,12 @@ function cpuhours($db,$system,$start_date,$end_date,$datelogic="during")
   return $retval;
 }
 
+function gpuhours($db,$system,$start_date,$end_date,$datelogic="during")
+{
+  $retval = "ngpus*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+  return $retval;
+}
+
 function nodehours($db,$system,$start_date,$end_date,$datelogic="during")
 {
   $retval = "nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";

@@ -45,6 +45,7 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count vs. Group","jobs_vs_groupname");
 jobstats_input_metric("Core Hours vs. Group","cpuhours_vs_groupname");
+jobstats_input_metric("GPU Hours vs. Group","gpuhours_vs_groupname");
 jobstats_input_metric("Node Hours vs. Group","nodehours_vs_groupname");
 jobstats_input_metric("Charges vs. Group","charges_vs_groupname");
 jobstats_input_metric("Job Length vs. Group","walltime_vs_groupname");

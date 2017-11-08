@@ -45,6 +45,7 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count vs. Node Count","jobs_vs_nodect");
 jobstats_input_metric("Core Hours vs. Node Count","cpuhours_vs_nodect");
+jobstats_input_metric("GPU Hours vs. Node Count","gpuhours_vs_nodect");
 jobstats_input_metric("Node Hours vs. Node Count","nodehours_vs_nodect");
 jobstats_input_metric("Charges vs. Node Count","charges_vs_nodect");
 jobstats_input_metric("Job Length vs. Node Count","walltime_vs_nodect");

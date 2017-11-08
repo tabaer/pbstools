@@ -45,6 +45,7 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count by Month","jobs_vs_month");
 jobstats_input_metric("Core Hours by Month","cpuhours_vs_month");
+jobstats_input_metric("GPU Hours by Month","gpuhours_vs_month");
 jobstats_input_metric("Node Hours by Month","nodehours_vs_month");
 jobstats_input_metric("Charges by Month","charges_vs_month");
 jobstats_input_metric("Job Length by Month","walltime_vs_month");

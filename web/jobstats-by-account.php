@@ -45,6 +45,7 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count vs. Account","jobs_vs_account");
 jobstats_input_metric("Core Hours vs. Account","cpuhours_vs_account");
+jobstats_input_metric("GPU Hours vs. Account","gpuhours_vs_account");
 jobstats_input_metric("Node Hours vs. Account","nodehours_vs_account");
 jobstats_input_metric("Charges vs. Account","charges_vs_account");
 jobstats_input_metric("Job Length vs. Account","walltime_vs_account");

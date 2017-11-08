@@ -45,6 +45,7 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count by Quarter","jobs_vs_quarter");
 jobstats_input_metric("Core Hours by Quarter","cpuhours_vs_quarter");
+jobstats_input_metric("GPU Hours by Quarter","gpuhours_vs_quarter");
 jobstats_input_metric("Node Hours by Quarter","nodehours_vs_quarter");
 jobstats_input_metric("Charges by Quarter","charges_vs_quarter");
 jobstats_input_metric("Job Length by Quarter","walltime_vs_quarter");

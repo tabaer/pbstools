@@ -68,6 +68,14 @@ if ( isset($_POST['system']) )
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
     
+    jobstats_output_metric('GPU Hours vs. CPU Count',
+			   'gpuhours_vs_nproc',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
     jobstats_output_metric('Node Hours vs. CPU Count',
 			   'nodehours_vs_nproc',
 			   $db,
@@ -173,6 +181,14 @@ if ( isset($_POST['system']) )
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
 
+    jobstats_output_metric('GPU Hours vs. Node Count',
+			   'gpuhours_vs_nodect',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
     jobstats_output_metric('Node Hours vs. Node Count',
 			   'nodehours_vs_nodect',
 			   $db,
@@ -272,6 +288,14 @@ if ( isset($_POST['system']) )
     
     jobstats_output_metric('Core Hours vs. Job Class',
 			   'cpuhours_vs_queue',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('GPU Hours vs. Job Class',
+			   'gpuhours_vs_queue',
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
@@ -391,6 +415,14 @@ if ( isset($_POST['system']) )
 				    $_POST['end_date'],
 				    $_POST['datelogic']);
     
+    jobstats_output_bucketed_metric('GPU Hours vs. Job Length Requested',
+				    'gpuhours_vs_walltime_req',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
     jobstats_output_bucketed_metric('Node Hours vs. Job Length Requested',
 				    'nodehours_vs_walltime_req',
 				    $db,
@@ -480,6 +512,14 @@ if ( isset($_POST['system']) )
 				    $_POST['end_date'],
 				    $_POST['datelogic']);
     
+    jobstats_output_bucketed_metric('GPU Hours vs. Job Length',
+				    'gpuhours_vs_walltime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
     jobstats_output_bucketed_metric('Node Hours vs. Job Length',
 				    'nodehours_vs_walltime',
 				    $db,
@@ -563,6 +603,14 @@ if ( isset($_POST['system']) )
     
     jobstats_output_metric('Core Hours vs. Account',
 			   'cpuhours_vs_account',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('GPU Hours vs. Account',
+			   'gpuhours_vs_account',
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
@@ -660,6 +708,14 @@ if ( isset($_POST['system']) )
     
     jobstats_output_metric('Core Hours vs. Group',
 			   'cpuhours_vs_groupname',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('GPU Hours vs. Group',
+			   'gpuhours_vs_groupname',
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
@@ -771,6 +827,14 @@ if ( isset($_POST['system']) )
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
 
+    jobstats_output_metric('GPU Hours vs. User',
+			   'gpuhours_vs_username',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
     jobstats_output_metric('Node Hours vs. User',
 			   'nodehours_vs_username',
 			   $db,
@@ -852,6 +916,14 @@ if ( isset($_POST['system']) )
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
 
+    jobstats_output_metric('GPU Hours vs. QOS',
+			   'gpuhours_vs_qos',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
     jobstats_output_metric('Node Hours vs. QOS',
 			   'nodehours_vs_qos',
 			   $db,
@@ -927,6 +999,14 @@ if ( isset($_POST['system']) )
 
     jobstats_output_metric('Core Hours vs. Quarter',
 			   'cpuhours_vs_quarter',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
+    jobstats_output_metric('GPU Hours vs. Quarter',
+			   'gpuhours_vs_quarter',
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
@@ -1022,8 +1102,16 @@ if ( isset($_POST['system']) )
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
 
+    jobstats_output_metric('GPU Hours vs. Month',
+			   'gpuhours_vs_month',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
     jobstats_output_metric('Node Hours vs. Month',
-			   'cpuhours_vs_month',
+			   'nodehours_vs_month',
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
@@ -1105,6 +1193,14 @@ if ( isset($_POST['system']) )
 
     jobstats_output_metric('Core Hours vs. Week',
 			   'cpuhours_vs_week',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
+    jobstats_output_metric('GPU Hours vs. Week',
+			   'gpuhours_vs_week',
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
@@ -1200,6 +1296,14 @@ if ( isset($_POST['system']) )
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
 
+    jobstats_output_metric('GPU Hours vs. Institution',
+			   'gpuhours_vs_institution',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
     jobstats_output_metric('Node Hours vs. Institution',
 			   'nodehours_vs_institution',
 			   $db,
@@ -1251,6 +1355,14 @@ if ( isset($_POST['system']) )
     
     jobstats_output_bucketed_metric('Core Hours vs. Processor Count',
 				    'cpuhours_vs_nproc_bucketed',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
+    jobstats_output_bucketed_metric('GPU Hours vs. Processor Count',
+				    'gpuhours_vs_nproc_bucketed',
 				    $db,
 				    $_POST['system'],
 				    $_POST['start_date'],
@@ -1385,6 +1497,14 @@ if ( isset($_POST['system']) )
 				    $_POST['end_date'],
 				    $_POST['datelogic']);
     
+    jobstats_output_bucketed_metric('GPU Hours vs. Normalized Processor Count',
+				    'gpuhours_vs_nproc_norm',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
     jobstats_output_bucketed_metric('Node Hours vs. Normalized Processor Count',
 				    'nodehours_vs_nproc_norm',
 				    $db,
@@ -1504,6 +1624,7 @@ else
     // by nproc
     jobstats_input_metric("Job Count vs. CPU Count","jobs_vs_nproc");
     jobstats_input_metric("Core Hours vs. CPU Count","cpuhours_vs_nproc");
+    jobstats_input_metric("GPU Hours vs. CPU Count","gpuhours_vs_nproc");
     jobstats_input_metric("Node Hours vs. CPU Count","nodehours_vs_nproc");
     jobstats_input_metric("Charges vs. CPU Count","charges_vs_nproc");
     jobstats_input_metric("Job Length vs. CPU Count","walltime_vs_nproc");
@@ -1520,6 +1641,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count vs. Node Count","jobs_vs_nodect");
     jobstats_input_metric("Core Hours vs. Node Count","cpuhours_vs_nodect");
+    jobstats_input_metric("GPU Hours vs. Node Count","gpuhours_vs_nodect");
     jobstats_input_metric("Node Hours vs. Node Count","nodehours_vs_nodect");
     jobstats_input_metric("Charges vs. Node Count","charges_vs_nodect");
     jobstats_input_metric("Job Length vs. Node Count","walltime_vs_nodect");
@@ -1535,6 +1657,7 @@ else
     // by queue
     jobstats_input_metric("Job Count vs. Job Class","jobs_vs_queue");
     jobstats_input_metric("Core Hours vs. Job Class","cpuhours_vs_queue");
+    jobstats_input_metric("GPU Hours vs. Job Class","gpuhours_vs_queue");
     jobstats_input_metric("Node Hours vs. Job Class","nodehours_vs_queue");
     jobstats_input_metric("Charges vs. Job Class","charges_vs_queue");
     jobstats_input_metric("Job Length vs. Job Class","walltime_vs_queue");
@@ -1552,6 +1675,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count vs. Job Length Requested","jobs_vs_walltime_req");
     jobstats_input_metric("Core Hours vs. Job Length Requested","cpuhours_vs_walltime_req");
+    jobstats_input_metric("GPU Hours vs. Job Length Requested","gpuhours_vs_walltime_req");
     jobstats_input_metric("Node Hours vs. Job Length Requested","nodehours_vs_walltime_req");
     jobstats_input_metric("Charges vs. Job Length Requested","charges_vs_walltime_req");
     jobstats_input_metric("Queue Time vs. Job Length Requested","qtime_vs_walltime_req");
@@ -1565,6 +1689,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count vs. Job Length","jobs_vs_walltime");
     jobstats_input_metric("Core Hours vs. Job Length","cpuhours_vs_walltime");
+    jobstats_input_metric("GPU Hours vs. Job Length","gpuhours_vs_walltime");
     jobstats_input_metric("Node Hours vs. Job Length","nodehours_vs_walltime");
     jobstats_input_metric("Charges vs. Job Length","charges_vs_walltime");
     jobstats_input_metric("Queue Time vs. Job Length","qtime_vs_walltime");
@@ -1577,6 +1702,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count vs. Account","jobs_vs_account");
     jobstats_input_metric("Core Hours vs. Account","cpuhours_vs_account");
+    jobstats_input_metric("GPU Hours vs. Account","gpuhours_vs_account");
     jobstats_input_metric("Node Hours vs. Account","nodehours_vs_account");
     jobstats_input_metric("Charges vs. Account","charges_vs_account");
     jobstats_input_metric("Job Length vs. Account","walltime_vs_account");
@@ -1592,6 +1718,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count vs. Group","jobs_vs_groupname");
     jobstats_input_metric("Core Hours vs. Group","cpuhours_vs_groupname");
+    jobstats_input_metric("GPU Hours vs. Group","gpuhours_vs_groupname");
     jobstats_input_metric("Node Hours vs. Group","nodehours_vs_groupname");
     jobstats_input_metric("Charges vs. Group","charges_vs_groupname");
     jobstats_input_metric("Job Length vs. Group","walltime_vs_groupname");
@@ -1608,6 +1735,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count vs. User","jobs_vs_username");
     jobstats_input_metric("Core Hours vs. User","cpuhours_vs_username");
+    jobstats_input_metric("GPU Hours vs. User","gpuhours_vs_username");
     jobstats_input_metric("Node Hours vs. User","nodehours_vs_username");
     jobstats_input_metric("Charges vs. User","charges_vs_username");
     jobstats_input_metric("Job Length vs. User","walltime_vs_username");
@@ -1621,6 +1749,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count vs. QOS","jobs_vs_qos");
     jobstats_input_metric("Core Hours vs. QOS","cpuhours_vs_qos");
+    jobstats_input_metric("GPU Hours vs. QOS","gpuhours_vs_qos");
     jobstats_input_metric("Node Hours vs. QOS","nodehours_vs_qos");
     jobstats_input_metric("Charges vs. QOS","charges_vs_qos");
     jobstats_input_metric("Job Length vs. QOS","walltime_vs_qos");
@@ -1634,6 +1763,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count by Quarter","jobs_vs_quarter");
     jobstats_input_metric("Core Hours by Quarter","cpuhours_vs_quarter");
+    jobstats_input_metric("GPU Hours by Quarter","gpuhours_vs_quarter");
     jobstats_input_metric("Node Hours by Quarter","nodehours_vs_quarter");
     jobstats_input_metric("Charges by Quarter","charges_vs_quarter");
     jobstats_input_metric("Job Length by Quarter","walltime_vs_quarter");
@@ -1648,6 +1778,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count by Month","jobs_vs_month");
     jobstats_input_metric("Core Hours by Month","cpuhours_vs_month");
+    jobstats_input_metric("GPU Hours by Month","gpuhours_vs_month");
     jobstats_input_metric("Node Hours by Month","nodehours_vs_month");
     jobstats_input_metric("Charges by Month","charges_vs_month");
     jobstats_input_metric("Job Length by Month","walltime_vs_month");
@@ -1662,6 +1793,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count by Week","jobs_vs_week");
     jobstats_input_metric("Core Hours by Week","cpuhours_vs_week");
+    jobstats_input_metric("GPU Hours by Week","gpuhours_vs_week");
     jobstats_input_metric("Node Hours by Week","nodehours_vs_week");
     jobstats_input_metric("Charges by Week","charges_vs_week");
     jobstats_input_metric("Job Length by Week","walltime_vs_week");
@@ -1676,6 +1808,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count by Institution","jobs_vs_institution");
     jobstats_input_metric("Core Hours by Institution","cpuhours_vs_institution");
+    jobstats_input_metric("GPU Hours by Institution","gpuhours_vs_institution");
     jobstats_input_metric("Node Hours by Institution","nodehours_vs_institution");
     jobstats_input_metric("Charges by Institution","charges_vs_institution");
     jobstats_input_metric("Active Users by Institution","users_vs_institution");
@@ -1686,6 +1819,7 @@ else
     jobstats_input_spacer();
     jobstats_input_metric("Job Count vs. Processor Count","jobs_vs_nproc_bucketed");
     jobstats_input_metric("Core Hours vs. Processor Count","cpuhours_vs_nproc_bucketed");
+    jobstats_input_metric("GPU Hours vs. Processor Count","gpuhours_vs_nproc_bucketed");
     jobstats_input_metric("Node Hours vs. Processor Count","nodehours_vs_nproc_bucketed");
     jobstats_input_metric("Charges vs. Processor Count","charges_vs_nproc_bucketed");
     jobstats_input_metric("Job Length vs. Processor Count","walltime_vs_nproc_bucketed");
@@ -1702,6 +1836,7 @@ else
     jobstats_input_metric("PSC Metrics vs. Processor Count","pscmetrics_vs_nproc_bucketed");
     jobstats_input_metric("Job Count vs. Normalized Processor Count","jobs_vs_nproc_norm");
     jobstats_input_metric("Core Hours vs. Normalized Processor Count","cpuhours_vs_nproc_norm");
+    jobstats_input_metric("GPU Hours vs. Normalized Processor Count","gpuhours_vs_nproc_norm");
     jobstats_input_metric("Node Hours vs. Normalized Processor Count","nodehours_vs_nproc_norm");
     jobstats_input_metric("Charges vs. Normalized Processor Count","charges_vs_nproc_norm");
     jobstats_input_metric("Job Length vs. Normalized Processor Count","walltime_vs_nproc_norm");

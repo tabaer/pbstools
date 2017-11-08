@@ -245,6 +245,7 @@ function ndays($db,$system,$start_date,$end_date)
 function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
 {
   if ( $metric=='cpuhours' ) return "SUM(".cpuhours($db,$system,$start_date,$end_date,$datelogic).") AS cpuhours";
+  if ( $metric=='gpuhours' ) return "SUM(".gpuhours($db,$system,$start_date,$end_date,$datelogic).") AS gpuhours";
   if ( $metric=='nodehours' ) return "SUM(".nodehours($db,$system,$start_date,$end_date,$datelogic).") AS nodehours";
   if ( $metric=='charges' ) return "SUM(".charges($db,$system,$start_date,$end_date,$datelogic).") AS charges";
   if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)) AS 'MIN(qtime)', SEC_TO_TIME(MAX(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)) AS 'MAX(qtime)', SEC_TO_TIME(AVG(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)) AS 'AVG(qtime)', SEC_TO_TIME(STDDEV(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END))  AS 'STDDEV(qtime)'";
@@ -286,6 +287,7 @@ function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
 function columnnames($metric)
 {
   if ( $metric=='cpuhours' ) return array("cpuhours");
+  if ( $metric=='gpuhours' ) return array("gpuhours");
   if ( $metric=='nodehours' ) return array("nodehours");
   if ( $metric=='charges' ) return array("charges");
   if ( $metric=='qtime' ) return array("MIN(qtime)","MAX(qtime)","AVG(qtime)","STDDEV(qtime)");

@@ -45,6 +45,7 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count vs. CPU Count","jobs_vs_nproc");
 jobstats_input_metric("Core Hours vs. CPU Count","cpuhours_vs_nproc");
+jobstats_input_metric("GPU Hours vs. CPU Count","gpuhours_vs_nproc");
 jobstats_input_metric("Node Hours vs. CPU Count","nodehours_vs_nproc");
 jobstats_input_metric("Charges vs. CPU Count","charges_vs_nproc");
 jobstats_input_metric("Job Length vs. CPU Count","walltime_vs_nproc");

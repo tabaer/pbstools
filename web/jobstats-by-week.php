@@ -45,6 +45,7 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count by Week","jobs_vs_week");
 jobstats_input_metric("Core Hours by Week","cpuhours_vs_week");
+jobstats_input_metric("GPU Hours by Week","gpuhours_vs_week");
 jobstats_input_metric("Node Hours by Week","nodehours_vs_week");
 jobstats_input_metric("Charges by Week","charges_vs_week");
 jobstats_input_metric("Job Length by Week","walltime_vs_week");

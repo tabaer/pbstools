@@ -44,6 +44,7 @@ date_fields();
 jobstats_input_header();
 jobstats_input_metric("Job Count vs. User","jobs_vs_username");
 jobstats_input_metric("Core Hours vs. User","cpuhours_vs_username");
+jobstats_input_metric("GPU Hours vs. User","gpuhours_vs_username");
 jobstats_input_metric("Node Hours vs. User","nodehours_vs_username");
 jobstats_input_metric("Charges vs. User","charges_vs_username");
 jobstats_input_metric("Job Length vs. User","walltime_vs_username");
