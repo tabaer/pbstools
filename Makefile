@@ -1,4 +1,4 @@
-VERSION = 3.3
+VERSION = 3.4
 RELEASE = 1
 ROOT = /
 PREFIX    = /usr/local
@@ -96,6 +96,7 @@ reaver:
 
 pbsacct-python:
 	cd src/python && python setup.py install --single-version-externally-managed --root=$(ROOT)
+	install -m 0755 sbin/transform-accounting-log $(PREFIX)/sbin/
 
 mpitools: parallel-command-processor pbsdcp-scatter jobarray-to-pcp
 

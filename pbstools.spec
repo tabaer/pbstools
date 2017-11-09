@@ -271,7 +271,7 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %dir %{_sysconfdir}/pbsacct
 %{_sysconfdir}/pbsacct/create-tables.mysql
 %{_sysconfdir}/pbsacct/create-tables.sqlite
-%{_sysconfdir}/pbsacctdb.cfg
+%config(noreplace) %{_sysconfdir}/pbsacctdb.cfg
 
 %files -n pbsacct-jobscript-watcher
 %{_sbindir}/jobscript-watcher
