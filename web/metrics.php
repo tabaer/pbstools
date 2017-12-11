@@ -256,7 +256,7 @@ function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
   if ( $metric=='cputime' ) return "SEC_TO_TIME(MIN(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'MIN(cputime)', SEC_TO_TIME(MAX(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'MAX(cputime)', SEC_TO_TIME(AVG(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'AVG(cputime)', SEC_TO_TIME(STDDEV(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'STDDEV(cputime)'";
   if ( $metric=='walltime_acc' ) return "MIN(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MIN(walltime_acc)',MAX(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MAX(walltime_acc)',AVG(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'AVG(walltime_acc)',STDDEV(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'STDDEV(walltime_acc)'";
   if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), MAX(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), AVG(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), STDDEV(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic)."))";
-  if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups";
+  if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts";
   if ( $metric=='backlog' ) return cpuhours($db,$system,$start_date,$end_date,$datelogic)." AS cpuhours, SUM(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/3600.0 AS 'SUM(qtime)'";
 #  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
   if ( $metric=='xfactor' ) return "MIN(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'MIN(xfactor)', MAX(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'MAX(xfactor)', AVG(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'AVG(xfactor)', STDDEV(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'STDDEV(xfactor)'";
@@ -278,6 +278,7 @@ function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
       $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
       return $column;
     }
+  if ( $metric=='moabstats' ) return columns('cpuhours',$system,$db,$start_date,$end_date,$datelogic).", AVG(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'AVG(xfactor)', MAX(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'MAX(xfactor)', AVG(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/3600.0 AS 'AvgQH', AVG(cput_sec/(3600*(".cpuhours($db,$system,$start_date,$end_date,$datelogic)."))) AS 'AVG(cpu_eff)', AVG(walltime_sec/walltime_req_sec) AS 'AVG(walltime_acc)'";
 
   return "";
 }
@@ -298,7 +299,7 @@ function columnnames($metric)
   if ( $metric=='cputime' ) return array("MIN(cputime)","MAX(cputime)","AVG(cputime)","STDDEV(cputime)");
   if ( $metric=='walltime_acc' ) return array("MIN(walltime_acc)","MAX(walltime_acc)","AVG(walltime_acc)","STDDEV(walltime_acc)");
   if ( $metric=='cpu_eff' ) return array("MIN(cpu_eff)","MAX(cpu_eff)","AVG(cpu_eff)","STDDEV(cpu_eff)");
-  if ( $metric=='usercount' ) return array("users","groups");
+  if ( $metric=='usercount' ) return array("users","groups","accounts");
   if ( $metric=='backlog' ) return array("cpuhours","SUM(qtime)");
 #  if ( $metric=='xfactor' ) return array("xfactor");
   if ( $metric=='xfactor' ) return array("MIN(xfactor)","MAX(xfactor)","AVG(xfactor)","STDDEV(xfactor)");
@@ -333,6 +334,16 @@ function columnnames($metric)
 	  $output[] = $maxs[$i-1]."-".$maxs[$i];
 	}
       $output[] = "&gt;".$maxs[count($maxs)-1];
+      return $output;
+    }
+  if ( $metric=='moabstats' )
+    {
+      $output = columnnames('cpuhours');
+      array_push($output,"AVG(xfactor)");
+      array_push($output,"MAX(xfactor)");
+      array_push($output,"AVG(qtime_hrs)");
+      array_push($output,"AVG(cpu_eff)");      
+      array_push($output,"AVG(walltime_acc)");      
       return $output;
     }
 
@@ -1196,7 +1207,8 @@ function jobstats_summary($db,$system,$start_date,$end_date,$datelogic="during")
   $usercount->fetchInto($counts);
   $nusers=$counts[1];
   $ngroups=$counts[2];
-  echo $nusers." distinct users, ".$ngroups." distinct groups";
+  $naccts=$counts[3];
+  echo $nusers." distinct users, ".$ngroups." distinct groups, ".$naccts." distinct accounts";
   echo "</B></P>\n";
   ob_flush();
   flush();

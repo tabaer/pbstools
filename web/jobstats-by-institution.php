@@ -51,6 +51,7 @@ jobstats_input_metric("Charges by Institution","charges_vs_institution");
 jobstats_input_metric("Active Users by Institution","users_vs_institution");
 jobstats_input_metric("Active Groups by Institution","groups_vs_institution");
 jobstats_input_metric("Active Accounts by Institution","accounts_vs_institution");
+jobstats_input_metric("Moab Statistics by Institution","moabstats_vs_institution");
 jobstats_input_footer();
 
 end_form();

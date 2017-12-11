@@ -398,6 +398,14 @@ if ( isset($_POST['system']) )
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
 
+    jobstats_output_metric('Moab Statistics vs. Job Class',
+			   'moabstats_vs_queue',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);    
+
     // by wallclock time requested
     jobstats_output_bucketed_metric('Job Count vs. Job Length Requested',
 				    'jobs_vs_walltime_req',
@@ -696,6 +704,14 @@ if ( isset($_POST['system']) )
 			   $_POST['start_date'],
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
+
+    jobstats_output_metric('Moab Statistics vs. Account',
+			   'moabstats_vs_account',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
     
     // by groupname
     jobstats_output_metric('Job Count vs. Group',
@@ -810,6 +826,14 @@ if ( isset($_POST['system']) )
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
     
+    jobstats_output_metric('Moab Statistics vs. Group',
+			   'moabstats_vs_groupname',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
     // by username
     jobstats_output_metric('Job Count vs. User',
 			   'jobs_vs_username',
@@ -893,6 +917,14 @@ if ( isset($_POST['system']) )
 
     jobstats_output_metric('CPU Efficiency vs. User',
 			   'cpu_eff_vs_username',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
+    jobstats_output_metric('Moab Statistics vs. User',
+			   'moabstats_vs_username',
 			   $db,
 			   $_POST['system'],
 			   $_POST['start_date'],
@@ -987,6 +1019,15 @@ if ( isset($_POST['system']) )
 			   $_POST['start_date'],
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
+
+    jobstats_output_metric('Moab Statistics vs. QOS',
+			   'moabstats_vs_qos',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
 
     // by quarter
     jobstats_output_metric('Job Count vs. Quarter',
@@ -1344,6 +1385,14 @@ if ( isset($_POST['system']) )
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
 
+    jobstats_output_metric('Moab Statistics vs. Institution',
+			   'moabstats_vs_institution',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
     // custom wackiness
     jobstats_output_bucketed_metric('Job Count vs. Processor Count',
 				    'jobs_vs_nproc_bucketed',
@@ -1670,6 +1719,7 @@ else
     jobstats_input_metric("Active Users vs. Job Class","users_vs_queue");
     jobstats_input_metric("Active Groups vs. Job Class","groups_vs_queue");
     jobstats_input_metric("Active Accounts vs. Job Class","accounts_vs_queue");
+    jobstats_input_metric("Moab Statistics vs. Job Class","moabstats_vs_queue");
 
     // by walltime_req
     jobstats_input_spacer();
@@ -1713,6 +1763,7 @@ else
     jobstats_input_metric("CPU Efficiency vs. Account","cpu_eff_vs_account");
     jobstats_input_metric("Active Users vs. Account","users_vs_account");
     jobstats_input_metric("Processor Count vs. Account","nproc_vs_account");
+    jobstats_input_metric("Moab Statistics vs. Account","moabstats_vs_account");
 
     // by groupname
     jobstats_input_spacer();
@@ -1730,6 +1781,7 @@ else
     jobstats_input_metric("Active Users vs. Group","users_vs_groupname");
     jobstats_input_metric("Active Accounts vs. Group","accounts_vs_groupname");
     jobstats_input_metric("Processor Count vs. Group","nproc_vs_groupname");
+    jobstats_input_metric("Moab Statistics vs. Group","moabstats_vs_groupname");
 
     // by username
     jobstats_input_spacer();
@@ -1744,6 +1796,7 @@ else
     jobstats_input_metric("Virtual Memory vs. User","vmem_kb_vs_username");
     jobstats_input_metric("Walltime Accuracy vs. User","walltime_acc_vs_username");
     jobstats_input_metric("CPU Efficiency vs. User","cpu_eff_vs_username");
+    jobstats_input_metric("Moab Statistics vs. User","moabstats_vs_username");
 
     // by QOS
     jobstats_input_spacer();
@@ -1758,6 +1811,7 @@ else
     jobstats_input_metric("Virtual Memory vs. QOS","vmem_kb_vs_qos");
     jobstats_input_metric("Walltime Accuracy vs. QOS","walltime_acc_vs_qos");
     jobstats_input_metric("CPU Efficiency vs. QOS","cpu_eff_vs_qos");
+    jobstats_input_metric("Moab Statistics vs. QOS","moabstats_vs_qos");
 
     // by quarter
     jobstats_input_spacer();
@@ -1814,6 +1868,7 @@ else
     jobstats_input_metric("Active Users by Institution","users_vs_institution");
     jobstats_input_metric("Active Groups by Institution","groups_vs_institution");
     jobstats_input_metric("Active Accounts by Institution","accounts_vs_institution");
+    jobstats_input_metric("Moab Statistics by Institution","moabstats_vs_institution");
 
     // custom wackiness
     jobstats_input_spacer();

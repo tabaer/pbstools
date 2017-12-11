@@ -54,6 +54,7 @@ jobstats_input_metric("Real Memory vs. QOS","mem_kb_vs_qos");
 jobstats_input_metric("Virtual Memory vs. QOS","vmem_kb_vs_qos");
 jobstats_input_metric("Walltime Accuracy vs. QOS","walltime_acc_vs_qos");
 jobstats_input_metric("CPU Efficiency vs. QOS","cpu_eff_vs_qos");
+jobstats_input_metric("Moab Statistics vs. QOS","moabstats_vs_qos");
 jobstats_input_footer();
 
 end_form();

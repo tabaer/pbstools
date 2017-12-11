@@ -56,6 +56,7 @@ jobstats_input_metric("Walltime Accuracy vs. Account","walltime_acc_vs_account")
 jobstats_input_metric("CPU Efficiency vs. Account","cpu_eff_vs_account");
 jobstats_input_metric("Active Users vs. Account","users_vs_account");
 jobstats_input_metric("Processor Count vs. Account","nproc_vs_account");
+jobstats_input_metric("Moab Statistics vs. Account","moabstats_vs_account");
 jobstats_input_footer();
 
 end_form();

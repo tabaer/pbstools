@@ -57,6 +57,7 @@ jobstats_input_metric("CPU Efficiency vs. Group","cpu_eff_vs_groupname");
 jobstats_input_metric("Active Users vs. Group","users_vs_groupname");
 jobstats_input_metric("Active Accounts vs. Group","accounts_vs_groupname");
 jobstats_input_metric("Processor Count vs. Group","nproc_vs_groupname");
+jobstats_input_metric("Moab Statistics vs. Group","moabstats_vs_groupname");
 jobstats_input_footer();
 
 end_form();

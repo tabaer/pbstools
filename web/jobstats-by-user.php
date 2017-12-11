@@ -53,6 +53,7 @@ jobstats_input_metric("Real Memory vs. User","mem_kb_vs_username");
 jobstats_input_metric("Virtual Memory vs. User","vmem_kb_vs_username");
 jobstats_input_metric("Walltime Accuracy vs. User","walltime_acc_vs_username");
 jobstats_input_metric("CPU Efficiency vs. User","cpu_eff_vs_username");
+jobstats_input_metric("Moab Statistics vs. User","moabstats_vs_username");
 jobstats_input_footer();
 
 end_form();
