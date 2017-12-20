@@ -251,15 +251,15 @@ function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
   if ( $metric=='qtime' ) return "SEC_TO_TIME(MIN(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)) AS 'MIN(qtime)', SEC_TO_TIME(MAX(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)) AS 'MAX(qtime)', SEC_TO_TIME(AVG(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)) AS 'AVG(qtime)', SEC_TO_TIME(STDDEV(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END))  AS 'STDDEV(qtime)'";
   if ( $metric=='mem_kb' ) return "MIN(mem_kb), MAX(mem_kb), AVG(mem_kb), STDDEV(mem_kb)";
   if ( $metric=='vmem_kb' ) return "MIN(vmem_kb), MAX(vmem_kb), AVG(vmem_kb), STDDEV(vmem_kb)";
-  if ( $metric=='walltime' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(walltime))) AS 'MIN(walltime)', SEC_TO_TIME(MAX(TIME_TO_SEC(walltime))) AS 'MAX(walltime)', SEC_TO_TIME(AVG(TIME_TO_SEC(walltime))) AS 'AVG(walltime)', SEC_TO_TIME(STDDEV(TIME_TO_SEC(walltime))) AS 'STDDEV(walltime)'";
-  if ( $metric=='cput' ) return "SEC_TO_TIME(MIN(TIME_TO_SEC(cput))) AS 'MIN(cput)',SEC_TO_TIME(MAX(TIME_TO_SEC(cput))) AS 'MAX(cput)',SEC_TO_TIME(AVG(TIME_TO_SEC(cput))) AS 'AVG(cput)',SEC_TO_TIME(STDDEV(TIME_TO_SEC(cput))) AS 'STDDEV(cput)'";
+  if ( $metric=='walltime' ) return "SEC_TO_TIME(MIN(walltime_sec)) AS 'MIN(walltime)', SEC_TO_TIME(MAX(walltime_sec)) AS 'MAX(walltime)', SEC_TO_TIME(AVG(walltime_sec)) AS 'AVG(walltime)', SEC_TO_TIME(STDDEV(walltime_sec)) AS 'STDDEV(walltime)'";
+  if ( $metric=='cput' ) return "SEC_TO_TIME(MIN(cput_sec)) AS 'MIN(cput)',SEC_TO_TIME(MAX(cput_sec)) AS 'MAX(cput)',SEC_TO_TIME(AVG(cput_sec)) AS 'AVG(cput)',SEC_TO_TIME(STDDEV(cput_sec)) AS 'STDDEV(cput)'";
   if ( $metric=='cputime' ) return "SEC_TO_TIME(MIN(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'MIN(cputime)', SEC_TO_TIME(MAX(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'MAX(cputime)', SEC_TO_TIME(AVG(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'AVG(cputime)', SEC_TO_TIME(STDDEV(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")) AS 'STDDEV(cputime)'";
-  if ( $metric=='walltime_acc' ) return "MIN(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MIN(walltime_acc)',MAX(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'MAX(walltime_acc)',AVG(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'AVG(walltime_acc)',STDDEV(TIME_TO_SEC(walltime)/TIME_TO_SEC(walltime_req)) AS 'STDDEV(walltime_acc)'";
-  if ( $metric=='cpu_eff' ) return "MIN(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), MAX(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), AVG(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), STDDEV(TIME_TO_SEC(cput)/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic)."))";
+  if ( $metric=='walltime_acc' ) return "MIN(walltime_sec/walltime_req_sec) AS 'MIN(walltime_acc)',MAX(walltime_sec/walltime_req_sec) AS 'MAX(walltime_acc)',AVG(walltime_sec/walltime_req_sec) AS 'AVG(walltime_acc)',STDDEV(walltime_sec/walltime_req_sec) AS 'STDDEV(walltime_acc)'";
+  if ( $metric=='cpu_eff' ) return "MIN(cput_sec/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), MAX(cput_sec/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), AVG(cput_sec/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic).")), STDDEV(cput_sec/(3600*".cpuhours($db,$system,$start_date,$end_date,$datelogic)."))";
   if ( $metric=='usercount' ) return "COUNT(DISTINCT(username)) AS users,COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts";
   if ( $metric=='backlog' ) return cpuhours($db,$system,$start_date,$end_date,$datelogic)." AS cpuhours, SUM(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/3600.0 AS 'SUM(qtime)'";
-#  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(TIME_TO_SEC(walltime))) AS xfactor";
-  if ( $metric=='xfactor' ) return "MIN(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'MIN(xfactor)', MAX(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'MAX(xfactor)', AVG(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'AVG(xfactor)', STDDEV(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'STDDEV(xfactor)'";
+#  if ( $metric=='xfactor' ) return "1+(SUM(start_ts-submit_ts))/(SUM(walltime_sec)) AS xfactor";
+  if ( $metric=='xfactor' ) return "MIN(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/walltime_sec) AS 'MIN(xfactor)', MAX(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/walltime_sec) AS 'MAX(xfactor)', AVG(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/walltime_sec) AS 'AVG(xfactor)', STDDEV(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/walltime_sec) AS 'STDDEV(xfactor)'";
   if ( $metric=='users' ) return "COUNT(DISTINCT(username)) AS users";
   if ( $metric=='groups' ) return "COUNT(DISTINCT(groupname)) AS groups";
   if ( $metric=='accounts' ) return "COUNT(DISTINCT(account)) AS accounts";
@@ -270,15 +270,15 @@ function columns($metric,$system,$db,$start_date,$end_date,$datelogic="during")
     {
       $first = 0;
       $maxs = bucket_maxs("walltime");
-      $column = "SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")<=TIME_TO_SEC('".$maxs[0]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '<=".$maxs[0]."'";
+      $column = "SUM( CASE WHEN (".bounded_walltime_sec($start_date,$end_date,$datelogic).")<=TIME_TO_SEC('".$maxs[0]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '<=".$maxs[0]."'";
       for ( $i=1 ; $i<count($maxs) ; $i++ )
 	{
-	  $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")>TIME_TO_SEC('".$maxs[$i-1]."') AND TIME_TO_SEC(walltime)<=TIME_TO_SEC('".$maxs[$i]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
+	  $column .= ", SUM( CASE WHEN (".bounded_walltime_sec($start_date,$end_date,$datelogic).")>TIME_TO_SEC('".$maxs[$i-1]."') AND walltime_sec<=TIME_TO_SEC('".$maxs[$i]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '".$maxs[$i-1]."-".$maxs[$i]."'"; 
 	}
-      $column .= ", SUM( CASE WHEN TIME_TO_SEC(".bounded_walltime($start_date,$end_date,$datelogic).")>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
+      $column .= ", SUM( CASE WHEN (".bounded_walltime_sec($start_date,$end_date,$datelogic).")>TIME_TO_SEC('".$maxs[count($maxs)-1]."') THEN ".cpuhours($db,$system,$start_date,$end_date,$datelogic)." ELSE 0 END ) AS '>".$maxs[count($maxs)-1]."'";
       return $column;
     }
-  if ( $metric=='moabstats' ) return columns('cpuhours',$system,$db,$start_date,$end_date,$datelogic).", AVG(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'AVG(xfactor)', MAX(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/TIME_TO_SEC(walltime)) AS 'MAX(xfactor)', AVG(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/3600.0 AS 'AvgQH', AVG(cput_sec/(3600*(".cpuhours($db,$system,$start_date,$end_date,$datelogic)."))) AS 'AVG(cpu_eff)', AVG(walltime_sec/walltime_req_sec) AS 'AVG(walltime_acc)'";
+  if ( $metric=='moabstats' ) return columns('cpuhours',$system,$db,$start_date,$end_date,$datelogic).", AVG(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/walltime_sec) AS 'AvgXF', MAX(1+(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/walltime_sec) AS 'MaxXF', AVG(CASE WHEN eligible_ts>submit_ts THEN start_ts-eligible_ts ELSE start_ts-submit_ts END)/3600.0 AS 'AvgQH', AVG(cput_sec/(3600*(".cpuhours($db,$system,$start_date,$end_date,$datelogic)."))) AS 'Effic', AVG(walltime_sec/walltime_req_sec) AS 'WCAcc'";
 
   return "";
 }
@@ -339,11 +339,11 @@ function columnnames($metric)
   if ( $metric=='moabstats' )
     {
       $output = columnnames('cpuhours');
-      array_push($output,"AVG(xfactor)");
-      array_push($output,"MAX(xfactor)");
-      array_push($output,"AVG(qtime_hrs)");
-      array_push($output,"AVG(cpu_eff)");      
-      array_push($output,"AVG(walltime_acc)");      
+      array_push($output,"AvgXF");
+      array_push($output,"MaxXF");
+      array_push($output,"AvgQH");
+      array_push($output,"Effic");      
+      array_push($output,"WCAcc");      
       return $output;
     }
 
@@ -351,7 +351,7 @@ function columnnames($metric)
 }
 
 
-function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic="during",$limit_access=false)
+function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic="during",$limit_access=false,$ascending=true,$limit=0)
 {
   $query = "SELECT ";
    if ( $xaxis!="" )
@@ -404,11 +404,14 @@ function get_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic=
        # }
        # OSC site-specific logic ends here
      }
-   $query .= " ".sort_criteria($metric."_vs_".$xaxis);
+   $query .= " ".sort_criteria($metric."_vs_".$xaxis,$ascending);
+   if ( $limit>0 )
+     {
+       $query .= " LIMIT ".$limit;
+     }
    #print "<PRE>".$query."</PRE>\n";
    return db_query($db,$query);
 }
-
 
 
 function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$datelogic="during",$limit_access=false)
@@ -1089,7 +1092,7 @@ function jobstats_input_metric($name,$fn)
 }
 
 
-function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$datelogic="during",$limit_access=false)
+function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$datelogic="during",$limit_access=false,$ascending=true,$limit=0)
 {
   if (    isset($_POST[$fn.'_graph'])
        || isset($_POST[$fn.'_table'])
@@ -1102,31 +1105,31 @@ function jobstats_output_metric($name,$fn,$db,$system,$start_date,$end_date,$dat
       
       if ( isset($_POST[$fn.'_graph']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access,$ascending,$limit);
 	  metric_as_graph($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
       
       if ( isset($_POST[$fn.'_table']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access,$ascending,$limit);
 	  metric_as_table($result,xaxis($fn),metric($fn));
 	}
 
       if ( isset($_POST[$fn.'_csv']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access,$ascending,$limit);
 	  metric_as_csv($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
       if ( isset($_POST[$fn.'_xls']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access,$ascending,$limit);
 	  metric_as_xls($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
 
      if ( isset($_POST[$fn.'_ods']) )
 	{
-	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access);
+	  $result=get_metric($db,$system,xaxis($fn),metric($fn),$start_date,$end_date,$datelogic,$limit_access,$ascending,$limit);
 	  metric_as_ods($result,xaxis($fn),metric($fn),$system,$start_date,$end_date);
 	}
     }
