@@ -295,8 +295,29 @@ else
   {
     begin_form("usage-summary.php");
 
+    $year = date('Y',time());
+    $month = date('m',time())-1;
+    if ( $month<1 )
+      {
+	$year = $year-1;
+	$month = 12;
+      }
+    $firstday = "01";
+    $lastday = "31";
+    if ( $month==2 )
+      {
+	$lastday = 28;
+      }
+    else if ( $month==4 || $month==6 || $month==9 || $month==11 )
+      {
+	$lastday = 30;
+      }
+    
+    $start = sprintf("%04d-%02d-%02d",$year,$month,$firstday);
+    $end = sprintf("%04d-%02d-%02d",$year,$month,$lastday);
+
     virtual_system_chooser();
-    date_fields();
+    date_fields($start,$end);
 
     $orders=array("jobs","cpuhours","nodehours","charges","users","groups");
     checkboxes_from_array("Supplemental reports",array("institution","account","software"));
