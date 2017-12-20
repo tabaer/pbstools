@@ -457,11 +457,19 @@ function charges($db,$system,$start_date,$end_date,$datelogic="during")
 
 # sorting criteria for each metric
 # here mostly as an example of what's possible
-function sort_criteria($fn)
+function sort_criteria($fn,$ascending=false)
 {
+  if ( $fn=="usercount_vs_" ) return ""; // no-op
   #  if ( $fn=='cpuhours_vs_groupname' ) return "ORDER BY cpuhours DESC";
-  if ( isset($_POST['order']) ) return "ORDER BY ".$_POST['order']." DESC";
-  if ( xaxis($fn)=="institution" ) return "ORDER BY institution";
+  if ( xaxis($fn)=="institution" &&  $fn!="moabstats_vs_institution" ) return "ORDER BY institution";
+  if ( isset($_POST['order']) && !$ascending )
+    {
+      return "ORDER BY ".$_POST['order']." DESC";
+    }
+  else if ( isset($_POST['order']) )
+    {
+      return "ORDER BY ".$_POST['order'];
+    }
   return "";
 }
 
