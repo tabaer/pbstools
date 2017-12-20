@@ -165,10 +165,10 @@ function virtual_system_chooser()
   echo "</SELECT><BR>\n";
 }
 
-function date_fields()
+function date_fields($start='',$end='')
 {
-  echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
-  echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\"> (YYYY-MM-DD)<BR>\n";
+  echo "Start date: <INPUT type=\"text\" name=\"start_date\" size=\"10\" value=\"".$start."\"> (YYYY-MM-DD)<BR>\n";
+  echo "End date: <INPUT type=\"text\" name=\"end_date\" size=\"10\" value=\"".$end."\"> (YYYY-MM-DD)<BR>\n";
   pulldown("datelogic","Date Logic",array("submit","eligible","start","end","during"),"start");
 }
 
