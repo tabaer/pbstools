@@ -11,10 +11,29 @@
 import copy
 import datetime
 import gzip
+import logging
 import os
 import re
 import sys
 import unittest
+
+# Needed to support logging in Python 2.6
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
+logger = logging.getLogger(__name__)
+try:
+    logging_null_handler = logging.NullHandler()
+except AttributeError:
+    logging_null_handler = NullHandler()
+logger.addHandler(logging_null_handler)
+
+def getLogger():
+    return logger
+
+def setLogger(newLogger):
+    logger = newLogger
 
 class jobinfo:
     def __init__(self,jobid,update_time,state,resources,system=None):
@@ -661,7 +680,7 @@ def raw_data_from_file(filename):
                     value = float(value)
                 resources_dict[key] = value
             elif ( resource!="" ):
-                sys.stderr.write("WARNING:  filename=%s, jobid=%s:  Malformed resource \"%s\"\n" % (filename,jobid,resource))
+                logger.warn("filename=%s, jobid=%s:  Malformed resource \"%s\"\n" % (filename,jobid,resource))
         
         # Store the data in the output
         output.append((jobid, time, record_type, resources_dict))
@@ -962,7 +981,7 @@ class pbsacctDB:
                     else:
                         raise RuntimeError("Unknown keyword \"%s\"" % keyword)
                 except Exception as e:
-                    sys.stderr.write(str(e))
+                    logger.warn(str(e))
                     pass
 
     def connect(self):
@@ -1186,14 +1205,14 @@ class pbsacctDB:
                 deltavalues.append(delta[key])
             sql = "INSERT INTO %s ( %s ) VALUES ( %s )" % (self.getJobsTable(),",".join(deltakeys),",".join(deltavalues))
             if ( noop ):
-                sys.stderr.write("%s\n" % sql)
+                logger.debug("%s\n" % sql)
             else:
                 try:
                     self.cursor().execute(sql)
                     self.commit()
                 except Exception as e:
-                    sys.stderr.write("%s\n" % sql)
-                    sys.stderr.write(str(e))
+                    logger.debug("%s\n" % sql)
+                    logger.error(str(e))
 
     def update_job(self,job,system=None,check_existance=True,noop=False,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
@@ -1212,14 +1231,14 @@ class pbsacctDB:
                     deltalist.append("%s=%s" % (key,delta[key]))
                 sql = "UPDATE %s SET %s WHERE jobid='%s'" % (self.getJobsTable(),", ".join(deltalist),myjobid)
                 if ( noop ):
-                    sys.stderr.write("%s\n" % sql)
+                    logger.debug("%s\n" % sql)
                 else:
                     try:
                         self.cursor().execute(sql)
                         self.commit()
                     except Exception as e:
-                        sys.stderr.write("%s\n" % sql)
-                        sys.stderr.write(str(e))
+                        logger.debug("%s\n" % sql)
+                        logger.error(str(e))
 
     def insert_or_update_job(self,job,system=None,noop=False,append_to_jobid=None):
         if ( not isinstance(job,jobinfo) ):
@@ -1236,7 +1255,7 @@ class pbsacctDB:
         if ( self.job_exists(myjobid) ):
             sql = "SELECT * FROM %s WHERE jobid='%s'" % (self.getJobsTable(),myjobid)
             if ( noop ):
-                sys.stderr.write("%s\n" % sql)
+                logger.debug("%s\n" % sql)
                 return None
             else:
                 self.cursor().execute(sql)
