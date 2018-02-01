@@ -13,8 +13,10 @@
 # Usage:  job-db-update [-h system] [-s dbhost] [-D dbtype]
 #                       [-d dbname] [-u dbuser] [-p dbpasswd]
 #                       [-t jobstable] [-C config_table] [-w sw_table]
-#                       [-c cfgfile]
+#                       [-c cfgfile] [-L|-l]
 #                       acctfile [...acctfiles...]
+# -L -- log to syslog
+# -l -- log to stderr
 #
 # Can be run with no acct files listed to check DB connectivity
 
@@ -31,6 +33,8 @@ def usage():
     sys.stderr.write("\t\t\t[-t jobstable] [-C config_table] [-w sw_table]\n")
     sys.stderr.write("\t\t\t[-c cfgfile] [-a append_to_jobid_in_db]\n")
     sys.stderr.write("\t\t\tacctfile [...acctfiles...]\n")
+    sys.stderr.write("-L -- log to syslog\n")
+    sys.stderr.write("-l -- log to stderr\n")
     sys.exit(0)
 
 
@@ -111,6 +115,7 @@ if ( syslog ):
 lh.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
 logger.addHandler(lh)
 
+# connect to DB
 dbconn = db.connect()
 cursor = dbconn.cursor()
 
