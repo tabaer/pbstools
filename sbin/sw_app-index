@@ -25,6 +25,7 @@
 # -l -- log to stderr
 
 import getopt
+import logging
 import os
 import pbsacct
 import re
