@@ -13,6 +13,7 @@
 # (which is itself invoked by dnotify or moral equivalent).
 
 import getopt
+import logging
 import os
 import pbsacct
 import re
@@ -22,8 +23,10 @@ def usage():
     sys.stderr.write("Usage:\tjobscript-to-db\t[-h system] [-s dbhost] [-D dbtype]\n")
     sys.stderr.write("\t\t\t[-d dbname] [-u dbuser] [-p dbpasswd]\n")
     sys.stderr.write("\t\t\t[-t jobstable] [-C config_table] [-w sw_table]\n")
-    sys.stderr.write("\t\t\t[-c cfgfile] [-A append_to_jobid_in_db]\n")
+    sys.stderr.write("\t\t\t[-c cfgfile] [-A append_to_jobid_in_db] [-L|-l]\n")
     sys.stderr.write("\t\t\tjobscript [...jobscripts...]\n")
+    sys.stderr.write("-L -- log to syslog\n")
+    sys.stderr.write("-l -- log to stderr (default)\n")
     sys.exit(0)
 
 
@@ -37,6 +40,7 @@ dbpasswd = "pbsRroxor"
 system = None
 noop = False
 append_to_jobid_in_db = None
+syslog = False
 
 db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
 if ( not os.environ.has_key("PBSTOOLS_DIR") ):
@@ -48,7 +52,7 @@ if ( os.path.exists(cfgfile) ):
 # command line processing
 try:
     opts, filelist = getopt.getopt(sys.argv[1:],
-                                   "C:D:Ta:c:d:h:p:s:t:u:w:",
+                                   "C:D:LTa:c:d:h:lp:s:t:u:w:",
                                    [])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
@@ -58,6 +62,8 @@ for opt in opts:
         db.setConfigTable(opt[1])
     elif ( opt[0]=="-D" ):
         db.setType(opt[1])
+    elif ( opt[0]=="-L" ):
+        syslog = True
     elif ( opt[0]=="-T" ):
         noop = True
     elif ( opt[0]=="-a" ):
@@ -68,6 +74,8 @@ for opt in opts:
         db.setName(opt[1])
     elif ( opt[0]=="-h" ):
         db.setSystem(opt[1])
+    elif ( opt[0]=="-l" ):
+        syslog = False
     elif ( opt[0]=="-p" ):
         db.setPassword(opt[1])
     elif ( opt[0]=="-s" ):
@@ -84,6 +92,20 @@ if ( system is None and db.getSystem() is not None ):
 else:
     system = "%"
 
+# configure logging
+logger = pbsacct.getLogger()
+
+if ( noop ):
+    logger.setLevel(logging.INFO)
+else:
+    logger.setLevel(logging.WARNING)
+lh = logging.StreamHandler(sys.stderr)
+if ( syslog ):
+    lh = logging.handlers.SysLogHandler(address='/dev/log')
+lh.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
+logger.addHandler(lh)
+
+# connect to DB
 dbconn = db.connect()
 cursor = dbconn.cursor()
 
@@ -100,12 +122,12 @@ for scriptfile in filelist:
         else:
             sql = "INSERT INTO "+db.getJobsTable()+" (script,system,jobid) VALUES (%s,%s,%s);"
         if ( noop ):
-            sys.stderr.write("%s (%s,%s,%s)\n" % (sql,script,system,jobid))
+            logger.info("%s (%s,%s,%s)" % (sql,script,system,jobid))
         else:
             try:
                 cursor.execute(sql,(script,system,jobid))
                 dbconn.commit()
             except Exception as e:
-                sys.stderr.write("%s\n" % sql)
-                sys.stderr.write(str(e))
+                logger.debug("%s" % sql)
+                logger.error(str(e))
 
