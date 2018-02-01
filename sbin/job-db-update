@@ -19,6 +19,7 @@
 # Can be run with no acct files listed to check DB connectivity
 
 import getopt
+import logging
 import os
 import pbsacct
 import re
@@ -44,6 +45,7 @@ system = None
 cfgfile = "/etc/pbsacctdb.cfg"
 query = False
 noop = False
+syslog = False
 append_to_jobid_in_db = None
 
 db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
@@ -56,7 +58,7 @@ if ( os.path.exists(cfgfile) ):
 # command line processing
 try:
     opts, filelist = getopt.getopt(sys.argv[1:],
-                                   "C:D:Ta:c:d:h:p:qs:t:u:w:",
+                                   "C:D:LTa:c:d:h:lp:qs:t:u:w:",
                                    [])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
@@ -66,6 +68,8 @@ for opt in opts:
         db.setConfigTable(opt[1])
     elif ( opt[0]=="-D" ):
         db.setType(opt[1])
+    elif ( opt[0]=="-L" ):
+        syslog = True
     elif ( opt[0]=="-T" ):
         noop = True
     elif ( opt[0]=="-a" ):
@@ -76,6 +80,8 @@ for opt in opts:
         db.setName(opt[1])
     elif ( opt[0]=="-h" ):
         db.setSystem(opt[1])
+    elif ( opt[0]=="-l" ):
+        syslog = False
     elif ( opt[0]=="-p" ):
         db.setPassword(opt[1])
     elif ( opt[0]=="-q" ):
@@ -91,6 +97,19 @@ for opt in opts:
 
 if ( system is None and db.getSystem() is not None ):
     system = db.getSystem()
+
+# configure logging
+logger = pbsacct.getLogger()
+
+if ( noop ):
+    logger.setLevel(logging.INFO)
+else:
+    logger.setLevel(logging.WARNING)
+lh = logging.StreamHandler(sys.stderr)
+if ( syslog ):
+    lh = logging.handlers.SysLogHandler(address='/dev/log')
+lh.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
+logger.addHandler(lh)
 
 dbconn = db.connect()
 cursor = dbconn.cursor()
@@ -111,18 +130,18 @@ if ( len(filelist)>0 ):
                 if ( db.job_exists(jobid,append_to_jobid=append_to_jobid_in_db) ):
                     dbjob = db.get_job(jobid,append_to_jobid=append_to_jobid_in_db)
                 if ( dbjob is None ):
-                    sys.stderr.write("Jobid %s does not exist in DB\n" % jobid)
+                    logger.info("Jobid %s does not exist in DB" % jobid)
                 elif ( dbjob!=jobs[jobid] ):
                     if ( jobid!=dbjob.jobid() ):
-                        sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, "jobid", str(dbjob.jobid(), str(jobid))))
+                        logger.info("%s %s:  dbvalue=%s, logvalue=%s" % (jobid, "jobid", str(dbjob.jobid(), str(jobid))))
                     if ( jobs[jobid].user()!=dbjob.user() ):
-                        sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, "user", str(dbjob.user()), str(jobs[jobid].user())))
+                        logger.info("%s %s:  dbvalue=%s, logvalue=%s" % (jobid, "user", str(dbjob.user()), str(jobs[jobid].user())))
                     if ( jobs[jobid].group()!=dbjob.group() ):
-                        sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, "group", str(dbjob.group()), str(jobs[jobid].group())))
+                        logger.info("%s %s:  dbvalue=%s, logvalue=%s" % (jobid, "group", str(dbjob.group()), str(jobs[jobid].group())))
                     if ( jobs[jobid].account()!=dbjob.account() ):
-                        sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, "account", str(dbjob.account()), str(jobs[jobid].account())))
+                        logger.info("%s %s:  dbvalue=%s, logvalue=%s" % (jobid, "account", str(dbjob.account()), str(jobs[jobid].account())))
                     if ( jobs[jobid].queue()!=dbjob.queue() ):
-                        sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, "queue", str(dbjob.queue()), str(jobs[jobid].queue())))
+                        logger.info("%s %s:  dbvalue=%s, logvalue=%s" % (jobid, "queue", str(dbjob.queue()), str(jobs[jobid].queue())))
                     for column in list( set(jobs[jobid].get_resource_keys()) | set(dbjob.get_resource_keys()) ):
                         dbvalue = dbjob.get_resource(column)
                         logvalue = jobs[jobid].get_resource(column)
@@ -134,21 +153,21 @@ if ( len(filelist)>0 ):
                                          "unique_node_count"]
                         if ( column not in ignorecolumns ):
                             if ( str(dbvalue)!=str(logvalue) ):
-                                if ( column in ["ctime","etime","start","end"] and ( dbvalue is not None and dbvalue!=0 ) and ( logvalue is not None or logvalue!=0 ) ):
-                                    sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s, difference=%d\n" % (jobid, column, str(dbvalue), str(logvalue), int(dbvalue)-int(logvalue)))
+                                if ( column in ["ctime","etime","start","end"] and ( dbvalue is not None and dbvalue!=0 ) and ( logvalue is not None and logvalue!=0 ) ):
+                                    logger.info("%s %s:  dbvalue=%s, logvalue=%s, difference=%d" % (jobid, column, str(dbvalue), str(logvalue), int(dbvalue)-int(logvalue)))
                                 # resources_used.cput and resources_used.walltime are weird because sometimes
                                 # they're reported in hh:mm:ss format and sometimes they're just in seconds,
                                 # depending on which version of TORQUE you're using.
                                 elif ( column=="resources_used.cput" and dbvalue is not None and logvalue is not None and pbsacct.time_to_sec(dbvalue)==int(logvalue) ):
                                     next
                                 elif ( column=="resources_used.cput" and dbvalue is not None and logvalue is not None and pbsacct.time_to_sec(dbvalue)!=int(logvalue) ):
-                                    sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, column, str(dbvalue), pbsacct.sec_to_time(int(logvalue))))
+                                    logger.info("%s %s:  dbvalue=%s, logvalue=%s" % (jobid, column, str(dbvalue), pbsacct.sec_to_time(int(logvalue))))
                                 elif ( column=="resources_used.walltime" and dbvalue is not None and logvalue is not None and pbsacct.time_to_sec(dbvalue)==int(logvalue) ):
                                     next
                                 elif ( column=="resources_used.walltime" and dbvalue is not None and logvalue is not None and pbsacct.time_to_sec(dbvalue)!=int(logvalue) ):
-                                    sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, column, str(dbvalue), pbsacct.sec_to_time(int(logvalue))))
+                                    logger.info("%s %s:  dbvalue=%s, logvalue=%s" % (jobid, column, str(dbvalue), pbsacct.sec_to_time(int(logvalue))))
                                 elif ( ( dbvalue is not None and dbvalue!=0 ) and ( logvalue is not None and logvalue!=0 ) ):
-                                    sys.stderr.write("%s %s:  dbvalue=%s, logvalue=%s\n" % (jobid, column, str(dbvalue), str(logvalue)))
+                                    logger.info("%s %s:  dbvalue=%s, logvalue=%s" % (jobid, column, str(dbvalue), str(logvalue)))
             else:
                 db.insert_or_update_job(jobs[jobid],system=system,noop=noop,append_to_jobid=append_to_jobid_in_db)
 
