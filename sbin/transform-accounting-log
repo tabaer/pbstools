@@ -3,6 +3,7 @@
 
 import datetime
 import getopt
+import logging
 import pbsacct
 import os
 import re
@@ -29,11 +30,12 @@ groupmapfile = None
 acctmapfile = None
 jobiddelta = 0
 tsdelta = 0
+syslog = False
 
 # command line processing
 try:
     opts, args = getopt.getopt(sys.argv[1:],
-                                   "A:DG:H:JN:RU:Wdj:t:",
+                                   "A:DG:H:JLN:RU:Wdj:lt:",
                                    ["account-map-file=",
                                     "debug",
                                     "deidentify",
@@ -41,8 +43,11 @@ try:
                                     "host-transform=",
                                     "jobid-adjust=",
                                     "jobid-autorenumber",
+                                    "no-syslog",
                                     "node-transform=",
                                     "read-map-files",
+                                    "stderr",
+                                    "syslog",
                                     "timestamp-adjust=",
                                     "user-map-file=",
                                     "write-map-files"])
@@ -62,6 +67,8 @@ for opt in opts:
         hostxform = [elt[1],elt[2]]
     elif ( opt[0] in ["-J","--jobid-autorenumber"] ):
         autorenumber = True
+    elif ( opt[0] in ["-L","--syslog"] ):
+        syslog = True
     elif ( opt[0] in ["-N","--node-transform"] ):
         # expect a sed style "s/old/new/" string
         elt = opt[1].split("/")
@@ -76,11 +83,26 @@ for opt in opts:
         debug = True
     elif ( opt[0] in ["-j","--jobid-adjust"] ):
         jobiddelta = int(opt[1])
+    elif ( opt[0] in ["-l","--no-syslog","--stderr"] ):
+        syslog = False
     elif ( opt[0] in ["-t","--timestamp-adjust"] ):
         tsdelta = int(opt[1])
 
 if ( len(args)!=2 ):
     usage()
+
+# configure logging
+logger = pbsacct.getLogger()
+
+if ( debug ):
+    logger.setLevel(logging.INFO)
+else:
+    logger.setLevel(logging.WARNING)
+lh = logging.StreamHandler(sys.stderr)
+if ( syslog ):
+    lh = logging.handlers.SysLogHandler(address='/dev/log')
+lh.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
+logger.addHandler(lh)
 
 # Read raw data from original file
 original = args[0]
@@ -98,7 +120,7 @@ if ( readmaps ):
     if ( usermapfile is not None ):
         if ( os.path.exists(usermapfile) ):
             if ( debug ):
-                sys.stderr.write("Reading usermap file %s..." % usermapfile)
+                logger.info("Reading usermap file %s" % usermapfile)
             usermap = open(usermapfile)
             for line in usermap.readlines():
                 if ( not line.startswith("#") ):
@@ -106,13 +128,13 @@ if ( readmaps ):
                     userlist[key] = value
             usermap.close()
             if ( debug ):
-                sys.stderr.write("done.\n")
+                logger.info("Done reading usermap file %" % usermapfile)
         elif ( debug ):
-            sys.stderr.write("Skipping nonexistent groupmap file %s\n" % groupmapfile)
+            logger.info("Skipping nonexistent groupmap file %s\n" % usermapfile)
     if ( groupmapfile is not None ):
         if ( os.path.exists(groupmapfile) ):
             if ( debug ):
-                sys.stderr.write("Reading groupmap file %s..." % groupmapfile)
+                logger.info("Reading groupmap file %s" % groupmapfile)
             groupmap = open(groupmapfile)
             for line in groupmap.readlines():
                 if ( not line.startswith("#") ):
@@ -120,13 +142,13 @@ if ( readmaps ):
                     grouplist[key] = value
             groupmap.close()
             if ( debug ):
-                sys.stderr.write("done.\n")
+                logger.info("Done reading groupmap file %s" % groupmapfile)
         elif ( debug ):
-            sys.stderr.write("Skipping nonexistent groupmap file %s\n" % groupmapfile)
+            logger.info("Skipping nonexistent groupmap file %s" % groupmapfile)
     if ( acctmapfile is not None ):
         if ( os.path.exists(acctmapfile) ):
             if ( debug ):
-                sys.stderr.write("Reading acctmap file %s..." % acctmapfile)
+                logger.info("Reading acctmap file %s" % acctmapfile)
             acctmap = open(acctmapfile)
             for line in acctmap.readlines():
                 if ( not line.startswith("#") ):
@@ -134,9 +156,9 @@ if ( readmaps ):
                     acctlist[key] = value
             acctmap.close()
             if ( debug ):
-                sys.stderr.write("done.\n")
+                logger.info("Done reading acctmap file %s" % acctmapfile)
         elif ( debug ):
-            sys.stderr.write("Skipping nonexistent acctmap file %s\n" % acctmapfile)            
+            logger.info("Skipping nonexistent acctmap file %s" % acctmapfile)            
 
 nuser = len(userlist.keys())
 ngroup = len(grouplist.keys())
@@ -174,37 +196,37 @@ if ( autorenumber and jobiddelta==0 and minjobid!=-1 ):
     jobiddelta = -minjobid
 
 if ( debug ):
-    sys.stderr.write("userlist = "+str(userlist)+"\n")
-    sys.stderr.write("grouplist = "+str(grouplist)+"\n")
-    sys.stderr.write("acctlist = "+str(acctlist)+"\n")
-    sys.stderr.write("jobiddelta = %d\n" % jobiddelta)
-    sys.stderr.write("tsdelta = %d\n" % tsdelta)
+    logger.info("userlist = "+str(userlist)+"\n")
+    logger.info("grouplist = "+str(grouplist)+"\n")
+    logger.info("acctlist = "+str(acctlist)+"\n")
+    logger.info("jobiddelta = %d\n" % jobiddelta)
+    logger.info("tsdelta = %d\n" % tsdelta)
 
 # Write maps, if requested
 if ( writemaps ):
     if ( usermapfile is not None ):
         if ( debug ):
-            sys.stderr.write("Writing usermap file %s..." % usermapfile)
+            logger.info("Writing usermap file %s" % usermapfile)
         usermap = open(usermapfile,'w')
         for key in sorted(userlist.keys()):
             usermap.write("%s=%s\n" % (key,userlist[key]))
         usermap.flush()
         usermap.close()
         if ( debug ):
-            sys.stderr.write("done.\n")
+            logger.info("Done writing usermap file %s" % usermapfile)
     if ( groupmapfile is not None ):
         if ( debug ):
-            sys.stderr.write("Writing groupmap file %s..." % groupmapfile)
+            logger.info("Writing groupmap file %s" % groupmapfile)
         groupmap = open(groupmapfile,'w')
         for key in sorted(grouplist.keys()):
             groupmap.write("%s=%s\n" % (key,grouplist[key]))
         groupmap.flush()
         groupmap.close()
         if ( debug ):
-            sys.stderr.write("done.\n")
+            logger.info("Done writing groupmap file %s" % groupmapfile)
     if ( acctmapfile is not None ):
         if ( debug ):
-            sys.stderr.write("Writing acctmap file %s..." % acctmapfile)
+            logger.info("Writing acctmap file %s" % acctmapfile)
         if ( os.path.exists(acctmapfile) ):
             os.remove(acctmapfile)
         acctmap = open(acctmapfile,'w')
@@ -213,7 +235,7 @@ if ( writemaps ):
         acctmap.flush()
         acctmap.close()
         if ( debug ):
-            sys.stderr.write("done.\n")
+            logger.info("Done writing acctmap file %s" % acctmapfile)
 
 # Write transformed log file
 outfile = open(args[1],'w')
