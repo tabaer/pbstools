@@ -15,11 +15,14 @@
 # $Date$
 #
 # Usage:  sw_app-index [-h system] [-s dbhost] [-d dbname] [-t dbtable]
-#                      [-u dbuser] [-p dbpasswd] [-F] [-L|-M|-T]
+#                      [-u dbuser] [-p dbpasswd] [-F] [--list|-M|-T]
+#                      [-L|-l]
 # -F -- full re-index (off by default, use with caution)
-# -L -- list all match rules
+# --list -- list all match rules
 # -M -- do multi-match analysis
 # -T -- syntax check
+# -L -- log to syslog
+# -l -- log to stderr
 
 import getopt
 import os
@@ -840,6 +843,7 @@ startdate = None
 enddate = None
 singlepkg = None
 indexhack = False
+syslog = False
 
 db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
 if ( not os.environ.has_key("PBSTOOLS_DIR") ):
@@ -851,8 +855,9 @@ if ( os.path.exists(cfgfile) ):
 # command line processing
 try:
     opts, filelist = getopt.getopt(sys.argv[1:],
-                                   "C:D:E:FHILMTP:S::a:c:d:h:p:s:t:u:w:",
-                                   ["help"])
+                                   "C:D:E:FHILMTP:S::a:c:d:h:lp:s:t:u:w:",
+                                   ["help",
+                                    "list"])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
     usage()
@@ -870,6 +875,8 @@ for opt in opts:
     elif ( opt[0] in ["-I"] ):
         indexhack = True
     elif ( opt[0]=="-L" ):
+        syslog = True
+    elif ( opt[0] in ["--list"] ):
         listmode = True
     elif ( opt[0]=="-M" ):
         domultimatch = True
@@ -887,6 +894,8 @@ for opt in opts:
         db.setName(opt[1])
     elif ( opt[0]=="-h" ):
         db.setSystem(opt[1])
+    elif ( opt[0]=="-l" ):
+        syslog = False
     elif ( opt[0]=="-p" ):
         db.setPassword(opt[1])
     elif ( opt[0]=="-s" ):
@@ -900,6 +909,16 @@ for opt in opts:
 
 if ( system is None and db.getSystem() is not None ):
     system = db.getSystem()
+
+# configure logging
+logger = pbsacct.getLogger()
+
+logger.setLevel(logging.WARNING)
+lh = logging.StreamHandler(sys.stderr)
+if ( syslog ):
+    lh = logging.handlers.SysLogHandler(address='/dev/log')
+lh.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
+logger.addHandler(lh)
 
 # get lists of sw pkg patterns
 pkglist = software_list()
@@ -967,7 +986,7 @@ else:
             if ( not syntaxcheck ):
                 db.commit()
         except Exception as e:
-            sys.stderr.write("ERROR on package \"%s\":  %s\n" % (pkg,str(e)))
-            sys.stderr.write("SQL statement:  %s\n\n" % sql)
+            logger.error("package \"%s\":  %s" % (pkg,str(e)))
+            logger.debug("%s" % sql)
 
 dbconn.close()
