@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import getopt
+import logging
 import pbsacct
 import os
 import sys
@@ -19,6 +20,7 @@ start_date = None
 end_date = None
 noop = False
 indexhack = False
+syslog = False
 
 db = pbsacct.pbsacctDB(host=dbhost,db=dbname,dbuser=dbuser,dbpasswd=dbpasswd)
 if ( not os.environ.has_key("PBSTOOLS_DIR") ):
@@ -30,7 +32,7 @@ if ( os.path.exists(cfgfile) ):
 # command line processing
 try:
     opts, args = getopt.getopt(sys.argv[1:],
-                               "E:IS:Tc:d:h:p:s:t:u:w:",
+                               "E:ILS:Tc:d:h:lp:s:t:u:w:",
                                [])
 except getopt.GetoptError, err:
     sys.stderr.write(str(err)+"\n")
@@ -40,6 +42,8 @@ for opt in opts:
         end_date = opt[1]
     elif ( opt[0]=="-I" ):
         indexhack = True
+    elif ( opt[0]=="-L" ):
+        syslog = True
     elif ( opt[0]=="-S" ):
         start_date = opt[1]
     elif ( opt[0]=="-T" ):
@@ -50,6 +54,8 @@ for opt in opts:
         db.setName(opt[1])
     elif ( opt[0]=="-h" ):
         db.setSystem(opt[1])
+    elif ( opt[0]=="-l" ):
+        syslog = False
     elif ( opt[0]=="-p" ):
         db.setPassword(opt[1])
     elif ( opt[0]=="-s" ):
@@ -60,6 +66,19 @@ for opt in opts:
         db.setUser(opt[1])
     elif ( opt[0]=="-w" ):
         db.setSoftwareTable(opt[1])
+
+# configure logging
+logger = pbsacct.getLogger()
+
+if ( noop ):
+    logger.setLevel(logging.INFO)
+else:
+    logger.setLevel(logging.WARNING)
+lh = logging.StreamHandler(sys.stderr)
+if ( syslog ):
+    lh = logging.handlers.SysLogHandler(address='/dev/log')
+lh.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
+logger.addHandler(lh)
 
 use_index = ""
 if ( indexhack ):
@@ -86,10 +105,10 @@ try:
 except KeyboardInterrupt:
     raise
 except Error, e:
-    sys.stderr.write("Error in package select from "+db.getJobsTable()+":  "+str(e)+"\n")
+    log.error("Package select from "+db.getJobsTable()+":  "+str(e))
     sys.exit(2)
 if ( noop ):
-    sys.stderr.write("Packages in jobs:  [%s]\n\n" % ",".join(packages_in_jobs))
+    logger.info("Packages in jobs:  [%s]" % ",".join(packages_in_jobs))
 
 packages_in_cache = []
 select = "SELECT package FROM "+db.getSoftwareTable()
@@ -100,13 +119,13 @@ try:
 except KeyboardInterrupt:
     raise
 except MySQLdb.Error, e:
-    sys.stderr.write("Error %d: %s\n" % (e.args[0],e.args[1]))
+    logger.error("MySQL error %d: %s" % (e.args[0],e.args[1]))
     sys.exit(1)
 except Error, e:
-    sys.stderr.write("Unknown error in package select from "+db.getSoftwareTable()+":  "+str(e)+"\n")
+    logger.error("Unknown error in package select from "+db.getSoftwareTable()+":  "+str(e))
     sys.exit(2)
 if ( noop ):
-    sys.stderr.write("Packages in cache:  [%s]\n\n" % ",".join(packages_in_cache))
+    logger.info("Packages in cache:  [%s]" % ",".join(packages_in_cache))
 
 for pkg in packages_in_jobs:
     if ( pkg not in packages_in_cache ):
@@ -114,7 +133,7 @@ for pkg in packages_in_jobs:
         # hitting the DB at once
         insert = "INSERT IGNORE INTO "+db.getSoftwareTable()+" SET package='"+pkg+"'"
         if ( noop ):
-            sys.stderr.write("%s\n" % insert)
+            logger.info("%s" % insert)
         else:
             try:
                 cursor.execute(insert)
@@ -124,7 +143,7 @@ for pkg in packages_in_jobs:
             except Error, e:
                 if dbconn:
                     dbconn.rollback()
-                sys.stderr.write("Error in insert of "+pkg+" into "+db.getSoftwareTable()+":  "+str(e)+"\n")
+                logger.error("Error in insert of "+pkg+" into "+db.getSoftwareTable()+":  "+str(e))
                 sys.exit(2)
     
 db.close()
