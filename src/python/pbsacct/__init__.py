@@ -2,7 +2,7 @@
 # This module provides functions for parsing PBS accounting logs for use by 
 # various scripts
 #
-# Copyright 2016, 2017 Ohio Supercomputer Center
+# Copyright 2016, 2017, 2018 Ohio Supercomputer Center
 # Authors:  Aaron Maharry
 #           Troy Baer <troy@osc.edu>
 #
