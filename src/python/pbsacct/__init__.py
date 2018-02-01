@@ -680,7 +680,7 @@ def raw_data_from_file(filename):
                     value = float(value)
                 resources_dict[key] = value
             elif ( resource!="" ):
-                logger.warn("filename=%s, jobid=%s:  Malformed resource \"%s\"\n" % (filename,jobid,resource))
+                logger.warn("filename=%s, jobid=%s:  Malformed resource \"%s\"" % (filename,jobid,resource))
         
         # Store the data in the output
         output.append((jobid, time, record_type, resources_dict))
@@ -1205,13 +1205,13 @@ class pbsacctDB:
                 deltavalues.append(delta[key])
             sql = "INSERT INTO %s ( %s ) VALUES ( %s )" % (self.getJobsTable(),",".join(deltakeys),",".join(deltavalues))
             if ( noop ):
-                logger.debug("%s\n" % sql)
+                logger.debug("%s" % sql)
             else:
                 try:
                     self.cursor().execute(sql)
                     self.commit()
                 except Exception as e:
-                    logger.debug("%s\n" % sql)
+                    logger.debug("%s" % sql)
                     logger.error(str(e))
 
     def update_job(self,job,system=None,check_existance=True,noop=False,append_to_jobid=None):
@@ -1231,13 +1231,13 @@ class pbsacctDB:
                     deltalist.append("%s=%s" % (key,delta[key]))
                 sql = "UPDATE %s SET %s WHERE jobid='%s'" % (self.getJobsTable(),", ".join(deltalist),myjobid)
                 if ( noop ):
-                    logger.debug("%s\n" % sql)
+                    logger.debug("%s" % sql)
                 else:
                     try:
                         self.cursor().execute(sql)
                         self.commit()
                     except Exception as e:
-                        logger.debug("%s\n" % sql)
+                        logger.debug("%s" % sql)
                         logger.error(str(e))
 
     def insert_or_update_job(self,job,system=None,noop=False,append_to_jobid=None):
@@ -1255,7 +1255,7 @@ class pbsacctDB:
         if ( self.job_exists(myjobid) ):
             sql = "SELECT * FROM %s WHERE jobid='%s'" % (self.getJobsTable(),myjobid)
             if ( noop ):
-                logger.debug("%s\n" % sql)
+                logger.debug("%s" % sql)
                 return None
             else:
                 self.cursor().execute(sql)
