@@ -2,7 +2,7 @@
 #
 # job-db-update -- Insert job records into a MySQL DB
 # Python rewrite
-# Copyright 2017 Ohio Supercomputer Center
+# Copyright 2017, 2018 Ohio Supercomputer Center
 #
 # Derived from original Perl code:
 # Copyright 2006, 2007, 2016 Ohio Supercomputer Center
@@ -31,10 +31,10 @@ def usage():
     sys.stderr.write("Usage:\tjob-db-update\t[-h system] [-s dbhost] [-D dbtype]\n")
     sys.stderr.write("\t\t\t[-d dbname] [-u dbuser] [-p dbpasswd] [-q]\n")
     sys.stderr.write("\t\t\t[-t jobstable] [-C config_table] [-w sw_table]\n")
-    sys.stderr.write("\t\t\t[-c cfgfile] [-a append_to_jobid_in_db]\n")
+    sys.stderr.write("\t\t\t[-c cfgfile] [-a append_to_jobid_in_db] [-L|-l]\n")
     sys.stderr.write("\t\t\tacctfile [...acctfiles...]\n")
     sys.stderr.write("-L -- log to syslog\n")
-    sys.stderr.write("-l -- log to stderr\n")
+    sys.stderr.write("-l -- log to stderr (default)\n")
     sys.exit(0)
 
 
