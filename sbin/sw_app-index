@@ -115,6 +115,7 @@ def software_list():
         "calyx",
         "cam",
         "cando",
+        "canu",
         "casino",
         "castro3d",
         "cbl",
@@ -127,6 +128,7 @@ def software_list():
         "cfd++",
         "cfd_postprocess",
         "cfl3d",
+        "cfour",
         "changa",
         "charmm",
         "charles",
@@ -149,6 +151,8 @@ def software_list():
         "consensus",
         "convectionimr",
         "converge",
+        "cosmosis",
+        "CountPairs",
         "cp2k",
         "cpmd",
         "cql3d",
@@ -207,6 +211,7 @@ def software_list():
         "esmf",
         "esp",
         "eulacc",
+        "evams",
         "ex_e",
         "exedys",
         "examl",
@@ -247,15 +252,18 @@ def software_list():
         "gdl",
         "gemc_x",
         "gen.v4",
-        "geodict",
         "genlatmu",
+        "geodict",
         "geosgcm",
+        "GEOsynchronous",
+        "getSoftFiles",
         "glast",
         "gnuplot",
         "gop2pc",
         "gpaw",
         "gphocs",
         "GreenSolver",
+        "grabbufr",
         "grads",
         "greengenes",
         "grib",
@@ -483,6 +491,7 @@ def software_list():
         "qrpacc",
         "qwalk",
         "R",
+        "Rstudio",
         "RR_xxM",
         "r_out",
         "radhyd",
@@ -543,6 +552,7 @@ def software_list():
         "sparkfuse",
         "spce",
         "spdcp",
+        "spheres3",
         "srad",
         "sratoolkit",
         "sses",
@@ -585,6 +595,7 @@ def software_list():
         "turbo",
         "turbomole",
         "turbsim",
+        "TWODLDC",
         "two_phase",
         "ukh2d",
         "upc",
@@ -690,6 +701,7 @@ def software_match_list():
     pkgmatch['idl']="( script LIKE '%module load idl%' OR script LIKE '%module add idl%' OR script LIKE '%\nidl%' OR ( software IS NOT NULL AND software LIKE '%idl%' ) )"
     pkgmatch['hsi'] = "( script LIKE '%hsi%' OR script LIKE '%htar%' OR queue='hpss' )"
     pkgmatch['ice'] = "script LIKE '%IceModule%'"
+    pkgmatch['iedg_mix'] = "( script LIKE '%iedg_mix%' OR script LIKE '%iedg_ext%' )"
     pkgmatch['imb'] = "script LIKE '%IMB-%'"
     pkgmatch['imc'] = "script LIKE '%/imc.x%'"
     pkgmatch['lammps'] = "( script LIKE '%lammps%' OR script LIKE '% lmp_%' OR script LIKE '%/lmp_%' )"
@@ -821,7 +833,7 @@ def software_match_list():
 
     # packages with dependencies on packages that have dependencies...
     pkgmatch['gaussian'] = "( script LIKE '%module load gaussian%' OR ( script LIKE '%g16%' AND NOT (( "+pkgmatch['adda']+" ) OR ( "+pkgmatch['adf']+" ) OR ( "+pkgmatch['dirac-pilot']+" ) OR ( "+pkgmatch['lammps']+" ) OR ( "+pkgmatch['starccm']+" ) ) ) OR script LIKE '%g09%' OR script LIKE '%g03%' OR ( script LIKE '%g98%' AND NOT ( ( "+pkgmatch['dirac-pilot']+" ) OR ( "+pkgmatch['python']+" ) OR ( "+pkgmatch['raxml']+" ) OR ( "+pkgmatch['samtools']+" ) OR ( "+pkgmatch['starccm']+" ) OR ( "+pkgmatch['tsutil']+" ) OR ( "+pkgmatch['vnc']+" ) OR script LIKE '%config98.WS%' ) ) )"
-    pkgmatch['R'] = "( ( script LIKE '%\nR %' OR script LIKE '%Rscript %' OR script LIKE '%RMPI%' ) AND NOT ( "+pkgmatch['gaussian']+" ) AND NOT ( "+pkgmatch['adf']+" ) )"
+    pkgmatch['R'] = "( ( script LIKE '%\nR %' OR script LIKE '%Rscript %' OR script LIKE '%RMPI%' OR script LIKE '%module load R\n%' OR script LIKE '%module load R/%' ) AND NOT ( "+pkgmatch['gaussian']+" ) AND NOT ( "+pkgmatch['adf']+" ) )"
 
     return pkgmatch
 
