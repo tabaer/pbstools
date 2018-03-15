@@ -419,14 +419,14 @@ class jobinfo:
     def mem_used_kb(self):
         """ Return the amount of memory (in kb) used by the job """
         if ( self.has_resource("resources_used.mem") ):
-            return int(re.sub("kb$", "", self._resources["resources_used.mem"]))
+            return mem_to_kb(self.get_resource("resources_used.mem"))
         else:
             return 0
 
     def vmem_used_kb(self):
         """ Return the amount of virtual memory (in kb) used by the job """
         if ( self.has_resource("resources_used.vmem") ):
-            return int(re.sub("kb$", "", self.get_resource("resources_used.vmem")))
+            return mem_to_kb(self.get_resource("resources_used.vmem"))
         else:
             return 0
 
