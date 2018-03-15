@@ -766,6 +766,32 @@ def jobs_from_files(filelist,system=None):
     return records_to_jobs(raw_data_from_files(filelist),system)
 
 
+def jobinfo_from_epilogue(jobid,reqlist="",usedlist="",queue=None,account=None,exit_status=0,system=None):
+    """
+    Create jobinfo from the information provided to the TORQUE epilogue.
+    """
+    update_time = datetime.datetime.strftime(datetime.datetime.now(),"%m/%d/%Y %H:%M:%S")
+    rsrc = {}
+    rsrc["exit_status"] = exit_status
+    if ( queue is not None ):
+        rsrc["queue"] = queue
+    if ( account is not None ):
+        rsrc["account"] = account
+    for req in reqlist.split(','):
+        try:
+            (key,value) = req.split('=',1)
+            rsrc[key] = value
+        except:
+            pass
+    for used in usedlist.split(','):
+        try:
+            (key,value) = used.split('=',1)
+            rsrc[key] = value
+        except:
+            pass
+    return jobinfo(jobid,update_time,"E",rsrc,system)
+
+
 def time_to_sec(timestr):
     """
     Convert string time into seconds.
@@ -841,6 +867,23 @@ class pbsacctTestCase(unittest.TestCase):
     # def test_records_to_jobs
     # def test_jobs_from_file(self):
     # def test_jobs_from_files(self):
+    def test_jobinfo_from_epilogue(self):
+        j1 = jobinfo_from_epilogue("123456.testfakehost.lan","Resource_List.cput=2:00:00,Resource_List.mem=1GB,Resource_List.nodes=2:ppn=4,Resource_List.vmem=1GB,Resource_List.walltime=1:00:00,Resource_List.nodect=2","resources_used.cput=00:00:02,resources_used.mem=1024kb,resources_used.vmem=2048kb,resources_used.walltime=00:00:01","batch")
+        self.assertEqual(j1.numeric_jobid(),123456)
+        self.assertEqual(j1.account(),None)
+        self.assertEqual(j1.queue(),"batch")
+        self.assertEqual(j1.num_nodes(),2)
+        self.assertEqual(j1.num_processors(),8)
+        self.assertEqual(j1.num_gpus(),0)
+        self.assertEqual(j1.cput_limit_sec(),7200)
+        self.assertEqual(j1.cput_used_sec(),2)
+        self.assertEqual(j1.walltime_limit_sec(),3600)
+        self.assertEqual(j1.walltime_used_sec(),1)
+        self.assertEqual(j1.mem_limit_kb(),1024*1024)        
+        self.assertEqual(j1.mem_used_kb(),1024)        
+        self.assertEqual(j1.vmem_limit_kb(),1024*1024)        
+        self.assertEqual(j1.vmem_used_kb(),2048)        
+        self.assertEqual(j1.software(),None)
     def test_mem_to_kb(self):
         self.assertEqual(mem_to_kb('1000kb'),1000)
         self.assertEqual(mem_to_kb('1000mb'),1000*1024)
