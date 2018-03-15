@@ -300,8 +300,24 @@ class jobinfo:
             nnodes = int(self.get_resource("unique_node_count"))
         elif ( self.has_resource("Resource_List.nodect")):
             nnodes = int(self.get_resource("Resource_List.nodect"))
-        else:
+        elif ( len(self.nodes_used())>0 ):
             nnodes = len(self.nodes_used())
+        elif ( self.has_resource("Resource_List.nodes") ):
+            for node in self.get_resource("Resource_List.nodes").split("+"):
+                nodes_and_ppn = node.split(":")
+                try:
+                    n = int(nodes_and_ppn[0])
+                except:
+                    n = 1
+                nnodes = nnodes+n
+        elif ( self.has_resource("Resource_List.neednodes") ):
+            for node in self.get_resource("Resource_List.neednodes").split("+"):
+                nodes_and_ppn = node.split(":")
+                try:
+                    n = int(nodes_ppn_prop[0])
+                except ValueError:
+                    n = 1
+                nnodes = nnodes+n
         return nnodes
 
     def num_processors(self):
@@ -780,13 +796,13 @@ def jobinfo_from_epilogue(jobid,reqlist="",usedlist="",queue=None,account=None,e
     for req in reqlist.split(','):
         try:
             (key,value) = req.split('=',1)
-            rsrc[key] = value
+            rsrc["Resource_List."+key] = value
         except:
             pass
     for used in usedlist.split(','):
         try:
             (key,value) = used.split('=',1)
-            rsrc[key] = value
+            rsrc["resources_used."+key] = value
         except:
             pass
     return jobinfo(jobid,update_time,"E",rsrc,system)
@@ -868,7 +884,7 @@ class pbsacctTestCase(unittest.TestCase):
     # def test_jobs_from_file(self):
     # def test_jobs_from_files(self):
     def test_jobinfo_from_epilogue(self):
-        j1 = jobinfo_from_epilogue("123456.testfakehost.lan","Resource_List.cput=2:00:00,Resource_List.mem=1GB,Resource_List.nodes=2:ppn=4,Resource_List.vmem=1GB,Resource_List.walltime=1:00:00,Resource_List.nodect=2","resources_used.cput=00:00:02,resources_used.mem=1024kb,resources_used.vmem=2048kb,resources_used.walltime=00:00:01","batch")
+        j1 = jobinfo_from_epilogue("123456.testfakehost.lan","cput=2:00:00,mem=1GB,nodes=2:ppn=4,vmem=1GB,walltime=1:00:00,neednodes=2:ppn=4","cput=00:00:02,mem=1024kb,vmem=2048kb,walltime=00:00:01","batch")
         self.assertEqual(j1.numeric_jobid(),123456)
         self.assertEqual(j1.account(),None)
         self.assertEqual(j1.queue(),"batch")
