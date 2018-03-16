@@ -160,7 +160,7 @@ if ( isset($_POST['system']) )
 	echo "<H3>Usage By Institution</H3>\n";
 	if  ( isset($_POST['table']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic'],false,false);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -169,7 +169,7 @@ if ( isset($_POST['system']) )
 	  }
 	if ( isset($_POST['csv']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic'],false,false);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -178,7 +178,7 @@ if ( isset($_POST['system']) )
 	  }
 	if ( isset($_POST['xls']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic'],false,false);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -187,7 +187,7 @@ if ( isset($_POST['system']) )
 	  }
 	if ( isset($_POST['ods']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
+	    $result=get_metric($db,$_POST['system'],'institution','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic'],false,false);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -204,7 +204,7 @@ if ( isset($_POST['system']) )
 	echo "<H3>Usage By Account</H3>\n";
 	if ( isset($_POST['table']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic'],false,false);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -213,7 +213,7 @@ if ( isset($_POST['system']) )
 	  }
 	if ( isset($_POST['csv']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic'],false,false);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -222,7 +222,7 @@ if ( isset($_POST['system']) )
 	  }
 	if ( isset($_POST['xls']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic'],false,false);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
@@ -231,7 +231,7 @@ if ( isset($_POST['system']) )
 	  }
 	if ( isset($_POST['ods']) )
 	  {
-	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']);
+	    $result=get_metric($db,$_POST['system'],'account','usage',$_POST['start_date'],$_POST['end_date'],$_POST['datelogic'],false,false);
 	    if ( PEAR::isError($result) )
 	      {
 		echo "<PRE>".$result->getMessage()."</PRE>\n";
