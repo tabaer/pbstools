@@ -461,7 +461,7 @@ function sort_criteria($fn,$ascending=false)
 {
   if ( $fn=="usercount_vs_" ) return ""; // no-op
   #  if ( $fn=='cpuhours_vs_groupname' ) return "ORDER BY cpuhours DESC";
-  if ( xaxis($fn)=="institution" &&  $fn!="moabstats_vs_institution" ) return "ORDER BY institution";
+  if ( xaxis($fn)=="institution" && $fn!="moabstats_vs_institution" && $fn!="usage_vs_institution" ) return "ORDER BY institution";
   if ( isset($_POST['order']) && !$ascending )
     {
       return "ORDER BY ".$_POST['order']." DESC";
@@ -480,9 +480,36 @@ function institution_match()
   $case  = "CASE";
   $case .= " WHEN system='bmibucki' THEN 'osu'";
   $case .= " WHEN system='bmiowens' THEN 'osu'";
-  $case .= " WHEN username REGEXP '^[a-z]{4}[0-9]{3,4}$' THEN SUBSTRING(username,1,4)";
-  $case .= " WHEN username REGEXP '^[a-z]{3}[0-9]{3,4}$' THEN SUBSTRING(username,1,3)";
-  $case .= " WHEN username REGEXP '^an[0-9]{3,4}$' THEN 'awe'";
+  $case .= " WHEN account LIKE 'PAS%' THEN 'osu'";
+  $case .= " WHEN account LIKE 'PBS%' THEN 'uak'";
+  $case .= " WHEN account LIKE 'PCS%' THEN 'bgs'";
+  $case .= " WHEN account LIKE 'PDS%' THEN 'cwr'";
+  $case .= " WHEN account LIKE 'PES%' THEN 'ucn'";
+  $case .= " WHEN account LIKE 'PFS%' THEN 'cls'";
+  $case .= " WHEN account LIKE 'PGS%' THEN 'ksu'";
+  $case .= " WHEN account LIKE 'PHS%' THEN 'ohu'";
+  $case .= " WHEN account LIKE 'PIS%' THEN 'afit'";
+  $case .= " WHEN account LIKE 'PJS%' THEN 'utl'";
+  $case .= " WHEN account LIKE 'PKS%' THEN 'kyc'";
+  $case .= " WHEN account LIKE 'PLS%' THEN 'ysu'";
+  $case .= " WHEN account LIKE 'PMS%' THEN 'jcu'";
+  $case .= " WHEN account LIKE 'PNS%' THEN 'uda'";
+  $case .= " WHEN account LIKE 'POS%' THEN 'ces'";
+  $case .= " WHEN account LIKE 'PPS%' THEN 'cap'";
+  $case .= " WHEN account LIKE 'PQS%' THEN 'owu'";
+  $case .= " WHEN account LIKE 'PRS%' THEN 'onu'";
+  $case .= " WHEN account LIKE 'PSS%' THEN 'muc'";
+  $case .= " WHEN account LIKE 'PTS%' THEN 'scc'";
+  $case .= " WHEN account LIKE 'PVS%' THEN 'ott'";
+  $case .= " WHEN account LIKE 'PYS%' THEN 'com'";
+  $case .= " WHEN account LIKE 'PZS%' THEN 'osc'";
+  #$case .= " WHEN account LIKE 'PAA%' THEN 'annual'";
+  $case .= " WHEN account LIKE 'PCON%' THEN 'con'";
+  $case .= " WHEN account LIKE 'PMIU%' THEN 'miu'";
+  $case .= " WHEN account LIKE 'PWSU%' THEN 'wsu'";
+  $case .= " WHEN username REGEXP '^[a-z]{4}[0-9]{3,5}$' THEN SUBSTRING(username,1,4)";
+  $case .= " WHEN username REGEXP '^[a-z]{3}[0-9]{3,5}$' THEN SUBSTRING(username,1,3)";
+  $case .= " WHEN username REGEXP '^an[0-9]{3,5}$' THEN 'awe'";
   $case .= " WHEN username='nova' THEN 'ucn'";
   $case .= " ELSE 'osc'";
   $case .= " END";
