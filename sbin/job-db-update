@@ -103,7 +103,10 @@ if ( system is None and db.getSystem() is not None ):
     system = db.getSystem()
 
 # configure logging
-logger = pbsacct.getLogger()
+try:
+    logger = pbsacct.getLogger()
+except:
+    logger = logging.getLogger(sys.argv[0])
 
 if ( noop ):
     logger.setLevel(logging.INFO)
