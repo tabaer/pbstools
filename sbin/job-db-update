@@ -128,8 +128,9 @@ if ( len(filelist)>0 ):
         # will be reported as in the E state with an end time (when it was
         # qdel'ed) but no start time, so just checking for the E state is not
         # enough to avoid false positives here
-        if ( jobs[jobid].get_state() in ["S","E"] and
+        if ( jobs[jobid].get_state() in ["S","E","A"] and
              jobs[jobid].start_ts()>0 ):
+          try:
             if ( query ):
                 dbjob = None
                 if ( db.job_exists(jobid,append_to_jobid=append_to_jobid_in_db) ):
@@ -175,5 +176,7 @@ if ( len(filelist)>0 ):
                                     logger.info("%s %s:  dbvalue=%s, logvalue=%s" % (jobid, column, str(dbvalue), str(logvalue)))
             else:
                 db.insert_or_update_job(jobs[jobid],system=system,noop=noop,append_to_jobid=append_to_jobid_in_db)
+          except:
+              pass
 
 dbconn.close()
