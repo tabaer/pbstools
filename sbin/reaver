@@ -31,7 +31,7 @@ my $sysuid_threshold=100;
 
 # regexp of usernames with uids above $sysuid_threshold that are allowed
 # to have processes running on a node without a PBS job
-my $safelist="arraysvcs|oscmon|decypher|rtkit|nagios";
+my $safelist="arraysvcs|oscmon|decypher|rtkit|nagios|polkitd";
 
 # Should we attempt to kill strays? (0 = no, 1 = yes)
 my $kill_mode = 0;
@@ -228,21 +228,33 @@ while (<PS>)
       }
     if ( ($uid > $sysuid_threshold) && !($user =~ /^($safelist)$/) && ($uid!=$>) )
       {
-	push(@pids,$pid);
-	if ($brief_mode)
-	  {
-	    print "$pid\n";
+        # make sure pid isn't in a torque cgroup
+        # if it is, don't add it to the pid list
+        my $in_torque_cgroup = 0;
+        if ( -r "/proc/$pid/cgroup" )
+  	  {
+	    my $x = `grep -c /torque/ /proc/$pid/cgroup`;
+	    chomp($x);
+	    $in_torque_cgroup = int($x);
 	  }
-	else
+        if ( $in_torque_cgroup==0 )
 	  {
-	    if ($long_ps_mode )
+	    push(@pids,$pid);
+	    if ($brief_mode)
 	      {
-		print $pid," ",$p_cpu," ",$p_mem," ",$state," ",$user," ",$lstart," ",$command,"\n";
-              }
+		print "$pid\n";
+	      }
 	    else
 	      {
-                printf "%8d  %-3s %-9.9s %-10.50s\n", $pid, $state, $user, $command;
-	      } 
+		if ($long_ps_mode )
+		  {
+		    print $pid," ",$p_cpu," ",$p_mem," ",$state," ",$user," ",$lstart," ",$command,"\n";
+		  }
+		else
+		  {
+		    printf "%8d  %-3s %-9.9s %-10.50s\n", $pid, $state, $user, $command;
+		  }
+	      }
 	  }
       }
   }
