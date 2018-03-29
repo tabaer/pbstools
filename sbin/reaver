@@ -154,15 +154,15 @@ if ( glob($ptn) )
 	  my $jobuserlist;
 	  # TORQUE 4(?) and after have XML .JB files; earlier versions
 	  # are binary
-	  my $isxml = `head -1 $jobfile | grep -ic xml`;
-          chop($isxml);
+	  my $isxml = `test -e $jobfile && head -1 $jobfile | grep -ic xml`;
+          chomp($isxml);
 	  if ( $isxml==1 )
 	    {
-	      $jobuserlist = `grep euser $jobfile | sed 's/ *<euser [A-Za-z0-9=\"]*>//g' | sed 's:</euser>::'`;
+	      $jobuserlist = `test -e $jobfile && grep euser $jobfile | sed 's/ *<euser [A-Za-z0-9=\"]*>//g' | sed 's:</euser>::'`;
 	    }
 	  else
 	    {
-	      $jobuserlist = `cat $jobfile | strings | grep -A 1 euser | grep -v euser | sort | uniq | tr '\n' '|'`;
+	      $jobuserlist = `test -e $jobfile && cat $jobfile | strings | grep -A 1 euser | grep -v euser | sort | uniq | tr '\n' '|'`;
 	    }
     	  chop($jobuserlist);
 	  if ( $jobuserlist ne "" )
