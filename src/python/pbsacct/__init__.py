@@ -225,25 +225,25 @@ class jobinfo:
         if ( self.has_resource("ctime") ):
             return datetime.datetime.fromtimestamp(int(self.get_resource("ctime")))
         else:
-            raise RuntimeError("Job "+self._jobid+" has no ctime set")
+            raise RuntimeError("Job "+self._jobid+" has no ctime set (aborted before started?)")
 
     def qtime(self):
         if ( self.has_resource("qtime") ):
             return datetime.datetime.fromtimestamp(int(self.get_resource("qtime")))
         else:
-            raise RuntimeError("Job "+self._jobid+" has no qtime set")
+            raise RuntimeError("Job "+self._jobid+" has no qtime set (aborted before started?)")
 
     def etime(self):
         if ( self.has_resource("etime") ):
             return datetime.datetime.fromtimestamp(int(self.get_resource("etime")))
         else:
-            raise RuntimeError("Job "+self._jobid+" has no etime set")
+            raise RuntimeError("Job "+self._jobid+" has no etime set (aborted before started?)")
 
     def start(self):
         if ( self.has_resource("start") ):
             return datetime.datetime.fromtimestamp(int(self.get_resource("start")))
         else:
-            raise RuntimeError("Job "+self._jobid+" has no start time set")
+            raise RuntimeError("Job "+self._jobid+" has no start time set (aborted before started?)")
 
     def end(self):
         if ( self.has_resource("end") ):
