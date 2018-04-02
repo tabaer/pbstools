@@ -156,7 +156,7 @@ if ( glob($ptn) )
 	  # are binary
 	  my $isxml = `test -e $jobfile && head -1 $jobfile | grep -ic xml`;
           chomp($isxml);
-	  if ( $isxml==1 )
+	  if ( defined($isxml) && int($isxml)==1 )
 	    {
 	      $jobuserlist = `test -e $jobfile && grep euser $jobfile | sed 's/ *<euser [A-Za-z0-9=\"]*>//g' | sed 's:</euser>::'`;
 	    }
