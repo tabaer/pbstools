@@ -504,7 +504,11 @@ function institution_match()
   $case .= " WHEN account LIKE 'PYS%' THEN 'com'";
   $case .= " WHEN account LIKE 'PZS%' THEN 'osc'";
   #$case .= " WHEN account LIKE 'PAA%' THEN 'annual'";
-  $case .= " WHEN account LIKE 'PCON%' THEN 'con'";
+  $case .= " WHEN account LIKE 'PAN%' THEN 'awe'";
+  $case .= " WHEN account LIKE 'PAW%' THEN 'awe'";
+  $case .= " WHEN account LIKE 'PCCH%' THEN 'cch'";
+  $case .= " WHEN account LIKE 'PCCR%' THEN 'ccri'";
+  $case .= " WHEN account LIKE 'PCON%' THEN 'cond'";
   $case .= " WHEN account LIKE 'PMIU%' THEN 'miu'";
   $case .= " WHEN account LIKE 'PWSU%' THEN 'wsu'";
   $case .= " WHEN username REGEXP '^[a-z]{4}[0-9]{3,5}$' THEN SUBSTRING(username,1,4)";
@@ -526,7 +530,7 @@ function bucket_maxs($xaxis)
   if ( $xaxis=='nproc_norm' ) return array("0.01","0.10","0.25","0.5","0.75","0.9");
   if ( $xaxis=='walltime' ) return array("1:00:00","4:00:00","8:00:00","12:00:00","16:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
   if ( $xaxis=='walltime_req' ) return array("1:00:00","4:00:00","8:00:00","12:00:00","16:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
-  if ( $xaxis=='qtime' ) return array("1:00:00","4:00:00","8:00:00","12:00:00","16:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
+  if ( $xaxis=='qtime' ) return array("00:00:30","00:01:00","00:02:00","00:05:00","00:10:00","00:30:00","1:00:00","4:00:00","8:00:00","12:00:00","16:00:00","24:00:00","48:00:00","96:00:00","168:00:00","320:00:00");
 
   if ( $xaxis=='mem_kb' ) return array("262144","1048576","4194304","12582912","33554432");
   if ( $xaxis=='vmem_kb' ) return array("262144","1048576","4194304","12582912","33554432");
