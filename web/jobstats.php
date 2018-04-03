@@ -599,6 +599,103 @@ if ( isset($_POST['system']) )
 				    $_POST['start_date'],
 				    $_POST['end_date'],
 				    $_POST['datelogic']);
+
+    // by queue time
+    jobstats_output_bucketed_metric('Job Count vs. Queue Time',
+				    'jobs_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+
+    jobstats_output_bucketed_metric('Core Hours vs. Queue Time',
+				    'cpuhours_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
+    jobstats_output_bucketed_metric('GPU Hours vs. Queue Time',
+				    'gpuhours_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
+    jobstats_output_bucketed_metric('Node Hours vs. Queue Time',
+				    'nodehours_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
+    jobstats_output_bucketed_metric('Charges vs. Queue Time',
+				    'charges_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
+    jobstats_output_bucketed_metric('Queue Time vs. Queue Time',
+				    'qtime_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
+    jobstats_output_bucketed_metric('Job Length vs. Queue Time',
+				    'walltime_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
+    jobstats_output_bucketed_metric('Expansion Factor vs. Queue Time',
+				    'xfactor_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
+    jobstats_output_bucketed_metric('Real Memory vs. Queue Time',
+				    'mem_kb_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
+    jobstats_output_bucketed_metric('Virtual Memory vs. Queue Time',
+				    'vmem_kb_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
+    jobstats_output_bucketed_metric('Walltime Accuracy vs. Queue Time',
+				    'walltime_acc_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
+    
+    jobstats_output_bucketed_metric('CPU Efficiency vs. Queue Time',
+				    'cpu_eff_vs_qtime',
+				    $db,
+				    $_POST['system'],
+				    $_POST['start_date'],
+				    $_POST['end_date'],
+				    $_POST['datelogic']);
     
     // by account
     jobstats_output_metric('Job Count vs. Account',
@@ -1747,6 +1844,19 @@ else
     jobstats_input_metric("Virtual Memory vs. Job Length","vmem_kb_vs_walltime");
     jobstats_input_metric("Walltime Accuracy vs. Job Length","walltime_acc_vs_walltime");
     jobstats_input_metric("CPU Efficiency vs. Job Length","cpu_eff_vs_walltime");
+
+    // by queue time
+    jobstats_input_spacer();
+    jobstats_input_metric("Job Count vs. Queue Time","jobs_vs_qtime");
+    jobstats_input_metric("Core Hours vs. Queue Time","cpuhours_vs_qtime");
+    jobstats_input_metric("GPU Hours vs. Queue Time","gpuhours_vs_qtime");
+    jobstats_input_metric("Node Hours vs. Queue Time","nodehours_vs_qtime");
+    jobstats_input_metric("Charges vs. Queue Time","charges_vs_qtime");
+    jobstats_input_metric("Queue Time vs. Queue Time","qtime_vs_qtime");
+    jobstats_input_metric("Real Memory vs. Queue Time","mem_kb_vs_qtime");
+    jobstats_input_metric("Virtual Memory vs. Queue Time","vmem_kb_vs_qtime");
+    jobstats_input_metric("Walltime Accuracy vs. Queue Time","walltime_acc_vs_qtime");
+    jobstats_input_metric("CPU Efficiency vs. Queue Time","cpu_eff_vs_qtime");
 
     // by account
     jobstats_input_spacer();
