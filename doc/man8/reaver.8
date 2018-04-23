@@ -17,16 +17,28 @@ optionally terminate any stray processes it finds.
 
 .SH OPTIONS
 .TP
+.B \-b, \-\-brief
+Display only the stray process IDs.
+.TP
+.B \-c, \-\-classic
+Display "classic" summary of process information.
+.TP
+.B -d <spooldir>, \-\-spool=<spooldir>
+Use <spooldir> as the PBS spool directory.  The default is $PBS_HOME.
+.TP
 .B \-h, \-\-help
 Print detailed help screen.
+.TP
+.B \-j, \-\-job=<jobid>
+Clean up processes associated with <jobid>.
 .TP
 .B \-k, \-\-kill
 Attempt to kill all stray processes.  This is accomplished by sending
 first SIGCONT, then 1 second later SIGTERM, then 5 seconds later
 SIGKILL.
 .TP
-.B \-b, \-\-brief
-Display only the stray process IDs.
+.B \-l, \-\-long
+Display long summary of process information.  This is the default.
 .TP
 .B \-v, \-\-verbose
 Display extra info.

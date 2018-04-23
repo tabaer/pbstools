@@ -47,12 +47,14 @@ my $verbose_mode = 0;
 my $long_ps_mode = 1;
 
 # Usage/help functions
-my $USAGE = "$0 [-bchklv] [-j <jobid>]";
+my $USAGE = "$0 [-bchklv] [-d <spooldir>] [-j <jobid>]";
 my $HELP = "Options:
  -b, --brief
     Display only the stray process IDs
  -c, --classic
     Display \"classic\" summary of process information
+ -d <spooldir>, --spool=<spooldir>
+    Use <spooldir> as the PBS spool directory; the default is \$PBS_HOME
  -h, --help
     Print detailed help screen
  -j <jobid>, --job=<jobid>
