@@ -114,11 +114,12 @@ sub usage_error {
 }
 
 # Process command line options
-my ($opt_b, $opt_c, $opt_h, $opt_j, $opt_k, $opt_l, $opt_v);
+my ($opt_b, $opt_c, $opt_d, $opt_h, $opt_j, $opt_k, $opt_l, $opt_v);
 Getopt::Long::Configure('bundling');
 GetOptions(
          "b"  => \$opt_b, "brief"   => \$opt_b,
          "c"  => \$opt_c, "classic" => \$opt_c,
+         "d=s"=> \$opt_d, "spool=s" => \$opt_d,
          "h"  => \$opt_h, "help"    => \$opt_h,
          "j=s"=> \$opt_j, "job=s"   => \$opt_j,
          "k"  => \$opt_k, "kill"    => \$opt_k,
@@ -129,6 +130,7 @@ GetOptions(
 if ($opt_h) { print_help(); exit(0); }
 if ($opt_b) { $brief_mode = 1; }
 if ($opt_c) { $long_ps_mode = 0; }
+if ($opt_d) { $spool = $opt_d; }
 if ($opt_j)
 {
     $reap_job = $opt_j;
@@ -137,6 +139,11 @@ if ($opt_j)
 if ($opt_k) { $kill_mode = 1; }
 if ($opt_l) { $long_ps_mode = 1; }
 if ($opt_v) { $verbose_mode = 1; $brief_mode = 0; }
+
+# Make sure $spool and subdirs actually exist
+die "$spool does not exist!" if ( ! -d "$spool" );
+die "$spool/mom_priv does not exist!" if ( ! -d "$spool/mom_priv" );
+die "$spool/mom_priv/jobs does not exist!" if ( ! -d "$spool/mom_priv/jobs" );
 
 # Append to $safelist the names of all users who have jobs currently running
 # on this host
