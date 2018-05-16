@@ -48,6 +48,7 @@ def software_list():
         "3d_nurbs_nonlinear",
         "3dcavity",
         "3dh",
+        "3dldc",
         "3n_bound",
         "55_x",
         "a_out",
@@ -76,6 +77,7 @@ def software_list():
         "anolis",
         "ansys",
         "anton",
+        "apbs",
         "AraSim",
         "armcibench",
         "arps",
@@ -129,6 +131,7 @@ def software_list():
         "cfd_postprocess",
         "cfl3d",
         "cfour",
+        "cfwr",
         "changa",
         "charmm",
         "charles",
@@ -137,6 +140,7 @@ def software_list():
         "chg",
         "chimera",
         "chroma",
+        "cif_mesh",
         "cilk",
         "clover_inverter",
         "cluster",
@@ -151,6 +155,7 @@ def software_list():
         "consensus",
         "convectionimr",
         "converge",
+        "corsika",
         "cosmosis",
         "CountPairs",
         "cp2k",
@@ -237,6 +242,7 @@ def software_list():
         "foam",
         "force_free",
         "foxexe",
+        "fsc26",
         "fsweep",
         "ftb",
         "ftes",
@@ -304,12 +310,14 @@ def software_list():
         "hydro",
         "hy3s",
         "ice",
+        "icemc",
         "idl",
         "iedg_mix",
         "ifs",
         "imb",
         "imc",
         "inca",
+        "inho",
         "intestine3d",
         "ior",
         "iplmcfd",
@@ -349,6 +357,7 @@ def software_list():
         "masa",
         "mathematica",
         "matlab",
+        "maya",
         "mcnp",
         "mcrothers",
         "mcsim",
@@ -392,6 +401,7 @@ def software_list():
         "msa",
         "mtrsassi",
         "multturb",
+        "muscle",
         "music",
         "mustem",
         "mykim9dgt",
@@ -470,6 +480,8 @@ def software_list():
         "polmc",
         "polylarge",
         "pop",
+        "postH",
+        "prebfx",
         "preps",
         "preqx",
         "prog_ccm_sph",
@@ -510,6 +522,7 @@ def software_list():
         "rosetta",
         "rotbouss",
         "roth",
+        "rstgbfx",
         "rtp",
         "run_1kmd",
         "run_all_de_novo",
@@ -532,6 +545,7 @@ def software_list():
         "schrodinger",
         "sddt",
         "seissol",
+        "setsm",
         "sfeles",
         "sgf",
         "shadowfax",
@@ -545,6 +559,7 @@ def software_list():
         "sleuth",
         "sms",
         "sne3d",
+        "snptest",
         "SOAPdenovo",
         "sord",
         "sovereign",
@@ -553,6 +568,7 @@ def software_list():
         "spce",
         "spdcp",
         "spheres3",
+        "spmv",
         "srad",
         "sratoolkit",
         "sses",
@@ -562,6 +578,7 @@ def software_list():
         "starccm",
         "stata",
         "stationaryAccretionShock3D",
+        "staus",
         "sus",
         "swarthmore",
         "sweqx",
@@ -608,6 +625,7 @@ def software_list():
         "vida",
         "ViennaRNA",
         "vina",
+        "virsorter",
         "visit",
         "vli",
         "vorpal",
@@ -627,6 +645,7 @@ def software_list():
         "xvicar3d",
         "xx",
         "yt",
+        "zeo++",
         "zeus",
         "zk3",
         "zNtoM"
@@ -725,9 +744,10 @@ def software_match_list():
     pkgmatch['os2z'] = "( script LIKE '%/oS2x_%' OR script LIKE '%/oS2z_%' )"
     pkgmatch['paraview'] = "( script LIKE '%paraview%' OR script LIKE '%pvserver%' )"
     pkgmatch['phase'] = "script LIKE '%/PHASE %'"
+    pkgmatch['postH'] = "script LIKE '%/postH %'"
     pkgmatch['pse'] = "( script LIKE '%/PSE\n' OR script LIKE '%/PSE2\n' )"
     pkgmatch['psi4'] = "( script LIKE '%/psi4 %' OR script LIKE '%\npsi4%' )"
-    pkgmatch['pwscf'] = "( script LIKE '%pwscf%' OR script LIKE '%/pw.x %' OR script LIKE '%/ph.x %' )"
+    pkgmatch['pwscf'] = "( script LIKE '%pwscf%' OR script LIKE '%/pw.x %' OR script LIKE '%/ph.x %' OR script LIKE '%module load espresso%' )"
     pkgmatch['RR_xxM'] = "( script REGEXP 'RR_[0-9]+(M|end)' )"
     pkgmatch['r_out'] = "( script LIKE '%/r.out %' OR script LIKE '%/r.out\n%' )"
     pkgmatch['radhyd'] = "( script LIKE '%radhyd%' OR script LIKE '%rhd_hyb%' OR script LIKE '%orion2%' )"
@@ -748,7 +768,7 @@ def software_match_list():
     pkgmatch['sratoolkit'] = "( script LIKE '%sratoolkit%' OR script LIKE '%fastq-dump%' )"
     pkgmatch['star'] = "( script LIKE '%/STAR --runMode%' OR script LIKE '%\nSTAR --runMode%' )"
     pkgmatch['tbms'] = "( script LIKE '%tbms%dvm%' OR script LIKE '%distr%dvm%' OR script LIKE '%jac%dvm%' OR script LIKE '%mt%dvm%' )"
-    pkgmatch['tsutil'] = "script LIKE '%tsutil%'"
+    pkgmatch['tsutil'] = "( script LIKE '%tsutil%' OR script LIKE '%app_cmd%' )"
     pkgmatch['track'] = "script LIKE '%TRACKdir%'"
     pkgmatch['turbo'] = "script LIKE '%pturbo.x%'"
     pkgmatch['upc'] = "script LIKE '%upcrun%'"
@@ -814,7 +834,6 @@ def software_match_list():
     pkgmatch['qrpacc']  = "( script LIKE '%qrpacc%' AND NOT ( "+pkgmatch['vbc']+" ) )"
     pkgmatch['quest'] = "( script LIKE '%quest%' AND script NOT LIKE '%request%' AND NOT ( "+pkgmatch['gen.v4']+" ) )"
     pkgmatch['radhyd'] = "( script LIKE '%radhyd%' AND NOT ( "+pkgmatch['chimera']+" ) )"
-    pkgmatch['res'] = "( script LIKE '%/res_%' AND NOT ( "+pkgmatch['enzo']+" ) AND NOT ( "+pkgmatch['grib']+" ) AND NOT ( "+pkgmatch['lammps']+" ) )"
     pkgmatch['run_im'] = "( script LIKE '%run_im%' AND NOT ( "+pkgmatch['aims']+" ) AND NOT ( "+pkgmatch['flash4']+" ) AND NOT ( "+pkgmatch['ncl']+" ) AND NOT ( "+pkgmatch['wrf']+" ) )"
     pkgmatch['run_xyzvort'] = "( ( script LIKE '%run_xvort%' OR script LIKE '%run_yvort%' OR script LIKE '%run_zvort%' OR script LIKE '%run_thpert%' OR script LIKE '%run_u%' OR script LIKE '%run_v%' OR script LIKE '%run_w%' OR script LIKE '%run_dBZ%' ) AND NOT ( "+pkgmatch['beopest']+" ) AND NOT ( "+pkgmatch['lobster']+" ) AND NOT ( "+pkgmatch['paraview']+" ) AND NOT ( "+pkgmatch['vasp']+" ) AND NOT ( "+pkgmatch['vnc']+" ) AND NOT ( "+pkgmatch['wrf']+" ) )"
     pkgmatch['s3d'] = "( script LIKE '%s3d%' AND NOT ( "+pkgmatch['adf']+" ) AND NOT ( "+pkgmatch['arps']+" ) AND NOT ( "+pkgmatch['cam']+" ) AND NOT ( "+pkgmatch['cctm']+" ) )"
@@ -832,8 +851,9 @@ def software_match_list():
     pkgmatch['yt'] = "( script LIKE '%yt%' AND NOT ( script LIKE '%ything%' ) AND NOT ( "+pkgmatch['amber']+" ) AND NOT ( "+pkgmatch['cactus']+" ) AND NOT ( "+pkgmatch['cdo']+" ) AND NOT ( "+pkgmatch['gen.v4']+" ) AND NOT ( "+pkgmatch['grib']+" ) AND NOT ( "+pkgmatch['grmhd']+" ) AND NOT ( "+pkgmatch['hoomd']+" ) AND NOT ( "+pkgmatch['hsi']+" ) AND NOT ( "+pkgmatch['hy3s']+" ) AND NOT ( "+pkgmatch['lammps']+" ) AND NOT ( "+pkgmatch['lfm']+" ) AND NOT ( "+pkgmatch['matlab']+" ) AND NOT ( "+pkgmatch['namd']+" ) AND NOT ( "+pkgmatch['nwchem']+" ) AND NOT ( "+pkgmatch['pop']+" ) AND NOT ( "+pkgmatch['python']+" ) AND NOT ( "+pkgmatch['stata']+" ) AND NOT ( "+pkgmatch['sses']+" ) AND NOT ( "+pkgmatch['sord']+" ) AND NOT ( "+pkgmatch['swift']+" ) AND NOT ( "+pkgmatch['sus']+" ) AND NOT ( "+pkgmatch['vasp']+" ) AND NOT ( "+pkgmatch['vorpal']+" ) )"
 
     # packages with dependencies on packages that have dependencies...
-    pkgmatch['gaussian'] = "( script LIKE '%module load gaussian%' OR ( script LIKE '%g16%' AND NOT (( "+pkgmatch['adda']+" ) OR ( "+pkgmatch['adf']+" ) OR ( "+pkgmatch['dirac-pilot']+" ) OR ( "+pkgmatch['lammps']+" ) OR ( "+pkgmatch['starccm']+" ) ) ) OR script LIKE '%g09%' OR script LIKE '%g03%' OR ( script LIKE '%g98%' AND NOT ( ( "+pkgmatch['dirac-pilot']+" ) OR ( "+pkgmatch['python']+" ) OR ( "+pkgmatch['raxml']+" ) OR ( "+pkgmatch['samtools']+" ) OR ( "+pkgmatch['starccm']+" ) OR ( "+pkgmatch['tsutil']+" ) OR ( "+pkgmatch['vnc']+" ) OR script LIKE '%config98.WS%' ) ) )"
-    pkgmatch['R'] = "( ( script LIKE '%\nR %' OR script LIKE '%Rscript %' OR script LIKE '%RMPI%' OR script LIKE '%module load R\n%' OR script LIKE '%module load R/%' ) AND NOT ( "+pkgmatch['gaussian']+" ) AND NOT ( "+pkgmatch['adf']+" ) )"
+    pkgmatch['gaussian'] = "( script LIKE '%module load gaussian%' OR ( script LIKE '%g16%' AND NOT ( ( "+pkgmatch['adda']+" ) OR ( "+pkgmatch['adf']+" ) OR ( "+pkgmatch['dirac-pilot']+" ) OR ( "+pkgmatch['lammps']+" ) OR ( "+pkgmatch['starccm']+" ) ) ) OR script LIKE '%g09%' OR script LIKE '%g03%' OR ( script LIKE '%g98%' AND NOT ( ( "+pkgmatch['dirac-pilot']+" ) OR ( "+pkgmatch['python']+" ) OR ( "+pkgmatch['raxml']+" ) OR ( "+pkgmatch['samtools']+" ) OR ( "+pkgmatch['starccm']+" ) OR ( "+pkgmatch['tsutil']+" ) OR ( "+pkgmatch['vnc']+" ) OR script LIKE '%config98.WS%' ) ) )"
+    pkgmatch['R'] = "( ( script LIKE '%\nR %' OR script LIKE '%Rscript %' OR script LIKE '%RMPI%' OR script LIKE '%module load R\n%' OR script LIKE '%module load R/%') AND NOT ( "+pkgmatch['gaussian']+" ) AND NOT ( "+pkgmatch['adf']+" ) )"
+    pkgmatch['res'] = "( script LIKE '%/res_%' AND NOT ( "+pkgmatch['enzo']+" ) AND NOT ( "+pkgmatch['grib']+" ) AND NOT ( "+pkgmatch['lammps']+" ) AND NOT ( "+pkgmatch['spheres3']+" ) AND NOT ( "+pkgmatch['tsutil']+" ) )"
 
     return pkgmatch
 
