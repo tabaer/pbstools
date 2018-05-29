@@ -122,9 +122,12 @@ else
     date_fields();
 
     $props=array("username","groupname","account","jobname","nproc","mppe","mppssp",
-		 "nodes","feature","gattr","gres","queue","qos","submit_ts","eligible_ts","start_ts","end_ts",
-		 "cput_req","cput","walltime_req","walltime","mem_req","mem_kb",
-		 "vmem_req","vmem_kb","energy","software","submithost","hostlist",
+		 "nodes","feature","gattr","gres","queue","qos",
+		 "submit_ts","eligible_ts","start_ts","end_ts",
+		 "cput_req","cput_req_sec","cput","cput_sec",
+		 "walltime_req","walltime_req_sec","walltime","walltime_sec",
+		 "mem_req","mem_kb","vmem_req","vmem_kb",
+		 "energy","software","submithost","hostlist",
 		 "exit_status","script","sw_app");
     checkboxes_from_array("Properties",$props);
 
