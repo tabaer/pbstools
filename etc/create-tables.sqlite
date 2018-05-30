@@ -25,6 +25,7 @@ CREATE TABLE Jobs (
   start_date   DATE,
   end_ts       BIGINT,
   end_date     DATE,
+  start_count  BIGINT UNSIGNED DEFAULT 0,
   cput_req     TIME DEFAULT '00:00:00',
   cput_req_sec BIGINT UNSIGNED DEFAULT 0,
   cput         TIME DEFAULT '00:00:00',
