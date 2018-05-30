@@ -96,6 +96,8 @@ class jobinfo:
             output += "\tstart = %s (%d)\n" % (str(self.start()),self.start_ts())
         if ( self.end_ts()>0 ):
             output += "\tend = %s (%d)\n" % (str(self.end()),self.end_ts())
+        if ( self.start_count()>0 ):
+            output += "\tstart_count = %d\n" % self.start_count()
         output += "\tnproc = %d\n" % self.num_processors()
         if ( self.nodes() is not None ):
             output += "\tnodes = %s\n" % self.nodes()
@@ -278,6 +280,12 @@ class jobinfo:
     def end_ts(self):
         if ( self.has_resource("end") ):
             return int(self.get_resource("end"))
+        else:
+            return 0
+
+    def start_count(self):
+        if ( self.has_resource("start_count") ):
+            return int(self.get_resource("start_count"))
         else:
             return 0
 
@@ -520,6 +528,7 @@ class jobinfoTestCase(unittest.TestCase):
                                 'etime': '1234567890',
                                 'start': '1234567890',
                                 'end': '1234567890',
+                                'start_count': '1',
                                 'queue': 'batch',
                                 'Resource_List.nodes': '2:ppn=4',
                                 'Resource_List.cput': '2:00:00',
@@ -560,6 +569,12 @@ class jobinfoTestCase(unittest.TestCase):
     def test_queue(self):
         j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.queue(),"batch")
+    def test_start_count(self):
+        j1 = copy.deepcopy(self.testjob)
+        self.assertEqual(j1.start_count(),1)
+    def test_nodes(self):
+        j1 = copy.deepcopy(self.testjob)
+        self.assertEqual(j1.nodes(),'2:ppn=4')
     def test_nodes_used(self):
         j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.nodes_used(),['node01','node02'])
@@ -651,7 +666,7 @@ class jobinfoTestCase(unittest.TestCase):
             fd1 = io.StringIO()
         j1 = copy.deepcopy(self.testjob)
         j1.write_last_accounting_record(fd1)
-        self.assertEqual(fd1.getvalue(),"02/13/2009 18:31:30;E;123456.fakehost.lan;Resource_List.cput=2:00:00 Resource_List.mem=1GB Resource_List.nodes=2:ppn=4 Resource_List.vmem=1GB Resource_List.walltime=1:00:00 ctime=1234567890 end=1234567890 etime=1234567890 exec_host=node01/1+node02/2 exit_status=0 group=bar jobname=job owner=foo@login1.fakehost.lan qtime=1234567890 queue=batch resources_used.cput=00:00:02 resources_used.mem=1024kb resources_used.vmem=2048kb resources_used.walltime=00:00:01 start=1234567890 system=None user=foo\n")
+        self.assertEqual(fd1.getvalue(),"02/13/2009 18:31:30;E;123456.fakehost.lan;Resource_List.cput=2:00:00 Resource_List.mem=1GB Resource_List.nodes=2:ppn=4 Resource_List.vmem=1GB Resource_List.walltime=1:00:00 ctime=1234567890 end=1234567890 etime=1234567890 exec_host=node01/1+node02/2 exit_status=0 group=bar jobname=job owner=foo@login1.fakehost.lan qtime=1234567890 queue=batch resources_used.cput=00:00:02 resources_used.mem=1024kb resources_used.vmem=2048kb resources_used.walltime=00:00:01 start=1234567890 start_count=1 system=None user=foo\n")
         fd1.close()
 
 
@@ -1186,6 +1201,9 @@ class pbsacctDB:
               ( oldjob is None or job.end_ts()!=oldjob.end_ts() ) ):
              fields_to_set["end_ts"] = "'%d'" % job.end_ts()
              fields_to_set["end_date"] = self._timestamp_to_date(job.end_ts())
+        if ( job.start_count()>0 and
+              ( oldjob is None or job.start_count()!=oldjob.start_count() ) ):
+            fields_to_set["start_count"] = "'%d'" % job.start_count()
         if ( job.cput_limit_sec()>0 and
              ( oldjob is None or job.cput_limit_sec()!=oldjob.cput_limit_sec() ) ):
              fields_to_set["cput_req"] = "'%s'" % sec_to_time(job.cput_limit_sec())
@@ -1355,6 +1373,9 @@ class pbsacctDB:
                         elif ( columns[i]=="end_ts" and
                                result[i]>0 ):
                             resources["end"] = str(result[i])
+                        elif ( columns[i]=="start_count" and
+                               result[i]>0 ):
+                            resources["start_count"] = str(result[i])
                         elif ( columns[i]=="hostlist" and
                                result[i] is not None ):
                             resources["exec_host"] = str(result[i])
