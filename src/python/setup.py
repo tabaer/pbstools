@@ -16,7 +16,7 @@ setup (name = "pbsacct",
                       'Intended Audience :: System Administrators',
                       'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
                       'Operating System :: POSIX',
-                      'Topic :: Scientific/Engineering :: Information Analysis'
+                      'Topic :: Scientific/Engineering :: Information Analysis',
                       'Topic :: Software Development :: Libraries :: Python Modules'
                      ]
       )
