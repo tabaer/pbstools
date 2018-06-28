@@ -735,6 +735,9 @@ def raw_data_from_files(filelist):
         if ( os.path.exists(filename) ):
             for record in raw_data_from_file(filename):
                 rawdata.append(record)
+        else:
+            logger.warn("%s does not exist" % filename)
+            continue
     return rawdata
 
 
