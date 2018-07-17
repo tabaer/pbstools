@@ -56,11 +56,14 @@ CREATE INDEX eligible_jobs ON Jobs (eligible_date);
 CREATE INDEX start_jobs ON Jobs (start_date);
 CREATE INDEX end_jobs ON Jobs (end_date);
 CREATE INDEX start_end_jobs ON Jobs (start_date,end_date);
+CREATE INDEX start_count_jobs ON Jobs (start_count);
 CREATE INDEX system_start_jobs ON Jobs (system,start_date);
 CREATE INDEX system_eligible_jobs ON Jobs (system,eligible_date);
 CREATE INDEX system_end_jobs ON Jobs (system,end_date);
 CREATE INDEX system_start_end_jobs ON Jobs (system,start_date,end_date);
+CREATE INDEX system_start_count_jobs ON Jobs (system,start_count);
 CREATE INDEX sw_app_jobs ON Jobs (sw_app);
+CREATE INDEX system_sw_app_jobs ON Jobs (system,sw_app(32));
 CREATE TABLE Software (
   package VARCHAR(32) PRIMARY KEY
 );
