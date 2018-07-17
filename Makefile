@@ -1,4 +1,4 @@
-VERSION = 3.4.2
+VERSION = 3.4.3
 RELEASE = 1
 ROOT = /
 PREFIX    = /usr/local
