@@ -720,7 +720,7 @@ def raw_data_from_file(filename):
     return output
 
 
-def raw_data_from_files(filelist):
+def raw_data_from_files(filelist,warn_missing=False):
     """
     Parses a list of files containing multiple PBS accounting log entries.
     Returns a list of tuples containing the following information:
@@ -735,7 +735,7 @@ def raw_data_from_files(filelist):
         if ( os.path.exists(filename) ):
             for record in raw_data_from_file(filename):
                 rawdata.append(record)
-        else:
+        elif ( warn_missing ):
             logger.warn("%s does not exist" % filename)
             continue
     return rawdata
@@ -782,22 +782,22 @@ def write_record_to_accounting_log(record,fd):
     fd.write("%s;%s;%s;%s\n" % (datestamp,state,jobid,resourcestring))
 
 
-def jobs_from_file(filename,system=None):
+def jobs_from_file(filename,system=None,warn_missing=False):
     """
     Parses a file containing multiple PBS accounting log entries.  Returns
     a hash of lightly postprocessed data (i.e. one entry per jobid rather
     than one per record).
     """
-    return jobs_from_files([filename],system)
+    return jobs_from_files([filename],system,warn_missing)
 
 
-def jobs_from_files(filelist,system=None):
+def jobs_from_files(filelist,system=None,warn_missing=False):
     """
     Parses a list of files containing multiple PBS accounting log entries.
     Returns a hash of lightly postprocessed data (i.e. one entry per jobid
     rather than one per record).
     """
-    return records_to_jobs(raw_data_from_files(filelist),system)
+    return records_to_jobs(raw_data_from_files(filelist,warn_missing),system)
 
 
 def jobinfo_from_epilogue(jobid,reqlist="",usedlist="",queue=None,account=None,exit_status=0,system=None):
