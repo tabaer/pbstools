@@ -1207,7 +1207,8 @@ class DAG(object):
             else:
                 newRescueDAG.write(line)
         # destroy "lock" file
-        os.remove(file+".rescue.lck")
+        if ( os.path.exists(file+".rescue.lck") ):
+            os.remove(file+".rescue.lck")
         newRescueDAG.close()       
         if ( verbose ):
             log.write(str(datetime.datetime.now())+":  done writing rescue DAG\n")
