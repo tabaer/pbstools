@@ -1316,7 +1316,8 @@ def main():
                                     "notification=",
                                     "oldrescue",
                                     "outfile_dir=",
-                                    "maxjobwait="])
+                                    "maxjobwait=",
+                                    "timeout="])
     except getopt.GetoptError, err:
         sys.stderr.write(str(err)+"\n")
         usage()
@@ -1345,7 +1346,15 @@ def main():
             if ( opt in ("-v", "--verbose") ):
                 verbose = True
             if ( opt=="--maxjobwait" ):
-                maxJobWait = int(value)
+                try:
+                    maxJobWait = int(value)
+                except:
+                    sys.stderr.warn("Unable to interpret maxjobwait value \"%s\", ignoring.\n" % str(value))
+            if ( opt=="--timeout" ):
+                try:
+                    timeout = int(value)
+                except:
+                    sys.stderr.warn("Unable to interpret timeout value \"%s\", ignoring.\n" % str(value))
     except NameError, err:
         sys.stderr.write(str(err)+"\n")
         usage()
