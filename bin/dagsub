@@ -1285,12 +1285,12 @@ def main():
     try:
         # The convention is to use single dash for short command (i.e. -h), and double dashes
         # (i.e. --no_submit) for long command.  In condor submit dag, user uses single dash
-        # to submit long command line option (i.e. -no_submit) process the long command line
-        # options with one more dash
+        # to submit long command line option (i.e. -no_submit), so process the long command line
+        # options to prepend one more dash where necessary.
         cmdline = sys.argv[1:]
         pcmd = []
         for each in cmdline:
-            if(each[0] == "-"):
+            if ( each.startswith("-") and not each.startswith("--") ):
                 pcmd.append('-' + each)
             else:
                 pcmd.append(each)
