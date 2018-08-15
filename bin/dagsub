@@ -635,7 +635,7 @@ class JobNode(object):
                     return success
         return True
 
-    def submit(self,dag,log,categories):
+    def submit(self,dag,log,categories,deptype="afterok"):
         """
         OVERVIEW: Submits job for self with dependencies 
 
@@ -703,16 +703,10 @@ class JobNode(object):
                     dependencies = unique(dependencies)
                     dependencies.sort()
                     #dependencies.reverse()
-                    dependency = "-W depend=afterok:"+dependencies[0]
-                    if ( len(dependencies)>1 ):
-                        for dep in dependencies[1:]:
-                            dependency += ":" + dep
+                    dependency = "-W depend=%s:%s" % (deptype,":".join(dependencies))
                 vars = ""
                 if ( self.vars() is not None ):
-                    vars = "-v "+self.vars()[0]
-                    if ( len(self.vars())>1 ):
-                        for var in self.vars()[1:]:
-                            vars = vars+","+var
+                    vars = "-v %s" % ",".join(self.vars())
                 queue = ""
                 if ( self.queue() is not None ):
                     queue = "-q "+self.queue()
