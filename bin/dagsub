@@ -883,7 +883,7 @@ class SubDAGNode(JobNode):
             return NOT_FOUND
         elif ( self.isSubmitted() and not self.isDone() ):
             return IN_PROGRESS
-        elif ( self.exitCode()!=0 ):
+        elif ( self.exitCode()!=0 or not self.isHealthy() ):
             return FAIL
         else:
             return SUCCESS
@@ -1209,22 +1209,24 @@ class DAG(object):
             log.flush()
 
     def _subtreeIsComplete(self, rootnode, log):
-        done = True
+        done = False
         if ( rootnode is None ):
             done = True
-        elif  ( rootnode.children() is None ):
+        else:
             rootstatus = rootnode.jobStatus(log)
-            if ( rootstatus==FAIL or rootstatus==NOT_FOUND ):
+            if ( rootstatus in [FAIL,NOT_FOUND] ):
+                done = True
+            elif ( rootstatus in [IN_PROGRESS] ):
+                done = False
+            elif ( not rootnode.isHealthy() ):
                 done = True
             else:
                 done = rootnode.isDone()
-        elif ( rootnode.children() is not None and rootnode.isDone() ):
-            for childname in rootnode.children():
-                childnode = self.getNode(childname)
-                if ( done ):
-                    done = self._subtreeIsComplete(childnode,log)
-        else:
-            done = False
+            if ( done and rootnode.isHealthy() and rootnode.children() is not None ):
+                for childname in rootnode.children():
+                    childnode = self.getNode(childname)
+                    if ( done ):
+                        done = self._subtreeIsComplete(childnode,log)
         return done
 
     def isComplete(self, log):
@@ -1537,12 +1539,12 @@ def main():
                             if ( dotFile is not None ):
                                 dag.writeDotFile(dotFile,base,log,False)
 
-                            # Monitor the DAG and write out rescue DAGs periodically
-                            while ( not dag.isComplete(log) ):
-                                time.sleep(timeout)
-                                dag.writeRescueDAG(log)
-                            if ( dotFile is not None ):
-                                dag.writeDotFile(dotFile,base,log,False)
+                        # Monitor the DAG and write out rescue DAGs periodically
+                        while ( not dag.isComplete(log) ):
+                            time.sleep(timeout)
+                            dag.writeRescueDAG(log)
+                        if ( dotFile is not None ):
+                            dag.writeDotFile(dotFile,base,log,False)
                                 
                     # last-ditch effort to finish the .DOT file up before exiting, if specified
                     if ( dotFile is not None ):
