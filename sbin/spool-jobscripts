@@ -88,7 +88,7 @@ if ( len(destfiles)>0 ):
     pid = os.fork()
     if ( pid==0 ):
         cmd = "/usr/local/sbin/jobscript-to-db"
-        args = [exe]
+        args = [cmd]
         if ( noop ):
             args.append("-T")
         if ( append_to_jobid_in_db is not None ):
@@ -98,7 +98,10 @@ if ( len(destfiles)>0 ):
             args.append(destfile)
         if ( noop ):
             sys.stderr.write(" ".join(args))
-        os.execvp(cmd,args)
+        try:
+            os.execv(cmd,args)
+        except Exception as e:
+            sys.stderr.write("%s\n" % str(e))
         sys.exit(0)
 
 sys.exit(0)
