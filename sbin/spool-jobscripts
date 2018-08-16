@@ -59,7 +59,7 @@ else:
     os.chdir(jobsdir)
 
 if ( not os.path.exists(spooldir) ):
-    os.mkdir(spooldir,mode=0700)
+    os.mkdir(spooldir,0700)
 
 # get list of script files
 srcfiles = []
