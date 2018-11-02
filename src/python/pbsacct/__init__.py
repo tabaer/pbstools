@@ -292,6 +292,9 @@ class jobinfo:
     def nodes(self):
         return self.get_resource("Resource_List.nodes")
 
+    def tasks(self):
+        return self.get_resource("tasks")
+
     def nodes_used(self):
         nodes = []
         if ( self.has_resource("exec_host") ):
@@ -575,6 +578,32 @@ class jobinfoTestCase(unittest.TestCase):
     def test_nodes(self):
         j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.nodes(),'2:ppn=4')
+    def test_tasks(self):
+        acctdata = "10/25/2018 17:02:14;S;13512.pitzer-batch.ten.osc.edu;user=troy group=PZS0708 account=PZS0708 jobname=ht-test-allowthreads-wholenode queue=newsyntax ctime=1540501291 qtime=1540501291 etime=1540501291 start_count=1 start=1540501334 owner=troy@pitzer-login01.hpc.osc.edu exec_host=p0221/0-79 Resource_List.walltime=01:00:00 Resource_List.gattr=sysp Resource_List.advres=ht-test.224004 Resource_Request_2.0=-L tasks=1:lprocs=80:memory=100GB:allowthreads \n"
+        acctdata += "10/25/2018 17:02:48;E;13512.pitzer-batch.ten.osc.edu;user=troy group=PZS0708 account=PZS0708 jobname=ht-test-allowthreads-wholenode queue=newsyntax ctime=1540501291 qtime=1540501291 etime=1540501291 start_count=1 start=1540501334 owner=troy@pitzer-login01.hpc.osc.edu exec_host=p0221/0-79 Resource_List.walltime=01:00:00 Resource_List.gattr=sysp Resource_List.advres=ht-test.224004 Resource_Request_2.0=-L tasks=1:lprocs=80:memory=100GB:allowthreads session=149510 total_execution_slots=80 unique_node_count=1 end=1540501368 Exit_status=0 resources_used.cput=253 resources_used.vmem=159171128kb resources_used.walltime=00:00:33 resources_used.mem=15448300kb resources_used.energy_used=0\n"
+        acctdata += "11/02/2018 10:04:27;S;16057.pitzer-batch.ten.osc.edu;user=troy group=PZS0708 account=PZS0708 jobname=twotasks queue=newsyntax ctime=1541167460 qtime=1541167460 etime=1541167460 start_count=1 start=1541167467 owner=troy@pitzer-login01.hpc.osc.edu exec_host=p0034/0+p0070/0 Resource_List.walltime=01:00:00 Resource_List.gattr=sysp Resource_Request_2.0=-L tasks=1:lprocs=1:usecores:memory=4GB -L tasks=1:lprocs=1:usecores:memory=4GB \n"
+        acctdata += "11/02/2018 10:05:58;E;16057.pitzer-batch.ten.osc.edu;user=troy group=PZS0708 account=PZS0708 jobname=twotasks queue=newsyntax ctime=1541167460 qtime=1541167460 etime=1541167460 start_count=1 start=1541167467 owner=troy@pitzer-login01.hpc.osc.edu exec_host=p0034/0+p0070/0 Resource_List.walltime=01:00:00 Resource_List.gattr=sysp Resource_Request_2.0=-L tasks=1:lprocs=1:usecores:memory=4GB -L tasks=1:lprocs=1:usecores:memory=4GB session=94063 total_execution_slots=2 unique_node_count=2 end=1541167558 Exit_status=271 resources_used.cput=0 resources_used.energy_used=0 resources_used.mem=1776kb resources_used.vmem=292048kb resources_used.walltime=00:01:24 \n"
+        from tempfile import mkstemp
+        (tmpfd,tmpfile) = mkstemp()
+        tmpfh = os.fdopen(tmpfd,'w')
+        tmpfh.write(acctdata)
+        tmpfh.flush()
+        tmpfh.close()
+        jobs = jobs_from_file(tmpfile)
+        if ( "13512.pitzer-batch.ten.osc.edu" not in jobs ):
+            self.fail()
+        else:
+            j1 = jobs["13512.pitzer-batch.ten.osc.edu"]
+            self.assertEqual(j1.tasks(),"1:lprocs=80:memory=100GB:allowthreads")
+        if ( "16057.pitzer-batch.ten.osc.edu" not in jobs ):
+            self.fail()
+        else:
+            j2 = jobs["16057.pitzer-batch.ten.osc.edu"]
+            self.assertEqual(j2.tasks(),"1:lprocs=1:usecores:memory=4GB+1:lprocs=1:usecores:memory=4GB")
+        try:
+            os.unlink(tmpfile)
+        except:
+            self.fail()            
     def test_nodes_used(self):
         j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.nodes_used(),['node01','node02'])
@@ -709,7 +738,14 @@ def raw_data_from_file(filename):
                     value = int(value)
                 if key in []:
                     value = float(value)
-                resources_dict[key] = value
+                # The "tasks" resource can appear more than once due to the ...interesting
+                # way the new NUMA-aware syntax implements multi-req jobs.  So, if there's
+                # more than one tasks=[...] entry, compound them with pluses (similar to
+                # how compound nodes= requests are done).
+                if ( key=="tasks" and "tasks" in resources_dict.keys() ):
+                    resources_dict[key] = resources_dict[key]+"+"+value
+                else:
+                    resources_dict[key] = value
             elif ( resource!="" ):
                 logger.warn("filename=%s, jobid=%s:  Malformed resource \"%s\"" % (filename,jobid,resource))
         
