@@ -53,9 +53,13 @@ CREATE INDEX user_jobs ON Jobs (username);
 CREATE INDEX group_jobs ON Jobs (groupname);
 CREATE INDEX account_jobs ON Jobs (account);
 CREATE INDEX queue_jobs ON Jobs (queue(16));
+CREATE INDEX submit_ts_jobs ON Jobs (submit_ts);
 CREATE INDEX submit_jobs ON Jobs (submit_date);
+CREATE INDEX eligible_ts_jobs ON Jobs (eligible_ts);
 CREATE INDEX eligible_jobs ON Jobs (eligible_date);
+CREATE INDEX start_ts_jobs ON Jobs (start_ts);C
 CREATE INDEX start_jobs ON Jobs (start_date);
+CREATE INDEX end_ts_jobs ON Jobs (end_ts);
 CREATE INDEX end_jobs ON Jobs (end_date);
 CREATE INDEX start_end_jobs ON Jobs (start_date,end_date);
 CREATE INDEX start_count_jobs ON Jobs (start_count);
