@@ -746,6 +746,10 @@ def raw_data_from_file(filename):
                     resources_dict[key] = resources_dict[key]+"+"+value
                 else:
                     resources_dict[key] = value
+            elif ( resource=="-L" ):
+                # This is detritus from how multiple -L tasks=[...] are included in accounting logs,
+                # so ignore it.
+                pass
             elif ( resource!="" ):
                 logger.warn("filename=%s, jobid=%s:  Malformed resource \"%s\"" % (filename,jobid,resource))
         
