@@ -116,6 +116,7 @@ function sys_list()
 	       "oak",
 	       "ruby",
 	       "owens",
+	       "pitzer",
 	       "quick",
 	       "bmibucki",
 	       "bmiowens",
@@ -126,7 +127,10 @@ function sys_list()
 	       "ruby-mic",
 	       "owens-gpu-nodes",
 	       "owens-gpu-reqd",
-	       "owens-hugemem");
+	       "owens-hugemem",
+	       "pitzer-gpu-nodes",
+	       "pitzer-gpu-reqd",
+	       "pitzer-hugemem");
 }
 
 # system selector
@@ -177,6 +181,9 @@ function sysselect($system)
   if ( $system=='owens-gpu-nodes' ) return "system = 'owens' AND hostlist REGEXP 'o0(649|6[5-9][0-9]|7[0-9][0-9]|80[0-8])'";
   if ( $system=='owens-gpu-reqd' ) return "system = 'owens' AND ngpus>0";
   if ( $system=='owens-hugemem' ) return "system = 'owens' AND hostlist REGEXP 'o08(09|1[0-9]|2[0-4])'";
+  if ( $system=='pitzer-gpu-nodes' ) return "system = 'pitzer' AND hostlist REGEXP 'p02(2[5-9]|[34][0-9]|5[0-6])'";
+  if ( $system=='pitzer-gpu-reqd' ) return "system = 'pitzer' AND ngpus>0";
+  if ( $system=='pitzer-hugemem' ) return "system = 'pitzer' AND hostlist REGEXP 'p02(5[7-9]|60)'";
   return "system LIKE '".$system."'";
 }
 
