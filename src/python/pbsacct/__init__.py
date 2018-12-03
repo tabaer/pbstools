@@ -162,6 +162,10 @@ class jobinfo:
     def set_resource(self,key,value):
         self._resources[key] = value
 
+    def unset_resource(self,key):
+        if ( key in self._resources ):
+            del self._resources[key]
+
     def has_resource(self,key):
         return key in self._resources
 
@@ -619,12 +623,19 @@ class jobinfoTestCase(unittest.TestCase):
         j3.set_resource("Resource_List.nodes","3:ppn=28")
         j3.set_resource("Resource_List.neednodes","3:ppn=28")
         j3.set_resource("Resource_List.nodect","3")
+        j3.unset_resource("exec_host")
         self.assertEqual(j3.num_nodes(),3)
         j4 = copy.deepcopy(self.testjob)
-        j4.set_resource("Resource_List.nodes","2:ppn=28")
-        j4.set_resource("Resource_List.neednodes","2:ppn=28")
-        j4.set_resource("unique_node_count","2")
-        self.assertEqual(j4.num_nodes(),2)
+        j4.set_resource("Resource_List.nodes","5:ppn=28")
+        j4.set_resource("Resource_List.neednodes","5:ppn=28")
+        j4.set_resource("unique_node_count","5")
+        j4.unset_resource("exec_host")
+        self.assertEqual(j4.num_nodes(),5)
+        j5 = copy.deepcopy(self.testjob)
+        j5.set_resource("Resource_List.nodes","2:ppn=28+2:ppn=1")
+        j5.set_resource("Resource_List.neednodes","2:ppn=28+2:ppn=1")
+        j5.unset_resource("exec_host")
+        self.assertEqual(j5.num_nodes(),4)
     def test_num_processors(self):
         j1 = copy.deepcopy(self.testjob)
         self.assertEqual(j1.num_processors(),8)
