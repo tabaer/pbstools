@@ -18,7 +18,16 @@ if (isset($_GET['jobid']))
 
 if ( isset($_POST['error_time']) )
   { 
-    $title="Job info for errors on ".$_POST['system']." running '".$_POST['program']."' at ".$_POST['error_time'];
+    $title = "Job info for errors on ".$_POST['system'];
+    if ( isset($_POST['node_regex']) && $_POST['node_regex']!='' )
+      {
+        $title = $title." nodes ".$_POST['node_regex'];
+      }
+    if ( isset($_POST['program']) && $_POST['program']!='' )
+      {
+        $title = $title." running ".$_POST['program'];
+      }
+    $title = $title." at ".$_POST['error_time'];
   } 
  else
   {
@@ -46,12 +55,29 @@ $keys = array_keys($_POST);
 if ( isset($_POST['error_time']) )
   {
     $db = db_connect();
-    $sql = "SELECT jobid";
+    $sql = "SELECT system, jobid";
     foreach ($keys as $key)
       {
-	if ( isset($_POST[$key]) && $key!='jobid' && $key!='error_time' && $key!='program' ) { $sql = $sql.",".$key; }
+	if ( isset($_POST[$key]) && $key!='system' && $key!='jobid' && $key!='error_time' && $key!='program' && $key!='node_regex' && $key!='limit' ) { $sql = $sql.",".$key; }
       }
-    $sql = $sql." FROM Jobs WHERE script LIKE '%".$_POST['program']."%' AND ( ".sysselect($_POST['system'])." ) AND FROM_UNIXTIME(start_ts) <= '".$_POST['error_time']."' AND FROM_UNIXTIME(end_ts) >= '".$_POST['error_time']."' ORDER BY end_ts-UNIX_TIMESTAMP('".$_POST['error_time']."') LIMIT 1;";
+    $sql = $sql." FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( start_ts <= UNIX_TIMESTAMP('".$_POST['error_time']."') AND end_ts >= UNIX_TIMESTAMP('".$_POST['error_time']."') )";
+    if ( isset($_POST['program']) && $_POST['program']!='' )
+      {
+        $sql = $sql." AND ( script LIKE '%".$_POST['program']."%' )";
+      }
+    if ( isset($_POST['node_regex']) && $_POST['node_regex']!='' )
+      {
+        $sql = $sql." AND ( hostlist REGEXP '".$_POST['node_regex']."' )";
+      }
+    $sql = $sql." ORDER BY end_ts-UNIX_TIMESTAMP('".$_POST['error_time']."')";
+    if ( isset($_POST['limit']) && $_POST['limit']!='' )
+      {
+        $sql = $sql." LIMIT ".$_POST['limit'].";";
+      }
+    else
+      {
+        $sql = $sql." LIMIT 1;";
+      }
     #echo "<PRE>".$sql,"</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
@@ -63,7 +89,7 @@ if ( isset($_POST['error_time']) )
 	echo "<TABLE border=\"1\">\n";
 	foreach ($keys as $key)
 	  {
-	    if ( isset($_POST[$key]) && $key!='error_time' && $key!='program' )
+	    if ( isset($_POST[$key]) && $key!='error_time' && $key!='program' && $key!='node_regex' && $key!='limit' )
 	      {
 		$data[$key]=array_shift($row);
 		echo "<TR><TD width=\"10%\"><PRE>".$key."</PRE></TD><TD width=\"90%\"><PRE>";
@@ -88,10 +114,12 @@ else
   {
     begin_form("error-correlator.php");
 
-    text_field("Error date/time (YYYY-MM-DD HH:MM:SS)","error_time",20);
-    text_field("Executable","program",8);
-    hidden_field("jobid","unknown");
     system_chooser();
+    text_field("Error date/time (YYYY-MM-DD HH:MM:SS)","error_time",20);
+    text_field("(OPTIONAL) Executable","program",20);
+    text_field("(OPTIONAL) Node regex","node_regex",20);
+    text_field("(OPTIONAL) Max results","limit",4);
+    hidden_field("jobid","unknown");
 
     checkboxes_from_array("Properties",$props);
 
