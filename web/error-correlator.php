@@ -74,10 +74,6 @@ if ( isset($_POST['error_time']) )
       {
         $sql = $sql." LIMIT ".$_POST['limit'].";";
       }
-    else
-      {
-        $sql = $sql." LIMIT 1;";
-      }
     #echo "<PRE>".$sql,"</PRE>\n";
     $result = db_query($db,$sql);
     if ( PEAR::isError($result) )
