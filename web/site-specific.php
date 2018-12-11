@@ -455,6 +455,18 @@ function charges($db,$system,$start_date,$end_date,$datelogic="during")
       $retval .= "  ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
       $retval .= " END";
     }
+  else if ( $system=="pitzer" | $system=="pitzer-gpu-nodes" | $system=="pitzer-gpu-reqd" | $system=="pitzer-hugemem" )
+    {
+      $retval  = " CASE queue";
+      $retval .= "  WHEN 'serial' THEN 0.1*nproc*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'newsyntax' THEN 0.05*nproc*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'parallel' THEN 0.1*40*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'largeparallel' THEN 0.1*40*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'dedicated' THEN 0.1*40*nodect*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  WHEN 'hugemem' THEN 0.1*80*(".bounded_walltime_sec($start_date,$end_date,$datelogic).")/3600.0";
+      $retval .= "  ELSE 0.1*".cpuhours($db,$system,$start_date,$end_date,$datelogic);
+      $retval .= " END";
+    }
   else if ( $system=="bmibucki" | $system=="bmiowens" | $system=="quick" )
     {
       $retval = "0.0";
