@@ -26,6 +26,7 @@
 
 import getopt
 import logging
+import logging.handlers
 import os
 import pbsacct
 import re
@@ -83,6 +84,7 @@ def software_list():
         "arps",
         "arts",
         "ash",
+        "astral",
         "astrobear",
         "atat",
         "athena",
@@ -148,6 +150,7 @@ def software_list():
         "clustalw",
         "cm1",
         "coarsen",
+        "columbus",
         "comm-bench",
         "compaware",
         "comsol",
@@ -225,6 +228,7 @@ def software_list():
         "fastqc",
         "fastsimcoal",
         "fastx",
+        "fld2d",
         "fd3d",
         "fdl3di",
         "FDTDxx",
@@ -282,6 +286,7 @@ def software_list():
         "gtc",
         "gvksx",
         "gyro",
+        "gzip",
         "h2mol",
         "h3d",
         "hadoop",
@@ -345,6 +350,7 @@ def software_list():
         "lmf",
         "lobster",
         "lodn",
+        "LowFreqPower",
         "lsdyna",
         "lsms",
         "lsp",
@@ -352,6 +358,7 @@ def software_list():
         "m2md",
         "madness",
         "maestro",
+        "mafft",
         "magic_square",
         "makethemcross",
         "masa",
@@ -369,14 +376,17 @@ def software_list():
         "meamzilla",
         "measurements",
         "meep",
+        "megahit",
         "meme",
         "meta",
+	"mexe",
         "metgrid",
         "mfc",
         "mhd_1",
         "mhd3d",
         "mhdam",
         "milc",
+        "minced",
         "mitgcmuv",
         "mkelly",
         "mkl_mm",
@@ -396,6 +406,7 @@ def software_list():
         "mpi-multi",
         "mpiasm",
         "mpiblast",
+	"MPT_PDECOMP",
         "mrbayes",
         "mrobb6dipzz",
         "msa",
@@ -514,6 +525,7 @@ def software_list():
         "real_exe",
         "reduce",
         "reflect",
+        "reframe",
         "RepeatMasker",
         "res",
         "rho_pion_corre",
@@ -534,6 +546,7 @@ def software_list():
         "run1s-5th-NL",
         "s-param",
         "s3d",
+        "s4kt",
         #"sable",
         "sailfish",
         "sam_adv_um5",
@@ -555,6 +568,8 @@ def software_list():
         "simfactory",
         "simpleio",
         "simu_pow",
+        "simulate",
+        "singularity",
         "skyrmions",
         "sleuth",
         "sms",
@@ -563,6 +578,7 @@ def software_list():
         "SOAPdenovo",
         "sord",
         "sovereign",
+        "spades",
         "spark",
         "sparkfuse",
         "spce",
@@ -585,6 +601,8 @@ def software_list():
         "swh1b",
         "swift",
         "THREEDIM_SOL_JET",
+	"THREEDHBL_hybridsol",
+        "tabix",
         "tacoma",
         "tantalus",
         "tapsim",
@@ -613,14 +631,17 @@ def software_list():
         "turbomole",
         "turbsim",
         "TWODLDC",
+	"TWODHBLhybridroe_sol",
         "two_phase",
         "ukh2d",
         "upc",
+        "v2",
         "vasp",
         "velvet",
         "vbc",
         "vdac",
         "vecadd",
+        "vep",
         "vhone",
         "vida",
         "ViennaRNA",
@@ -636,8 +657,10 @@ def software_list():
         "warp3d",
         "wave_packet",
         "webmo",
+        "wget",
         "wmc",
         "wrf",
+        "WrightonPipeline",
         "xgc",
         "xmfdn",
         "xplot3d",
@@ -701,6 +724,7 @@ def software_match_list():
     pkgmatch['ex_e'] = "script LIKE '%ex.e%'"
     pkgmatch['fastsimcoal'] = "( script LIKE '%FASTSIMCOAL%' OR script LIKE '%fsc25%' )"
     pkgmatch['fit_exe'] = "script LIKE '%fit.exe%'"
+    pkgmatch['fld2d'] = "( script LIKE '%fld2d%' OR script LIKE '%/compact.%.exe%' )"
     pkgmatch['fluent'] = "( script LIKE '%fluent%' OR ( software IS NOT NULL AND software LIKE '%fluent%' ) )"
     pkgmatch['fsweep'] = "( script LIKE '%fsweep.exe%' OR script LIKE '%fsweep2.exe%' )"
     pkgmatch['gabe'] = "script LIKE '%./gabe %'"
@@ -709,6 +733,7 @@ def software_match_list():
     pkgmatch['gemc_x'] = "script LIKE '%gemc.x%'"
     pkgmatch['glast'] = "( script LIKE '%glast%' OR script LIKE '%gp run%' )"
     pkgmatch['gphocs'] = "script LIKE '%/G-PhoCS%'"
+    pkgmatch['gzip'] = "( script LIKE '%gzip%' OR script LIKE '%gunzip%' )"
     pkgmatch['harness'] = "script LIKE '%test_harness_driver.py%'"
     pkgmatch['harris'] = "script LIKE '%harris.cxx.op%'"
     pkgmatch['hd'] = "script LIKE '%/HD %'"
@@ -736,7 +761,7 @@ def software_match_list():
     pkgmatch['mrbayes'] = "( script LIKE '%mrbayes%' OR script LIKE '%mb-parallel%' )"
     pkgmatch['msa'] = "script LIKE '%/msa %'"
     pkgmatch['nb'] = "script LIKE '%NB/CODES%'"
-    pkgmatch['ncbi'] = "( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%blastn%' OR script LIKE '%blastpgp%' OR script LIKE '%blastp %' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR script LIKE '%makeblastdb%' OR script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )"
+    pkgmatch['ncbi'] = "( script LIKE '%ncbi%' OR script LIKE '%blastall%' OR script LIKE '%blastn%' OR script LIKE '%blastpgp%' OR script LIKE '%blastp %' OR script LIKE '%blastx%' OR script LIKE '%fastacmd%' OR script LIKE '%formatdb%' OR script LIKE '%makeblastdb%' OR script LIKE '%rpsblast%' OR script LIKE '%seqtest%' )"
     pkgmatch['nga_fb'] = "( script LIKE '%nga_fb%' OR script LIKE '%nga_cfb%' )"
     pkgmatch['omega'] = "script LIKE '%omega.exe%'"
     pkgmatch['openeye'] = "( script LIKE '%babel3%' OR script LIKE '%checkcff%' OR script LIKE '%chunker%' OR script LIKE '%fred2%' OR script LIKE '%fredPA%' OR script LIKE '%ligand_info%' OR script LIKE '%makefraglib%' OR script LIKE '%makerocsdb%' OR script LIKE '%nam2mol%' OR script LIKE '%omega2%' OR script LIKE '%szybki%' )"
@@ -757,13 +782,14 @@ def software_match_list():
     pkgmatch['reduce'] = "( script LIKE '%reduce_1%' OR script LIKE '%reduce_eta%' )"
     pkgmatch['reflect'] = "script LIKE '%/reflect\n%'"
     pkgmatch['root'] = "script LIKE '%\nroot -q%'"
-    pkgmatch['rosetta'] = "( script LIKE '%rosetta.%' OR script LIKE '% rosetta %' OR script LIKE '%/rr %' OR script LIKE '%rosetta_scripts%' )"
+    pkgmatch['rosetta'] = "( script LIKE '%rosetta.%' OR script LIKE '% rosetta %' OR script LIKE '%/rr %' OR script LIKE '%rosetta_scripts%' OR script LIKE '%module load rosetta%' )"
     pkgmatch['roth'] = "script LIKE '%/ROTH%'"
     pkgmatch['rtp'] = "( script LIKE '%rtp%' AND NOT ( script like '%RestartP%' ) AND NOT ( script LIKE '%addpertpath%' ) )"
     pkgmatch['sable'] = "( script LIKE '%sable%' AND script NOT LIKE '%DISABLE%' )"
     pkgmatch['sas'] = "( script LIKE '%\nsas%' OR ( software IS NOT NULL AND software LIKE '%sas%' ) OR queue  LIKE '%sas%' )"
     pkgmatch['scattering'] = "script LIKE '%/scattering %'"
     pkgmatch['simu_pow'] = "( script LIKE '%simu_pow%' OR script LIKE '%simu_thres%' )"
+    pkgmatch['simulate'] = "script LIKE '%/Binary/simulate%'"
     pkgmatch['spark'] = "script LIKE '%spark-submit%'"
     pkgmatch['sratoolkit'] = "( script LIKE '%sratoolkit%' OR script LIKE '%fastq-dump%' )"
     pkgmatch['star'] = "( script LIKE '%/STAR --runMode%' OR script LIKE '%\nSTAR --runMode%' )"
@@ -772,6 +798,7 @@ def software_match_list():
     pkgmatch['track'] = "script LIKE '%TRACKdir%'"
     pkgmatch['turbo'] = "script LIKE '%pturbo.x%'"
     pkgmatch['upc'] = "script LIKE '%upcrun%'"
+    pkgmatch['v2'] = "script LIKE '%/v2_%'"
     pkgmatch['vasp'] = "script LIKE '%vasp%'"
     pkgmatch['vina'] = "script LIKE '%/vina %'"
     pkgmatch['visit'] = "( script LIKE '%visit%' AND script NOT LIKE '%revisit%' )"
@@ -840,8 +867,10 @@ def software_match_list():
     pkgmatch['scalapack'] = "( script LIKE '%scalapack%' AND NOT ( script LIKE '%#module load scalapack%' ) AND NOT ( "+pkgmatch['mustem']+" ) AND NOT ( "+pkgmatch['siesta']+" ) AND NOT ( "+pkgmatch['vasp']+" ) )"
     pkgmatch['sgf'] = "( script LIKE '%sgf%' AND NOT ( "+pkgmatch['lsdyna']+" ) AND NOT ( "+pkgmatch['sigma']+" ) )"
     pkgmatch['sord'] = "( script LIKE '%sord%' AND NOT ( "+pkgmatch['namd']+" ) )"
+    pkgmatch['spades'] = "( script LIKE '%spades%' AND NOT ( "+pkgmatch['ncbi']+" ) )"
     pkgmatch['sses'] = "( script LIKE '%sses%' AND NOT ( script LIKE '%subprocess%' ) AND NOT ( "+pkgmatch['amber']+" ) AND NOT ( "+pkgmatch['arps']+" ) AND NOT ( "+pkgmatch['cactus']+" ) AND NOT ( "+pkgmatch['cdo']+" ) AND NOT ( "+pkgmatch['enzo']+" ) AND NOT ( "+pkgmatch['grib']+" ) AND NOT ( "+pkgmatch['milc']+" ) AND NOT ( "+pkgmatch['namd']+" ) AND NOT ( "+pkgmatch['python']+" ) AND NOT ( "+pkgmatch['qb']+" ) AND NOT ( "+pkgmatch['vasp']+" ) AND NOT ( "+pkgmatch['vbc']+" ) )"
     pkgmatch['sus'] = "( script LIKE '%sus%' AND NOT ( "+pkgmatch['cam']+" ) AND NOT ( "+pkgmatch['consensus']+" ) AND NOT ( "+pkgmatch['stata']+" ) )"
+    pkgmatch['tabix'] = "( script LIKE '%tabix%' AND NOT ( "+pkgmatch['vep']+" ) )"
     pkgmatch['tsc'] = "( script LIKE '%tsc%' AND NOT ( "+pkgmatch['amber']+" ) AND NOT ( "+pkgmatch['arps']+" ) AND NOT ( "+pkgmatch['cactus']+" ) AND NOT ( "+pkgmatch['foam']+" ) AND NOT ( "+pkgmatch['simfactory']+" ) AND NOT ( "+pkgmatch['swift']+" ) )"
     pkgmatch['turbomole'] = "( script LIKE '%turbomole%' AND NOT ( "+pkgmatch['chemshell']+" ) )"
     pkgmatch['ukh2d'] = "( ( script LIKE '%ukh2d%' OR script LIKE '%ukh.cxx.op%' ) AND NOT ( "+pkgmatch['h3d']+" ) )"
