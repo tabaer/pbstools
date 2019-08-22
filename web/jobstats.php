@@ -164,6 +164,119 @@ if ( isset($_POST['system']) )
 			   $_POST['end_date'],
 			   $_POST['datelogic']);
 
+    // by GPU count
+    jobstats_output_metric('Job Count vs. GPU Count',
+			   'jobs_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('Core Hours vs. GPU Count',
+			   'cpuhours_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('GPU Hours vs. GPU Count',
+			   'gpuhours_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('Node Hours vs. GPU Count',
+			   'nodehours_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('Charges vs. GPU Count',
+			   'charges_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('Job Length vs. GPU Count',
+			   'walltime_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('Queue Time vs. GPU Count',
+			   'qtime_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('Real Memory vs. GPU Count',
+			   'mem_kb_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('Virtual Memory vs. GPU Count',
+			   'vmem_kb_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('Walltime Accuracy vs. GPU Count',
+			   'walltime_acc_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('CPU Efficiency vs. GPU Count',
+			   'cpu_eff_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
+    jobstats_output_metric('Active Users vs. GPU Count',
+			   'users_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
+    jobstats_output_metric('Active Groups vs. GPU Count',
+			   'groups_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+    
+    jobstats_output_metric('Active Accounts vs. GPU Count',
+			   'accounts_vs_ngpus',
+			   $db,
+			   $_POST['system'],
+			   $_POST['start_date'],
+			   $_POST['end_date'],
+			   $_POST['datelogic']);
+
     // by node count
     jobstats_output_metric('Job Count vs. Node Count',
 			   'jobs_vs_nodect',
@@ -1782,6 +1895,22 @@ else
     jobstats_input_metric("Active Users vs. CPU Count","users_vs_nproc");
     jobstats_input_metric("Active Groups vs. CPU Count","groups_vs_nproc");
     jobstats_input_metric("Active Accounts vs. CPU Count","accounts_vs_nproc");
+    
+    // by ngpus
+    jobstats_input_metric("Job Count vs. GPU Count","jobs_vs_ngpus");
+    jobstats_input_metric("Core Hours vs. GPU Count","cpuhours_vs_ngpus");
+    jobstats_input_metric("GPU Hours vs. GPU Count","gpuhours_vs_ngpus");
+    jobstats_input_metric("Node Hours vs. GPU Count","nodehours_vs_ngpus");
+    jobstats_input_metric("Charges vs. GPU Count","charges_vs_ngpus");
+    jobstats_input_metric("Job Length vs. GPU Count","walltime_vs_ngpus");
+    jobstats_input_metric("Queue Time vs. GPU Count","qtime_vs_ngpus");
+    jobstats_input_metric("Real Memory vs. GPU Count","mem_kb_vs_ngpus");
+    jobstats_input_metric("Virtual Memory vs. GPU Count","vmem_kb_vs_ngpus");
+    jobstats_input_metric("Walltime Accuracy vs. GPU Count","walltime_acc_vs_ngpus");
+    jobstats_input_metric("CPU Efficiency vs. GPU Count","cpu_eff_vs_ngpus");
+    jobstats_input_metric("Active Users vs. GPU Count","users_vs_ngpus");
+    jobstats_input_metric("Active Groups vs. GPU Count","groups_vs_ngpus");
+    jobstats_input_metric("Active Accounts vs. GPU Count","accounts_vs_ngpus");
     
     // by nodect
     jobstats_input_spacer();
