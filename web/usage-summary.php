@@ -58,10 +58,10 @@ if ( isset($_POST['system']) )
   {
     # system overview
     echo "<H3>Overview</H3>\n";
-    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".nodehours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS nodehours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, NULL AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY ".$_POST['order']." DESC";
+    $sql = "SELECT system, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".gpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS gpuhours, SUM(".nodehours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS nodehours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, NULL AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY system ORDER BY ".$_POST['order']." DESC";
     #echo "<PRE>\n".$sql."</PRE>\n";
     echo "<TABLE border=1>\n";
-    echo "<TR><TH>system</TH><TH>jobs</TH><TH>cpuhours</TH><TH>nodehours</TH><TH>charges</TH><TH>%util</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
+    echo "<TR><TH>system</TH><TH>jobs</TH><TH>cpuhours</TH><TH>gpuhours</TH><TH>nodehours</TH><TH>charges</TH><TH>%cpuutil</TH><TH>users</TH><TH>groups</TH><TH>accounts</TH></TR>\n";
     ob_flush();
     flush();
 
@@ -115,7 +115,7 @@ if ( isset($_POST['system']) )
       }
     if ( $_POST['system']=="%" )
       {
-	$sql = "SELECT 'TOTAL', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".nodehours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS nodehours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, 'N/A' AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." )";
+	$sql = "SELECT 'TOTAL', COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".gpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS gpuhours, SUM(".nodehours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS nodehours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, 'N/A' AS pct_util, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." )";
 	$result = db_query($db,$sql);
 	if ( PEAR::isError($result) )
 	  {
@@ -246,9 +246,9 @@ if ( isset($_POST['system']) )
     if ( isset($_POST['software']) )
       {
 	echo "<H3>Software Usage</H3>\n";
-	$sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".nodehours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS nodehours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE sw_app IS NOT NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
+	$sql = "SELECT sw_app, COUNT(jobid) AS jobs, SUM(".cpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS cpuhours, SUM(".gpuhours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS gpuhours, SUM(".nodehours($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS nodehours, SUM(".charges($db,$_POST['system'],$_POST['start_date'],$_POST['end_date'],$_POST['datelogic']).") AS charges, COUNT(DISTINCT(username)) AS users, COUNT(DISTINCT(groupname)) AS groups, COUNT(DISTINCT(account)) AS accounts FROM Jobs WHERE sw_app IS NOT NULL AND ( ".sysselect($_POST['system'])." ) AND ( ".dateselect($_POST['datelogic'],$_POST['start_date'],$_POST['end_date'])." ) GROUP BY sw_app ORDER BY ".$_POST['order']." DESC";
         #echo "<PRE>\n".$sql."</PRE>\n";
-	$columns = array("package","jobs","cpuhours","nodehours","charges","users","groups", "accounts");
+	$columns = array("package","jobs","cpuhours","gpuhours","nodehours","charges","users","groups", "accounts");
 	if (  isset($_POST['table']) )
 	  {
 	    $result = db_query($db,$sql);
@@ -319,7 +319,7 @@ else
     virtual_system_chooser();
     date_fields($start,$end);
 
-    $orders=array("jobs","cpuhours","nodehours","charges","users","groups");
+    $orders=array("jobs","cpuhours","gpuhours","nodehours","charges","users","groups");
     checkboxes_from_array("Supplemental reports",array("institution","account","software"));
     $defaultorder="cpuhours";
     pulldown("order","Order results by",$orders,$defaultorder);
