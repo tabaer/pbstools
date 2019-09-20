@@ -2,7 +2,7 @@
 #
 # sw_app-index -- Update values for sw_app indexing
 # Python rewrite
-# Copyright 2017, 2018 Ohio Supercomputer Center
+# Copyright 2017, 2018, 2019 Ohio Supercomputer Center
 #
 # Derived from original Perl code:
 # Copyright 2006, 2007, 2016, 2017 Ohio Supercomputer Center
