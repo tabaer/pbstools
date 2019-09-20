@@ -64,6 +64,7 @@ def software_list():
         "adcprep",
         "adda",
         "adf",
+        "AFcombine",
         "aflow",
         "afma",
         "agk",
@@ -89,6 +90,7 @@ def software_list():
         "atat",
         "athena",
         "atmc",
+        "atmosphere_model",
         "augustus",
         "ausam",
         "autogrid4",
@@ -96,7 +98,10 @@ def software_list():
         "autostem",
         "awm",
         "bam",
+        "bbmap",
         "beast",
+        "bedpostX",
+        "bedtools",
         "beopest",
         "berkeleygw",
         "bgw",
@@ -105,6 +110,7 @@ def software_list():
         "bioperl",
         "bismark",
         "blat",
+        "blender",
         "bolztran",
         "boots",
         "bowtie",
@@ -169,6 +175,7 @@ def software_list():
         "crystal",
         "css2sld",
         "csurfs",
+        "ctac",
         "cube",
         "cudac",
         "cufflinks",
@@ -180,6 +187,7 @@ def software_list():
         "dam",
         "darshan",
         "dasquad",
+        "ddmax",
         "decomp",
         #"decypher",
         "delphi",
@@ -209,6 +217,7 @@ def software_list():
         "eden",
         "eigen.x",
         "elk",
+        "EMoffice",
         "emotif",
         "energyplus",
         "enkf",
@@ -220,6 +229,7 @@ def software_list():
         "esp",
         "eulacc",
         "evams",
+        "evp",
         "ex_e",
         "exedys",
         "examl",
@@ -235,6 +245,7 @@ def software_list():
         "featureComputation",
         "fedvr",
         "fidap",
+        "find3rdVsquare",
         "firefly",
         "fit_exe",
         "flash2",
@@ -284,6 +295,7 @@ def software_list():
         "grouper",
         "gsi.exe",
         "gtc",
+        "guppy",
         "gvksx",
         "gyro",
         "gzip",
@@ -294,6 +306,7 @@ def software_list():
         "halo",
         "harness",
         "harris",
+        "HashChr",
         "hchbm",
         "hd",
         "hd_nonuma",
@@ -318,9 +331,11 @@ def software_list():
         "icemc",
         "idl",
         "iedg_mix",
+        "iedg_mpi_multidomain",
         "ifs",
         "imb",
         "imc",
+        "imd.x",
         "inca",
         "inho",
         "intestine3d",
@@ -364,6 +379,7 @@ def software_list():
         "masa",
         "mathematica",
         "matlab",
+        "maxsolve",
         "maya",
         "mcnp",
         "mcrothers",
@@ -443,6 +459,7 @@ def software_list():
         "nwchem",
         "ocore",
         "octave",
+        "OffsetBlockVTime",
         "omega",
         "omen",
         "omgred",
@@ -509,6 +526,7 @@ def software_list():
         "python",
         "qb",
         "qchem",
+        "qiime",
         "qmc",
         "quartet",
         "qrpacc",
@@ -522,6 +540,7 @@ def software_list():
         "raspa",
         "raxml",
         "readall_parallel",
+        "readTree_diode",
         "real_exe",
         "reduce",
         "reflect",
@@ -539,11 +558,15 @@ def software_list():
         "run_1kmd",
         "run_all_de_novo",
         "run_flexible",
+        "run_glaps",
         "run_hyd",
         "run_im",
         "run_lprlx",
+        "run_probtrackx",
         "run_xyzvort",
         "run1s-5th-NL",
+        "runAnalysisStage01",
+        "runInterferometry",
         "s-param",
         "s3d",
         "s4kt",
@@ -570,12 +593,14 @@ def software_list():
         "simu_pow",
         "simulate",
         "singularity",
+        "SiteCorrelationLowCov",
         "skyrmions",
         "sleuth",
         "sms",
         "sne3d",
         "snptest",
         "SOAPdenovo",
+        "so_gen_weights",
         "sord",
         "sovereign",
         "spades",
@@ -610,6 +635,7 @@ def software_list():
         "tdcc2d",
         "tdse",
         "terachem",
+        "testharness",
         "testpio",
         "tetradpost",
         "tfe",
@@ -618,6 +644,7 @@ def software_list():
         "torch",
         "tornado_friction",
         "track",
+        "trial",
         "translate",
         "trigger_study_ara",
         "trimmomatic",
@@ -661,6 +688,7 @@ def software_list():
         "wmc",
         "wrf",
         "WrightonPipeline",
+        "xfdtd",
         "xgc",
         "xmfdn",
         "xplot3d",
@@ -721,6 +749,7 @@ def software_match_list():
     pkgmatch['dns2d'] = "( script LIKE '%DNS2d.x%' OR script LIKE '%DNS2d_%.x%' OR script LIKE '%code2.x%' OR script LIKE '%spcal2d.x%' )"
     pkgmatch['dock'] = "( script LIKE '%dock5%' OR script LIKE '%dock6%' OR script LIKE '%sphgen%' OR script LIKE '%mopac%' )"
     pkgmatch['esp'] = "script LIKE '%/esp %'"
+    pkgmatch['evp'] = "script LIKE '%/evp %'"
     pkgmatch['ex_e'] = "script LIKE '%ex.e%'"
     pkgmatch['fastsimcoal'] = "( script LIKE '%FASTSIMCOAL%' OR script LIKE '%fsc25%' )"
     pkgmatch['fit_exe'] = "script LIKE '%fit.exe%'"
@@ -794,8 +823,10 @@ def software_match_list():
     pkgmatch['sratoolkit'] = "( script LIKE '%sratoolkit%' OR script LIKE '%fastq-dump%' )"
     pkgmatch['star'] = "( script LIKE '%/STAR --runMode%' OR script LIKE '%\nSTAR --runMode%' )"
     pkgmatch['tbms'] = "( script LIKE '%tbms%dvm%' OR script LIKE '%distr%dvm%' OR script LIKE '%jac%dvm%' OR script LIKE '%mt%dvm%' )"
+    pkgmatch['testharness'] = "( username LIKE 'usertest%' )"
     pkgmatch['tsutil'] = "( script LIKE '%tsutil%' OR script LIKE '%app_cmd%' )"
     pkgmatch['track'] = "script LIKE '%TRACKdir%'"
+    pkgmatch['trial'] = "script LIKE '%/trial %'"
     pkgmatch['turbo'] = "script LIKE '%pturbo.x%'"
     pkgmatch['upc'] = "script LIKE '%upcrun%'"
     pkgmatch['v2'] = "script LIKE '%/v2_%'"
@@ -804,6 +835,7 @@ def software_match_list():
     pkgmatch['visit'] = "( script LIKE '%visit%' AND script NOT LIKE '%revisit%' )"
     pkgmatch['vnc'] = "script LIKE '%vncserver%'"
     pkgmatch['vpic'] = "( script LIKE '%npic%' OR script LIKE '%open.cxx.op%' )"
+    pkgmatch['xfdtd'] = "( script LIKE '%xfdtd%' OR script LIKE '%xfsolver%' )"
     pkgmatch['xtest'] = "script LIKE '%/xtest%'"
     pkgmatch['xx'] = "script LIKE '%./xx\n%'"
     pkgmatch['zeus'] = "( script LIKE '%/zeus%' OR script LIKE '%/pglobal%' )"
@@ -823,6 +855,7 @@ def software_match_list():
     pkgmatch['charmm'] = "( script LIKE '%charmm%' AND NOT ( "+pkgmatch['chemshell']+" ) )"
     pkgmatch['cpmd'] = "( script LIKE '%cpmd%' AND NOT ( "+pkgmatch['a_out']+" ) AND NOT ( "+pkgmatch['amber']+" ) AND NOT ( "+pkgmatch['inca']+" ) AND NOT ( "+pkgmatch['vasp']+" ) )"
     pkgmatch['cvm'] = "( script LIKE '%cvm%' AND NOT ( "+pkgmatch['cpmd']+" ) AND NOT ( "+pkgmatch['psolve']+" ) )"
+    pkgmatch['ddmax'] = "( script LIKE '%DDMAX%' AND NOT ( "+pkgmatch['maxsolve']+" ) )"
     pkgmatch['eden'] = "( script LIKE '%eden%' AND NOT ( "+pkgmatch['matlab']+" ) )"
     pkgmatch['enzo'] = "( script LIKE '%enzo%' AND NOT ( "+pkgmatch['rtp']+" ) )"
     pkgmatch['f-plane'] = "( script LIKE '%f-plane%' AND NOT ( "+pkgmatch['hsi']+" ) )"
@@ -881,7 +914,7 @@ def software_match_list():
 
     # packages with dependencies on packages that have dependencies...
     pkgmatch['gaussian'] = "( script LIKE '%module load gaussian%' OR ( script LIKE '%g16%' AND NOT ( ( "+pkgmatch['adda']+" ) OR ( "+pkgmatch['adf']+" ) OR ( "+pkgmatch['dirac-pilot']+" ) OR ( "+pkgmatch['lammps']+" ) OR ( "+pkgmatch['starccm']+" ) ) ) OR script LIKE '%g09%' OR script LIKE '%g03%' OR ( script LIKE '%g98%' AND NOT ( ( "+pkgmatch['dirac-pilot']+" ) OR ( "+pkgmatch['python']+" ) OR ( "+pkgmatch['raxml']+" ) OR ( "+pkgmatch['samtools']+" ) OR ( "+pkgmatch['starccm']+" ) OR ( "+pkgmatch['tsutil']+" ) OR ( "+pkgmatch['vnc']+" ) OR script LIKE '%config98.WS%' ) ) )"
-    pkgmatch['R'] = "( ( script LIKE '%\nR %' OR script LIKE '%Rscript %' OR script LIKE '%RMPI%' OR script LIKE '%module load R\n%' OR script LIKE '%module load R/%') AND NOT ( "+pkgmatch['gaussian']+" ) AND NOT ( "+pkgmatch['adf']+" ) )"
+    pkgmatch['R'] = "( ( script LIKE '%\nR %' OR script LIKE '%Rscript %' OR script LIKE '%RMPI%' OR script LIKE '%module load R\n%' OR script LIKE '%module load R/%' OR script LIKE '%ml R/%' ) AND NOT ( "+pkgmatch['gaussian']+" ) AND NOT ( "+pkgmatch['adf']+" ) )"
     pkgmatch['res'] = "( script LIKE '%/res_%' AND NOT ( "+pkgmatch['enzo']+" ) AND NOT ( "+pkgmatch['grib']+" ) AND NOT ( "+pkgmatch['lammps']+" ) AND NOT ( "+pkgmatch['spheres3']+" ) AND NOT ( "+pkgmatch['tsutil']+" ) )"
 
     return pkgmatch
