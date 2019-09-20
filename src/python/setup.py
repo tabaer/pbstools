@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.rst')) as f:
     long_description = f.read()
 
 setup (name = "pbsacct",
-       version = "3.4.5",
+       version = "3.4.6",
        description = "Python library for parsing PBS accounting logs",
        long_description = long_description,
        long_description_content_type = 'text/x-rst',
