@@ -18,7 +18,7 @@ matrix:
     - language: c
       before_install:
         - sudo apt-get install -qq
-        - sudo apt-get install -qq mpich
+        - sudo apt-get install -qq mpich libmpich-dev
       script:
         - mkdir /tmp/pbstools-mpich
         - make mpitools PREFIX=/tmp/pbstools-mpich
