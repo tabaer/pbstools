@@ -496,7 +496,7 @@ function get_bucketed_metric($db,$system,$xaxis,$metric,$start_date,$end_date,$d
       $query .= " GROUP BY ".$xaxis."_bucketed";
     }
   $query .= " ORDER BY hidden;";
-  print "<PRE>".$query."</PRE>\n";
+  #print "<PRE>".$query."</PRE>\n";
   return db_query($db,$query);
 }
 
