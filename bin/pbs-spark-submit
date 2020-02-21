@@ -10,6 +10,7 @@
 # $HeadURL$
 # $Revision$
 # $Date$
+import argparse
 import fcntl
 import getopt
 import glob
@@ -128,6 +129,19 @@ class PBSDSHLauncher(Launcher):
                         os.system("pbsdsh -h "+node+" "+cmdline+" &")
         self.sleep()
 
+class SRunLauncher(Launcher):
+    def launch(self,cmdline,env,propagate_env=False,
+               prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
+               wpn=1,worker_on_mother_superior=True):
+        time.sleep(1)
+        cmd = cmdline
+        if ( propagate_env ):
+            cmd = self.env_string(env,prop_env_list)+" "+cmdline
+        if ( wpn is None ):
+            os.system("srun %s" % cmd)
+        else:
+            os.system("srun --ntask-per-node %d %s" % (wpn,cmd))
+        self.sleep()
 
 class SSHLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
@@ -212,83 +226,12 @@ def get_ip_address(ifname):
             )[20:24])
 
 #
-# documentation
-#
-def usage():
-    sys.stderr.write("pbs-spark-submit:  Run an Apache Spark \"job\" (including optionally\n\tstarting the Spark master and work services) inside a PBS job.\n")
-    sys.stderr.write("\n")
-    sys.stderr.write("Usage:  pbs-spark-submit [arguments] <app.jar|python_file> [app options]\n")
-    sys.stderr.write("\n")
-    sys.stderr.write("Options:\n")
-    sys.stderr.write("\t--help or -h\n\t\tPrint this help message\n")
-    sys.stderr.write("\t--init\n\t\tInitialize Spark master/worker services (default).\n")
-    sys.stderr.write("\t--no-init\n\t\tDo not initialize Spark master/worker services.\n")
-    sys.stderr.write("\t--exec\n\t\tUse the exec process launcher.\n")
-    sys.stderr.write("\t--pbsdsh\n\t\tUse the pbsdsh process launcher (default).\n")
-    sys.stderr.write("\t--ssh\n\t\tUse the ssh process launcher.\n")
-    sys.stderr.write("\t--worker-on-mother-superior\n\t\tRun a worker on the mother superior node as well as\n\t\tthe driver program (default).\n")
-    sys.stderr.write("\t--no-worker-on-mother-superior or -N\n\t\tDo not run a worker on the mother superior node, only\n\t\tthe driver program.\n")
-    sys.stderr.write("\t--master-interface <IF> or -M <IF>\n\t\tHave Spark master listen on network interface <IF> rather\n\t\tthan the default.\n")
-    sys.stderr.write("\t--conf-dir <confdir> or -C <confdir>\n\t\tLook in <confdir> for Java properties files.\n")
-    sys.stderr.write("\t--log-dir <logdir> or -L <logdir>\n\t\tPlace logs in <logdir>.\n")
-    sys.stderr.write("\t--log4j-properties <propsfile> or -l <propsfile>\n\t\tRead log4j properties from <propsfile>.\n")
-    sys.stderr.write("\t--work-dir <workdir> or -d <workdir>\n\t\tUse <workdir> as Spark program's working directory.\n")
-    sys.stderr.write("\t--workers-per-node <N> or --wpn <N> or -W <N>\n\t\tLaunch <N> worker tasks per node instead of the default (1).\n")
-    sys.stderr.write("\t--worker-cores <N> or --wc <N> or -w <N>\n\t\tUse <N> cores per worker (default all available).\n")
-    sys.stderr.write("\t--worker-memory <memlimit> or --wm <memlimit> or -m <memlimit>\n\t\tSet per-worker memory limit.\n")
-    sys.stderr.write("\t--pausetime <N> or -p <N>\n\t\tPause <N> seconds between startup stages (default 5).\n")
-    sys.stderr.write("\t--conf <key>=<value> or -D <key>=<value>\n\t\tSet the Java property <key> to <value>.\n")
-    sys.stderr.write("\t--properties-file <propfile> or -P <propfile>\n\t\tRead Java properties from <propfile>.\n")
-    sys.stderr.write("\t--class <classname>\n\t\tApplication's main class (for Java/Scala apps).\n")
-    sys.stderr.write("\t--name <name>\n\t\tThe name of your application.\n")
-    sys.stderr.write("\t--jars <jarlist>\n\t\tComma-separated list of local jars to include on the driver\n\t\tand executor classpaths.\n")
-    sys.stderr.write("\t--packages <pkglist>\n\t\tComma-separated list of maven coordinates of jars to include\n\t\ton the driver and executor classpaths. Will search the local\n\t\tmaven repo, then maven central and any additional remote\n\t\trepositories given by --repositories. The format for the\n\t\tcoordinates should be groupId:artifactId:version.\n")
-    sys.stderr.write("\t--exclude-packages <pkglist>\n\t\tComma-separated list of groupId:artifactId to exclude\n\t\twhile resolving the dependencies provided in --packages\n\t\tto avoid dependency conflicts.\n")
-    sys.stderr.write("\t--repositories <repolist>\n\t\tComma-separated list of additional remote repositories\n\t\tto search for the maven coordinates given with --packages.\n")
-    sys.stderr.write("\t--py-files <filelist>\n\t\tComma-separated list of .zip, .egg, or .py files to place\n\t\ton PYTHONPATH for Python apps.\n")
-    sys.stderr.write("\t--files <filelist>\n\t\tComma-separated list of files to be placed in the\n\t\tworking directory of each executor.\n")
-    sys.stderr.write("\t--driver-memory <mem>\n\t\tMemory for driver (e.g. 1000M, 2G; default is 1024M).\n")
-    sys.stderr.write("\t--driver-java-options <opts>\n\t\tExtra Java options to pass to the driver.\n")
-    sys.stderr.write("\t--driver-library-path <libpath>\n\t\tExtra library path entries to pass to the driver.\n")
-    sys.stderr.write("\t--driver-class-path <classpth>\n\t\tExtra class path entries to pass to the driver. Note\n\t\tthat jars added with --jars are automatically included\n\t\tin the classpath.\n")
-    sys.stderr.write("\t--executor-cores <cores>\n\t\t# cores per executor (e.g. 1; default is all available).\n")
-    sys.stderr.write("\t--executor-memory <mem>\n\t\tMemory per executor (e.g. 1000M, 2G; default is 1G).\n")
-    sys.stderr.write("\n")
-    sys.stderr.write("Run \"man pbs-spark-submit\" for more details.\n")
-    sys.stderr.write("\n")
-    sys.exit(0)
-    
-
-#
 # main program begins here
 #
 
 # set up default environment
-init_svcs = True
-child_args = []
 properties = {}
-pausetime = 5
-launcher = PBSDSHLauncher()
-log4j_props = None
-wpn = 1
-worker_cores = None
-worker_mem = None
-driver_mem = None
-driver_java_opts = None
-driver_lib_path = None
-driver_class_path = None
-exec_cores = None
-exec_mem = None
-classname = None
-name = None
-jars = None
-pkgs = None
-excl_pkgs = None
-repos = None
-pyfiles = None
-files = None
-worker_on_mother_superior = True
-iface = None
+launcher = SSHLauncher()
 if ( "SPARK_LAUNCHER" in os.environ.keys() ):
     if ( os.environ["SPARK_LAUNCHER"] in ("exec","EXEC") ):
         launcher = ExecLauncher()
@@ -296,6 +239,12 @@ if ( "SPARK_LAUNCHER" in os.environ.keys() ):
         launcher = PBSDSHLauncher()
     if ( os.environ["SPARK_LAUNCHER"] in ("ssh","SSH") ):
         launcher = SSHLauncher()
+    if ( os.environ["SPARK_LAUNCHER"] in ("srun","SRUN") ):
+        launcher = SRunLauncher()
+elif ( "PBS_JOBID" in os.environ ):
+    launcher = PBSDSHLauncher()
+elif ( "SLURM_JOB_ID" in os.environ ):
+    launcher = SRunLauncher()
 if ( not ( "SPARK_CONF_DIR" in os.environ.keys() ) ):
     os.environ["SPARK_CONF_DIR"] = os.getcwd()+"/conf"
 if ( not ( "SPARK_LOG_DIR" in os.environ.keys() ) ):
@@ -314,134 +263,217 @@ elif ( not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
     os.environ["SPARK_LOCAL_DIRS"] = "/tmp"
 
 # command line argument handling
-try:
-    opts, child_args = getopt.getopt(sys.argv[1:],
-                                     "C:D:d:hL:l:M:m:NP:p:t:W:w:",
-                                     ["help",
-                                      "init",
-                                      "no-init",
-                                      "exec",
-                                      "pbsdsh",
-                                      "ssh",
-                                      "conf-dir",
-                                      "log-dir=",
-                                      "log4j-properties=",
-                                      "work-dir=",
-                                      "workers-per-node=",
-                                      "wpn=",
-                                      "worker-cores=",
-                                      "wc=",
-                                      "worker-memory=",
-                                      "wm=",
-                                      "worker-on-mother-superior",
-                                      "no-worker-on-mother-superior",
-                                      "master-interface=",
-                                      "properties-file",
-                                      "pause-time",
-                                      "driver-memory=",
-                                      "driver-java-options=",
-                                      "driver-library-path",
-                                      "driver-class-path=",
-                                      "executor-cores=",
-                                      "executor-memory=",
-                                      "conf=",
-                                      "class=",
-                                      "name=",
-                                      "jars=",
-                                      "packages=",
-                                      "exclude-packages=",
-                                      "repositories=",
-                                      "py-files=",
-                                      "files=",
-                                      # the following three are deprecated and will eventually be removed
-                                      "tasks-per-node=",
-                                      "tpn=",
-                                      "memory="])
-except getopt.GetoptError, err:
-    sys.stderr.write(str(err)+"\n")
-    usage()
-for opt in opts:
-    if ( opt[0] in ["--no-init"] ):
-        init_svcs = False
-    elif ( opt[0] in ["--init"] ):
-        init_svcs = True
-    elif ( opt[0] in ["--help","-h"] ):
-        usage()
-    elif ( opt[0] in ["--exec"] ):
+parser = argparse.ArgumentParser()
+initargs = parser.add_mutually_exclusive_group()
+initargs.add_argument("--init",
+                      help="Initialize Spark master/worker services (default).",
+                      action="store_true",
+                      dest="init_svcs",
+                      default=True)
+initargs.add_argument("--no-init",
+                      help="Do not initialize Spark master/worker services.",
+                      dest="init_svcs",
+                      action="store_false")
+launcherargs = parser.add_mutually_exclusive_group()
+launcherargs.add_argument("--pbsdsh",
+                          help="Use the pbsdsh process launcher.",
+                          action="store_const",
+                          dest="launcher",
+                          const="pbsdsh",
+                          default=None)
+launcherargs.add_argument("--exec",
+                          help="Use the exec process launcher.",
+                          action="store_const",
+                          dest="launcher",
+                          const="exec")
+launcherargs.add_argument("--srun",
+                          help="Use the srun process launcher.",
+                          action="store_const",
+                          dest="launcher",
+                          const="ssh")
+launcherargs.add_argument("--ssh",
+                          help="Use the ssh process launcher.",
+                          action="store_const",
+                          dest="launcher",
+                          const="ssh")
+msargs = parser.add_mutually_exclusive_group()
+msargs.add_argument("--worker-on-mother-superior",
+                    help="Run a worker on the mother superior node as well as the driver program (default).",
+                    action="store_true",
+                    dest="worker_on_mother_superior",
+                    default=True)
+msargs.add_argument("-N","--no-worker-on-mother-superior",
+                    help="Do not run a worker on the mother superior node, only the driver program.",
+                    action="store_false",
+                    dest="worker_on_mother_superior")
+parser.add_argument("-M","--master-interface",
+                    help="Have Spark master listen on network interface <IF> rather than the default.",
+                    metavar="IF",
+                    dest="iface",
+                    type=str,
+                    default=None)
+parser.add_argument("-C","--conf-dir",
+                    help="Look in <SPARK_CONF_DIR> for Java properties files.",
+                    dest="spark_conf_dir",
+                    type=str,
+                    default=None)
+parser.add_argument("-L","--log-dir",
+                    help="Place logs in <SPARK_LOG_DIR>.",
+                    dest="spark_log_dir",
+                    type=str,
+                    default=None)
+parser.add_argument("-l","--log4j-properties",
+                    help="Read log4j properties from <LOG4J_PROPS>.",
+                    dest="log4j_props",
+                    type=str,
+                    default=None)
+parser.add_argument("-d","--work-dir",
+                    help="Use <workdir> as Spark program's working directory.",
+                    metavar="workdir",
+                    dest="workdir",
+                    type=str,
+                    default=workdir)
+parser.add_argument("-W","--wpn","--workers-per-node",
+                    help="Launch <N> worker tasks per node instead of the default (1).",
+                    metavar="N",
+                    dest="wpn",
+                    type=int,
+                    default=1)
+parser.add_argument("-w","--wc","--worker-cores",
+                    help="Use <N> cores per worker (default all available).",
+                    metavar="N",
+                    dest="worker_cores",
+                    type=int,
+                    default=None)
+parser.add_argument("-m","--wm","--worker-memory",
+                    help="Set per-worker memory limit.",
+                    metavar="MEM",
+                    dest="worker_mem",
+                    type=str,
+                    default=None)
+parser.add_argument("-p","--pausetime",
+                    help="Pause <N> seconds between startup stages (default 5).",
+                    metavar="N",
+                    type=int,
+                    default=5)
+parser.add_argument("-D","--conf",
+                    help="Set the Java property <key> to <value>.",
+                    metavar="key=value",
+                    dest="properties",
+                    nargs='+',
+                    action="append")
+parser.add_argument("-P","--properties-file",
+                    help="Read Java properties from <propfile>.",
+                    metavar="propfile",
+                    dest="propfile",
+                    type=str,
+                    default=None)
+parser.add_argument("--class",
+                    help="Application's main class (for Java/Scala apps).",
+                    dest="classname",
+                    type=str,
+                    default=None)
+parser.add_argument("--name",
+                    help="The name of your application.",
+                    type=str,
+                    default=None)
+parser.add_argument("--jars",
+                    help="Comma-separated list of local jars to include on the driver and executor classpaths.",
+                    metavar="jarlist",
+                    type=str,
+                    default=None)
+parser.add_argument("--packages",
+                    help="Comma-separated list of maven coordinates of jars to include on the driver and executor classpaths. Will search the local maven repo, then maven central and any additional remote repositories given by --repositories. The format for the coordinates should be groupId:artifactId:version.",
+                    metavar="pkglist",
+                    dest="pkgs",
+                    type=str,
+                    default=None)
+parser.add_argument("--exclude-packages",
+                    help="Comma-separated list of groupId:artifactId to exclude while resolving the dependencies provided in --packages to avoid dependency conflicts.",
+                    metavar="pkglist",
+                    dest="excl_pkgs",
+                    type=str,
+                    default=None)
+parser.add_argument("--repositories",
+                    help="",
+                    metavar="repolist",
+                    dest="repos",
+                    type=str,
+                    default=None)
+parser.add_argument("--py-files",
+                    help="Comma-separated list of .zip, .egg, or .py files to place on PYTHONPATH for Python apps.",
+                    metavar="filelist",
+                    dest="pyfiles",
+                    type=str,
+                    default=None)
+parser.add_argument("--files",
+                    help="Comma-separated list of files to be placed in the working directory of each executor.",
+                    type=str,
+                    default=None)
+parser.add_argument("--driver-memory",
+                    help="Memory for driver (e.g. 1000M, 2G; default is 1024M).",
+                    metavar="mem",
+                    dest="driver_mem",
+                    type=str,
+                    default=None)
+parser.add_argument("--driver-java-options",
+                    help="Extra Java options to pass to the driver.",
+                    metavar="opts",
+                    dest="driver_java_opts",
+                    type=str,
+                    default=None)
+parser.add_argument("--driver-library-path",
+                    help="Extra library path entries to pass to the driver.",
+                    metavar="libpath",
+                    dest="driver_lib_path",
+                    type=str,
+                    default=None)
+parser.add_argument("--driver-class-path",
+                    help="Extra class path entries to pass to the driver. Note that jars added with --jars are automatically included in the classpath.",
+                    metavar="classpath",
+                    dest="driver_class_path",
+                    type=str,
+                    default=None)
+parser.add_argument("--executor-cores",
+                    help="# cores per executor (e.g. 1; default is all available).",
+                    metavar="cores",
+                    dest="exec_cores",
+                    type=int,
+                    default=None)
+parser.add_argument("--executor-memory",
+                    help="Memory per executor (e.g. 1000M, 2G; default is 1G).",
+                    metavar="mem",
+                    dest="exec_mem",
+                    type=str,
+                    default=None)
+parser.add_argument("app",
+                     nargs=argparse.REMAINDER,
+                     help="Spark application and arguments")
+
+args = parser.parse_args()
+
+# post arg parsing setup
+if ( args.launcher is not None ):
+    if ( args.launcher=="exec" ):
         launcher = ExecLauncher()
-    elif ( opt[0] in ["--pbsdsh"] ):
+    elif ( args.launcher=="pbsdsh" ):
         launcher = PBSDSHLauncher()
-    elif ( opt[0] in ["--ssh"] ):
+    elif ( args.launcher=="srun" ):
+        launcher = SRunLauncher()
+    elif ( args.launcher=="ssh" ):
         launcher = SSHLauncher()
-    elif ( opt[0] in ["--conf-dir","-C"] ):
-        os.environ["SPARK_CONF_DIR"] = opt[1]
-    elif ( opt[0] in ["--log-dir","-L"] ):
-        os.environ["SPARK_LOG_DIR"] = opt[1]
-    elif ( opt[0] in ["--log4j-properties","-l"] ):
-        log4j_props = opt[1]
-    elif ( opt[0] in ["--work-dir","-d"] ):
-        workdir = opt[1]
-    elif ( opt[0] in ["--workers-per-node","--wpn","-W","--tasks-per-node","--tpn","-t"] ):
-        wpn = int(opt[1])
-        if ( opt[0] in ["--tasks-per-node","--tpn","-t"] ):
-            warnings.warn("The option %s=%s is deprecated, please use --workers-per-node=%s instead." % (opt[0],opt[1],opt[1]),DeprecationWarning,stacklevel=2)
-    elif ( opt[0] in ["--worker-cores","--wc","-w"] ):
-        worker_cores = int(opt[1])
-    elif ( opt[0] in ["--worker-memory","--wm","-m","--memory"] ):
-        worker_mem = opt[1]
-        if ( opt[0] in ["--memory"] ):
-            warnings.warn("The option %s=%s is deprecated, please use --worker-memory=%s instead." % (opt[0],opt[1],opt[1]),DeprecationWarning,stacklevel=2)
-    elif ( opt[0] in ["--worker-on-mother-superior"] ):
-        worker_on_mother_superior = True
-    elif ( opt[0] in ["--no-worker-on-mother-superior","-N"] ):
-        worker_on_mother_superior = False
-    elif ( opt[0] in ["--master-interface","-M"] ):
-        iface = opt[1]
-    elif ( opt[0] in ["--conf","-D"] ):
-        keyval = opt[1].split("=",1)
-        if ( len(keyval)==2 ):
-            properties[keyval[0]] = keyval[1]
-        else:
-            raise getopt.GetoptError("malformed property \""+opt[1]+"\"")
-    elif ( opt[0] in ["--properties-file","-P"] ):
-        if ( os.path.exists(opt[1]) ):
-            props = propsFromFile(opt[1])
-            for key in props.keys():
-                properties[key] = props[key]
-    elif ( opt[0] in ["--pause-time","-p"] ):
-        pausetime = int(opt[1])
-    elif ( opt[0] in ["--class"] ):
-        classname = opt[1]
-    elif ( opt[0] in ["--name"] ):
-        name = opt[1]
-    elif ( opt[0] in ["--jars"] ):
-        jars = opt[1]
-    elif ( opt[0] in ["--packages"] ):
-        pkgs = opt[1]
-    elif ( opt[0] in ["--exclude-packages"] ):
-        excl_pkgs = opt[1]
-    elif ( opt[0] in ["--repositories"] ):
-        repos = opt[1]
-    elif ( opt[0] in ["--py-files"] ):
-        pyfiles = opt[1]
-    elif ( opt[0] in ["--files"] ):
-        files = opt[1]
-    elif ( opt[0] in ["--driver-memory"] ):
-        driver_mem = opt[1]
-    elif ( opt[0] in ["--driver-java-options"] ):
-        driver_java_opts = opt[1]
-    elif ( opt[0] in ["--driver-library-path"] ):
-        driver_lib_path = opt[1]
-    elif ( opt[0] in ["--driver-class-path"] ):
-        driver_class_path = opt[1]
-    elif ( opt[0] in ["--executor-cores"] ):
-        exec_cores = opt[1]
-    elif ( opt[0] in ["--executor-memory"] ):
-        exec_mem = opt[1]
+if ( args.properties is not None ):
+    for propertylist in args.properties:
+        for property in propertylist:
+            try:
+                (key,value) = property.split("=")
+                properties[key] = value
+            except:
+                sys.stdin.write("Ignoring malformed property \"%s\"\n" % property)
 
 # environment sanity checks
-if ( not ( "PBS_JOBID" in os.environ.keys() ) ):
-    raise EnvironmentError("Not in a PBS job")
+if ( not "PBS_JOBID" in os.environ and not "SLURM_JOB_ID" in os.environ ):
+    raise EnvironmentError("Not in a PBS or Slurm job")
 if ( not ( "SPARK_HOME" in os.environ.keys() ) ):
     raise EnvironmentError("SPARK_HOME not defined")
 
@@ -454,22 +486,22 @@ for propfile in glob.glob(os.environ["SPARK_CONF_DIR"]+"/*.properties"):
                 properties[key] = props[key]
 
 # make sure the work dir actually exists
-if ( workdir is not None and not os.path.exists(workdir) ):
-    os.mkdir(workdir)
+if ( args.workdir is not None and not os.path.exists(args.workdir) ):
+    os.mkdir(args.workdir)
 
 # **ASSUMPTION**:  master runs on mother superior node
-if ( iface is None ):
+if ( args.iface is None ):
     os.environ["SPARK_MASTER_IP"] = platform.node()
     os.environ["SPARK_MASTER_HOST"] = platform.node()
 else:
-    os.environ["SPARK_MASTER_IP"] = get_ip_address(iface)
-    os.environ["SPARK_MASTER_HOST"] = get_ip_address(iface)
+    os.environ["SPARK_MASTER_IP"] = get_ip_address(args.iface)
+    os.environ["SPARK_MASTER_HOST"] = get_ip_address(args.iface)
 if ( not ( "SPARK_MASTER_PORT" in os.environ.keys() ) ):
     os.environ["SPARK_MASTER_PORT"] = "7077"
 spark_master = "spark://"+os.environ["SPARK_MASTER_IP"]+":"+str(os.environ["SPARK_MASTER_PORT"])
 #sys.stderr.write("Spark master = "+spark_master+"\n")
 
-if ( init_svcs ):
+if ( args.init_svcs ):
     # stick any properties in the appropriate environment variable
     if ( len(properties)>0 ):
         if ( "SPARK_DAEMON_JAVA_OPTS" in os.environ.keys() ):
@@ -483,58 +515,58 @@ if ( init_svcs ):
     sys.stderr.write(cmdline+"\n")
     sys.stdout.write("SPARK_MASTER_HOST="+os.environ["SPARK_MASTER_HOST"]+"\n")
     sys.stdout.write("SPARK_MASTER_PORT="+os.environ["SPARK_MASTER_PORT"]+"\n")
-    time.sleep(pausetime)
+    time.sleep(args.pausetime)
 
     # launch workers
     cmdline = os.environ["SPARK_HOME"]+"/bin/spark-class org.apache.spark.deploy.worker.Worker"
-    if ( worker_cores is not None ):
-        cmdline += " --cores "+str(worker_cores)
-    if ( worker_mem is not None ):
-        cmdline += " --memory "+worker_mem
-    if ( workdir is not None ):
-        cmdline += " --work-dir "+workdir
+    if ( args.worker_cores is not None ):
+        cmdline += " --cores "+str(args.worker_cores)
+    if ( args.worker_mem is not None ):
+        cmdline += " --memory "+args.worker_mem
+    if ( args.workdir is not None ):
+        cmdline += " --work-dir "+args.workdir
     cmdline += " "+spark_master
     sys.stderr.write(cmdline+"\n")
-    launcher.launch(cmdline,os.environ,wpn=wpn,
-                    worker_on_mother_superior=worker_on_mother_superior)
-    time.sleep(pausetime)
+    launcher.launch(cmdline,os.environ,wpn=args.wpn,
+                    worker_on_mother_superior=args.worker_on_mother_superior)
+    time.sleep(args.pausetime)
 
 # run the user's Spark "job", if one is given
-if ( len(child_args)>0 ):
+if ( len(args.app)>0 ):
     cmdline = os.environ["SPARK_HOME"]+"/bin/spark-submit --master "+spark_master
-    if ( classname is not None ):
-        cmdline += " --class "+classname
-    if ( name is not None ):
-        cmdline += " --name "+name
-    if ( jars is not None ):
-        cmdline += " --jars "+jars
-    if ( pkgs is not None ):
-        cmdline += " --packages "+pkgs
-    if ( excl_pkgs is not None ):
-        cmdline += " --exclude-packages "+excl_pkgs
-    if ( repos is not None ):
-        cmdline += " --repositories "+repos
-    if ( pyfiles is not None ):
-        cmdline += " --py-files "+pyfiles
-    if ( files is not None ):
-        cmdline += " --files "+files
-    if ( log4j_props is not None and driver_java_opts is None ):
-        cmdline += " --driver-java-options \"-Dlog4j.configuration=file:"+log4j_props+"\""
-    elif ( log4j_props is None and driver_java_opts is not None ):
-        cmdline += " --driver-java-options \""+driver_java_opts+"\""
-    elif ( log4j_props is not None and driver_java_opts is not None ):
-        cmdline += " --driver-java-options \"-Dlog4j.configuration=file:"+log4j_props+" "+driver_java_opts+"\""
-    if ( driver_mem is not None ):
-        cmdline += " --driver-memory "+driver_mem
-    if ( driver_lib_path is not None ):
-        cmdline += " --driver-library-path "+driver_lib_path
-    if ( driver_class_path is not None ):
-        cmdline += " --driver-class-path "+driver_class_path
-    if ( exec_cores is not None ):
-        cmdline += " --executor-cores "+exec_cores
-    if ( exec_mem is not None ):
-        cmdline += " --executor-memory "+exec_mem
+    if ( args.classname is not None ):
+        cmdline += " --class "+args.classname
+    if ( args.name is not None ):
+        cmdline += " --name "+args.name
+    if ( args.jars is not None ):
+        cmdline += " --jars "+args.jars
+    if ( args.pkgs is not None ):
+        cmdline += " --packages "+args.pkgs
+    if ( args.excl_pkgs is not None ):
+        cmdline += " --exclude-packages "+args.excl_pkgs
+    if ( args.repos is not None ):
+        cmdline += " --repositories "+args.repos
+    if ( args.pyfiles is not None ):
+        cmdline += " --py-files "+args.pyfiles
+    if ( args.files is not None ):
+        cmdline += " --files "+args.files
+    if ( args.log4j_props is not None and args.driver_java_opts is None ):
+        cmdline += " --driver-java-options \"-Dlog4j.configuration=file:"+args.log4j_props+"\""
+    elif ( args.log4j_props is None and args.driver_java_opts is not None ):
+        cmdline += " --driver-java-options \""+args.driver_java_opts+"\""
+    elif ( args.log4j_props is not None and args.driver_java_opts is not None ):
+        cmdline += " --driver-java-options \"-Dlog4j.configuration=file:"+args.log4j_props+" "+args.driver_java_opts+"\""
+    if ( args.driver_mem is not None ):
+        cmdline += " --driver-memory "+args.driver_mem
+    if ( args.driver_lib_path is not None ):
+        cmdline += " --driver-library-path "+args.driver_lib_path
+    if ( args.driver_class_path is not None ):
+        cmdline += " --driver-class-path "+args.driver_class_path
+    if ( args.exec_cores is not None ):
+        cmdline += " --executor-cores "+args.exec_cores
+    if ( args.exec_mem is not None ):
+        cmdline += " --executor-memory "+args.exec_mem
     for key in properties.keys():
         cmdline += " --conf \""+str(key)+"="+str(properties[key])+"\""
-    cmdline += " "+" ".join(child_args)
+    cmdline += " "+" ".join(args.app)
     os.system(cmdline)
