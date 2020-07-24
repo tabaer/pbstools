@@ -3,7 +3,7 @@
 # pbs-spark-submit:  Run an Apache Spark "job" (including optionally
 #                    starting the Spark services) inside a PBS job.
 # Copyright 2014, 2015 University of Tennessee
-# Copyright 2015-2017 Ohio Supercomputer Center
+# Copyright 2015-2020 Ohio Supercomputer Center
 #
 # License:  GNU GPL v2; see ../COPYING for details.
 # Revision info:
@@ -32,8 +32,12 @@ class Launcher:
         raise NotImplementedError
     def sleep(self):
         sleeptime = 5
-        if ( "PBS_NUM_NODES" in os.environ.keys() ):
+        if ( "PBS_NUM_NODES" in os.environ ):
             sleeptime += 2*int(os.environ["PBS_NUM_NODES"])
+        elif ( "SLURM_JOB_NUM_NODES" in os.environ ):
+            sleeptime += 2*int(os.environ["SLURM_JOB_NUM_NODES"])
+        elif ( "SLURM_NNODES" in os.environ ):
+            sleeptime += 2*int(os.environ["SLURM_NNODES"])
         time.sleep(sleeptime)
     def env_list(env,prop_env_list):
         # since we can't rely on ssh_config and sshd_config having
@@ -133,14 +137,25 @@ class SRunLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
                prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
                wpn=1,worker_on_mother_superior=True):
+        if ( not worker_on_mother_superior ):
+            raise NotImplementedError("worker_on_mother_superior=False not implemented for SRunLauncher")
         time.sleep(1)
         cmd = cmdline
         if ( propagate_env ):
             cmd = self.env_string(env,prop_env_list)+" "+cmdline
         if ( wpn is None ):
-            os.system("srun %s" % cmd)
+            os.system("srun %s &" % cmd)
         else:
-            os.system("srun --ntask-per-node %d %s" % (wpn,cmd))
+            # srun is a bit dense and has to be told the total number of tasks
+            # with --ntasks-per-node
+            if ( "SLURM_JOB_NUM_NODES" in os.environ ):
+                nnodes = int(os.environ["SLURM_JOB_NUM_NODES"])
+            elif ( "SLURM_NNODES" in os.environ ):
+                nnodes = int(os.environ["SLURM_NNODES"])
+            else:
+                raise RuntimeError("SRunLauncher:  Unable to determine number of nodes")
+            ntasks = nnodes*wpn
+            os.system("srun --ntasks %d --ntasks-per-node %d %s &" % (ntasks,wpn,cmd))
         self.sleep()
 
 class SSHLauncher(Launcher):
@@ -241,10 +256,10 @@ if ( "SPARK_LAUNCHER" in os.environ.keys() ):
         launcher = SSHLauncher()
     if ( os.environ["SPARK_LAUNCHER"] in ("srun","SRUN") ):
         launcher = SRunLauncher()
-elif ( "PBS_JOBID" in os.environ ):
-    launcher = PBSDSHLauncher()
 elif ( "SLURM_JOB_ID" in os.environ ):
     launcher = SRunLauncher()
+elif ( "PBS_JOBID" in os.environ ):
+    launcher = PBSDSHLauncher()
 if ( not ( "SPARK_CONF_DIR" in os.environ.keys() ) ):
     os.environ["SPARK_CONF_DIR"] = os.getcwd()+"/conf"
 if ( not ( "SPARK_LOG_DIR" in os.environ.keys() ) ):
@@ -290,7 +305,7 @@ launcherargs.add_argument("--srun",
                           help="Use the srun process launcher.",
                           action="store_const",
                           dest="launcher",
-                          const="ssh")
+                          const="srun")
 launcherargs.add_argument("--ssh",
                           help="Use the ssh process launcher.",
                           action="store_const",
