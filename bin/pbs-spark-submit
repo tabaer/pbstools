@@ -137,8 +137,6 @@ class SRunLauncher(Launcher):
     def launch(self,cmdline,env,propagate_env=False,
                prop_env_list=["SPARK_CONF_DIR","SPARK_LOG_DIR","SPARK_LOCAL_DIRS"],
                wpn=1,worker_on_mother_superior=True):
-        if ( not worker_on_mother_superior ):
-            raise NotImplementedError("worker_on_mother_superior=False not implemented for SRunLauncher")
         time.sleep(1)
         cmd = cmdline
         if ( propagate_env ):
@@ -154,8 +152,12 @@ class SRunLauncher(Launcher):
                 nnodes = int(os.environ["SLURM_NNODES"])
             else:
                 raise RuntimeError("SRunLauncher:  Unable to determine number of nodes")
+            srun = "srun"
+            if ( not worker_on_mother_superior ):
+                nnodes -= 1
+                srun = "srun --exclude=%s" % platform.node().split(".")[0]
             ntasks = nnodes*wpn
-            os.system("srun --ntasks %d --ntasks-per-node %d %s &" % (ntasks,wpn,cmd))
+            os.system("%s --nodes=%d --ntasks=%d --ntasks-per-node=%d %s &" % (srun,nnodes,ntasks,wpn,cmd))
         self.sleep()
 
 class SSHLauncher(Launcher):
@@ -269,7 +271,10 @@ if ( not ( "SPARK_LOG_DIR" in os.environ.keys() ) ):
 # **ASSUMPTION**:  work directory is on a shared file system
 workdir = os.getcwd()
 if ( "SCRATCHDIR" in os.environ.keys() ):
-    workdir = os.environ["SCRATCHDIR"]+"/spark-"+os.environ["PBS_JOBID"]
+    if ( "SLURM_JOB_ID" in os.environ ):
+        workdir = os.environ["SCRATCHDIR"]+"/spark-"+os.environ["SLURM_JOB_ID"]
+    elif ( "PBS_JOBID" in os.environ ):
+        workdir = os.environ["SCRATCHDIR"]+"/spark-"+os.environ["PBS_JOBID"]
 # SPARK_LOCAL_DIRS should be node-local
 if ( ( "TMPDIR" in os.environ.keys() ) and
      not ( "SPARK_LOCAL_DIRS" in os.environ.keys() ) ):
