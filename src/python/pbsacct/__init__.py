@@ -5,6 +5,7 @@
 # Copyright 2016, 2017, 2018 Ohio Supercomputer Center
 # Authors:  Aaron Maharry
 #           Troy Baer <troy@osc.edu>
+#           Mark Glants
 #
 # License:  GNU GPL v2, see ../COPYING for details.
 
@@ -107,6 +108,8 @@ class jobinfo:
             output += "\tngpus = %d\n" % self.num_gpus()
         if ( self.feature() is not None ):
             output += "\tfeature = %s\n" % self.feature()
+        if ( self.vntype() is not None ):
+            output += "\tvntype = %s\n" % self.vntype()
         if ( self.gattr() is not None ):
             output += "\tgattr = %s\n" % self.gattr()
         if ( self.gres() is not None ):
@@ -415,7 +418,8 @@ class jobinfo:
 
     def feature(self):
         return self.get_resource("Resource_List.feature")
-
+    def vntype(self):
+        return self.get_resource("Resource_List.vntype")
     def gattr(self):
         return self.get_resource("Resource_List.gattr")
 
@@ -542,6 +546,7 @@ class jobinfoTestCase(unittest.TestCase):
                                 'Resource_List.walltime': '1:00:00',
                                 'Resource_List.mem': '1GB',
                                 'Resource_List.vmem': '1GB',
+                                'Resource_List.vntype': 'cray_compute',
                                 'resources_used.cput': '00:00:02',
                                 'resources_used.walltime': '00:00:01',
                                 'resources_used.mem':  '1024kb',
@@ -1227,6 +1232,9 @@ class pbsacctDB:
         if ( job.feature() is not None and
              ( oldjob is None or job.feature()!=oldjob.feature() ) ):
              fields_to_set["feature"] = "'%s'" % job.feature()
+        if ( job.vntype() is not None and
+             ( oldjob is None or job.vntype()!=oldjob.vntype() ) ):
+             fields_to_set["vntype"] = "'%s'" % job.vntype()
         if ( job.gattr() is not None and
              ( oldjob is None or job.gattr()!=oldjob.gattr() ) ):
              fields_to_set["gattr"] = "'%s'" % job.gattr()
