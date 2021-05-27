@@ -157,7 +157,11 @@ External PHP ods library for pbsacct-php
 %package -n pbsacct-db
 Summary:  pbsacct Database Backend
 Group:  System Environment/Base
+%if 0%{?rhel}>=7
+Requires: mariadb-server
+%else
 Requires: mysql-server
+%endif
 %description -n pbsacct-db
 pbsacct-db is the database backend for the pbsacct workload analysis
 system.  It should be installed on a database server running MySQL.

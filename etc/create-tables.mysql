@@ -57,7 +57,7 @@ CREATE INDEX submit_ts_jobs ON Jobs (submit_ts);
 CREATE INDEX submit_jobs ON Jobs (submit_date);
 CREATE INDEX eligible_ts_jobs ON Jobs (eligible_ts);
 CREATE INDEX eligible_jobs ON Jobs (eligible_date);
-CREATE INDEX start_ts_jobs ON Jobs (start_ts);C
+CREATE INDEX start_ts_jobs ON Jobs (start_ts);
 CREATE INDEX start_jobs ON Jobs (start_date);
 CREATE INDEX end_ts_jobs ON Jobs (end_ts);
 CREATE INDEX end_jobs ON Jobs (end_date);
