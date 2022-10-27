@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 #
 # job-vm-launch:  Launch a VM image inside a PBS job
 # Copyright 2013, 2014, University of Tennessee

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # dagsub:  Submit one or more directed acyclic graphs of jobs to TORQUE
 #          using a language compatible with Condor DAGman.
 #

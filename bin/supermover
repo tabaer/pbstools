@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 #
 # supermover -- wrapper around a number of data movement tools
 # Copyright 2009, 2011, 2013 University of Tennessee

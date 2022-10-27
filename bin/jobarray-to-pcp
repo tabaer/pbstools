@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 #
 # jobarray-to-pcp:  Run the equivalent of a TORQUE job array using
 #                   parallel-command-processor.

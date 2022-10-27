@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 #
 # pbsacct-dump -- Dump records from pbsacct DB into CSV format
 # Copyright 2016 Ohio Supercomputer Center

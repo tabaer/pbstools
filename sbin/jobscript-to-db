@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 # jobscript-to-db -- copy newly spooled job scripts into database
 # Python rewrite

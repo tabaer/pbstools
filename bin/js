@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 #
 # js -- Retrieve a job script from the pbsacct DB.
 # Python rewrite

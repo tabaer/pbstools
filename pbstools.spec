@@ -23,7 +23,7 @@ OpenPBS, PBS Pro, and TORQUE).
 %package ja
 Summary:  PBStools Job Accounting
 Group:  System Environment/Base
-Requires: python
+Requires: python2
 %description ja
 ja provides job accounting within a PBS job, similar to the command of
 the same name in NQE.
@@ -48,7 +48,7 @@ qexec is a PBS workalike for the SGE qlogin, qrsh, and qsh commands.
 %package -n supermover
 Summary:  Supermover
 Group:  System Environment/Base
-Requires: python
+Requires: python2
 %description -n supermover
 supermover is a highly configurable wrapper around other data transfer
 utilities such as scp, globus-url-copy, and hsi.
@@ -57,7 +57,7 @@ utilities such as scp, globus-url-copy, and hsi.
 %package dmsub
 Summary:  PBStools Data Movement Job Submission
 Group:  System Environment/Base
-Requires: python,supermover
+Requires: python2,supermover
 %description dmsub
 dmsub is a tool for submitting data movement jobs. It understands data
 transfer descriptions in the formats of DMOVER, RFT, and Stork; it can
@@ -67,7 +67,7 @@ also use several different data movement tools, including supermover.
 %package dagsub
 Summary:  PBStools Directed Acyclic Graph Job Submission
 Group:  System Environment/Base
-Requires: python,dmsub
+Requires: python2,dmsub
 %description dagsub
 dagsub is a workalike for condor_submit_dag. This allows the
 submission of large, complex sets of dependent jobs using a relatively
@@ -77,7 +77,7 @@ simple syntax. It relies on dmsub for data movement.
 %package job-vm-launch
 Summary:  PBStools VM Launcher
 Group:  System Environment/Base
-Requires:  python,libvirt-python
+Requires:  python2,libvirt-python
 %description job-vm-launch
 job-vm-launch launches a virtual machine instance within a TORQUE job
 using KVM.  It should be installed on compute nodes running pbs_mom
@@ -86,14 +86,14 @@ and libvirtd/qemu-kvm.
 %package jobarray-to-pcp
 Summary:  PBStools Job Array to PCP
 Group:  System Environment/Base
-Requires:  python
+Requires:  python2
 %description jobarray-to-pcp
 Run the equivalent of a TORQUE job array using parallel-command-processor.
 
 %package pbs-spark-submit
 Summary:  PBStools Spark Launcher
 Group:  System Environment/Base
-Requires:  python
+Requires:  python2
 %description pbs-spark-submit
 pbs-spark-submit launches an Apache Spark program within a TORQUE job,
 including starting the Spark master and worker processes in standalone
@@ -112,8 +112,8 @@ which have not been allocated jobs on that host.
 %package -n pbsacct-python
 Summary:  pbsacct Python library
 Group:  System Environment/Base
-Requires:  python
-BuildRequires:  python-setuptools
+Requires:  python2
+BuildRequires:  python2-setuptools
 %description -n pbsacct-python
 pbsacct.py is a module for parsing and processing PBS accounting log files.
 
@@ -121,7 +121,7 @@ pbsacct.py is a module for parsing and processing PBS accounting log files.
 %package -n pbsacct-collector
 Summary:  pbsacct Data Collector
 Group:  System Environment/Base
-Requires:  perl,perl-DBD-MySQL,python,pbsacct-python
+Requires:  perl,perl-DBD-MySQL,python2,pbsacct-python
 %description -n pbsacct-collector
 pbsacct-collector is the data collection core of the pbsacct workload
 analysis system.  It should be installed on the same host as a
@@ -244,10 +244,9 @@ make PREFIX=%{buildroot}/%{_prefix} WEBPREFIX=%{buildroot}/var/www/html/pbsacct 
 %doc %{_mandir}/man8/reaver.8.gz
 
 %files -n pbsacct-python
-%{python_sitelib}/pbsacct-*
-%{python_sitelib}/pbsacct/__init__.py
-%{python_sitelib}/pbsacct/__init__.pyc
-%{python_sitelib}/pbsacct/__init__.pyo
+%{python2_sitelib}/pbsacct-*
+%{python2_sitelib}/pbsacct/__init__.py
+%{python2_sitelib}/pbsacct/__init__.pyc
 %{_sbindir}/transform-accounting-log
 
 %files -n pbsacct-collector

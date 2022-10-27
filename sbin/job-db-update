@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 #
 # job-db-update -- Insert job records into a MySQL DB
 # Python rewrite

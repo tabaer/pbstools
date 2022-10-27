@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 #
 # spool-jobscripts -- copy newly created job scripts to a spool directory
 # Python rewrite

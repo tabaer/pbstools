@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # This module provides functions for parsing PBS accounting logs for use by 
 # various scripts
 #
