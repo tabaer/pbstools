@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 import getopt
 import logging
 import pbsacct

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 #
 # pbs-spark-submit:  Run an Apache Spark "job" (including optionally
 #                    starting the Spark services) inside a PBS job.

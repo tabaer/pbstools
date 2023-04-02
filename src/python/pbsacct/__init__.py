@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # This module provides functions for parsing PBS accounting logs for use by 
 # various scripts
 #
@@ -64,7 +64,9 @@ class jobinfo:
                         "session",
                         "system",
                         "total_execution_slots",
-                        "unique_node_count"]
+                        "unique_node_count",
+                        "license",
+                        "floating"]
         for key in list(set(self.get_resource_keys()) | set(other.get_resource_keys())):
             if ( key not in ignore_rsrcs ):
                 if ( not self.has_resource(key) or 
@@ -411,6 +413,8 @@ class jobinfo:
                 ngpus = ngpus + nodes*gpn
         elif ( self.gres() is not None and "gpus:" in self.gres() ):
             ngpus = int(re.search("gpus:(\d+)",self.gres()).group(1))
+        if ( self.has_resource("Resource_List.ngpus") ):
+            ngpus = max(ngpus,int(self.get_resource("Resource_List.ngpus")))
         return ngpus
 
     def feature(self):
